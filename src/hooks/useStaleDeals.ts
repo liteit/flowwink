@@ -8,6 +8,8 @@ export interface StaleDeal {
   currency: string;
   lead_id: string;
   product_name: string | null;
+  contact_name: string | null;
+  company_name: string | null;
   expected_close: string | null;
   days_idle: number;
   recommendation: string;
