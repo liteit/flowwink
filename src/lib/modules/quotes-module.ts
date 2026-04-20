@@ -62,7 +62,6 @@ const QUOTES_SKILLS: SkillSeed[] = [
     category: 'commerce',
     handler: 'db:quotes',
     scope: 'internal',
-    requires_approval: false,
     tool_definition: {
       type: 'function',
       function: {
