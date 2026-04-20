@@ -36,7 +36,6 @@ CREATE TABLE IF NOT EXISTS public.agent_skills (
   category agent_skill_category NOT NULL DEFAULT 'content',
   scope agent_scope NOT NULL DEFAULT 'internal',
   tool_definition JSONB NOT NULL DEFAULT '{}'::jsonb,
-  requires_approval BOOLEAN NOT NULL DEFAULT false,
   enabled BOOLEAN NOT NULL DEFAULT true,
   trust_level skill_trust_level NOT NULL DEFAULT 'auto',
   origin skill_origin NOT NULL DEFAULT 'bundled',
