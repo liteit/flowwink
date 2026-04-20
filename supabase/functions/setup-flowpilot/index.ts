@@ -5268,9 +5268,13 @@ Deno.serve(async (req) => {
         .select('name');
       const existingNames = new Set((existingSkillRows || []).map((r: { name: string }) => r.name));
       
-      // Filter to only new skills
-      const newSkills = DEFAULT_SKILLS.filter(s => !existingNames.has(s.name));
-      
+      // Filter to only new skills + strip legacy `requires_approval` field (column was dropped)
+      const stripLegacy = (s: any) => {
+        const { requires_approval: _ra, ...rest } = s;
+        return rest;
+      };
+      const newSkills = DEFAULT_SKILLS.filter(s => !existingNames.has(s.name)).map(stripLegacy);
+
       if (newSkills.length > 0) {
         // Batch insert all new skills at once
         const { error } = await supabase.from('agent_skills').insert(newSkills);
