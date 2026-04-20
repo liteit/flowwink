@@ -56,6 +56,7 @@ export function StaleDealsCard({ daysThreshold = 14 }: StaleDealsCardProps) {
           <div className="space-y-2">
             {data.deals.slice(0, 8).map(d => {
               const stageInfo = getDealStageInfo(d.stage as DealStage);
+              const title = d.contact_name || d.company_name || d.product_name || 'Untitled deal';
               return (
                 <Link
                   key={d.deal_id}
@@ -64,16 +65,28 @@ export function StaleDealsCard({ daysThreshold = 14 }: StaleDealsCardProps) {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-medium text-sm truncate">
-                        {d.product_name || 'Custom deal'}
-                      </p>
+                      <p className="font-medium text-sm truncate">{title}</p>
                       {stageInfo && (
                         <Badge variant="secondary" className={stageInfo.color}>
                           {stageInfo.label}
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1 flex-wrap">
+                      {d.company_name && d.company_name !== title && (
+                        <span className="inline-flex items-center gap-1">
+                          <Building2 className="h-3 w-3" />
+                          {d.company_name}
+                        </span>
+                      )}
+                      {d.product_name && (
+                        <span className="inline-flex items-center gap-1">
+                          <Package className="h-3 w-3" />
+                          {d.product_name}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1 truncate italic">
                       {d.recommendation}
                     </p>
                   </div>
