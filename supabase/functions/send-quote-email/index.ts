@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
     // Route via the provider-agnostic email-send function.
     const { data: sendData, error: sendErr } = await supabase.functions.invoke('email-send', {
       body: {
-        to: quote.customer_email,
+        to: recipientEmail,
         subject,
         html,
         fromOverride: quoteCfg.fromOverride,
@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
       action: body.reminder ? 'quote.reminder_sent' : 'quote.email_sent',
       entity_type: 'quote',
       entity_id: quote.id,
-      metadata: { provider: sendData.provider, to: quote.customer_email, subject },
+      metadata: { provider: sendData.provider, to: recipientEmail, subject },
     });
 
     return new Response(JSON.stringify({ success: true, provider: sendData.provider }), {
