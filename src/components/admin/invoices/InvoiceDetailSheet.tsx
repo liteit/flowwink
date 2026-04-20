@@ -165,6 +165,8 @@ export function InvoiceDetailSheet({ invoiceId, open, onOpenChange }: Props) {
     await navigator.clipboard.writeText(url);
     toast.success('Public link copied');
   };
+
+  const updateLineItem = (index: number, field: keyof InvoiceLineItem, value: string | number) => {
     setLineItems(prev => prev.map((item, i) =>
       i === index ? { ...item, [field]: value } : item
     ));
