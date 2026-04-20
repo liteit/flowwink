@@ -34,6 +34,7 @@ const schema = z.object({
   scope: z.enum(['internal', 'external', 'both']),
   handler: z.string().min(1, 'Required'),
   requires_approval: z.boolean(),
+  trust_level: z.enum(['auto', 'notify', 'approve']),
   enabled: z.boolean(),
   tool_definition_json: z.string(),
 });
@@ -59,6 +60,7 @@ export function SkillEditorSheet({ skill, open, onClose, onSave, onDelete }: Ski
       scope: 'internal',
       handler: '',
       requires_approval: false,
+      trust_level: 'notify',
       enabled: true,
       tool_definition_json: '{}',
     },
@@ -74,6 +76,7 @@ export function SkillEditorSheet({ skill, open, onClose, onSave, onDelete }: Ski
         scope: skill.scope,
         handler: skill.handler,
         requires_approval: skill.requires_approval,
+        trust_level: skill.trust_level ?? 'notify',
         enabled: skill.enabled,
         tool_definition_json: JSON.stringify(skill.tool_definition, null, 2),
       });
@@ -86,6 +89,7 @@ export function SkillEditorSheet({ skill, open, onClose, onSave, onDelete }: Ski
         scope: 'internal',
         handler: '',
         requires_approval: false,
+        trust_level: 'notify',
         enabled: true,
         tool_definition_json: '{}',
       });
@@ -110,6 +114,7 @@ export function SkillEditorSheet({ skill, open, onClose, onSave, onDelete }: Ski
       scope: values.scope,
       handler: values.handler,
       requires_approval: values.requires_approval,
+      trust_level: values.trust_level,
       enabled: values.enabled,
       tool_definition: toolDef,
     });
