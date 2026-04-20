@@ -30,8 +30,9 @@ export function useStaleDeals(daysThreshold = 14) {
     queryFn: async (): Promise<StaleDealsResult> => {
       const { data, error } = await supabase.functions.invoke('agent-execute', {
         body: {
-          skill: 'deal_stale_check',
-          args: { days_threshold: daysThreshold },
+          skill_name: 'deal_stale_check',
+          arguments: { days_threshold: daysThreshold },
+          agent_type: 'flowpilot',
         },
       });
       if (error) throw error;
