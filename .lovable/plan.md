@@ -1,105 +1,62 @@
 
 
-# MCP Server for FlowWink Modules
+# Fix Module Registry Drift — Återanslut quotes/approvals/reconciliation
 
-## Summary
+## Vad är fel
 
-Expose FlowWink's module registry as an MCP (Model Context Protocol) server via a single Edge Function. Any external AI client (Cursor, Claude Desktop, custom agents) can connect and use FlowWink modules as tools — completing the three-channel architecture: **Skills** (internal), **A2A** (peer), **MCP** (universal).
+Vitest-guardrailsen (`module-registry.guardrails.test.ts`) failar på 2 av 4 tester. Tre moduler har manifest (`defineModule()`) och exporteras från barrel, men de är **frikopplade från resten av plattformen**:
 
-## Architecture
+| Modul | Manifest finns | Settings-key | Importeras i registry | Effekt |
+|-------|---------------|--------------|----------------------|--------|
+| `quotes` | ✅ | ❌ | ❌ | Skill exponeras inte via MCP, kan inte togglas |
+| `approvals` | ✅ | ✅ | ❌ | Settings finns men self-registration sker inte |
+| `reconciliation` | ✅ | ✅ | ❌ | Samma — drift mellan manifest och registry |
+
+Detta är **exakt det MCP-problemet du ser**: när ClawWink/externa agenter anropar skills (t.ex. `create_quote`, `approve_expense`, `reconcile_transaction`) hittar MCP-servern ingen aktiv modul och blockerar/404:ar dem — eller så filtrerar `mcp-module-aware-filtering` bort dem trots att deras manifest finns.
+
+Det matchar också `mem://development/new-module-checklist` som kräver: manifest + settings-key + registry-import för varje ny modul.
+
+## Vad som ska göras
+
+### 1. Lägg till `quotes` i `defaultModulesSettings` (`src/hooks/useModules.tsx`)
+Ny entry med samma form som `invoicing`/`deals`:
+- `name: 'Quotes'`, `category: 'data'`, `autonomy: 'view-required'`, `adminUI: true`
+- Beskrivning som speglar offert-funktionen (skicka offerter, konvertera till order/invoice)
+- `enhancedByFlowPilot: true` (autonom uppföljning på skickade offerter)
+
+### 2. Lägg till alla tre i `src/lib/module-registry.ts`
+Importera `quotesModule`, `approvalsModule`, `reconciliationModule` från `./modules` och registrera dem i samma block där övriga moduler self-registrerar (`moduleRegistry.register(...)`).
+
+### 3. Verifiera att MCP-filtret nu släpper igenom dem
+Kör `vitest run src/lib/__tests__/module-registry.guardrails.test.ts` — alla 4 tester ska gå grönt.
+
+Sedan i preview: öppna `/admin/modules` och bekräfta att Quotes/Approvals/Reconciliation visas som riktiga modulkort med toggle.
+
+### 4. Bonus-fix: `ModuleDetailSheet` ref-warning (konsollog)
+Konsollen visar `Function components cannot be given refs` från `SheetHeader` i `ModuleDetailSheet.tsx`. Det är en separat, icke-blockerande bug men trivial att laga (wrappa header-komponenten i `React.forwardRef` eller ta bort ref-prop:en). Inkluderas om det är samma kodväg.
+
+## Varför detta löser MCP-felen
+
+ClawWink träffar fel via MCP eftersom:
+- `mcp-server` filtrerar skills baserat på `site_settings.modules[id].enabled`
+- `quotes`-skills (t.ex. `create_quote`, `send_quote`) registreras i registry vid runtime — men eftersom `quotesModule` aldrig importeras i `module-registry.ts` sker self-registreringen aldrig → MCP exponerar inga `quotes`-tools → externa anrop misslyckas
+- `approvals`/`reconciliation` har samma problem; deras heartbeats/skills går inte att rikta från MCP
+
+Efter fixen är manifest, settings-key, registry-import och MCP-exponering i synk — vilket är hela poängen med guardrail-testet.
+
+## Filer som ändras
+
+- `src/hooks/useModules.tsx` — lägg till `quotes`-entry
+- `src/lib/module-registry.ts` — importera och registrera 3 moduler
+- (valfritt) `src/components/admin/modules/ModuleDetailSheet.tsx` — fixa forwardRef-warning
+
+## Verifiering
 
 ```text
-External AI Client (Cursor, Claude Desktop, etc.)
-        │
-        ▼  HTTP Streamable Transport
-┌───────────────────────────────┐
-│  mcp-server Edge Function     │
-│  (Hono + mcp-lite)            │
-│                               │
-│  ┌─ API Key auth ────────┐    │
-│  │  api_keys table check │    │
-│  └───────────────────────┘    │
-│                               │
-│  ┌─ Tool Registry ───────┐    │
-│  │  agent_skills WHERE   │    │
-│  │  mcp_exposed = true   │    │
-│  │  → MCP tool defs      │    │
-│  └───────────────────────┘    │
-│                               │
-│  ┌─ Execution ───────────┐    │
-│  │  Route to             │    │
-│  │  agent-execute logic  │    │
-│  └───────────────────────┘    │
-└───────────────────────────────┘
+npx vitest run src/lib/__tests__/module-registry.guardrails.test.ts
+→ Test Files 1 passed (1)
+→ Tests       4 passed (4)
 ```
 
-## Implementation Steps
-
-### 1. Database: API Keys table + mcp_exposed flag
-
-**Migration** adding:
-- `api_keys` table — `id`, `name`, `key_hash` (SHA-256), `key_prefix` (first 8 chars for display), `scopes` (text[]), `created_by`, `last_used_at`, `expires_at`, `created_at`
-- `mcp_exposed boolean DEFAULT false` column on `agent_skills`
-- RLS: only admins can manage API keys
-- Set `mcp_exposed = true` on a curated default set (~20 safe skills: blog CRUD, CRM reads, stock checks, page management, KB search)
-
-### 2. Edge Function: `mcp-server`
-
-Single file using **Hono + mcp-lite** (npm:mcp-lite@^0.10.0):
-
-- **Auth**: Extract `Authorization: Bearer <api_key>` → hash → lookup in `api_keys` → reject if missing/expired
-- **Tool discovery**: Query `agent_skills WHERE mcp_exposed = true`, map `tool_definition` JSON to MCP tool schemas
-- **Tool execution**: On tool call → invoke `agent-execute` internally (service role, same Supabase instance) with `agent_type: 'mcp'`
-- **Resources**: Expose a `flowwink://modules` resource listing all enabled modules
-
-Config in `config.toml`: `[functions.mcp-server] verify_jwt = false`
-
-### 3. Admin UI: API Keys management
-
-New page `/admin/developer/api-keys`:
-- Generate new API key (shown once, stored as hash)
-- List keys with prefix, name, scopes, last used, expiry
-- Revoke keys
-- Link from existing Developer module page
-
-### 4. Admin UI: MCP exposure toggle
-
-On the Skills admin page, add a small MCP toggle icon per skill (shield icon) that flips `mcp_exposed`. Bulk toggle via category.
-
-### 5. Module config: `mcpExposed` default
-
-In `useModules.tsx`, add `mcpExposed?: boolean` to `ModuleConfig`. When a module is toggled off, its skills are also hidden from MCP.
-
-### 6. Documentation
-
-- Update `docs/PRD.md` v4.4 — add MCP Server section documenting the three-channel model
-- Update `docs/FLOWPILOT.md` — add MCP channel alongside Skills + A2A
-- Add connection instructions for Cursor / Claude Desktop in PRD
-
-## Files Changed/Created
-
-| File | Action |
-|------|--------|
-| `supabase/migrations/..._mcp_server.sql` | Create `api_keys` table, add `mcp_exposed` to `agent_skills` |
-| `supabase/functions/mcp-server/index.ts` | New — Hono + mcp-lite MCP server |
-| `supabase/config.toml` | Add `[functions.mcp-server]` block |
-| `src/pages/admin/ApiKeysPage.tsx` | New — API key management UI |
-| `src/hooks/useApiKeys.ts` | New — CRUD hooks for api_keys |
-| `src/hooks/useModules.tsx` | Add `mcpExposed` to ModuleConfig |
-| `src/components/admin/adminNavigation.ts` | Add API Keys nav entry under Developer |
-| `src/App.tsx` | Add route for ApiKeysPage |
-| `docs/PRD.md` | v4.4 — MCP Server + three-channel architecture |
-
-## Security Model
-
-- API keys are hashed (SHA-256) — raw key shown only at creation
-- Keys have optional scopes (limit to specific skill categories)
-- Keys have optional expiry dates
-- `mcp_exposed` acts as a second gate — even with a valid key, only explicitly exposed skills are callable
-- Module-level gating: disabled modules hide their skills from MCP
-- Rate limiting via Supabase Edge Function defaults (can be extended later)
-
-## What This Enables
-
-External AI clients can `manage_blog_post`, `check_stock`, `search_kb`, `create_lead` — treating FlowWink as a headless business operations API. Combined with A2A (peer agents like OpenClaw) and internal Skills (FlowPilot), this creates a fully composable, mix-and-match platform.
+Sedan testa via MCP att `quotes`/`approvals`/`reconciliation`-skills syns under `/rest/groups` och kan kallas av ClawWink utan 404.
 
