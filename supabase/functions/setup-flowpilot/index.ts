@@ -36,7 +36,6 @@ CREATE TABLE IF NOT EXISTS public.agent_skills (
   category agent_skill_category NOT NULL DEFAULT 'content',
   scope agent_scope NOT NULL DEFAULT 'internal',
   tool_definition JSONB NOT NULL DEFAULT '{}'::jsonb,
-  requires_approval BOOLEAN NOT NULL DEFAULT false,
   enabled BOOLEAN NOT NULL DEFAULT true,
   trust_level skill_trust_level NOT NULL DEFAULT 'auto',
   origin skill_origin NOT NULL DEFAULT 'bundled',
@@ -5269,9 +5268,13 @@ Deno.serve(async (req) => {
         .select('name');
       const existingNames = new Set((existingSkillRows || []).map((r: { name: string }) => r.name));
       
-      // Filter to only new skills
-      const newSkills = DEFAULT_SKILLS.filter(s => !existingNames.has(s.name));
-      
+      // Filter to only new skills + strip legacy `requires_approval` field (column was dropped)
+      const stripLegacy = (s: any) => {
+        const { requires_approval: _ra, ...rest } = s;
+        return rest;
+      };
+      const newSkills = DEFAULT_SKILLS.filter(s => !existingNames.has(s.name)).map(stripLegacy);
+
       if (newSkills.length > 0) {
         // Batch insert all new skills at once
         const { error } = await supabase.from('agent_skills').insert(newSkills);

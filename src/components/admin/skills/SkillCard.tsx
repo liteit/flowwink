@@ -117,11 +117,6 @@ export function SkillCard({ skill, onToggle, onEdit, onToggleMcp }: SkillCardPro
               </TooltipContent>
             </Tooltip>
           )}
-          {skill.requires_approval && (
-            <Badge variant="destructive" className="text-[10px]">
-              Legacy approval flag
-            </Badge>
-          )}
         </div>
       </CardContent>
     </Card>

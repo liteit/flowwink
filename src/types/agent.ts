@@ -27,7 +27,6 @@ export interface AgentSkill {
   tool_definition: ToolDefinition;
   handler: string;
   instructions: string | null;
-  requires_approval: boolean;
   enabled: boolean;
   mcp_exposed?: boolean;
   trust_level?: SkillTrustLevel;
