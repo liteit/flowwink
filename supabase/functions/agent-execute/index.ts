@@ -2434,7 +2434,6 @@ async function executeDealsAction(
   skillName: string,
   args: Record<string, unknown>,
 ): Promise<unknown> {
-  console.log(`[executeDealsAction] skillName=${skillName}, args=${JSON.stringify(args)}`);
   // ── deal_stale_check skill (MCP-exposed, agent-independent) ──
   if (skillName === 'deal_stale_check') {
     const { days_threshold = 14 } = args as any;
