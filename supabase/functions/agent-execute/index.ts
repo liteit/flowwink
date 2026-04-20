@@ -3568,7 +3568,7 @@ The body_html should be clean HTML with inline styles, no <html>/<body> wrapper.
         );
         const data = await r.json();
         const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-        aiResp = JSON.parse(raw);
+        aiResp = parseAiEmailJson(raw);
       } else if (openaiKey) {
         const r = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -3583,7 +3583,7 @@ The body_html should be clean HTML with inline styles, no <html>/<body> wrapper.
           }),
         });
         const data = await r.json();
-        aiResp = JSON.parse(data.choices?.[0]?.message?.content || '{}');
+        aiResp = parseAiEmailJson(data.choices?.[0]?.message?.content || '{}');
       } else {
         throw new Error('No AI provider configured (GEMINI_API_KEY or OPENAI_API_KEY)');
       }
