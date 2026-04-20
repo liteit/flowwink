@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPageContainer } from '@/components/admin/AdminPageContainer';
@@ -21,9 +22,25 @@ const STATUS_COLORS: Record<QuoteStatus, string> = {
 };
 
 export default function QuotesPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(searchParams.get('id'));
   const [createOpen, setCreateOpen] = useState(false);
+
+  useEffect(() => {
+    const id = searchParams.get('id');
+    if (id) setSelectedId(id);
+  }, [searchParams]);
+
+  const handleSheetOpenChange = (open: boolean) => {
+    if (!open) {
+      setSelectedId(null);
+      if (searchParams.get('id')) {
+        searchParams.delete('id');
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  };
 
   const { data: quotes = [], isLoading } = useQuotes(
     statusFilter === 'all' ? undefined : statusFilter
@@ -119,7 +136,7 @@ export default function QuotesPage() {
         <QuoteDetailSheet
           quoteId={selectedId}
           open={!!selectedId}
-          onOpenChange={(open) => !open && setSelectedId(null)}
+          onOpenChange={handleSheetOpenChange}
         />
 
         <CreateQuoteDialog open={createOpen} onOpenChange={setCreateOpen} />
