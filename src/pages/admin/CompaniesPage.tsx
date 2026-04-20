@@ -111,7 +111,7 @@ export default function CompaniesPage() {
         <Card className="cursor-pointer transition hover:bg-muted/30" onClick={() => setLifecycleFilter('customer')}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Customers</CardTitle>
-            <Trophy className="h-4 w-4 text-emerald-500" />
+            <Trophy className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.customers ?? 0}</div>
@@ -210,7 +210,7 @@ export default function CompaniesPage() {
                     </TableCell>
                     <TableCell>
                       {company.lifecycle_stage === 'customer' ? (
-                        <Badge className="bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/20 border-emerald-500/30">
+                        <Badge className="bg-primary/15 text-primary hover:bg-primary/20 border-primary/30">
                           <Trophy className="h-3 w-3 mr-1" /> Customer
                         </Badge>
                       ) : company.lifecycle_stage === 'churned' ? (
