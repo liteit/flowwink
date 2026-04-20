@@ -149,39 +149,41 @@ serve(async (req: Request) => {
       .maybeSingle();
 
     const integrations = (integ?.value as any) ?? {};
-    const emailSettings: EmailSettings = integrations.email?.config ?? {};
+    // Side panel (Admin → Integrations) is the source of truth.
+    // Resend config lives at integrations.resend.config.emailConfig.*
+    // SMTP config lives at integrations.smtp.config.*
     const resendCfg = integrations.resend ?? {};
     const smtpCfg = integrations.smtp ?? {};
+    const resendEmailCfg = resendCfg.config?.emailConfig ?? {};
+    const smtpEmailCfg = smtpCfg.config ?? {};
 
-    // Resolve provider — explicit setting > auto-detect
-    const explicit = emailSettings.provider;
+    // Resolve provider — explicit > auto-detect from enabled toggles + secrets
+    const explicit: Provider | undefined =
+      resendEmailCfg.provider || smtpEmailCfg.provider;
     const resendEnabled = resendCfg.enabled !== false && !!Deno.env.get("RESEND_API_KEY");
-    const smtpEnabled = smtpCfg.enabled !== false && !!Deno.env.get("SMTP_HOST");
+    const smtpEnabled = smtpCfg.enabled === true && !!Deno.env.get("SMTP_HOST");
 
     let provider: Provider | null = null;
     if (explicit === "smtp" && smtpEnabled) provider = "smtp";
     else if (explicit === "resend" && resendEnabled) provider = "resend";
-    else if (smtpEnabled) provider = "smtp";
     else if (resendEnabled) provider = "resend";
+    else if (smtpEnabled) provider = "smtp";
 
     if (!provider) {
       return new Response(
         JSON.stringify({
           error: "no_email_provider_configured",
-          hint: "Configure SMTP or Resend in Admin → Integrations.",
+          hint: "Enable Resend or SMTP in Admin → Integrations.",
         }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // Resolve From
-    const fromName =
-      emailSettings.fromName ||
-      resendCfg.config?.emailConfig?.fromName ||
-      "FlowWink";
+    // Resolve From — read from side panel
+    const activeCfg = provider === "resend" ? resendEmailCfg : smtpEmailCfg;
+    const fromName = activeCfg.fromName || "FlowWink";
     const fromEmail =
-      emailSettings.fromEmail ||
-      resendCfg.config?.emailConfig?.fromEmail ||
+      activeCfg.fromEmail ||
       Deno.env.get("SMTP_FROM") ||
       "noreply@example.com";
     const from = body.fromOverride || `${fromName} <${fromEmail}>`;
