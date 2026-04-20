@@ -77,7 +77,7 @@ export function useCreateCompany() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (company: Omit<Company, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (company: Partial<Omit<Company, 'id' | 'created_at' | 'updated_at'>> & { name: string }) => {
       const { data, error } = await supabase
         .from('companies')
         .insert(company)
