@@ -3671,13 +3671,14 @@ The body_html should be clean HTML with inline styles, no <html>/<body> wrapper.
         const data = await r.json();
         aiResp = parseAiEmailJson(data.choices?.[0]?.message?.content || '{}');
       } else {
-        throw new Error('No AI provider configured (GEMINI_API_KEY or OPENAI_API_KEY)');
+        console.warn('[send_email_to_lead] No AI provider configured — using fallback template');
       }
       subject = subject || aiResp?.subject;
       bodyHtml = bodyHtml || aiResp?.body_html;
     } catch (e) {
-      console.error('[send_email_to_lead] AI generation failed:', e);
-      throw new Error(`Email draft generation failed: ${(e as Error).message}`);
+      // Don't hard-fail — let the fallback template below take over so the
+      // agent can still send a sensible email instead of getting stuck.
+      console.error('[send_email_to_lead] AI generation failed, falling back to template:', (e as Error).message);
     }
   }
 
@@ -5617,21 +5618,39 @@ async function executeGenericCrud(
 
       case 'create': {
         const { limit: _l, offset: _o, order_by: _ob, ascending: _a, filters: _f, ...insertData } = fields;
-        const { data, error } = await supabase.from(table).insert(insertData).select().single();
-        if (error) throw new Error(`Create ${table} failed: ${error.message}`);
+        // Strip internal underscore-prefixed fields (e.g. _caller_user_id, _approved)
+        // so they never reach the DB layer (no such columns exist on most tables).
+        const cleanInsert = stripInternalFields(insertData);
+        // Map _caller_user_id → created_by when the column likely exists
+        if ((insertData as any)._caller_user_id && !cleanInsert.created_by) {
+          cleanInsert.created_by = (insertData as any)._caller_user_id;
+        }
+        const { data, error } = await supabase.from(table).insert(cleanInsert).select().single();
+        if (error) {
+          // If created_by doesn't exist on this table, retry without it
+          if (error.message?.includes('created_by')) {
+            delete cleanInsert.created_by;
+            const { data: d2, error: e2 } = await supabase.from(table).insert(cleanInsert).select().single();
+            if (e2) throw new Error(`Create ${table} failed: ${e2.message}`);
+            return { created: true, item: d2, table };
+          }
+          throw new Error(`Create ${table} failed: ${error.message}`);
+        }
         return { created: true, item: data, table };
       }
 
       case 'update': {
         if (!id) return { error: 'id is required for update action' };
         const { limit: _l, offset: _o, order_by: _ob, ascending: _a, filters: _f, ...updateData } = fields;
-        updateData.updated_at = new Date().toISOString();
-        const { data, error } = await supabase.from(table).update(updateData).eq('id', id).select().single();
+        // Strip internal underscore-prefixed fields (e.g. _caller_user_id, _approved)
+        const cleanUpdate = stripInternalFields(updateData);
+        cleanUpdate.updated_at = new Date().toISOString();
+        const { data, error } = await supabase.from(table).update(cleanUpdate).eq('id', id).select().single();
         if (error) {
           // If updated_at doesn't exist on the table, retry without it
           if (error.message?.includes('updated_at')) {
-            delete updateData.updated_at;
-            const { data: d2, error: e2 } = await supabase.from(table).update(updateData).eq('id', id).select().single();
+            delete cleanUpdate.updated_at;
+            const { data: d2, error: e2 } = await supabase.from(table).update(cleanUpdate).eq('id', id).select().single();
             if (e2) throw new Error(`Update ${table} failed: ${e2.message}`);
             return { updated: true, item: d2, table };
           }
