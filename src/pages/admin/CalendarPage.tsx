@@ -14,6 +14,7 @@ import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 
 export default function CalendarPage() {
   const navigate = useNavigate();
@@ -76,7 +77,7 @@ export default function CalendarPage() {
   };
 
   return (
-    <>
+    <AdminLayout>
       <Helmet>
         <title>Calendar — Admin</title>
       </Helmet>
@@ -203,6 +204,6 @@ export default function CalendarPage() {
         .calendar-host .fc-event { cursor: pointer; border-radius: 4px; padding: 1px 4px; font-size: 0.78rem; }
         .calendar-host .fc-list-event:hover td { background: hsl(var(--accent) / 0.4); }
       `}</style>
-    </>
+    </AdminLayout>
   );
 }
