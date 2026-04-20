@@ -308,7 +308,7 @@ export function InvoiceDetailSheet({ invoiceId, open, onOpenChange }: Props) {
               {pdfLoading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
               PDF
             </Button>
-            <Button variant="default" onClick={handleSendInvoice} disabled={sendLoading || !customerEmail}>
+            <Button variant="default" onClick={handleSendInvoice} disabled={sendLoading}>
               {sendLoading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Send className="h-4 w-4 mr-1" />}
               Send
             </Button>
