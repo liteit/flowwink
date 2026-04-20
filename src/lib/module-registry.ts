@@ -27,6 +27,7 @@ import {
   growthModule, resumeModule, browserControlModule, federationModule,
   composioModule, ticketsModule, siteMigrationModule, developerModule,
   flowpilotModule, emailModule,
+  quotesModule, approvalsModule, reconciliationModule,
   // Legacy modules (manual registration)
   globalBlocksModule, ordersModule,
 } from '@/lib/modules';

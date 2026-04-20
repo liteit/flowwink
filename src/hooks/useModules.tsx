@@ -85,6 +85,7 @@ export interface ModulesSettings {
   subscriptions: ModuleConfig;
   approvals: ModuleConfig;
   reconciliation: ModuleConfig;
+  quotes: ModuleConfig;
   email: ModuleConfig;
 }
 
@@ -529,6 +530,17 @@ export const defaultModulesSettings: ModulesSettings = {
     autonomy: 'agent-capable',
     adminUI: true,
     optionalIntegrations: ['stripe'],
+    enhancedByFlowPilot: true,
+  },
+  quotes: {
+    enabled: false,
+    name: 'Quotes',
+    description: 'Send branded quotes, track acceptance, and convert to orders or invoices — FlowPilot autonomously follows up on pending quotes.',
+    icon: 'FileSignature',
+    category: 'data',
+    autonomy: 'view-required',
+    adminUI: true,
+    optionalIntegrations: ['stripe', 'resend'],
     enhancedByFlowPilot: true,
   },
   email: {
