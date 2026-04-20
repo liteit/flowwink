@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, Clock, TrendingDown } from 'lucide-react';
+import { AlertTriangle, Clock, TrendingDown, Building2, Package } from 'lucide-react';
 import { useStaleDeals } from '@/hooks/useStaleDeals';
 import { formatPrice } from '@/hooks/useProducts';
 import { getDealStageInfo, type DealStage } from '@/hooks/useDeals';
