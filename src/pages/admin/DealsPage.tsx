@@ -157,7 +157,7 @@ export default function DealsPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Deal</TableHead>
-                        <TableHead>Lead</TableHead>
+                        <TableHead>Contact</TableHead>
                         <TableHead>Value</TableHead>
                         <TableHead>Stage</TableHead>
                         <TableHead>Expected Close</TableHead>
@@ -174,7 +174,7 @@ export default function DealsPage() {
                               to={`/admin/leads/${deal.lead_id}`}
                               className="text-primary hover:underline"
                             >
-                              View Lead
+                              View Contact
                             </Link>
                           </TableCell>
                           <TableCell className="font-semibold">
@@ -223,7 +223,7 @@ export default function DealsPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Deal</TableHead>
-                        <TableHead>Lead</TableHead>
+                        <TableHead>Contact</TableHead>
                         <TableHead>Value</TableHead>
                         <TableHead>Result</TableHead>
                         <TableHead>Closed At</TableHead>
@@ -242,7 +242,7 @@ export default function DealsPage() {
                                 to={`/admin/leads/${deal.lead_id}`}
                                 className="text-primary hover:underline"
                               >
-                                View Lead
+                                View Contact
                               </Link>
                             </TableCell>
                             <TableCell className="font-semibold">
@@ -354,13 +354,13 @@ function CreateDealDialogWithLeadPicker({ open, onOpenChange }: CreateDealDialog
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="lead_id">Lead *</Label>
+              <Label htmlFor="lead_id">Contact *</Label>
               <Select
                 value={watch('lead_id')}
                 onValueChange={(value) => setValue('lead_id', value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a lead" />
+                  <SelectValue placeholder="Select a contact" />
                 </SelectTrigger>
                 <SelectContent>
                   {availableLeads.map(lead => (
@@ -372,7 +372,7 @@ function CreateDealDialogWithLeadPicker({ open, onOpenChange }: CreateDealDialog
               </Select>
               {availableLeads.length === 0 && (
                 <p className="text-sm text-muted-foreground">
-                  No active leads available. Create a lead first.
+                  No active contacts available. Create a contact first.
                 </p>
               )}
             </div>
