@@ -3485,6 +3485,34 @@ async function executeLeadsAction(
 // Sends via Resend. Logs result to lead_activities for audit + future
 // suppression checks. Supports dry_run for safe previews.
 
+/**
+ * Robust JSON parser for AI-generated email drafts.
+ * Handles: code-fence wrappers, leading/trailing prose, unterminated strings
+ * (extracts subject/body via regex fallback when JSON.parse fails).
+ */
+function parseAiEmailJson(raw: string): { subject?: string; body_html?: string } {
+  if (!raw) return {};
+  let txt = raw.trim();
+  // Strip ```json ... ``` fences
+  txt = txt.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
+  // Try direct parse first
+  try {
+    return JSON.parse(txt);
+  } catch { /* fall through */ }
+  // Try extracting first {...} block
+  const match = txt.match(/\{[\s\S]*\}/);
+  if (match) {
+    try { return JSON.parse(match[0]); } catch { /* fall through */ }
+  }
+  // Last resort: regex-extract subject + body_html fields
+  const subjectMatch = txt.match(/"subject"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  const bodyMatch = txt.match(/"body_html"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  const out: { subject?: string; body_html?: string } = {};
+  if (subjectMatch) out.subject = subjectMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
+  if (bodyMatch) out.body_html = bodyMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
+  return out;
+}
+
 async function executeSendEmailToLead(
   supabase: any,
   args: Record<string, unknown>,
