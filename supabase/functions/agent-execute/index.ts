@@ -2442,7 +2442,7 @@ async function executeDealsAction(
 
     const { data, error } = await supabase
       .from('deals')
-      .select('id, stage, value_cents, currency, lead_id, expected_close, updated_at, notes, product:products(name)')
+      .select('id, stage, value_cents, currency, lead_id, expected_close, updated_at, notes, product:products(name), lead:leads(id, name, email, company:companies(id, name))')
       .not('stage', 'in', '(closed_won,closed_lost)')
       .lt('updated_at', cutoff.toISOString())
       .order('updated_at', { ascending: true })
@@ -2459,6 +2459,8 @@ async function executeDealsAction(
         value_cents: d.value_cents,
         currency: d.currency,
         lead_id: d.lead_id,
+        contact_name: d.lead?.name || d.lead?.email || null,
+        company_name: d.lead?.company?.name || null,
         product_name: d.product?.name || null,
         expected_close: d.expected_close,
         days_idle: daysIdle,
