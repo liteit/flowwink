@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 
 function formatAmount(cents: number | null, currency: string) {
   if (cents == null) return '—';
@@ -83,6 +84,7 @@ export default function ApprovalsPage() {
   });
 
   return (
+    <AdminLayout>
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center gap-3">
         <ShieldCheck className="h-8 w-8 text-primary" />
@@ -253,5 +255,6 @@ export default function ApprovalsPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </AdminLayout>
   );
 }
