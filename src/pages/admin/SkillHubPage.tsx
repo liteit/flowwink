@@ -24,7 +24,7 @@ import { EvolutionPanel } from '@/components/admin/skills/EvolutionPanel';
 import { WorkflowsPanel } from '@/components/admin/skills/WorkflowsPanel';
 import { SelfHealingAlert } from '@/components/admin/skills/SelfHealingAlert';
 import { AutonomyScheduleTab } from '@/components/admin/AutonomyScheduleTab';
-import { useSkills, useToggleSkill, useUpsertSkill, useDeleteSkill, useToggleMcpExposed } from '@/hooks/useSkillHub';
+import { useSkills, useToggleSkill, useUpsertSkill, useDeleteSkill, useToggleMcpExposed, useBulkToggleSkills } from '@/hooks/useSkillHub';
 import {
   useAutonomyScheduleSettings,
   useUpdateAutonomyScheduleSettings,
@@ -45,6 +45,7 @@ export default function SkillHubPage() {
   const toggleMcp = useToggleMcpExposed();
   const upsert = useUpsertSkill();
   const remove = useDeleteSkill();
+  const bulkToggle = useBulkToggleSkills();
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingSkill, setEditingSkill] = useState<AgentSkill | null>(null);
@@ -185,6 +186,23 @@ export default function SkillHubPage() {
             </Select>
 
             <div className="flex-1" />
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => bulkToggle.mutate({ ids: filtered.map(s => s.id), enabled: true })}
+              disabled={!filtered.length || bulkToggle.isPending}
+            >
+              Enable all
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => bulkToggle.mutate({ ids: filtered.map(s => s.id), enabled: false })}
+              disabled={!filtered.length || bulkToggle.isPending}
+            >
+              Disable all
+            </Button>
 
             <Button onClick={handleNew} size="sm" className="gap-1.5">
               <Plus className="h-4 w-4" />

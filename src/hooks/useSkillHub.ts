@@ -35,6 +35,25 @@ export function useToggleSkill() {
   });
 }
 
+export function useBulkToggleSkills() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, enabled }: { ids: string[]; enabled: boolean }) => {
+      if (!ids.length) return;
+      const { error } = await supabase
+        .from('agent_skills')
+        .update({ enabled })
+        .in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['agent-skills'] });
+      toast.success(`${vars.enabled ? 'Enabled' : 'Disabled'} ${vars.ids.length} skills`);
+    },
+    onError: () => toast.error('Failed to bulk update skills'),
+  });
+}
+
 export function useToggleMcpExposed() {
   const qc = useQueryClient();
   return useMutation({
