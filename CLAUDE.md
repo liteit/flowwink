@@ -162,6 +162,8 @@ Every skill MUST contain sufficient metadata (`description`, `Use when:`, `NOT f
 
 Blocks capture intent and render responses. They NEVER build their own AI pipelines. All intelligence flows through FlowPilot's reasoning engine. See "Core Architecture Principle" above.
 
+**Refinement — Utility vs Skill:** Pure text transforms (improve / translate / summarize / expand / continue) on a text selection are **utilities**, not pipelines. They call `chat-completion` directly via `useAITextGeneration` and require no platform context. Use the shared `<AITiptapToolbar>` component in every Tiptap editor for consistency. Anything that needs business context (KB, identity, past records, policy) is a **skill** — register it in `agent_skills` and execute via FlowPilot or `agent-execute`. See `mem://architecture/ai-utility-vs-skill-classification`.
+
 ### Law 4: Fail Forward, Don't Gate
 
 Prefer runtime fallbacks over static validation gates. If API keys exist, the feature works — don't require manual `enabled` flags on top of working credentials.
