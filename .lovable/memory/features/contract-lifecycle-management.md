@@ -1,33 +1,55 @@
 ---
 name: Contract Lifecycle Management
-description: Contracts evolved from "legal archive" to "authoring + archive". TipTap markdown editor as source of truth, public signing flow mirrors quotes, MCP exposes full body to ClawWink. Sign as separate Odoo-style module is planned future extraction.
+description: Contracts = strukturerad post med Google Docs-känsla i editorn. body_markdown är källan, TipTap WYSIWYG ger Docs-UX, documents-modulen håller bilagor (PDF). Sign extraheras till egen modul när 3+ entities behöver det.
 type: feature
 ---
 
-## Scope (2026-04-21)
-Contracts module is now **authoring + archive**:
-- `contracts.body_markdown` is source of truth (TipTap WYSIWYG → Turndown → markdown)
-- Public signing at `/contract/:token` mirrors `/quote/:token` UX
-- `contract_versions` snapshots on send-for-signature
-- `contract_signatures` audit log (view + accept/reject + IP/UA)
-- `pg_trgm` GIN indexes on title + body_markdown for fast LLM-driven search
+## Arkitekturbeslut (2026-04-21): "Strukturerad post + Docs-känsla"
 
-## MCP skills (Scenario B — ClawWink as operator)
+Contracts är **hybrid**, medvetet:
+- **Strukturerad post** — `contracts`-tabell äger metadata (counterparty, status, dates, value, version, signatures)
+- **Editerbart dokument** — `body_markdown` är källan, TipTap-editorn ska kännas som **Google Docs** (clean canvas, fokus på text, autosave, inline formatering, inga distraktioner)
+- **Bilagor** — `documents`-modulen (polymorft filarkiv) håller uppladdade PDF:er, signerade original, attachments via `related_entity_type='contract'`
+
+### Skiljelinje mot `documents`-modulen
+| | `contracts.body_markdown` | `documents` |
+|---|---|---|
+| Typ | Editerbar text (Google Docs-style) | Filer (PDF/DOCX/bilder) |
+| Innehåll | Läsbart, sökbart, MCP-exponerat | Opakt — vi serverar bara filen |
+| Editor | TipTap WYSIWYG inline | Ingen — bara upload/preview |
+| Sökning | pg_trgm GIN på markdown | Filnamn + metadata |
+| Versioner | `contract_versions` snapshots | Filversion via re-upload |
+
+### Google Docs-UX — krav på editorn
+- Stor clean canvas, ingen visuell brus runtomkring
+- Inline-toolbar (sticky), inte modal/sidebar
+- Autosave med tyst "Saved"-indikator (ingen "Save"-knapp som primary action)
+- Tangentbordsgenvägar (Cmd+B/I/U, headings via #, ##)
+- Placeholder som vägleder ("Skriv avtalet här…")
+- Prose-styling som påminner om dokument, inte form-fält
+
+## Scope idag
+- `contracts.body_markdown` är source of truth (TipTap → Turndown → markdown)
+- Public signing `/contract/:token` mirrors `/quote/:token` UX
+- `contract_versions` snapshots vid send-for-signature
+- `contract_signatures` audit log (view + accept/reject + IP/UA)
+- `pg_trgm` GIN på title + body_markdown för LLM-driven sökning
+
+## MCP skills (Scenario B — ClawWink som operator)
 - `manage_contract` — CRUD
-- `get_contract_content` — full markdown body, LLM-friendly, no PDF parsing
-- `search_contracts` — pg_trgm fuzzy search across title + counterparty + body
-- `send_contract_for_signature` — generates public signing token + URL
-- `contract_renewal_check` — daily cron (08:00 weekdays)
-- `list_contract_documents` — attached PDFs via documents vault
+- `get_contract_content` — full markdown body, LLM-friendly
+- `search_contracts` — pg_trgm fuzzy search
+- `send_contract_for_signature` — genererar signing token
+- `contract_renewal_check` — daglig cron (08:00 weekdays)
+- `list_contract_documents` — bilagor via documents vault
 
 ## Edge function
-`contract-sign` — public, no JWT — handles atomic accept/reject, status flip to active, audit insert.
+`contract-sign` — public, no JWT — atomic accept/reject, status flip till active, audit insert.
 
-## Future: Sign as standalone module (planned, not implemented)
-Odoo has `sign` as a horizontal module. We deferred extraction until we have 3+ entities signing (currently quotes + contracts). When we extract:
-- Polymorphic `signatures` table with `signable_type` + `signable_id` (same pattern as `documents`)
-- `request_signature(entity_type, entity_id)` MCP skill works on any signable entity
-- Reusable `<PublicSignaturePage>` component
-- Trigger: when a 3rd entity (employment offers? PO approvals?) needs signing.
+## När bryta ut till "docs"-modul (Väg B)?
+**Inte nu.** Trigger: när 3+ entities behöver fri editerbar text + templates + comments (t.ex. proposals, SOWs, policies, KB-artiklar med rich editing). Då polymorft `docs`-table med `entity_type` + `entity_id`.
 
-**Why wait:** premature abstraction before pattern stabilizes. Quotes and contracts are built and shipping — refactor when we know what's actually shared.
+**Varför vänta:** Quotes är strukturerad data (line items), inte fri text. Contracts är ensam idag — abstraktion = premature.
+
+## Sign som standalone module (planerat, ej implementerat)
+Se `mem://features/signature-module` för full extraktionsplan. Trigger: 3:e signable entity (employment offers, PO approvals).
