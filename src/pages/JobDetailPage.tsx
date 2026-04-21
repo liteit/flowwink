@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -33,7 +33,6 @@ const applicationSchema = z.object({
 
 export default function JobDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
 
@@ -183,7 +182,7 @@ export default function JobDetailPage() {
             <CardContent>
               {submitted ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
-                  <CheckCircle2 className="mb-3 h-12 w-12 text-emerald-500" />
+                  <CheckCircle2 className="mb-3 h-12 w-12 text-primary" />
                   <h3 className="text-xl font-semibold">Application received</h3>
                   <p className="mt-2 text-muted-foreground">
                     Thanks {form.candidate_name.split(' ')[0]}. We'll review and get back to you by email.

@@ -62,6 +62,8 @@ import TemplateLivePreviewPage from "./pages/admin/TemplateLivePreviewPage";
 import PreviewPage from "./pages/PreviewPage";
 import PublicPage from "./pages/PublicPage";
 import BlogArchivePage from "./pages/BlogArchivePage";
+import JobsPage from "./pages/JobsPage";
+import JobDetailPage from "./pages/JobDetailPage";
 import BlogPostPage from "./pages/BlogPostPage";
 import BlogCategoryPage from "./pages/BlogCategoryPage";
 import BlogTagPage from "./pages/BlogTagPage";
@@ -175,6 +177,8 @@ const router = createBrowserRouter([
       { path: "/blog/category/:slug", element: <BlogCategoryPage /> },
       { path: "/blog/tag/:slug", element: <BlogTagPage /> },
       { path: "/blog/:slug", element: <BlogPostPage /> },
+      { path: "/jobs", element: <JobsPage /> },
+      { path: "/jobs/:slug", element: <JobDetailPage /> },
       { path: "/admin", element: <AdminDashboard /> },
       { path: "/admin/analytics", element: <AnalyticsDashboardPage /> },
       { path: "/admin/pages", element: <PagesListPage /> },
