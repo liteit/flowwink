@@ -227,7 +227,6 @@ const RECRUITMENT_AUTOMATIONS: AutomationSeed[] = [
 ];
 
 export const recruitmentModule = defineModule<RecruitmentInput, RecruitmentOutput>({
-  // @ts-expect-error — 'recruitment' is added to ModulesSettings in useModules.tsx
   id: 'recruitment',
   name: 'Recruitment',
   version: '1.0.0',
