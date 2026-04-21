@@ -121,7 +121,7 @@ async function snapshotContract(contract: Contract & { version?: number }, reaso
 export function useSendContract() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (contract: Contract & { accept_token?: string | null; version?: number }) => {
+    mutationFn: async (contract: Contract & { accept_token?: string | null; version?: number; body_markdown?: string | null }) => {
       if (!contract.body_markdown || !contract.body_markdown.trim()) {
         throw new Error('Contract body is empty — write the agreement first.');
       }
