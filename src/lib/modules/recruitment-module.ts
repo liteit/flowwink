@@ -227,6 +227,7 @@ const RECRUITMENT_AUTOMATIONS: AutomationSeed[] = [
 ];
 
 export const recruitmentModule = defineModule<RecruitmentInput, RecruitmentOutput>({
+  // @ts-expect-error — 'recruitment' is added to ModulesSettings in useModules.tsx
   id: 'recruitment',
   name: 'Recruitment',
   version: '1.0.0',
@@ -246,19 +247,6 @@ export const recruitmentModule = defineModule<RecruitmentInput, RecruitmentOutpu
   ],
   skillSeeds: RECRUITMENT_SKILLS,
   automations: RECRUITMENT_AUTOMATIONS,
-
-  webhookEvents: [
-    {
-      event: 'application.created',
-      description: 'Fired when a new candidate application is submitted',
-      sample_payload: { id: 'uuid', candidate_email: 'candidate@example.com', job_posting_id: 'uuid' },
-    },
-    {
-      event: 'application.stage_changed',
-      description: 'Fired when an application moves to a new pipeline stage',
-      sample_payload: { id: 'uuid', from_stage: 'applied', to_stage: 'screened' },
-    },
-  ],
 
   async publish(input: RecruitmentInput): Promise<RecruitmentOutput> {
     const validated = recruitmentInputSchema.parse(input);
