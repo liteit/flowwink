@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useJobPostings } from '@/hooks/useRecruitment';
-import { Briefcase } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Briefcase, Share2, ExternalLink } from 'lucide-react';
 import { NewJobDialog } from './NewJobDialog';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -17,6 +18,13 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline'> = {
 
 export function JobPostingsList() {
   const { data, isLoading } = useJobPostings();
+  const { toast } = useToast();
+
+  const copyShareLink = (slug: string) => {
+    const url = `${window.location.origin}/jobs/${slug}`;
+    navigator.clipboard.writeText(url);
+    toast({ title: 'Link copied', description: url });
+  };
 
   if (isLoading) {
     return (
@@ -69,9 +77,28 @@ export function JobPostingsList() {
                 {formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}
               </TableCell>
               <TableCell className="text-right">
-                <Button asChild size="sm" variant="ghost">
-                  <Link to={`/admin/recruitment/jobs/${job.id}`}>Open</Link>
-                </Button>
+                <div className="flex justify-end gap-1">
+                  {job.status === 'published' && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => copyShareLink(job.slug)}
+                        title="Copy share link"
+                      >
+                        <Share2 className="h-4 w-4" />
+                      </Button>
+                      <Button asChild size="sm" variant="ghost" title="View public page">
+                        <a href={`/jobs/${job.slug}`} target="_blank" rel="noreferrer">
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </>
+                  )}
+                  <Button asChild size="sm" variant="ghost">
+                    <Link to={`/admin/recruitment/jobs/${job.id}`}>Open</Link>
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
