@@ -751,6 +751,8 @@ export type Database = {
           cover_letter: string | null
           created_at: string
           detected_skills: string[] | null
+          employee_id: string | null
+          hired_at: string | null
           id: string
           job_posting_id: string
           linkedin_url: string | null
@@ -778,6 +780,8 @@ export type Database = {
           cover_letter?: string | null
           created_at?: string
           detected_skills?: string[] | null
+          employee_id?: string | null
+          hired_at?: string | null
           id?: string
           job_posting_id: string
           linkedin_url?: string | null
@@ -805,6 +809,8 @@ export type Database = {
           cover_letter?: string | null
           created_at?: string
           detected_skills?: string[] | null
+          employee_id?: string | null
+          hired_at?: string | null
           id?: string
           job_posting_id?: string
           linkedin_url?: string | null
@@ -833,6 +839,13 @@ export type Database = {
             columns: ["assigned_recruiter_id"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
           {
@@ -6469,6 +6482,15 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      hire_candidate_from_application: {
+        Args: {
+          p_application_id: string
+          p_department?: string
+          p_employment_type?: string
+          p_start_date?: string
+        }
+        Returns: Json
       }
       register_flowpilot_cron: {
         Args: { p_anon_key: string; p_supabase_url: string }
