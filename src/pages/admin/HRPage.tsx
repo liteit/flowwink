@@ -10,6 +10,7 @@ import { LeaveRequestsPanel } from "@/components/admin/hr/LeaveRequestsPanel";
 import { LeaveAllocationsPanel } from "@/components/admin/hr/LeaveAllocationsPanel";
 import { PayrollExportPanel } from "@/components/admin/hr/PayrollExportPanel";
 import { OrgChart } from "@/components/admin/hr/OrgChart";
+import { PerformancePanel } from "@/components/admin/hr/PerformancePanel";
 import { Users, CalendarOff, AlertTriangle } from "lucide-react";
 
 export default function HRPage() {
