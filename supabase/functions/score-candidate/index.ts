@@ -22,7 +22,6 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    // Load application + job posting
     const { data: app, error: appErr } = await supabase
       .from('applications')
       .select('*, job_postings(*)')
@@ -75,15 +74,32 @@ Return ONLY valid JSON:
   "ai_summary": "One paragraph summary of fit",
   "matching_skills": ["skill1", "skill2"],
   "missing_skills": ["skill3"],
-  "recommendation": "advance" | "hold" | "reject"
+  "match_breakdown": {
+    "skills": 80,
+    "experience": 70,
+    "education": 60,
+    "location": 90,
+    "culture_fit": 75
+  },
+  "recommendation": "advance",
+  "confidence_level": "high"
 }
 
-Scoring rubric (0-100):
-- 90-100: Exceptional match — has all requirements + bonus skills
-- 75-89: Strong match — meets all critical requirements
-- 60-74: Good match — meets most requirements, some gaps
-- 40-59: Partial match — significant gaps but transferable skills
-- 0-39: Poor match — missing critical requirements
+Each match_breakdown dimension is 0-100:
+- skills: how many required skills the candidate has
+- experience: years and relevance of work history vs role seniority
+- education: degree level and field relevance (use 50 if not a strict requirement)
+- location: geographic fit (remote roles always 100; otherwise based on location/relocation signals)
+- culture_fit: tone of cover letter and signals of motivation, communication, soft skills
+
+ai_score MUST be a weighted average roughly: skills*0.40 + experience*0.30 + education*0.10 + location*0.10 + culture_fit*0.10
+
+recommendation:
+- "advance" when ai_score >= 75
+- "hold" when 55 <= ai_score < 75
+- "reject" when ai_score < 55
+
+confidence_level: "high" when resume has clear evidence for all dimensions, "medium" when some dimensions are inferred, "low" when key data is missing.
 
 Be honest and specific. Cite actual evidence from the resume.`;
 
@@ -124,7 +140,6 @@ Be honest and specific. Cite actual evidence from the resume.`;
     const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     const scoring = JSON.parse(cleaned);
 
-    // Persist back to applications
     const { error: updateErr } = await supabase
       .from('applications')
       .update({
@@ -133,6 +148,9 @@ Be honest and specific. Cite actual evidence from the resume.`;
         ai_summary: scoring.ai_summary,
         matching_skills: scoring.matching_skills ?? [],
         missing_skills: scoring.missing_skills ?? [],
+        match_breakdown: scoring.match_breakdown ?? {},
+        recommendation: scoring.recommendation ?? null,
+        confidence_level: scoring.confidence_level ?? null,
       })
       .eq('id', application_id);
 
