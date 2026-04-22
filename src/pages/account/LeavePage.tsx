@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { differenceInCalendarDays, format } from "date-fns";
+import { LeaveBalanceCards } from "@/components/account/LeaveBalanceCards";
 import { toast } from "sonner";
 import {
   CalendarOff,
@@ -279,6 +280,8 @@ export default function LeavePage() {
 
   return (
     <div className="space-y-6">
+      <LeaveBalanceCards employeeId={employee!.id} />
+
       <Card>
         <CardHeader>
           <CardTitle>Request leave</CardTitle>

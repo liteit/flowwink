@@ -7,6 +7,7 @@ import { useEmployees, useLeaveRequests } from "@/hooks/useEmployees";
 import { EmployeeList } from "@/components/admin/hr/EmployeeList";
 import { NewEmployeeDialog } from "@/components/admin/hr/NewEmployeeDialog";
 import { LeaveRequestsPanel } from "@/components/admin/hr/LeaveRequestsPanel";
+import { LeaveAllocationsPanel } from "@/components/admin/hr/LeaveAllocationsPanel";
 import { Users, CalendarOff, AlertTriangle } from "lucide-react";
 
 export default function HRPage() {
@@ -61,6 +62,7 @@ export default function HRPage() {
           <TabsList>
             <TabsTrigger value="employees">Employees</TabsTrigger>
             <TabsTrigger value="leave">Leave Requests{pendingLeave > 0 && ` (${pendingLeave})`}</TabsTrigger>
+            <TabsTrigger value="allocations">Allocations</TabsTrigger>
           </TabsList>
           <TabsContent value="employees">
             <Card>
@@ -80,6 +82,17 @@ export default function HRPage() {
                   <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
                 ) : (
                   <LeaveRequestsPanel requests={leaveRequests || []} />
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="allocations">
+            <Card>
+              <CardContent className="pt-6">
+                {empLoading ? (
+                  <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
+                ) : (
+                  <LeaveAllocationsPanel employees={employees || []} />
                 )}
               </CardContent>
             </Card>
