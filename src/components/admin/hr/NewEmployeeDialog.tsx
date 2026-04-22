@@ -22,6 +22,7 @@ export function NewEmployeeDialog() {
     start_date: "",
     manager_id: "",
     personal_number: "",
+    birth_date: "",
     notes: "",
   });
 
@@ -39,6 +40,7 @@ export function NewEmployeeDialog() {
         start_date: form.start_date || null,
         manager_id: form.manager_id || null,
         personal_number: form.personal_number || null,
+        birth_date: form.birth_date || null,
         notes: form.notes || null,
       },
       {
@@ -47,7 +49,7 @@ export function NewEmployeeDialog() {
           setForm({
             name: "", email: "", phone: "", title: "", department: "",
             employment_type: "full_time", start_date: "", manager_id: "",
-            personal_number: "", notes: "",
+            personal_number: "", birth_date: "", notes: "",
           });
         },
       }
