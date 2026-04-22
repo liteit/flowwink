@@ -3,8 +3,8 @@
  *
  * Verifies the full chain that lets ClawWink (external orchestrator) drive
  * recruitment autonomously:
- *  1. The unified module declares exactly 6 skills.
- *  2. bootstrapModule('recruitment', ...) seeds/updates each of those 6 skills
+ *  1. The unified module declares exactly 7 skills (incl. hire_candidate bridge to HR).
+ *  2. bootstrapModule('recruitment', ...) seeds/updates each of those 7 skills
  *     with enabled=true AND mcp_exposed=true.
  *  3. The MCP server maps `recruitment` into a category group so the skills
  *     are exposed via /rest/groups and tool-listing for external callers.
