@@ -48,21 +48,25 @@ interface ModuleInfo {
 function parseModuleFile(filePath: string): ModuleInfo | null {
   const src = fs.readFileSync(filePath, 'utf-8');
 
-  const idMatch = src.match(/id:\s*['"]([^'"]+)['"]/);
-  const nameMatch = src.match(/name:\s*['"]([^'"]+)['"]/);
-  const versionMatch = src.match(/version:\s*['"]([^'"]+)['"]/);
-  const descMatch = src.match(/description:\s*['"]([^'"]+)['"]/);
-  const capMatch = src.match(/capabilities:\s*\[([^\]]+)\]/);
+  // Extract the defineModule({ ... }) block to scope our matches and avoid
+  // collisions with tool_definition.function.name etc.
+  const defBlock = extractDefineModuleBlock(src) ?? src;
+
+  const idMatch = defBlock.match(/id:\s*['"]([^'"]+)['"]/);
+  const nameMatch = defBlock.match(/^\s*name:\s*['"]([^'"]+)['"]/m);
+  const versionMatch = defBlock.match(/version:\s*['"]([^'"]+)['"]/);
+  const descMatch = defBlock.match(/description:\s*['"]([^'"]+)['"]/);
+  const capMatch = defBlock.match(/capabilities:\s*\[([^\]]+)\]/);
 
   if (!idMatch) return null;
 
-  // Extract actions from z.enum
-  const actionMatch = src.match(/action:\s*z\.enum\(\[([^\]]+)\]\)/);
+  // Extract actions from z.enum (search whole file — schema lives outside defineModule)
+  const actionMatch = src.match(/action:\s*z\.enum\(\[([\s\S]*?)\]\)/);
   const actions = actionMatch
     ? actionMatch[1].match(/'([^']+)'/g)?.map(s => s.replace(/'/g, '')) ?? []
     : [];
 
-  // Extract input schema field names (rough)
+  // Extract input/output schema field names (rough)
   const inputFields = extractSchemaFields(src, /InputSchema|inputSchema/);
   const outputFields = extractSchemaFields(src, /OutputSchema|outputSchema/);
 
@@ -79,6 +83,32 @@ function parseModuleFile(filePath: string): ModuleInfo | null {
     actions,
     sourceFile: path.relative(ROOT, filePath),
   };
+}
+
+function extractDefineModuleBlock(src: string): string | null {
+  // Find a `defineModule(...)` call (not the import statement). The call is
+  // typically `defineModule<...>({ ... })` or `defineModule({ ... })`.
+  const callRe = /defineModule\s*(?:<[^>]*>)?\s*\(\s*\{/g;
+  let m: RegExpExecArray | null;
+  while ((m = callRe.exec(src)) !== null) {
+    // Skip matches inside import statements
+    const lineStart = src.lastIndexOf('\n', m.index) + 1;
+    const lineEnd = src.indexOf('\n', m.index);
+    const line = src.slice(lineStart, lineEnd === -1 ? src.length : lineEnd);
+    if (/^\s*import\b/.test(line)) continue;
+
+    const open = m.index + m[0].length - 1; // position of `{`
+    let depth = 0;
+    for (let i = open; i < src.length; i++) {
+      const c = src[i];
+      if (c === '{') depth++;
+      else if (c === '}') {
+        depth--;
+        if (depth === 0) return src.slice(open, i + 1);
+      }
+    }
+  }
+  return null;
 }
 
 function extractSchemaFields(src: string, pattern: RegExp): string[] {
@@ -305,6 +335,18 @@ const MODULE_ID_TO_SETTINGS_KEY: Record<string, string> = {
   hr: 'hr',
   documents: 'documents',
   projects: 'projects',
+  recruitment: 'recruitment',
+  approvals: 'approvals',
+  reconciliation: 'reconciliation',
+  quotes: 'quotes',
+  email: 'email',
+  subscriptions: 'subscriptions',
+  flowpilot: 'flowpilot',
+  chat: 'chat',
+  'company-insights': 'companyInsights',
+  'live-support': 'liveSupport',
+  analytics: 'analytics',
+  calendar: 'calendar',
 };
 
 // ---------------------------------------------------------------------------

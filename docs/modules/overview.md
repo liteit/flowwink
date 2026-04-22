@@ -75,9 +75,15 @@ When FlowPilot is on, modules gain autonomous skills and automation.
 |--------|--------|----------|-------------|
 | **Timesheets** | `log_time`, `manage_projects`, `manage_tasks`, `timesheet_summary` | `timesheet.submitted` | Time tracking |
 | **Projects** | `manage_project`, `manage_project_task` | `project.created`, `task.completed` | Project management |
-| **Contracts** | `manage_contract`, `contract_renewal_check` | `contract.created`, `contract.signed`, `contract.status_changed` | Contract lifecycle |
+| **Calendar** | `manage_calendar_event` | — | Unified calendar view |
+| **Quotes** | `manage_quote`, `quote_to_invoice` | `quote.sent`, `quote.accepted` | Quote-to-cash |
+| **Approvals** | `request_approval`, `decide_approval` | `approval.requested`, `approval.resolved` | Approval workflows |
+| **Reconciliation** | `import_bank_transactions`, `match_transactions` | — | Bank reconciliation |
+| **Contracts** | `manage_contract`, `contract_renewal_check`, `get_contract_content`, `search_contracts`, `send_contract_for_signature`, `list_contract_documents` | `contract.created`, `contract.signed`, `contract.status_changed` | Contract lifecycle |
 | **HR** | `manage_employee`, `manage_leave`, `onboarding_checklist` | `employee.created`, `leave.requested`, `leave.status_changed` | People management |
+| **Recruitment** | `manage_job_posting`, `parse_resume`, `score_candidate`, `move_application_stage`, `draft_candidate_outreach`, `hire_candidate`, `summarize_candidate_pipeline` | `application.created`, `application.stage_changed` | ATS — hire-to-onboard |
 | **Documents** | `manage_document` | `document.uploaded` | Document management |
+| **SLA** | `sla_check`, `sla_breach_alert` | `sla.breached` | Service-level monitoring |
 
 ### Intelligence
 
@@ -91,11 +97,19 @@ When FlowPilot is on, modules gain autonomous skills and automation.
 
 | Module | Skills | Webhooks | Description |
 |--------|--------|----------|-------------|
+| **FlowPilot** | (orchestrator — uses all skills) | — | Autonomous agent loop |
 | **Federation** | `a2a_chat`, `a2a_request`, `openclaw_start_session`, `openclaw_end_session`, `openclaw_report_finding`, `openclaw_exchange`, `openclaw_get_status`, `queue_beta_test`, `resolve_finding`, `scan_beta_findings` | — | Agent-to-Agent protocol |
 | **Composio** | `composio_execute`, `composio_search_tools`, `composio_gmail_read`, `composio_gmail_send` | — | External tool bridge |
+| **Email** | `send_email` | `email.sent` | Provider-agnostic email transport |
+| **Chat** | `chat_history_search` | — | AI chat infrastructure |
+| **Browser Control** | `browser_fetch`, `browser_act` | — | Headless browser automation |
+| **Subscriptions** | `manage_subscription` | `subscription.renewed`, `subscription.cancelled` | Recurring revenue |
+| **Templates** | `install_template` | — | Site template installer |
+| **Developer** | `manage_webhook`, `run_diagnostic` | — | Developer tools |
 | **Resume** | `manage_consultant_profile`, `match_consultant` | — | Talent matching |
 | **Site Migration** | `migrate_url` | — | Content import |
 | **Tickets** | `ticket_triage` | — | Support tickets |
+| **Global Blocks** | (registry only) | — | Reusable page blocks |
 
 ---
 
@@ -116,10 +130,15 @@ Each module has auto-generated documentation with API contracts, webhook events,
 | Module | Doc |
 |--------|-----|
 | Accounting | [accounting.md](./accounting.md) |
+| Analytics | [analytics.md](./analytics.md) |
+| Approvals | [approvals.md](./approvals.md) |
 | Blog | [blog.md](./blog.md) |
 | Booking | [booking.md](./booking.md) |
 | Browser Control | [browser-control.md](./browser-control.md) |
+| Calendar | [calendar.md](./calendar.md) |
+| Chat | [chat.md](./chat.md) |
 | Companies | [companies.md](./companies.md) |
+| Company Insights | [company-insights.md](./company-insights.md) |
 | Composio | [composio.md](./composio.md) |
 | Contracts | [contracts.md](./contracts.md) |
 | CRM (Leads) | [crm.md](./crm.md) |
@@ -127,22 +146,33 @@ Each module has auto-generated documentation with API contracts, webhook events,
 | Developer | [developer.md](./developer.md) |
 | Documents | [documents.md](./documents.md) |
 | E-commerce | [orders.md](./orders.md) · [products.md](./products.md) |
+| Email | [email.md](./email.md) |
 | Expenses | [expenses.md](./expenses.md) |
 | Federation | [federation.md](./federation.md) |
+| FlowPilot | [flowpilot.md](./flowpilot.md) |
 | Forms | [forms.md](./forms.md) |
+| Global Blocks | [global-blocks.md](./global-blocks.md) |
 | Handbook | [handbook.md](./handbook.md) |
 | HR | [hr.md](./hr.md) |
 | Inventory | [inventory.md](./inventory.md) |
 | Invoicing | [invoicing.md](./invoicing.md) |
 | Knowledge Base | [kb.md](./kb.md) |
+| Live Support | [live-support.md](./live-support.md) |
 | Media Library | [media.md](./media.md) |
 | Newsletter | [newsletter.md](./newsletter.md) |
+| Paid Growth | [paid-growth.md](./paid-growth.md) |
 | Pages | [pages.md](./pages.md) |
 | Projects | [projects.md](./projects.md) |
 | Purchasing | [purchasing.md](./purchasing.md) |
+| Quotes | [quotes.md](./quotes.md) |
+| Reconciliation | [reconciliation.md](./reconciliation.md) |
+| Recruitment | [recruitment.md](./recruitment.md) |
 | Resume | [resume.md](./resume.md) |
 | Sales Intelligence | [sales-intelligence.md](./sales-intelligence.md) |
+| Site Migration | [site-migration.md](./site-migration.md) |
 | SLA | [sla.md](./sla.md) |
+| Subscriptions | [subscriptions.md](./subscriptions.md) |
+| Templates | [templates.md](./templates.md) |
 | Tickets | [tickets.md](./tickets.md) |
 | Timesheets | [timesheets.md](./timesheets.md) |
 | Webinars | [webinars.md](./webinars.md) |
