@@ -233,6 +233,38 @@ export function useScoreCandidate() {
   });
 }
 
+export function useHireCandidate() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (input: {
+      application_id: string;
+      start_date?: string;
+      employment_type?: 'full_time' | 'part_time' | 'contractor';
+      department?: string;
+    }) => {
+      const { data, error } = await supabase.rpc('hire_candidate_from_application', {
+        p_application_id: input.application_id,
+        p_start_date: input.start_date ?? null,
+        p_employment_type: input.employment_type ?? 'full_time',
+        p_department: input.department ?? null,
+      });
+      if (error) throw error;
+      return data as { success: boolean; employee_id: string; checklist_id: string };
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['applications'] });
+      qc.invalidateQueries({ queryKey: ['applications', vars.application_id] });
+      qc.invalidateQueries({ queryKey: ['employees'] });
+      toast({ title: 'Candidate hired', description: 'Employee record + onboarding checklist created.' });
+    },
+    onError: (e: Error) => {
+      logger.error('hireCandidate', e);
+      toast({ title: 'Hire failed', description: e.message, variant: 'destructive' });
+    },
+  });
+}
+
 export function useCreateApplication() {
   const qc = useQueryClient();
   const { toast } = useToast();
