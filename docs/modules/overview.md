@@ -75,9 +75,15 @@ When FlowPilot is on, modules gain autonomous skills and automation.
 |--------|--------|----------|-------------|
 | **Timesheets** | `log_time`, `manage_projects`, `manage_tasks`, `timesheet_summary` | `timesheet.submitted` | Time tracking |
 | **Projects** | `manage_project`, `manage_project_task` | `project.created`, `task.completed` | Project management |
-| **Contracts** | `manage_contract`, `contract_renewal_check` | `contract.created`, `contract.signed`, `contract.status_changed` | Contract lifecycle |
+| **Calendar** | `manage_calendar_event` | — | Unified calendar view |
+| **Quotes** | `manage_quote`, `quote_to_invoice` | `quote.sent`, `quote.accepted` | Quote-to-cash |
+| **Approvals** | `request_approval`, `decide_approval` | `approval.requested`, `approval.resolved` | Approval workflows |
+| **Reconciliation** | `import_bank_transactions`, `match_transactions` | — | Bank reconciliation |
+| **Contracts** | `manage_contract`, `contract_renewal_check`, `get_contract_content`, `search_contracts`, `send_contract_for_signature`, `list_contract_documents` | `contract.created`, `contract.signed`, `contract.status_changed` | Contract lifecycle |
 | **HR** | `manage_employee`, `manage_leave`, `onboarding_checklist` | `employee.created`, `leave.requested`, `leave.status_changed` | People management |
+| **Recruitment** | `manage_job_posting`, `parse_resume`, `score_candidate`, `move_application_stage`, `draft_candidate_outreach`, `hire_candidate`, `summarize_candidate_pipeline` | `application.created`, `application.stage_changed` | ATS — hire-to-onboard |
 | **Documents** | `manage_document` | `document.uploaded` | Document management |
+| **SLA** | `sla_check`, `sla_breach_alert` | `sla.breached` | Service-level monitoring |
 
 ### Intelligence
 
