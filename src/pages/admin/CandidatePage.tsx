@@ -39,6 +39,7 @@ export default function CandidatePage() {
   const { data, isLoading } = useApplication(id);
   const score = useScoreCandidate();
   const move = useMoveApplicationStage();
+  const hire = useHireCandidate();
   const [showOverlay, setShowOverlay] = useState(false);
 
   if (isLoading) {
