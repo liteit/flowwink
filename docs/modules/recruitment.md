@@ -52,7 +52,7 @@ Powered by `match_breakdown` (JSONB), `recommendation` and `confidence_level` co
 
 ## Skills (MCP exposed)
 
-All 6 skills are seeded with `enabled: true` and `mcp_exposed: true` and grouped under the `crm` toolset, so external orchestrators (ClawWink, OpenClaw) discover them via `/rest/groups?groups=recruitment`.
+All 7 skills are seeded with `enabled: true` and `mcp_exposed: true` and grouped under the `crm` toolset, so external orchestrators (ClawWink, OpenClaw) discover them via `/rest/groups?groups=recruitment`.
 
 | Skill | Purpose |
 |-------|---------|
@@ -61,7 +61,18 @@ All 6 skills are seeded with `enabled: true` and `mcp_exposed: true` and grouped
 | `score_candidate` | Run weighted AI match (returns full breakdown) |
 | `move_application_stage` | Advance / reject candidate in pipeline |
 | `draft_candidate_outreach` | Draft personalized email to candidate |
+| `hire_candidate` | **Bridge to HR** — convert application → employee + onboarding checklist |
 | `summarize_candidate_pipeline` | Aggregate pipeline status per job |
+
+### Hire-to-onboard bridge (Odoo-style)
+
+When a candidate accepts an offer, the **Hire candidate** button on `/admin/recruitment/candidates/:id` (visible at stage `interviewed` or `offer_sent`) calls the `hire_candidate_from_application` RPC, which:
+
+1. Creates an `employees` row from `applications.candidate_name/email/phone` + `job_postings.title/department`
+2. Sets `applications.stage = 'hired'`, `hired_at = now()`, and links `employee_id`
+3. Seeds a default onboarding checklist (IT setup, access cards, welcome meeting, contract, policies, buddy)
+
+This closes the full loop `score → advance → outreach → hire → onboard` and lets ClawWink/FlowPilot drive the whole hire pipeline autonomously via the `hire_candidate` MCP skill.
 
 ## Edge functions
 
