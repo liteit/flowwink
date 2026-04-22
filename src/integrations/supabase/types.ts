@@ -747,16 +747,19 @@ export type Database = {
           candidate_email: string
           candidate_name: string
           candidate_phone: string | null
+          confidence_level: string | null
           cover_letter: string | null
           created_at: string
           detected_skills: string[] | null
           id: string
           job_posting_id: string
           linkedin_url: string | null
+          match_breakdown: Json
           matching_skills: string[] | null
           meta: Json
           missing_skills: string[] | null
           parsed_resume: Json
+          recommendation: string | null
           rejected_reason: string | null
           resume_url: string | null
           source: string
@@ -771,16 +774,19 @@ export type Database = {
           candidate_email: string
           candidate_name: string
           candidate_phone?: string | null
+          confidence_level?: string | null
           cover_letter?: string | null
           created_at?: string
           detected_skills?: string[] | null
           id?: string
           job_posting_id: string
           linkedin_url?: string | null
+          match_breakdown?: Json
           matching_skills?: string[] | null
           meta?: Json
           missing_skills?: string[] | null
           parsed_resume?: Json
+          recommendation?: string | null
           rejected_reason?: string | null
           resume_url?: string | null
           source?: string
@@ -795,16 +801,19 @@ export type Database = {
           candidate_email?: string
           candidate_name?: string
           candidate_phone?: string | null
+          confidence_level?: string | null
           cover_letter?: string | null
           created_at?: string
           detected_skills?: string[] | null
           id?: string
           job_posting_id?: string
           linkedin_url?: string | null
+          match_breakdown?: Json
           matching_skills?: string[] | null
           meta?: Json
           missing_skills?: string[] | null
           parsed_resume?: Json
+          recommendation?: string | null
           rejected_reason?: string | null
           resume_url?: string | null
           source?: string
