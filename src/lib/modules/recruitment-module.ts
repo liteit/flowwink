@@ -269,6 +269,7 @@ export const recruitmentModule = defineModule<RecruitmentInput, RecruitmentOutpu
     'score_candidate',
     'move_application_stage',
     'draft_candidate_outreach',
+    'hire_candidate',
     'summarize_candidate_pipeline',
   ],
   skillSeeds: RECRUITMENT_SKILLS,
