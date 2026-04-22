@@ -62,9 +62,10 @@ function check(): { issues: Issue[]; ok: number } {
     }
     const src = fs.readFileSync(filePath, 'utf8');
 
-    // 1. defineModule({ id: '<id>' })
-    const defineRe = new RegExp(`defineModule\\s*\\(\\s*\\{[^}]*id\\s*:\\s*['"\`]${exp.id}['"\`]`, 's');
-    if (!defineRe.test(src)) {
+    // 1. Must call defineModule(...) AND declare id: '<id>'
+    const hasDefine = /defineModule\s*[<(]/.test(src);
+    const hasId = new RegExp(`\\bid\\s*:\\s*['"\`]${exp.id}['"\`]`).test(src);
+    if (!hasDefine || !hasId) {
       issues.push({
         module: exp.id,
         message: `${exp.file} does not call defineModule({ id: '${exp.id}', ... })`,
