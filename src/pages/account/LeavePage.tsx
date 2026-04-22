@@ -326,7 +326,30 @@ export default function LeavePage() {
               <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
-          <Button onClick={() => create.mutate()} disabled={create.isPending}>
+
+          {requestedDays > 0 && (
+            <div
+              className={`text-sm rounded-md border px-3 py-2 ${
+                overBalance
+                  ? "border-destructive/40 bg-destructive/10 text-destructive"
+                  : "border-border bg-muted/40 text-muted-foreground"
+              }`}
+            >
+              Requesting <strong>{requestedDays} day{requestedDays === 1 ? "" : "s"}</strong>
+              {remaining !== null && (
+                <>
+                  {" "}· {remaining} day{remaining === 1 ? "" : "s"} available for {leaveType}
+                  {overBalance && " — exceeds your balance"}
+                </>
+              )}
+              {remaining === null && " · no allocation set for this type"}
+            </div>
+          )}
+
+          <Button
+            onClick={() => create.mutate()}
+            disabled={create.isPending || !startDate || !endDate}
+          >
             {create.isPending ? "Submitting…" : "Submit request"}
           </Button>
         </CardContent>

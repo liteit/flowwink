@@ -1,7 +1,10 @@
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LeaveRequest, useUpdateLeaveRequest } from "@/hooks/useEmployees";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Check, X } from "lucide-react";
 
