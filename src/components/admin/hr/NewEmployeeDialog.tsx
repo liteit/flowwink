@@ -82,7 +82,8 @@ export function NewEmployeeDialog() {
               </Select>
             </div>
             <div><Label>Start Date</Label><Input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} /></div>
-            <div><Label>Personal Number</Label><Input value={form.personal_number} onChange={e => setForm(f => ({ ...f, personal_number: e.target.value }))} placeholder="YYYYMMDD-XXXX" /></div>
+            <div><Label>Birth Date</Label><Input type="date" value={form.birth_date} onChange={e => setForm(f => ({ ...f, birth_date: e.target.value }))} /></div>
+            <div className="col-span-2"><Label>Personal Number</Label><Input value={form.personal_number} onChange={e => setForm(f => ({ ...f, personal_number: e.target.value }))} placeholder="YYYYMMDD-XXXX" /></div>
             <div className="col-span-2">
               <Label>Manager</Label>
               <Select
