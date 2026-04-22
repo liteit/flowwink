@@ -3930,6 +3930,53 @@ export type Database = {
           },
         ]
       }
+      leave_allocations: {
+        Row: {
+          allocated_days: number
+          carried_over_days: number
+          created_at: string
+          created_by: string | null
+          employee_id: string
+          id: string
+          leave_type: string
+          notes: string | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          allocated_days?: number
+          carried_over_days?: number
+          created_at?: string
+          created_by?: string | null
+          employee_id: string
+          id?: string
+          leave_type: string
+          notes?: string | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          allocated_days?: number
+          carried_over_days?: number
+          created_at?: string
+          created_by?: string | null
+          employee_id?: string
+          id?: string
+          leave_type?: string
+          notes?: string | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_allocations_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leave_requests: {
         Row: {
           created_at: string
@@ -6475,6 +6522,31 @@ export type Database = {
       get_conversation_token_estimate: {
         Args: { p_conversation_id: string }
         Returns: number
+      }
+      get_employee_leave_balances: {
+        Args: { p_employee_id: string; p_year?: number }
+        Returns: {
+          allocated_days: number
+          carried_over_days: number
+          leave_type: string
+          pending_days: number
+          remaining_days: number
+          used_days: number
+          year: number
+        }[]
+      }
+      get_leave_balance: {
+        Args: { p_employee_id: string; p_leave_type: string; p_year?: number }
+        Returns: {
+          allocated_days: number
+          carried_over_days: number
+          employee_id: string
+          leave_type: string
+          pending_days: number
+          remaining_days: number
+          used_days: number
+          year: number
+        }[]
       }
       get_user_role: {
         Args: { _user_id: string }
