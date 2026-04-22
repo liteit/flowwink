@@ -5549,6 +5549,8 @@ const GENERIC_CRUD_TABLES = new Set([
   'booking_services', 'booking_availability', 'bookings',
   'content_proposals', 'content_research',
   'agent_memory', 'agent_activity',
+  // Recruitment / ATS module
+  'job_postings', 'candidates', 'job_applications', 'application_stages', 'interviews',
 ]);
 
 /**
