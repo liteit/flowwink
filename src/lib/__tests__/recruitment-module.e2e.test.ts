@@ -3,8 +3,8 @@
  *
  * Verifies the full chain that lets ClawWink (external orchestrator) drive
  * recruitment autonomously:
- *  1. The unified module declares exactly 6 skills.
- *  2. bootstrapModule('recruitment', ...) seeds/updates each of those 6 skills
+ *  1. The unified module declares exactly 7 skills (incl. hire_candidate bridge to HR).
+ *  2. bootstrapModule('recruitment', ...) seeds/updates each of those 7 skills
  *     with enabled=true AND mcp_exposed=true.
  *  3. The MCP server maps `recruitment` into a category group so the skills
  *     are exposed via /rest/groups and tool-listing for external callers.
@@ -70,6 +70,7 @@ const RECRUITMENT_SKILLS = [
   'score_candidate',
   'move_application_stage',
   'draft_candidate_outreach',
+  'hire_candidate',
   'summarize_candidate_pipeline',
 ];
 
@@ -89,7 +90,7 @@ afterEach(() => {
 });
 
 describe('recruitment module — end-to-end autonomy contract', () => {
-  it('declares exactly the 6 ClawWink-callable skills in its manifest', () => {
+  it('declares exactly the 7 ClawWink-callable skills in its manifest', () => {
     expect(recruitmentModule.skills).toEqual(RECRUITMENT_SKILLS);
     expect(recruitmentModule.skillSeeds).toBeDefined();
     expect(recruitmentModule.skillSeeds!.map((s) => s.name).sort()).toEqual(
@@ -97,7 +98,7 @@ describe('recruitment module — end-to-end autonomy contract', () => {
     );
   });
 
-  it('on enable: inserts all 6 skills with enabled=true AND mcp_exposed=true', async () => {
+  it('on enable: inserts all 7 skills with enabled=true AND mcp_exposed=true', async () => {
     // None exist yet → INSERT path
     const result = await bootstrapModule('recruitment', allModulesEnabled);
 
@@ -107,7 +108,7 @@ describe('recruitment module — end-to-end autonomy contract', () => {
       .filter((c) => c.table === 'agent_skills')
       .flatMap((c) => c.rows);
 
-    expect(inserted).toHaveLength(6);
+    expect(inserted).toHaveLength(7);
     for (const name of RECRUITMENT_SKILLS) {
       const row = inserted.find((r) => r.name === name);
       expect(row, `skill ${name} must be inserted`).toBeTruthy();
@@ -118,24 +119,23 @@ describe('recruitment module — end-to-end autonomy contract', () => {
   });
 
   it('on re-enable: updates existing skills back to enabled + mcp_exposed', async () => {
-    // Pretend all 6 already exist
+    // Pretend all 7 already exist
     for (const n of RECRUITMENT_SKILLS) existingSkills.add(n);
 
     const result = await bootstrapModule('recruitment', allModulesEnabled);
     expect(result.errors).toEqual([]);
 
-    // Per-skill UPDATE via .eq('id', ...) should set both flags true
     const perSkillUpdates = updateCalls.filter(
       (c) => c.table === 'agent_skills' && c.filter.col === 'id',
     );
-    expect(perSkillUpdates.length).toBe(6);
+    expect(perSkillUpdates.length).toBe(7);
     for (const u of perSkillUpdates) {
       expect(u.values.enabled).toBe(true);
       expect(u.values.mcp_exposed).toBe(true);
     }
   });
 
-  it('teardown disables the 6 skills (without deleting them)', async () => {
+  it('teardown disables the 7 skills (without deleting them)', async () => {
     await teardownModule('recruitment');
     const disable = updateCalls.find(
       (c) =>

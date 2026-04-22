@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, Linkedin, Sparkles, Star, Briefcase, FileText, BarChart3 } from 'lucide-react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
+import { ArrowLeft, Mail, Phone, Linkedin, Sparkles, Star, Briefcase, FileText, BarChart3, UserCheck, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import {
   useApplication,
   useScoreCandidate,
   useMoveApplicationStage,
+  useHireCandidate,
   APPLICATION_STAGES,
   STAGE_LABELS,
   type ApplicationStage,
@@ -38,6 +39,7 @@ export default function CandidatePage() {
   const { data, isLoading } = useApplication(id);
   const score = useScoreCandidate();
   const move = useMoveApplicationStage();
+  const hire = useHireCandidate();
   const [showOverlay, setShowOverlay] = useState(false);
 
   if (isLoading) {
@@ -142,6 +144,27 @@ export default function CandidatePage() {
                 <Button variant="ghost" size="sm" onClick={() => setShowOverlay(true)} className="h-7 text-xs">
                   <BarChart3 className="mr-1.5 h-3.5 w-3.5" /> Match breakdown
                 </Button>
+              )}
+              {(data as any).employee_id ? (
+                <Link
+                  to={`/admin/hr`}
+                  className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-400"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Hired — view employee
+                </Link>
+              ) : (
+                ['interviewed', 'offer_sent'].includes(data.stage) && (
+                  <Button
+                    size="sm"
+                    onClick={() => hire.mutate({ application_id: data.id })}
+                    disabled={hire.isPending}
+                    className="mt-1"
+                  >
+                    <UserCheck className="mr-1.5 h-4 w-4" />
+                    {hire.isPending ? 'Hiring…' : 'Hire candidate'}
+                  </Button>
+                )
               )}
             </div>
           </div>
