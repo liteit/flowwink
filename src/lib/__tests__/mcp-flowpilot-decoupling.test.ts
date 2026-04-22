@@ -62,7 +62,7 @@ beforeEach(() => {
 afterEach(() => vi.clearAllMocks());
 
 describe('MCP–FlowPilot decoupling', () => {
-  it('seeds module skills with mcp_exposed=true even when FlowPilot is DISABLED', async () => {
+  it('seeds/enables module skills with mcp_exposed=true even when FlowPilot is DISABLED', async () => {
     const settings = {
       flowpilot: { enabled: false },
       recruitment: { enabled: true },
@@ -71,14 +71,27 @@ describe('MCP–FlowPilot decoupling', () => {
     const result = await bootstrapModule('recruitment', settings);
     expect(result.errors).toEqual([]);
 
-    const inserted = insertCalls
-      .filter((c) => c.table === 'agent_skills')
-      .flatMap((c) => c.rows);
+    // Step 3: bulk-enable by name MUST run regardless of FlowPilot.
+    const bulkEnable = updateCalls.find(
+      (c) => c.table === 'agent_skills' && c.filter.col === 'name',
+    );
+    expect(bulkEnable, 'bulk skill-enable must run when FlowPilot is off').toBeTruthy();
+    expect(bulkEnable!.values.enabled).toBe(true);
 
-    expect(inserted.length).toBeGreaterThan(0);
+    // Step 4: per-skill seed (insert OR update) flags mcp_exposed=true.
+    const inserted = insertCalls.filter((c) => c.table === 'agent_skills').flatMap((c) => c.rows);
+    const perSkillUpdates = updateCalls.filter(
+      (c) => c.table === 'agent_skills' && c.filter.col === 'id',
+    );
+    expect(inserted.length + perSkillUpdates.length, 'skill seed must run when FlowPilot is off').toBeGreaterThan(0);
+
     for (const row of inserted) {
-      expect(row.mcp_exposed, `skill ${row.name} must be MCP-exposed regardless of FlowPilot state`).toBe(true);
+      expect(row.mcp_exposed).toBe(true);
       expect(row.enabled).toBe(true);
+    }
+    for (const u of perSkillUpdates) {
+      expect(u.values.mcp_exposed).toBe(true);
+      expect(u.values.enabled).toBe(true);
     }
   });
 
