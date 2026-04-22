@@ -98,7 +98,7 @@ describe('recruitment module — end-to-end autonomy contract', () => {
     );
   });
 
-  it('on enable: inserts all 6 skills with enabled=true AND mcp_exposed=true', async () => {
+  it('on enable: inserts all 7 skills with enabled=true AND mcp_exposed=true', async () => {
     // None exist yet → INSERT path
     const result = await bootstrapModule('recruitment', allModulesEnabled);
 
@@ -108,7 +108,7 @@ describe('recruitment module — end-to-end autonomy contract', () => {
       .filter((c) => c.table === 'agent_skills')
       .flatMap((c) => c.rows);
 
-    expect(inserted).toHaveLength(6);
+    expect(inserted).toHaveLength(7);
     for (const name of RECRUITMENT_SKILLS) {
       const row = inserted.find((r) => r.name === name);
       expect(row, `skill ${name} must be inserted`).toBeTruthy();
@@ -119,24 +119,23 @@ describe('recruitment module — end-to-end autonomy contract', () => {
   });
 
   it('on re-enable: updates existing skills back to enabled + mcp_exposed', async () => {
-    // Pretend all 6 already exist
+    // Pretend all 7 already exist
     for (const n of RECRUITMENT_SKILLS) existingSkills.add(n);
 
     const result = await bootstrapModule('recruitment', allModulesEnabled);
     expect(result.errors).toEqual([]);
 
-    // Per-skill UPDATE via .eq('id', ...) should set both flags true
     const perSkillUpdates = updateCalls.filter(
       (c) => c.table === 'agent_skills' && c.filter.col === 'id',
     );
-    expect(perSkillUpdates.length).toBe(6);
+    expect(perSkillUpdates.length).toBe(7);
     for (const u of perSkillUpdates) {
       expect(u.values.enabled).toBe(true);
       expect(u.values.mcp_exposed).toBe(true);
     }
   });
 
-  it('teardown disables the 6 skills (without deleting them)', async () => {
+  it('teardown disables the 7 skills (without deleting them)', async () => {
     await teardownModule('recruitment');
     const disable = updateCalls.find(
       (c) =>
