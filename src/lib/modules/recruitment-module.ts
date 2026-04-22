@@ -189,6 +189,33 @@ const RECRUITMENT_SKILLS: SkillSeed[] = [
       'Use candidate name + job title + company identity. Default tone: warm. Always include the recruiter signature. Output as plain text.',
   },
   {
+    name: 'hire_candidate',
+    description:
+      'Hire a candidate: convert their application into an HR employee record and seed an onboarding checklist. Use when: candidate has accepted offer and should be moved into HR. NOT for: stage changes alone (use move_application_stage). Closes the hire-to-onboard loop.',
+    category: 'crm',
+    handler: 'rpc:hire_candidate_from_application',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'hire_candidate',
+        description: 'Convert application → employee + onboarding',
+        parameters: {
+          type: 'object',
+          properties: {
+            application_id: { type: 'string' },
+            start_date: { type: 'string', description: 'YYYY-MM-DD, defaults to today' },
+            employment_type: { type: 'string', enum: ['full_time', 'part_time', 'contractor'] },
+            department: { type: 'string', description: 'Override job posting department if needed' },
+          },
+          required: ['application_id'],
+        },
+      },
+    },
+    instructions:
+      'Calls hire_candidate_from_application RPC. Creates employees row from candidate_name/email/phone + job title, sets application.stage=hired, links employee_id, and creates a default onboarding checklist (IT, access, welcome, contract, policies, buddy). Idempotent — fails if already hired.',
+  },
+  {
     name: 'summarize_candidate_pipeline',
     description:
       'Summarize current pipeline state: per-job counts by stage, candidates stuck >X days, top-scored unreviewed candidates. Use when: admin asks "how is recruiting going?" or for daily briefing. NOT for: detailed candidate data (use list/get).',
