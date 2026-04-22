@@ -124,31 +124,54 @@ export default function LeavePage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle>My requests</CardTitle></CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <Skeleton className="h-32 w-full" />
-          ) : !requests?.length ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">No leave requests yet.</p>
-          ) : (
-            <ul className="divide-y">
-              {requests.map((r: any) => (
-                <li key={r.id} className="py-3 flex items-center justify-between gap-4">
-                  <div>
-                    <p className="font-medium capitalize">{r.leave_type}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {format(new Date(r.start_date), "MMM d")} – {format(new Date(r.end_date), "MMM d, yyyy")} · {r.days} day{r.days === 1 ? "" : "s"}
-                    </p>
-                    {r.reason && <p className="text-xs text-muted-foreground mt-1">{r.reason}</p>}
-                  </div>
-                  <Badge variant="outline" className={STATUS_COLORS[r.status] || ""}>{r.status}</Badge>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+      {(() => {
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const upcoming = (requests ?? []).filter((r: any) => new Date(r.end_date) >= today);
+        const past = (requests ?? []).filter((r: any) => new Date(r.end_date) < today);
+
+        const renderList = (items: any[]) => (
+          <ul className="divide-y">
+            {items.map((r: any) => (
+              <li key={r.id} className="py-3 flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-medium capitalize">{r.leave_type}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {format(new Date(r.start_date), "MMM d")} – {format(new Date(r.end_date), "MMM d, yyyy")} · {r.days} day{r.days === 1 ? "" : "s"}
+                  </p>
+                  {r.reason && <p className="text-xs text-muted-foreground mt-1">{r.reason}</p>}
+                </div>
+                <Badge variant="outline" className={STATUS_COLORS[r.status] || ""}>{r.status}</Badge>
+              </li>
+            ))}
+          </ul>
+        );
+
+        return (
+          <>
+            <Card>
+              <CardHeader><CardTitle>Upcoming & active</CardTitle></CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <Skeleton className="h-24 w-full" />
+                ) : !upcoming.length ? (
+                  <p className="text-sm text-muted-foreground py-6 text-center">No upcoming leave.</p>
+                ) : renderList(upcoming)}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle>History</CardTitle></CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <Skeleton className="h-24 w-full" />
+                ) : !past.length ? (
+                  <p className="text-sm text-muted-foreground py-6 text-center">No past leave on record.</p>
+                ) : renderList(past)}
+              </CardContent>
+            </Card>
+          </>
+        );
+      })()}
     </div>
   );
 }
