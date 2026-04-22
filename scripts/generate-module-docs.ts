@@ -48,21 +48,25 @@ interface ModuleInfo {
 function parseModuleFile(filePath: string): ModuleInfo | null {
   const src = fs.readFileSync(filePath, 'utf-8');
 
-  const idMatch = src.match(/id:\s*['"]([^'"]+)['"]/);
-  const nameMatch = src.match(/name:\s*['"]([^'"]+)['"]/);
-  const versionMatch = src.match(/version:\s*['"]([^'"]+)['"]/);
-  const descMatch = src.match(/description:\s*['"]([^'"]+)['"]/);
-  const capMatch = src.match(/capabilities:\s*\[([^\]]+)\]/);
+  // Extract the defineModule({ ... }) block to scope our matches and avoid
+  // collisions with tool_definition.function.name etc.
+  const defBlock = extractDefineModuleBlock(src) ?? src;
+
+  const idMatch = defBlock.match(/id:\s*['"]([^'"]+)['"]/);
+  const nameMatch = defBlock.match(/^\s*name:\s*['"]([^'"]+)['"]/m);
+  const versionMatch = defBlock.match(/version:\s*['"]([^'"]+)['"]/);
+  const descMatch = defBlock.match(/description:\s*['"]([^'"]+)['"]/);
+  const capMatch = defBlock.match(/capabilities:\s*\[([^\]]+)\]/);
 
   if (!idMatch) return null;
 
-  // Extract actions from z.enum
-  const actionMatch = src.match(/action:\s*z\.enum\(\[([^\]]+)\]\)/);
+  // Extract actions from z.enum (search whole file — schema lives outside defineModule)
+  const actionMatch = src.match(/action:\s*z\.enum\(\[([\s\S]*?)\]\)/);
   const actions = actionMatch
     ? actionMatch[1].match(/'([^']+)'/g)?.map(s => s.replace(/'/g, '')) ?? []
     : [];
 
-  // Extract input schema field names (rough)
+  // Extract input/output schema field names (rough)
   const inputFields = extractSchemaFields(src, /InputSchema|inputSchema/);
   const outputFields = extractSchemaFields(src, /OutputSchema|outputSchema/);
 
