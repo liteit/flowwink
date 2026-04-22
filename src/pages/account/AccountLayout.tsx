@@ -5,8 +5,9 @@ import { PublicFooter } from '@/components/public/PublicFooter';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Package, MapPin, Heart, User, LogOut, Loader2, CalendarOff, Receipt } from 'lucide-react';
+import { Package, MapPin, Heart, User, LogOut, Loader2, CalendarOff, Receipt, Users } from 'lucide-react';
 import { useEmployeeSelf } from '@/hooks/useEmployeeSelf';
+import { useIsManager } from '@/hooks/useTeam';
 
 const customerNav = [
   { to: '/account', label: 'Orders', icon: Package, exact: true },
@@ -19,15 +20,23 @@ const employeeNav = [
   { to: '/account/expenses', label: 'Expenses', icon: Receipt },
 ];
 
+const managerNav = [{ to: '/account/team', label: 'My Team', icon: Users }];
+
 const profileNav = [{ to: '/account/profile', label: 'Profile', icon: User }];
 
 export default function AccountLayout() {
   const { isLoggedIn, loading, signOut, profile } = useCustomerAuth();
   const { isEmployee } = useEmployeeSelf();
+  const { isManager } = useIsManager();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const navItems = [...customerNav, ...(isEmployee ? employeeNav : []), ...profileNav];
+  const navItems = [
+    ...customerNav,
+    ...(isEmployee ? employeeNav : []),
+    ...(isManager ? managerNav : []),
+    ...profileNav,
+  ];
 
   if (loading) {
     return (
