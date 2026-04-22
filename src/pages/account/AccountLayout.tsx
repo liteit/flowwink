@@ -75,7 +75,7 @@ export default function AccountLayout() {
             {/* Sidebar nav */}
             <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
               {navItems.map((item) => {
-                const isActive = item.exact
+                const isActive = (item as { exact?: boolean }).exact
                   ? location.pathname === item.to
                   : location.pathname.startsWith(item.to);
                 return (
