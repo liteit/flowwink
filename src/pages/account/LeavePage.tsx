@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useEmployeeLeaveBalances } from "@/hooks/useLeaveBalances";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEmployeeSelf } from "@/hooks/useEmployeeSelf";
@@ -122,6 +123,18 @@ export default function LeavePage() {
       return data as LeaveRow[];
     },
   });
+
+  const { data: balances } = useEmployeeLeaveBalances(employee?.id, new Date().getFullYear());
+
+  const requestedDays = useMemo(() => {
+    if (!startDate || !endDate) return 0;
+    const d = differenceInCalendarDays(new Date(endDate), new Date(startDate)) + 1;
+    return d > 0 ? d : 0;
+  }, [startDate, endDate]);
+
+  const currentBalance = balances?.find((b) => b.leave_type === leaveType);
+  const remaining = currentBalance ? Number(currentBalance.remaining_days) : null;
+  const overBalance = remaining !== null && requestedDays > remaining;
 
   const create = useMutation({
     mutationFn: async () => {
