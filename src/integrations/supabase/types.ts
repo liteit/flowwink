@@ -7004,6 +7004,93 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_invoices: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          due_date: string | null
+          id: string
+          invoice_date: string
+          invoice_number: string
+          match_status: string
+          notes: string | null
+          paid_at: string | null
+          purchase_order_id: string | null
+          status: string
+          subtotal_cents: number
+          tax_cents: number
+          total_cents: number
+          updated_at: string
+          variance_cents: number
+          variance_notes: string | null
+          vendor_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number: string
+          match_status?: string
+          notes?: string | null
+          paid_at?: string | null
+          purchase_order_id?: string | null
+          status?: string
+          subtotal_cents?: number
+          tax_cents?: number
+          total_cents?: number
+          updated_at?: string
+          variance_cents?: number
+          variance_notes?: string | null
+          vendor_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          match_status?: string
+          notes?: string | null
+          paid_at?: string | null
+          purchase_order_id?: string | null
+          status?: string
+          subtotal_cents?: number
+          tax_cents?: number
+          total_cents?: number
+          updated_at?: string
+          variance_cents?: number
+          variance_notes?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_invoices_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_invoices_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_products: {
         Row: {
           created_at: string
@@ -7401,6 +7488,10 @@ export type Database = {
           employee_name: string
         }[]
       }
+      auto_approve_vendor_invoice: {
+        Args: { p_invoice_id: string }
+        Returns: Json
+      }
       calculate_vacation_days: {
         Args: { p_employee_id: string; p_year: number }
         Returns: number
@@ -7620,6 +7711,38 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "payroll_exports"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      match_po_to_invoice: {
+        Args: { p_invoice_id: string; p_variance_tolerance_pct?: number }
+        Returns: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          due_date: string | null
+          id: string
+          invoice_date: string
+          invoice_number: string
+          match_status: string
+          notes: string | null
+          paid_at: string | null
+          purchase_order_id: string | null
+          status: string
+          subtotal_cents: number
+          tax_cents: number
+          total_cents: number
+          updated_at: string
+          variance_cents: number
+          variance_notes: string | null
+          vendor_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "vendor_invoices"
           isOneToOne: true
           isSetofReturn: false
         }
