@@ -185,7 +185,7 @@ export const invoicingModule = defineModule<InvoicingInput, InvoicingOutput>({
   inputSchema: invoicingInputSchema,
   outputSchema: invoicingOutputSchema,
 
-  skills: ['manage_invoice', 'invoice_from_timesheets', 'invoice_overdue_check'],
+  skills: ['manage_invoice', 'invoice_from_timesheets', 'invoice_overdue_check', 'bulk_invoice_from_timesheets', 'send_dunning_reminders', 'auto_mark_invoice_paid'],
   skillSeeds: INVOICING_SKILLS,
   automations: INVOICING_AUTOMATIONS,
 
