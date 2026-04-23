@@ -2,8 +2,8 @@
 
 > The full employee lifecycle — from hire to offboarding.
 
-**Maturity level:** L2 — Manual (with agent assistance for checklists)
-**Status:** ⚠️ Basic HR functions; lacks payroll and performance management
+**Maturity level:** L3 — Operational (auto-hire bridge live; payroll & performance still manual)
+**Status:** ✅ Hire-to-Onboard automated; ⚠️ lacks payroll and performance management
 
 ---
 
