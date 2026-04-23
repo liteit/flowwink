@@ -142,7 +142,7 @@ export const hrModule = defineModule<HrInput, HrOutput>({
   inputSchema: hrInputSchema,
   outputSchema: hrOutputSchema,
 
-  skills: ['manage_employee', 'manage_leave', 'onboarding_checklist'],
+  skills: ['manage_employee', 'manage_leave', 'onboarding_checklist', 'auto_allocate_vacation'],
   skillSeeds: HR_SKILLS,
   automations: HR_AUTOMATIONS,
 
