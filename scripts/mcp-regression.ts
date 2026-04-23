@@ -113,10 +113,17 @@ async function rpc(method: string, params: Record<string, unknown> = {}) {
 
   // Streamable HTTP can return either JSON or SSE. Handle both.
   let payload: unknown;
-  if (text.startsWith('event:') || text.includes('\ndata:')) {
-    // SSE — extract last data: line
+  const trimmed = text.trimStart();
+  const looksSse =
+    trimmed.startsWith('event:') ||
+    trimmed.startsWith('data:') ||
+    (res.headers.get('content-type') ?? '').includes('text/event-stream');
+
+  if (looksSse) {
+    // Extract last `data: ...` line (single JSON-RPC frame per response)
     const dataLine = text
       .split('\n')
+      .map((l) => l.trim())
       .reverse()
       .find((l) => l.startsWith('data:'));
     if (!dataLine) fail(3, `MCP ${method} → SSE response with no data frame`);
