@@ -121,9 +121,9 @@ export function useChartOfAccounts(locale?: string) {
 // Journal Entries
 // ============================================================
 
-export function useJournalEntries(statusFilter?: string) {
+export function useJournalEntries(statusFilter?: string, journalId?: string) {
   return useQuery({
-    queryKey: ['journal-entries', statusFilter],
+    queryKey: ['journal-entries', statusFilter, journalId],
     queryFn: async () => {
       let query = supabase
         .from('journal_entries')
@@ -133,6 +133,9 @@ export function useJournalEntries(statusFilter?: string) {
 
       if (statusFilter && statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
+      }
+      if (journalId && journalId !== 'all') {
+        query = query.eq('journal_id', journalId);
       }
 
       const { data, error } = await query;
