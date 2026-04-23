@@ -30,18 +30,33 @@ export function JournalTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Filter status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="posted">Posted</SelectItem>
-            <SelectItem value="voided">Voided</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Select value={journalFilter} onValueChange={setJournalFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter journal" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All journals</SelectItem>
+              {journals?.map((j) => (
+                <SelectItem key={j.id} value={j.id}>
+                  {j.code} — {j.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Filter status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="posted">Posted</SelectItem>
+              <SelectItem value="voided">Voided</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <Button onClick={() => setShowCreate(true)}>
           <Plus className="h-4 w-4 mr-2" />
           New Entry
