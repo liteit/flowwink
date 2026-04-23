@@ -30,6 +30,8 @@ export const inventoryModule = defineModule<InventoryInput, InventoryOutput>({
     'check_stock',
     'adjust_stock',
     'low_stock_report',
+    'list_reorder_candidates',
+    'auto_generate_purchase_orders',
   ],
 
   webhookEvents: [
