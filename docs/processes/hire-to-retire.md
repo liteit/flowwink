@@ -53,9 +53,11 @@ Offboarding → contracts terminated, access revoked
 
 | Step | 👤 Manual | 🤖 FlowPilot | 🔗 External agent |
 |------|----------|-------------|-------------------|
+| Candidate screening | ✅ | ✅ (`score_candidate`) | — |
+| **Hire bridge (app→emp+contract+onboarding)** | ✅ | ✅ (`hire_application`) | ✅ MCP-exposed |
 | Employee registration | ✅ | ✅ (`manage_employee`) | — |
-| Contract handling | ✅ | ✅ (`manage_contract`) | — |
-| Onboarding checklist | ✅ | ✅ (`onboarding_checklist`) | — |
+| Contract handling | ✅ | ✅ (`manage_contract`, `sign_employment_contract`) | — |
+| Onboarding checklist | ✅ | ✅ (`onboarding_checklist`, `apply_onboarding_template`) | — |
 | Leave requests | ✅ | ✅ (`manage_leave`) | — |
 | Contract renewal check | — | ✅ (`contract_renewal_check`) | — |
 | Performance reviews | ❌ Missing | — | — |
