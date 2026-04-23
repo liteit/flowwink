@@ -69,6 +69,20 @@ accounting_reports (BS, P&L, general ledger)
 
 ---
 
+## Period close & lock
+
+When `close_accounting_period(year, month)` is called (skill `close_accounting_period`, or via `lock_timesheet_period`):
+
+| Table | Guard trigger | Effect |
+|-------|---------------|--------|
+| `journal_entries` | `guard_journal_entries_period` | Insert/update/delete blocked for entry_date in closed period |
+| `journal_entry_lines` | `guard_journal_entry_lines_period` | Same, propagated through parent entry |
+| `time_entries` | `guard_time_entries_period` ✨ | Insert/update/delete blocked — protects payroll & invoicing cutoffs |
+
+Reopen via `reopen_accounting_period(year, month)` (admin only). Periods in `locked` state cannot be reopened.
+
+---
+
 ## Webhook events
 
 `invoice.created`, `invoice.paid`, `expense.status_changed`
