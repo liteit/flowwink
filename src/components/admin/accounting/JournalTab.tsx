@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, FileText } from 'lucide-react';
-import { useJournalEntries, useJournalEntryWithLines } from '@/hooks/useAccounting';
+import { useJournalEntries, useJournalEntryWithLines, useJournals } from '@/hooks/useAccounting';
 import { Skeleton } from '@/components/ui/skeleton';
 import { NewJournalEntryDialog } from './NewJournalEntryDialog';
 import { JournalEntryDetail } from './JournalEntryDetail';
