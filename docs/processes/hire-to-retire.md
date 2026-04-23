@@ -59,6 +59,7 @@ Offboarding → contracts terminated, access revoked
 | Contract handling | ✅ | ✅ (`manage_contract`, `sign_employment_contract`) | — |
 | Onboarding checklist | ✅ | ✅ (`onboarding_checklist`, `apply_onboarding_template`) | — |
 | Leave requests | ✅ | ✅ (`manage_leave`) | — |
+| **Year-end vacation allocation** | ✅ | ✅ (`auto_allocate_vacation`) | ✅ MCP-exposed |
 | Contract renewal check | — | ✅ (`contract_renewal_check`) | — |
 | Performance reviews | ❌ Missing | — | — |
 | Payroll | ❌ Missing | — | — |
@@ -70,7 +71,7 @@ Offboarding → contracts terminated, access revoked
 - ❌ **Payroll integration** (Fortnox Lön, Visma, Hogia)
 - ❌ Performance management / PDP / 1:1 notes
 - ❌ Compensation planning
-- ❌ Time-off accrual rules (vacation days per collective agreement)
+- ✅ Time-off accrual: `auto_allocate_vacation` matchar `vacation_policies` (ålder/tenure) + capped carry-over, audit-loggas per anställd
 - ❌ Org chart / reporting structure
 - ❌ Employment contract templates with Swedish collective agreements
 
