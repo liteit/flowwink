@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import type { AgentActivity } from '@/types/agent';
+import { ValidationErrorDetails, hasValidationDetails } from '@/components/admin/agent/ValidationErrorDetails';
 
 interface ActivityFeedProps {
   activities: AgentActivity[];
