@@ -172,6 +172,13 @@ export function McpFindings() {
                   <Badge variant="outline" className="text-[10px] h-4">
                     {config.label}
                   </Badge>
+                  <Badge
+                    variant={(f as any).reported_by && (f as any).reported_by !== 'flowpilot' ? 'default' : 'outline'}
+                    className="text-[10px] h-4 font-mono"
+                    title="Reported by"
+                  >
+                    {(f as any).reported_by || 'unknown'}
+                  </Badge>
                 </div>
                 {f.description && (
                   <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{f.description}</p>
