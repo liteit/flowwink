@@ -37,6 +37,7 @@ import { AgentInvites } from '@/components/admin/federation/AgentInvites';
 import { McpActivityLog } from '@/components/admin/federation/McpActivityLog';
 import { McpFindings } from '@/components/admin/federation/McpFindings';
 import { PeerChannelsInline } from '@/components/admin/federation/PeerChannelsInline';
+import { MissionDispatchDialog } from '@/components/admin/federation/MissionDispatchDialog';
 import { useFederationConnections } from '@/hooks/useFederationConnections';
 import { useToast } from '@/hooks/use-toast';
 import { useA2APeers, useCreateA2APeer, useUpdateA2APeer, useDeleteA2APeer, useA2AActivity } from '@/hooks/useA2A';
