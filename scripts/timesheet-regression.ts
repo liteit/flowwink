@@ -65,7 +65,7 @@ async function callSkill(
   args: Record<string, unknown>,
   jwt: string,
   callerUserId?: string,
-): Promise<{ ok: boolean; status: number; body: any }> {
+): Promise<{ ok: boolean; status: number; body: any; innerError?: string }> {
   const res = await fetch(EXEC_URL, {
     method: 'POST',
     headers: {
@@ -82,7 +82,14 @@ async function callSkill(
   const text = await res.text();
   let body: any;
   try { body = JSON.parse(text); } catch { body = { raw: text }; }
-  return { ok: res.ok, status: res.status, body };
+  // agent-execute wraps RPC errors as { status:"success", result:{ error, status:"failed" } }
+  const innerError =
+    body?.error ||
+    body?.message ||
+    body?.result?.error ||
+    (body?.result?.status === 'failed' ? JSON.stringify(body.result) : undefined);
+  const ok = res.ok && !innerError;
+  return { ok, status: res.status, body, innerError };
 }
 
 function classifyError(body: any): { kind: 'rls' | 'double-prefix' | 'missing-skill' | 'other'; msg: string } {
