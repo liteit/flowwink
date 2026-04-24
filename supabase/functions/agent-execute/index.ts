@@ -18,6 +18,8 @@ interface ExecuteRequest {
   trace_id?: string;
   /** When called via MCP, the user who owns the api_key. Used for ownership/created_by. */
   caller_user_id?: string;
+  /** When called via MCP, the api_key id (and inbound peer) that initiated the call. */
+  caller_api_key_id?: string;
   objective_context?: {
     goal: string;
     step: string;
@@ -82,7 +84,7 @@ serve(async (req) => {
 
   try {
     const body: ExecuteRequest = await req.json();
-    const { skill_id, skill_name, arguments: rawArgs = {}, agent_type, conversation_id, objective_context, trace_id, caller_user_id } = body;
+    const { skill_id, skill_name, arguments: rawArgs = {}, agent_type, conversation_id, objective_context, trace_id, caller_user_id, caller_api_key_id } = body;
 
     // ─── Argument normalization ──────────────────────────────────────────
     const _rawHasData = rawArgs && typeof rawArgs === 'object' && 'data' in (rawArgs as any);
@@ -90,6 +92,9 @@ serve(async (req) => {
     // Forward caller identity to handlers (used to set created_by/author_id for MCP-originated writes)
     if (caller_user_id && !(args as any)._caller_user_id) {
       (args as any)._caller_user_id = caller_user_id;
+    }
+    if (caller_api_key_id && !(args as any)._caller_api_key_id) {
+      (args as any)._caller_api_key_id = caller_api_key_id;
     }
     if (_rawHasData) {
       console.log('[normalize-debug] rawKeys:', Object.keys(rawArgs as any), 'flatKeys:', Object.keys(args), 'sample:', JSON.stringify(args).slice(0,200));
@@ -243,6 +248,8 @@ serve(async (req) => {
     const activityInput: Record<string, unknown> = { ...args };
     if (objective_context) activityInput._objective_context = objective_context;
     if (trace_id) activityInput.trace_id = trace_id;
+    if (caller_api_key_id) activityInput._caller_api_key_id = caller_api_key_id;
+    if (caller_user_id) activityInput._caller_user_id = caller_user_id;
     // Determine if the handler actually succeeded
     const handlerFailed = !!(result as any)?.error;
     const activityId = await logActivity(supabase, {
