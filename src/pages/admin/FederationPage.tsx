@@ -355,15 +355,11 @@ export default function FederationPage() {
     const updates: Record<string, string> = { id: (editingPeer as any).id };
     if (editName !== (editingPeer as any).name) updates.name = editName;
     if (editUrl !== ((editingPeer as any).url || '')) updates.url = editUrl;
-    await updatePeer.mutateAsync(updates as any);
-
-    if (editOutboundToken) {
-      // Update outbound token separately via the raw supabase call
-      const { supabase } = await import('@/integrations/supabase/client');
-      await (supabase.from('a2a_peers') as any)
-        .update({ outbound_token: editOutboundToken })
-        .eq('id', (editingPeer as any).id);
+    if (editGatewayToken !== ((editingPeer as any).gateway_token || '')) {
+      updates.gateway_token = editGatewayToken;
     }
+    if (editOutboundToken) updates.outbound_token = editOutboundToken;
+    await updatePeer.mutateAsync(updates as any);
 
     setEditingPeer(null);
     toast({ title: 'Peer updated', description: `${editName} has been updated.` });
