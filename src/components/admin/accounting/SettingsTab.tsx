@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Settings, Globe, Check, Database } from 'lucide-react';
+import { Settings, Globe, Check, Database, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAccountingLocale, ACCOUNTING_LOCALES } from '@/hooks/useAccountingLocale';
 import { useChartOfAccounts } from '@/hooks/useAccounting';
 import { IFRS_TEMPLATES } from '@/data/templates-ifrs';
@@ -63,6 +64,14 @@ export function SettingsTab() {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <Button asChild variant="outline" size="sm">
+          <Link to="/admin/accounting/locale-packs">
+            <ExternalLink className="h-3 w-3 mr-1" />
+            Manage locale packs
+          </Link>
+        </Button>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
