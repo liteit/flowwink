@@ -261,6 +261,7 @@ const router = createBrowserRouter([
       { path: "/admin/sales-intelligence", element: <SalesIntelligencePage /> },
       { path: "/admin/resume", element: <ConsultantProfilesPage /> },
       { path: "/admin/federation", element: <FederationPage /> },
+      { path: "/admin/clawable", element: <ClawablePage /> },
       { path: "/admin/company-insights", element: <CompanyInsightsPage /> },
       { path: "/admin/growth", element: <GrowthDashboardPage /> },
       
