@@ -18,6 +18,8 @@ interface ExecuteRequest {
   trace_id?: string;
   /** When called via MCP, the user who owns the api_key. Used for ownership/created_by. */
   caller_user_id?: string;
+  /** When called via MCP, the api_key id (and inbound peer) that initiated the call. */
+  caller_api_key_id?: string;
   objective_context?: {
     goal: string;
     step: string;
