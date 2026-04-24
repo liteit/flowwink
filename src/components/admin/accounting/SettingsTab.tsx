@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Settings, Globe, Check, Database } from 'lucide-react';
+import { Settings, Globe, Check, Database, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAccountingLocale, ACCOUNTING_LOCALES } from '@/hooks/useAccountingLocale';
 import { useChartOfAccounts } from '@/hooks/useAccounting';
 import { IFRS_TEMPLATES } from '@/data/templates-ifrs';
