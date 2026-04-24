@@ -2547,7 +2547,7 @@ async function executeDealsAction(
               name: resolvedCompanyName || 'Auto-generated lead',
               company_id: resolvedCompanyId,
               source: 'agent_deal',
-              status: 'qualified',
+              status: 'opportunity',
             }).select('id').single();
           if (leadErr) throw new Error(`Auto-lead creation failed: ${leadErr.message}`);
           lead_id = newLead.id;
