@@ -654,6 +654,19 @@ export default function FederationPage() {
                   Token FlowPilot sends when calling this peer. Only updates if you enter a new value.
                 </p>
               </div>
+
+              <div className="space-y-2">
+                <Label>Gateway Token (Bearer for /v1/responses)</Label>
+                <Input
+                  type="password"
+                  placeholder="For OpenClaw/Clawwink-style peers"
+                  value={editGatewayToken}
+                  onChange={e => setEditGatewayToken(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Required for /v1/responses peers (Clawable chat). Setting this auto-tags transport as <code>openresponses</code>.
+                </p>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setEditingPeer(null)}>Cancel</Button>
