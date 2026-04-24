@@ -2,14 +2,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+export type PeerTransport = 'a2a' | 'openresponses' | 'mcp_inbound';
+
 export interface A2APeer {
   id: string;
   name: string;
-  url: string;
-  outbound_token: string;
+  url: string | null;
+  outbound_token: string | null;
   gateway_token: string;
   inbound_token_hash: string | null;
   mcp_api_key: string | null;
+  transport: PeerTransport;
+  api_key_id: string | null;
   status: 'active' | 'paused' | 'revoked';
   capabilities: unknown;
   last_seen_at: string | null;

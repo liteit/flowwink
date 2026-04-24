@@ -368,11 +368,22 @@ export default function FederationPage() {
   };
 
   // --- Protocol detection ---
-  const getPeerTransport = (peer: { gateway_token?: string | null; capabilities?: unknown }): 'responses' | 'a2a' => {
+  // Prefers the explicit `transport` column (set during peer creation or auto-discovery).
+  // Falls back to legacy heuristics for older peers that pre-date the column.
+  const getPeerTransport = (peer: { transport?: string | null; gateway_token?: string | null; capabilities?: unknown }): 'responses' | 'a2a' | 'mcp_inbound' => {
+    if (peer.transport === 'mcp_inbound') return 'mcp_inbound';
+    if (peer.transport === 'openresponses') return 'responses';
+    if (peer.transport === 'a2a') return 'a2a';
     if (peer.gateway_token) return 'responses';
     const caps = (peer.capabilities && typeof peer.capabilities === 'object') ? peer.capabilities as Record<string, unknown> : {};
     if (caps.protocol === 'responses' || caps.protocol === 'openai') return 'responses';
     return 'a2a';
+  };
+
+  const transportLabel = (t: 'responses' | 'a2a' | 'mcp_inbound') => {
+    if (t === 'mcp_inbound') return 'MCP Inbound';
+    if (t === 'responses') return '/v1/responses';
+    return 'A2A';
   };
 
   const [dispatchingPeerId, setDispatchingPeerId] = useState<string | null>(null);
