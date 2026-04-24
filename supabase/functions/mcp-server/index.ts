@@ -609,7 +609,7 @@ async function createMcpServer(filterGroups?: string[]): Promise<McpServer> {
       },
       handler: async (args: Record<string, unknown>) => {
         const ctx = requestContext.getStore();
-        const result = await executeSkill(skill.name, args, ctx?.callerUserId ?? null);
+        const result = await executeSkill(skill.name, args, ctx?.callerUserId ?? null, ctx?.callerApiKeyId ?? null);
         return {
           content: [{ type: "text" as const, text: result }],
         };
