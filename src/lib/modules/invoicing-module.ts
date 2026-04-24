@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger';
 import { z } from 'zod';
 import { defineModule } from '@/lib/module-def';
 import type { SkillSeed, AutomationSeed } from '@/lib/module-bootstrap';
+import { getActivePack } from '@/lib/locale-packs';
 
 const invoicingInputSchema = z.object({
   action: z.enum(['create', 'update', 'list']),
@@ -53,7 +54,7 @@ const INVOICING_SKILLS: SkillSeed[] = [
             project_id: { type: 'string' },
             line_items: { type: 'array', items: { type: 'object', properties: { description: { type: 'string' }, qty: { type: 'number' }, unit_price_cents: { type: 'number' } } } },
             tax_rate: { type: 'number', description: 'Decimal e.g. 0.25 for 25%' },
-            currency: { type: 'string', description: 'ISO currency code, default SEK' },
+            currency: { type: 'string', description: `ISO currency code, default ${getActivePack().currency.code}` },
             due_date: { type: 'string', description: 'YYYY-MM-DD' },
             payment_terms: { type: 'string' },
             notes: { type: 'string' },
@@ -63,7 +64,7 @@ const INVOICING_SKILLS: SkillSeed[] = [
         },
       },
     },
-    instructions: 'Invoice lifecycle: draft → sent → paid (or cancelled). When creating, auto-generate INV-XXXXX number. When marking as sent, set sent_at. When marking as paid, set paid_at. For listing, support status filter. Swedish: "faktura", "skapa faktura", "skicka faktura", "betald".',
+    instructions: `Invoice lifecycle: draft → sent → paid (or cancelled). When creating, auto-generate INV-XXXXX number. When marking as sent, set sent_at. When marking as paid, set paid_at. For listing, support status filter. Locale-specific: ${getActivePack().ai_instructions.invoicing}`,
   },
   {
     name: 'invoice_from_timesheets',

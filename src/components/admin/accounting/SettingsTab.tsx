@@ -46,7 +46,7 @@ export function SettingsTab() {
 
       const templatesToSeed = getTemplatesForLocale(targetLocale);
       if (templatesToSeed.length > 0) {
-        await supabase.from('accounting_templates').insert(templatesToSeed);
+        await supabase.from('accounting_templates').insert(templatesToSeed as any);
       }
 
       queryClient.invalidateQueries({ queryKey: ['chart-of-accounts'] });
@@ -135,17 +135,29 @@ export function SettingsTab() {
 }
 
 // ============================================================
-// Locale routing
+// Locale routing — falls back to legacy data files for packs that
+// don't yet have a full plugin (e.g. us-gaap). New packs in
+// src/lib/locale-packs/ are picked up automatically by ACCOUNTING_LOCALES.
 // ============================================================
 
+import { LOCALE_PACKS } from '@/lib/locale-packs';
+
 function getAccountsForLocale(locale: string) {
-  if (locale === 'ifrs-generic') return IFRS_ACCOUNTS;
+  const pack = LOCALE_PACKS[locale];
+  if (pack) return pack.chart.map((a) => ({ ...a, locale: pack.id }));
   if (locale === 'us-gaap') return US_GAAP_ACCOUNTS;
-  return []; // BAS 2024 is seeded by the bootstrap
+  return [];
 }
 
 function getTemplatesForLocale(locale: string) {
-  if (locale === 'ifrs-generic') return IFRS_TEMPLATES;
+  const pack = LOCALE_PACKS[locale];
+  if (pack) {
+    return pack.templates.map((t) => ({
+      ...t,
+      locale: pack.id,
+      is_system: t.is_system ?? true,
+    }));
+  }
   if (locale === 'us-gaap') return US_GAAP_TEMPLATES;
-  return []; // BAS 2024 templates are seeded by the bootstrap
+  return [];
 }
