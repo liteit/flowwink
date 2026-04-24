@@ -300,174 +300,176 @@ export default function ClawablePage() {
           description="OpenClaw-style chat with /v1/responses peers — sessions persist via previous_response_id chaining."
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
-          {/* Left: peer + session list */}
-          <Card className="h-fit">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
-              <CardTitle className="text-base">Peer</CardTitle>
-              <Button size="sm" variant="ghost" onClick={openNewPeerDialog} title="Add peer">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {peers.length === 0 ? (
-                <div className="text-xs text-muted-foreground py-2">
-                  No peers yet. Click + to add Clawwink (or any /v1/responses peer).
-                </div>
-              ) : (
-                <Select value={selectedPeerId} onValueChange={setSelectedPeerId}>
-                  <SelectTrigger><SelectValue placeholder="Select peer" /></SelectTrigger>
-                  <SelectContent>
-                    {peers.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+        {/* Compact toolbar: peer + session controls */}
+        <div className="flex flex-wrap items-center gap-2 mb-3 pb-3 border-b border-border/50">
+          {peers.length === 0 ? (
+            <Button size="sm" variant="outline" onClick={openNewPeerDialog}>
+              <Plus className="h-3.5 w-3.5 mr-1" /> Add peer
+            </Button>
+          ) : (
+            <>
+              <Select value={selectedPeerId} onValueChange={setSelectedPeerId}>
+                <SelectTrigger className="h-8 w-[180px] text-xs">
+                  <SelectValue placeholder="Peer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {peers.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               {selectedPeer && (
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <div className="truncate">{selectedPeer.url}</div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">{selectedPeer.transport}</Badge>
-                    <Button size="sm" variant="ghost" className="h-6 px-2" onClick={openEditPeerDialog}>
-                      <Settings2 className="h-3 w-3 mr-1" /> Edit
-                    </Button>
-                  </div>
-                  {!selectedPeer.gateway_token && (
-                    <div className="text-destructive">Missing gateway_token — click Edit</div>
-                  )}
-                </div>
+                <>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 px-2"
+                    onClick={openEditPeerDialog}
+                    title={selectedPeer.url || ''}
+                  >
+                    <Settings2 className="h-3.5 w-3.5" />
+                  </Button>
+                  <Badge variant="outline" className="text-[10px] font-mono">{agentId || 'openclaw/main'}</Badge>
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvanced((v) => !v)}
+                    className="text-[10px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                  >
+                    {showAdvanced ? 'Hide' : 'Change agent'}
+                  </button>
+                </>
               )}
 
-              <div className="pt-2 space-y-2">
-                <div className="text-xs text-muted-foreground">
-                  Talking to <span className="font-mono text-foreground">{agentId || 'openclaw/main'}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowAdvanced((v) => !v)}
-                  className="text-[10px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-                >
-                  {showAdvanced ? 'Hide' : 'Change agent'}
-                </button>
-                {showAdvanced && (
-                  <div className="space-y-2 pt-1">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs text-muted-foreground">Agent ID / model slug</label>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 px-2 text-xs"
-                        onClick={loadPeerModels}
-                        disabled={!selectedPeerId || loadingModels}
-                        title="Fetch /v1/models from peer"
-                      >
-                        {loadingModels ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                        List models
-                      </Button>
-                    </div>
-                    <Input
-                      list="peer-models-list"
-                      placeholder="openclaw/main"
-                      value={agentId}
-                      onChange={(e) => setAgentId(e.target.value)}
-                    />
-                    <datalist id="peer-models-list">
-                      {peerModels.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.owned_by ? `${m.id} — ${m.owned_by}` : m.id}
-                        </option>
-                      ))}
-                    </datalist>
-                    <p className="text-[10px] text-muted-foreground leading-relaxed">
-                      Each session is isolated — picks the agent personality but does not join the peer's main conversation memory.
-                    </p>
-                  </div>
-                )}
-              </div>
+              <div className="flex-1" />
 
+              <Select value={selectedSessionId} onValueChange={setSelectedSessionId} disabled={!sessions.length}>
+                <SelectTrigger className="h-8 w-[220px] text-xs">
+                  <SelectValue placeholder={sessions.length ? 'Session' : 'No sessions yet'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {sessions.map(s => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.title} {s.agent_id ? `· ${s.agent_id}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               <Button
+                size="sm"
+                variant="outline"
                 onClick={handleNewSession}
                 disabled={!selectedPeerId || creating}
-                className="w-full"
-                size="sm"
+                className="h-8"
               >
-                {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
                 New session
               </Button>
-            </CardContent>
-          </Card>
 
-          <Dialog open={peerDialogOpen} onOpenChange={setPeerDialogOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{peerForm.id ? 'Edit peer' : 'Add peer'}</DialogTitle>
-                <DialogDescription>
-                  Register a peer that exposes <code>/v1/responses</code> (e.g. Clawwink, OpenClaw).
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-muted-foreground">Name</label>
-                  <Input value={peerForm.name} onChange={e => setPeerForm({ ...peerForm, name: e.target.value })} />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Base URL</label>
-                  <Input
-                    placeholder="https://clawwink.froste.eu"
-                    value={peerForm.url}
-                    onChange={e => setPeerForm({ ...peerForm, url: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Gateway token (Bearer)</label>
-                  <Input
-                    type="password"
-                    placeholder="Bearer token sent on outbound calls"
-                    value={peerForm.gateway_token}
-                    onChange={e => setPeerForm({ ...peerForm, gateway_token: e.target.value })}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setPeerDialogOpen(false)}>Cancel</Button>
-                <Button onClick={savePeer} disabled={savingPeer}>
-                  {savingPeer && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                  Save
+              {selectedSessionId && (
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={handleDeleteSession} title="Delete session">
+                  <Trash2 className="h-3.5 w-3.5" />
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          {/* Right: chat */}
-          <Card className="flex flex-col h-[calc(100vh-220px)] min-h-[500px]">
-            <CardHeader className="border-b py-3 space-y-2">
-              <div className="flex items-center gap-2">
-                <Select value={selectedSessionId} onValueChange={setSelectedSessionId} disabled={!sessions.length}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder={sessions.length ? 'Select session' : 'No sessions yet'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sessions.map(s => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.title} {s.agent_id ? `· ${s.agent_id}` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedSessionId && (
-                  <Button size="icon" variant="ghost" onClick={handleDeleteSession} title="Delete session">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-              {selectedSession?.last_response_id && (
-                <div className="text-xs text-muted-foreground font-mono truncate">
-                  chain: {selectedSession.last_response_id}
-                </div>
               )}
+            </>
+          )}
+        </div>
+
+        {/* Advanced agent picker (collapsed by default) */}
+        {showAdvanced && selectedPeer && (
+          <div className="mb-3 p-3 rounded-md border border-border/50 bg-muted/30 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs text-muted-foreground">Agent ID / model slug</label>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-xs"
+                onClick={loadPeerModels}
+                disabled={!selectedPeerId || loadingModels}
+                title="Fetch /v1/models from peer"
+              >
+                {loadingModels ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                List models
+              </Button>
+            </div>
+            <Input
+              list="peer-models-list"
+              placeholder="openclaw/main"
+              value={agentId}
+              onChange={(e) => setAgentId(e.target.value)}
+              className="h-8 text-xs"
+            />
+            <datalist id="peer-models-list">
+              {peerModels.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.owned_by ? `${m.id} — ${m.owned_by}` : m.id}
+                </option>
+              ))}
+            </datalist>
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              Each session is isolated — picks the agent personality but does not join the peer's main conversation memory.
+            </p>
+          </div>
+        )}
+
+        {selectedPeer && !selectedPeer.gateway_token && (
+          <div className="mb-3 text-xs text-destructive">
+            Missing gateway_token on selected peer — click the gear icon to add it.
+          </div>
+        )}
+
+        <Dialog open={peerDialogOpen} onOpenChange={setPeerDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{peerForm.id ? 'Edit peer' : 'Add peer'}</DialogTitle>
+              <DialogDescription>
+                Register a peer that exposes <code>/v1/responses</code> (e.g. Clawwink, OpenClaw).
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground">Name</label>
+                <Input value={peerForm.name} onChange={e => setPeerForm({ ...peerForm, name: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Base URL</label>
+                <Input
+                  placeholder="https://clawwink.froste.eu"
+                  value={peerForm.url}
+                  onChange={e => setPeerForm({ ...peerForm, url: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Gateway token (Bearer)</label>
+                <Input
+                  type="password"
+                  placeholder="Bearer token sent on outbound calls"
+                  value={peerForm.gateway_token}
+                  onChange={e => setPeerForm({ ...peerForm, gateway_token: e.target.value })}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPeerDialogOpen(false)}>Cancel</Button>
+              <Button onClick={savePeer} disabled={savingPeer}>
+                {savingPeer && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Save
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Full-width chat */}
+        <Card className="flex flex-col h-[calc(100vh-200px)] min-h-[500px]">
+          {selectedSession?.last_response_id && (
+            <CardHeader className="border-b py-2">
+              <div className="text-[10px] text-muted-foreground font-mono truncate">
+                chain: {selectedSession.last_response_id}
+              </div>
             </CardHeader>
+          )}
+
 
             <ScrollArea className="flex-1" ref={scrollRef as any}>
               <div className="p-4 space-y-4">
@@ -527,7 +529,6 @@ export default function ClawablePage() {
               </Button>
             </div>
           </Card>
-        </div>
       </AdminPageContainer>
     </AdminLayout>
   );
