@@ -63,11 +63,7 @@ export default function FederationPage() {
   const [showToken, setShowToken] = useState<string | null>(null);
   const [copiedToken, setCopiedToken] = useState(false);
 
-  const [editingPeer, setEditingPeer] = useState<typeof peers extends (infer T)[] | undefined ? T | null : null>(null);
-  const [editName, setEditName] = useState('');
-  const [editUrl, setEditUrl] = useState('');
-  const [editOutboundToken, setEditOutboundToken] = useState('');
-  const [editGatewayToken, setEditGatewayToken] = useState('');
+  // Edit-peer state removed — channel-level edits live in PeerChannelsInline
 
   const [generatedInboundToken, setGeneratedInboundToken] = useState<string | null>(null);
    const [testingPeerId, setTestingPeerId] = useState<string | null>(null);
@@ -344,28 +340,7 @@ export default function FederationPage() {
     await updatePeer.mutateAsync({ id: peerId, status: 'revoked' });
   };
 
-  const openEditDialog = (peer: any) => {
-    setEditingPeer(peer);
-    setEditName(peer.name);
-    setEditUrl(peer.url || '');
-    setEditOutboundToken('');
-    setEditGatewayToken(peer.gateway_token || '');
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editingPeer) return;
-    const updates: Record<string, string> = { id: (editingPeer as any).id };
-    if (editName !== (editingPeer as any).name) updates.name = editName;
-    if (editUrl !== ((editingPeer as any).url || '')) updates.url = editUrl;
-    if (editGatewayToken !== ((editingPeer as any).gateway_token || '')) {
-      updates.gateway_token = editGatewayToken;
-    }
-    if (editOutboundToken) updates.outbound_token = editOutboundToken;
-    await updatePeer.mutateAsync(updates as any);
-
-    setEditingPeer(null);
-    toast({ title: 'Peer updated', description: `${editName} has been updated.` });
-  };
+  // openEditDialog/handleSaveEdit removed — channel-level edits live in PeerChannelsInline
 
   // --- Protocol detection ---
   // Prefers the explicit `transport` column (set during peer creation or auto-discovery).
@@ -558,83 +533,7 @@ export default function FederationPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        {/* Edit Peer Dialog */}
-        <Dialog open={!!editingPeer} onOpenChange={(open) => !open && setEditingPeer(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Peer</DialogTitle>
-              <DialogDescription>
-                Update the connection details for {editName}.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Name</Label>
-                <Input value={editName} onChange={e => setEditName(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>URL</Label>
-                <Input
-                  placeholder="https://peer.example.com"
-                  value={editUrl}
-                  onChange={e => setEditUrl(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  The peer's A2A endpoint or Agent Card URL.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label>Outbound Token (leave empty to keep current)</Label>
-                {editingPeer && (editingPeer as any).outbound_token && (
-                  <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50 border">
-                    <code className="text-xs font-mono text-muted-foreground break-all flex-1 select-all">
-                      {(editingPeer as any).outbound_token}
-                    </code>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="shrink-0 h-7 w-7 p-0"
-                      onClick={() => {
-                        navigator.clipboard.writeText((editingPeer as any).outbound_token);
-                        toast({ title: 'Copied', description: 'Current outbound token copied' });
-                      }}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                )}
-                <Input
-                  placeholder="Paste new token to update"
-                  value={editOutboundToken}
-                  onChange={e => setEditOutboundToken(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Token FlowPilot sends when calling this peer. Only updates if you enter a new value.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Gateway Token (Bearer for /v1/responses)</Label>
-                <Input
-                  type="password"
-                  placeholder="For OpenClaw/Clawwink-style peers"
-                  value={editGatewayToken}
-                  onChange={e => setEditGatewayToken(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Required for /v1/responses peers (Clawable chat). Setting this auto-tags transport as <code>openresponses</code>.
-                </p>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditingPeer(null)}>Cancel</Button>
-              <Button onClick={handleSaveEdit} disabled={!editName || updatePeer.isPending}>
-                {updatePeer.isPending ? 'Saving...' : 'Save'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Edit Peer dialog removed — credentials/URL now managed per Channel (see PeerChannelsInline) */}
 
         {/* Add Peer */}
         <div className="flex justify-end">
@@ -945,42 +844,7 @@ export default function FederationPage() {
                               Dispatch Mission
                             </Button>
                           )}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openEditDialog(peer)}
-                          >
-                            <Pencil className="h-3 w-3 mr-1" />
-                            Edit
-                          </Button>
-                          {peer.outbound_token && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                navigator.clipboard.writeText(peer.outbound_token);
-                                toast({ title: 'Copied', description: 'A2A outbound token copied to clipboard' });
-                              }}
-                              title="Copy A2A outbound token"
-                            >
-                              <Copy className="h-3 w-3 mr-1" />
-                              A2A Token
-                            </Button>
-                          )}
-                          {peer.mcp_api_key && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                navigator.clipboard.writeText(peer.mcp_api_key!);
-                                toast({ title: 'Copied', description: 'MCP API key copied to clipboard' });
-                              }}
-                              title="Copy MCP API key"
-                            >
-                              <Copy className="h-3 w-3 mr-1" />
-                              MCP Key
-                            </Button>
-                          )}
+                          {/* Edit / token-copy buttons removed — credentials now live per Channel */}
                           <Switch
                             checked={peer.status === 'active'}
                             onCheckedChange={() => handleToggleStatus(peer.id, peer.status)}
