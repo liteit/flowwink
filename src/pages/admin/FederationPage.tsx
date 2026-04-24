@@ -65,6 +65,7 @@ export default function FederationPage() {
   const [editName, setEditName] = useState('');
   const [editUrl, setEditUrl] = useState('');
   const [editOutboundToken, setEditOutboundToken] = useState('');
+  const [editGatewayToken, setEditGatewayToken] = useState('');
 
   const [generatedInboundToken, setGeneratedInboundToken] = useState<string | null>(null);
    const [testingPeerId, setTestingPeerId] = useState<string | null>(null);
