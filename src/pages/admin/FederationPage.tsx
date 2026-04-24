@@ -336,9 +336,7 @@ export default function FederationPage() {
     await updatePeer.mutateAsync({ id: peerId, status: newStatus });
   };
 
-  const handleRevoke = async (peerId: string) => {
-    await updatePeer.mutateAsync({ id: peerId, status: 'revoked' });
-  };
+  // handleRevoke removed — credential revocation is per-channel (MCP via API Keys, A2A via remove channel)
 
   // openEditDialog/handleSaveEdit removed — channel-level edits live in PeerChannelsInline
 
