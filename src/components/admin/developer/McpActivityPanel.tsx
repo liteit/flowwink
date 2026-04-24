@@ -72,8 +72,8 @@ export function McpActivityPanel() {
                     row.status === 'failed' &&
                     (hasValidationDetails(row.output) || !!row.error_message);
                   return (
-                    <>
-                      <TableRow key={row.id}>
+                    <Fragment key={row.id}>
+                      <TableRow>
                         <TableCell className="text-xs text-muted-foreground">
                           {formatDistanceToNow(new Date(row.created_at), { addSuffix: true })}
                         </TableCell>
