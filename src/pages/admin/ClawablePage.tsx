@@ -54,7 +54,8 @@ export default function ClawablePage() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [agentId, setAgentId] = useState('');
+  const [agentId, setAgentId] = useState('openclaw/main');
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [peerModels, setPeerModels] = useState<Array<{ id: string; owned_by: string | null }>>([]);
   const [loadingModels, setLoadingModels] = useState(false);
   const [peerDialogOpen, setPeerDialogOpen] = useState(false);
@@ -339,39 +340,52 @@ export default function ClawablePage() {
               )}
 
               <div className="pt-2 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs text-muted-foreground">Agent ID / model slug (optional)</label>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 px-2 text-xs"
-                    onClick={loadPeerModels}
-                    disabled={!selectedPeerId || loadingModels}
-                    title="Fetch /v1/models from peer"
-                  >
-                    {loadingModels ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                    List models
-                  </Button>
+                <div className="text-xs text-muted-foreground">
+                  Talking to <span className="font-mono text-foreground">{agentId || 'openclaw/main'}</span>
                 </div>
-                <Input
-                  list="peer-models-list"
-                  placeholder="leave empty for default"
-                  value={agentId}
-                  onChange={(e) => setAgentId(e.target.value)}
-                />
-                <datalist id="peer-models-list">
-                  {peerModels.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.owned_by ? `${m.id} — ${m.owned_by}` : m.id}
-                    </option>
-                  ))}
-                </datalist>
-                {peerModels.length > 0 && (
-                  <div className="text-[10px] text-muted-foreground">
-                    {peerModels.length} model{peerModels.length === 1 ? '' : 's'} available — type to filter
+                <button
+                  type="button"
+                  onClick={() => setShowAdvanced((v) => !v)}
+                  className="text-[10px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                >
+                  {showAdvanced ? 'Hide' : 'Change agent'}
+                </button>
+                {showAdvanced && (
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs text-muted-foreground">Agent ID / model slug</label>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2 text-xs"
+                        onClick={loadPeerModels}
+                        disabled={!selectedPeerId || loadingModels}
+                        title="Fetch /v1/models from peer"
+                      >
+                        {loadingModels ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                        List models
+                      </Button>
+                    </div>
+                    <Input
+                      list="peer-models-list"
+                      placeholder="openclaw/main"
+                      value={agentId}
+                      onChange={(e) => setAgentId(e.target.value)}
+                    />
+                    <datalist id="peer-models-list">
+                      {peerModels.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.owned_by ? `${m.id} — ${m.owned_by}` : m.id}
+                        </option>
+                      ))}
+                    </datalist>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      Each session is isolated — picks the agent personality but does not join the peer's main conversation memory.
+                    </p>
                   </div>
                 )}
               </div>
+
 
               <Button
                 onClick={handleNewSession}
