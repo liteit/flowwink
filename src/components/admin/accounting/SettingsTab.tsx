@@ -46,7 +46,7 @@ export function SettingsTab() {
 
       const templatesToSeed = getTemplatesForLocale(targetLocale);
       if (templatesToSeed.length > 0) {
-        await supabase.from('accounting_templates').insert(templatesToSeed);
+        await supabase.from('accounting_templates').insert(templatesToSeed as any);
       }
 
       queryClient.invalidateQueries({ queryKey: ['chart-of-accounts'] });
@@ -160,10 +160,4 @@ function getTemplatesForLocale(locale: string) {
   }
   if (locale === 'us-gaap') return US_GAAP_TEMPLATES;
   return [];
-}
-
-function getTemplatesForLocale(locale: string) {
-  if (locale === 'ifrs-generic') return IFRS_TEMPLATES;
-  if (locale === 'us-gaap') return US_GAAP_TEMPLATES;
-  return []; // BAS 2024 templates are seeded by the bootstrap
 }
