@@ -453,8 +453,9 @@ export default function FederationPage() {
 
         <Tabs defaultValue="a2a-peers" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="a2a-peers">A2A Peers</TabsTrigger>
-            <TabsTrigger value="mcp-collaborators">MCP Collaborators</TabsTrigger>
+            <TabsTrigger value="a2a-peers">Peers</TabsTrigger>
+            <TabsTrigger value="connections">Connections</TabsTrigger>
+            <TabsTrigger value="activity">Activity & Findings</TabsTrigger>
             <TabsTrigger value="agent-invites">Agent Invites</TabsTrigger>
           </TabsList>
 
