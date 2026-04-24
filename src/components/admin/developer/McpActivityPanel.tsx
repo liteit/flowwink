@@ -106,7 +106,7 @@ export function McpActivityPanel() {
                           </TableCell>
                         </TableRow>
                       )}
-                    </>
+                    </Fragment>
                   );
                 })}
               </TableBody>
