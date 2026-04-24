@@ -84,7 +84,7 @@ serve(async (req) => {
 
   try {
     const body: ExecuteRequest = await req.json();
-    const { skill_id, skill_name, arguments: rawArgs = {}, agent_type, conversation_id, objective_context, trace_id, caller_user_id } = body;
+    const { skill_id, skill_name, arguments: rawArgs = {}, agent_type, conversation_id, objective_context, trace_id, caller_user_id, caller_api_key_id } = body;
 
     // ─── Argument normalization ──────────────────────────────────────────
     const _rawHasData = rawArgs && typeof rawArgs === 'object' && 'data' in (rawArgs as any);
@@ -92,6 +92,9 @@ serve(async (req) => {
     // Forward caller identity to handlers (used to set created_by/author_id for MCP-originated writes)
     if (caller_user_id && !(args as any)._caller_user_id) {
       (args as any)._caller_user_id = caller_user_id;
+    }
+    if (caller_api_key_id && !(args as any)._caller_api_key_id) {
+      (args as any)._caller_api_key_id = caller_api_key_id;
     }
     if (_rawHasData) {
       console.log('[normalize-debug] rawKeys:', Object.keys(rawArgs as any), 'flatKeys:', Object.keys(args), 'sample:', JSON.stringify(args).slice(0,200));
