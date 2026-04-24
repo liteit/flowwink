@@ -39,15 +39,15 @@ const TIMESHEET_SKILLS: SkillSeed[] = [
       type: 'function',
       function: {
         name: 'log_time',
-        description: 'Create, list, or delete time entries. ALWAYS pass action="create" when logging hours — otherwise the call defaults to listing and nothing is persisted.',
+        description: 'Create, list, or delete time entries. STRICT: action is required and never auto-inferred. To log hours you MUST send action="create" together with hours (>0, ≤24) AND project_id OR project_name — otherwise the call fails loudly with a validation error.',
         parameters: {
           type: 'object',
           properties: {
-            action: { type: 'string', enum: ['create', 'list', 'delete'], description: 'REQUIRED for logging — use "create" to insert a new entry.' },
-            project_id: { type: 'string', description: 'Project UUID (preferred over project_name)' },
-            project_name: { type: 'string', description: 'Project name (case-insensitive partial match) used to look up project_id if not provided' },
-            entry_date: { type: 'string', description: 'YYYY-MM-DD (defaults to today)' },
-            hours: { type: 'number', description: 'REQUIRED for create — hours worked, must be > 0 (e.g. 4, 7.5)' },
+            action: { type: 'string', enum: ['create', 'list', 'delete'], description: 'REQUIRED. Must be explicitly set. Use "create" to insert a new entry — there is no default and no auto-inference.' },
+            project_id: { type: 'string', description: 'Project UUID. Required for create unless project_name is supplied.' },
+            project_name: { type: 'string', description: 'Project name (case-insensitive partial match). Required for create unless project_id is supplied.' },
+            entry_date: { type: 'string', description: 'YYYY-MM-DD (defaults to today). Strict format — invalid dates are rejected.' },
+            hours: { type: 'number', description: 'REQUIRED for create. Must be a number > 0 and ≤ 24.' },
             description: { type: 'string', description: 'What was done' },
             is_billable: { type: 'boolean', description: 'Defaults to true' },
             user_id: { type: 'string', description: 'Employee UUID (defaults to MCP caller / current user)' },
@@ -58,7 +58,7 @@ const TIMESHEET_SKILLS: SkillSeed[] = [
         },
       },
     },
-    instructions: 'CRITICAL: when logging time you MUST set action="create" AND hours>0 — without action="create" the call returns success but persists nothing. Steps: 1) Look up project by name if only a name is given. 2) Default entry_date to today. 3) Confirm the log showing project name, hours, and date. Swedish synonyms: "logga tid", "tidsrapport", "jobbade", "timmar".',
+    instructions: 'STRICT VALIDATION: log_time will reject the call (status="failed") if action is missing, if action!="create" while attempting to log, if hours is missing/zero/negative/>24, or if neither project_id nor project_name is supplied. To log hours: 1) Resolve the project (lookup by name if needed). 2) Send action="create", hours, and project_id|project_name — entry_date defaults to today. 3) Confirm the log showing project name, hours, and date. Swedish synonyms: "logga tid", "tidsrapport", "jobbade", "timmar".',
   },
   {
     name: 'manage_projects',
