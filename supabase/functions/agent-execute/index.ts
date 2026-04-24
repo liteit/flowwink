@@ -725,7 +725,7 @@ async function executeTimesheetsAction(
 ): Promise<unknown> {
   switch (skillName) {
     case 'log_time': {
-      const { action = 'list', project_id, project_name, entry_date, hours, description, is_billable, user_id, entry_id, week_offset = 0 } = args as any;
+      const { action = 'list', project_id, project_name, entry_date, hours, description, is_billable, user_id, entry_id, week_offset = 0, _caller_user_id } = args as any;
 
       if (action === 'create') {
         let resolvedProjectId = project_id;
@@ -743,8 +743,14 @@ async function executeTimesheetsAction(
         }
         if (!resolvedProjectId) return { error: 'project_id or project_name required' };
 
+        // Resolve user_id from explicit arg → MCP caller → auth context
+        const resolvedUserId = user_id
+          || _caller_user_id
+          || (await supabase.auth.getUser()).data?.user?.id;
+        if (!resolvedUserId) return { error: 'user_id required (or pass _caller_user_id from MCP)' };
+
         const { data, error } = await supabase.from('time_entries').insert([{
-          user_id: user_id || (await supabase.auth.getUser()).data?.user?.id,
+          user_id: resolvedUserId,
           project_id: resolvedProjectId,
           entry_date: entry_date || new Date().toISOString().slice(0, 10),
           hours: hours || 0,
