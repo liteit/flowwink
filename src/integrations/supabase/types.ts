@@ -1360,6 +1360,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          reported_by: string | null
           resolved_at: string | null
           screenshot_url: string | null
           session_id: string | null
@@ -1372,6 +1373,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          reported_by?: string | null
           resolved_at?: string | null
           screenshot_url?: string | null
           session_id?: string | null
@@ -1384,6 +1386,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          reported_by?: string | null
           resolved_at?: string | null
           screenshot_url?: string | null
           session_id?: string | null
@@ -3578,6 +3581,69 @@ export type Database = {
             columns: ["report_id"]
             isOneToOne: false
             referencedRelation: "expense_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      federation_connections: {
+        Row: {
+          api_key_id: string | null
+          created_at: string
+          direction: Database["public"]["Enums"]["connection_direction"]
+          endpoint_url: string | null
+          id: string
+          last_activity_at: string | null
+          metadata: Json
+          outbound_token: string | null
+          peer_id: string
+          request_count: number
+          status: string
+          transport: Database["public"]["Enums"]["connection_transport"]
+          updated_at: string
+        }
+        Insert: {
+          api_key_id?: string | null
+          created_at?: string
+          direction: Database["public"]["Enums"]["connection_direction"]
+          endpoint_url?: string | null
+          id?: string
+          last_activity_at?: string | null
+          metadata?: Json
+          outbound_token?: string | null
+          peer_id: string
+          request_count?: number
+          status?: string
+          transport: Database["public"]["Enums"]["connection_transport"]
+          updated_at?: string
+        }
+        Update: {
+          api_key_id?: string | null
+          created_at?: string
+          direction?: Database["public"]["Enums"]["connection_direction"]
+          endpoint_url?: string | null
+          id?: string
+          last_activity_at?: string | null
+          metadata?: Json
+          outbound_token?: string | null
+          peer_id?: string
+          request_count?: number
+          status?: string
+          transport?: Database["public"]["Enums"]["connection_transport"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "federation_connections_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "federation_connections_peer_id_fkey"
+            columns: ["peer_id"]
+            isOneToOne: false
+            referencedRelation: "a2a_peers"
             referencedColumns: ["id"]
           },
         ]
@@ -8637,6 +8703,8 @@ export type Database = {
       approval_status: "pending" | "approved" | "rejected" | "cancelled"
       automation_trigger_type: "cron" | "event" | "signal"
       company_lifecycle_stage: "prospect" | "customer" | "churned"
+      connection_direction: "outbound" | "inbound" | "bidirectional"
+      connection_transport: "a2a" | "openresponses" | "mcp"
       contract_status:
         | "draft"
         | "pending_signature"
@@ -8920,6 +8988,8 @@ export const Constants = {
       approval_status: ["pending", "approved", "rejected", "cancelled"],
       automation_trigger_type: ["cron", "event", "signal"],
       company_lifecycle_stage: ["prospect", "customer", "churned"],
+      connection_direction: ["outbound", "inbound", "bidirectional"],
+      connection_transport: ["a2a", "openresponses", "mcp"],
       contract_status: [
         "draft",
         "pending_signature",
