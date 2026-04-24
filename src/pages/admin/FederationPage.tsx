@@ -34,9 +34,12 @@ import { Globe, Plus, Copy, Check, ArrowDownLeft, ArrowUpRight, AlertCircle, Pen
 import { A2ATestChat } from '@/components/admin/federation/A2ATestChat';
 import { A2AActivityLog } from '@/components/admin/federation/A2AActivityLog';
 import { AgentInvites } from '@/components/admin/federation/AgentInvites';
-import { McpCollaborators } from '@/components/admin/federation/McpCollaborators';
 import { McpActivityLog } from '@/components/admin/federation/McpActivityLog';
 import { McpFindings } from '@/components/admin/federation/McpFindings';
+import { PeerConnectionsTab } from '@/components/admin/federation/PeerConnectionsTab';
+import { ConnectionBadges } from '@/components/admin/federation/ConnectionBadges';
+import { PeerConnectionRow } from '@/components/admin/federation/PeerConnectionRow';
+import { useFederationConnections } from '@/hooks/useFederationConnections';
 import { useToast } from '@/hooks/use-toast';
 import { useA2APeers, useCreateA2APeer, useUpdateA2APeer, useDeleteA2APeer, useA2AActivity } from '@/hooks/useA2A';
 import { useQueryClient } from '@tanstack/react-query';
@@ -451,8 +454,9 @@ export default function FederationPage() {
 
         <Tabs defaultValue="a2a-peers" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="a2a-peers">A2A Peers</TabsTrigger>
-            <TabsTrigger value="mcp-collaborators">MCP Collaborators</TabsTrigger>
+            <TabsTrigger value="a2a-peers">Peers</TabsTrigger>
+            <TabsTrigger value="connections">Connections</TabsTrigger>
+            <TabsTrigger value="activity">Activity & Findings</TabsTrigger>
             <TabsTrigger value="agent-invites">Agent Invites</TabsTrigger>
           </TabsList>
 
@@ -899,7 +903,8 @@ export default function FederationPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {/* Discovered Skills */}
+                  <PeerConnectionRow peerId={peer.id} />
+
                   {(() => {
                     const skills = (peer.capabilities as any)?.skills;
                     if (!skills?.length) return null;
@@ -1172,8 +1177,11 @@ export default function FederationPage() {
         </Dialog>
           </TabsContent>
 
-          <TabsContent value="mcp-collaborators" className="space-y-8">
-            <McpCollaborators />
+          <TabsContent value="connections" className="space-y-6">
+            <PeerConnectionsTab />
+          </TabsContent>
+
+          <TabsContent value="activity" className="space-y-8">
             <div>
               <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
                 Agent Findings

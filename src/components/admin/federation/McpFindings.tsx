@@ -32,7 +32,7 @@ export function McpFindings() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('beta_test_findings')
-        .select('id, title, type, severity, description, resolved_at, created_at')
+        .select('id, title, type, severity, description, resolved_at, created_at, reported_by')
         .order('created_at', { ascending: false })
         .limit(50);
       if (error) throw error;
@@ -171,6 +171,13 @@ export function McpFindings() {
                   </Badge>
                   <Badge variant="outline" className="text-[10px] h-4">
                     {config.label}
+                  </Badge>
+                  <Badge
+                    variant={(f as any).reported_by && (f as any).reported_by !== 'flowpilot' ? 'default' : 'outline'}
+                    className="text-[10px] h-4 font-mono"
+                    title="Reported by"
+                  >
+                    {(f as any).reported_by || 'unknown'}
                   </Badge>
                 </div>
                 {f.description && (
