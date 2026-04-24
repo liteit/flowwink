@@ -295,10 +295,7 @@ export default function ClawablePage() {
   return (
     <AdminLayout>
       <AdminPageContainer>
-        <AdminPageHeader
-          title="Clawable"
-          description="OpenClaw-style chat with /v1/responses peers — sessions persist via previous_response_id chaining."
-        />
+
 
         {/* Compact toolbar: peer + session controls */}
         <div className="flex flex-wrap items-center gap-2 mb-3 pb-3 border-b border-border/50">
