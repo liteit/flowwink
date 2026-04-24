@@ -228,7 +228,7 @@ export default function ClawablePage() {
     }
   };
 
-
+  const handleSend = async () => {
     if (!input.trim() || !selectedSessionId) return;
     const text = input.trim();
     setInput('');
