@@ -339,12 +339,38 @@ export default function ClawablePage() {
               )}
 
               <div className="pt-2 space-y-2">
-                <label className="text-xs text-muted-foreground">Agent ID (optional)</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-muted-foreground">Agent ID / model slug (optional)</label>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 px-2 text-xs"
+                    onClick={loadPeerModels}
+                    disabled={!selectedPeerId || loadingModels}
+                    title="Fetch /v1/models from peer"
+                  >
+                    {loadingModels ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                    List models
+                  </Button>
+                </div>
                 <Input
-                  placeholder="e.g. heartbeat"
+                  list="peer-models-list"
+                  placeholder="leave empty for default"
                   value={agentId}
                   onChange={(e) => setAgentId(e.target.value)}
                 />
+                <datalist id="peer-models-list">
+                  {peerModels.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.owned_by ? `${m.id} — ${m.owned_by}` : m.id}
+                    </option>
+                  ))}
+                </datalist>
+                {peerModels.length > 0 && (
+                  <div className="text-[10px] text-muted-foreground">
+                    {peerModels.length} model{peerModels.length === 1 ? '' : 's'} available — type to filter
+                  </div>
+                )}
               </div>
 
               <Button
