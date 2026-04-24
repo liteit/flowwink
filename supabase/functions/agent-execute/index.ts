@@ -2542,9 +2542,11 @@ async function executeDealsAction(
         if (existing) {
           lead_id = existing.id;
         } else {
+          const safeName = (resolvedCompanyName || 'auto-lead').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
           const { data: newLead, error: leadErr } = await supabase
             .from('leads').insert({
               name: resolvedCompanyName || 'Auto-generated lead',
+              email: `deal-${safeName}-${Date.now()}@auto.flowwink.local`,
               company_id: resolvedCompanyId,
               source: 'agent_deal',
               status: 'opportunity',
