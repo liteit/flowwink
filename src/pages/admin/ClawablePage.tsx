@@ -529,7 +529,6 @@ export default function ClawablePage() {
               </Button>
             </div>
           </Card>
-        </div>
       </AdminPageContainer>
     </AdminLayout>
   );
