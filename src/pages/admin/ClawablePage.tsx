@@ -278,24 +278,38 @@ export default function ClawablePage() {
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
           {/* Left: peer + session list */}
           <Card className="h-fit">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base">Peer</CardTitle>
+              <Button size="sm" variant="ghost" onClick={openNewPeerDialog} title="Add peer">
+                <Plus className="h-4 w-4" />
+              </Button>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Select value={selectedPeerId} onValueChange={setSelectedPeerId}>
-                <SelectTrigger><SelectValue placeholder="Select peer" /></SelectTrigger>
-                <SelectContent>
-                  {peers.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {peers.length === 0 ? (
+                <div className="text-xs text-muted-foreground py-2">
+                  No peers yet. Click + to add Clawwink (or any /v1/responses peer).
+                </div>
+              ) : (
+                <Select value={selectedPeerId} onValueChange={setSelectedPeerId}>
+                  <SelectTrigger><SelectValue placeholder="Select peer" /></SelectTrigger>
+                  <SelectContent>
+                    {peers.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               {selectedPeer && (
                 <div className="text-xs text-muted-foreground space-y-1">
                   <div className="truncate">{selectedPeer.url}</div>
-                  <Badge variant="outline">{selectedPeer.transport}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">{selectedPeer.transport}</Badge>
+                    <Button size="sm" variant="ghost" className="h-6 px-2" onClick={openEditPeerDialog}>
+                      <Settings2 className="h-3 w-3 mr-1" /> Edit
+                    </Button>
+                  </div>
                   {!selectedPeer.gateway_token && (
-                    <div className="text-destructive">Missing gateway_token</div>
+                    <div className="text-destructive">Missing gateway_token — click Edit</div>
                   )}
                 </div>
               )}
@@ -320,6 +334,47 @@ export default function ClawablePage() {
               </Button>
             </CardContent>
           </Card>
+
+          <Dialog open={peerDialogOpen} onOpenChange={setPeerDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{peerForm.id ? 'Edit peer' : 'Add peer'}</DialogTitle>
+                <DialogDescription>
+                  Register a peer that exposes <code>/v1/responses</code> (e.g. Clawwink, OpenClaw).
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-muted-foreground">Name</label>
+                  <Input value={peerForm.name} onChange={e => setPeerForm({ ...peerForm, name: e.target.value })} />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Base URL</label>
+                  <Input
+                    placeholder="https://clawwink.froste.eu"
+                    value={peerForm.url}
+                    onChange={e => setPeerForm({ ...peerForm, url: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Gateway token (Bearer)</label>
+                  <Input
+                    type="password"
+                    placeholder="Bearer token sent on outbound calls"
+                    value={peerForm.gateway_token}
+                    onChange={e => setPeerForm({ ...peerForm, gateway_token: e.target.value })}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setPeerDialogOpen(false)}>Cancel</Button>
+                <Button onClick={savePeer} disabled={savingPeer}>
+                  {savingPeer && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  Save
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           {/* Right: chat */}
           <Card className="flex flex-col h-[calc(100vh-220px)] min-h-[500px]">
