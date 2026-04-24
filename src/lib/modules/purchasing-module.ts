@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger';
 import { z } from 'zod';
 import { defineModule } from '@/lib/module-def';
 import type { SkillSeed, AutomationSeed } from '@/lib/module-bootstrap';
+import { getActivePack } from '@/lib/locale-packs';
 
 const purchasingInputSchema = z.object({
   action: z.enum(['create_po', 'list_pos', 'list_vendors', 'get_vendor']),
@@ -80,7 +81,7 @@ const PURCHASING_SKILLS: SkillSeed[] = [
         },
       },
     },
-    instructions: 'Always create POs in draft status. Calculate totals: subtotal = sum(qty * unit_price), tax = sum(qty * unit_price * tax_rate/100). Default tax_rate is 25% for Swedish vendors.',
+    instructions: `Always create POs in draft status. Calculate totals: subtotal = sum(qty * unit_price), tax = sum(qty * unit_price * tax_rate/100). Locale-specific: ${getActivePack().ai_instructions.purchasing}`,
   },
   {
     name: 'send_purchase_order',
