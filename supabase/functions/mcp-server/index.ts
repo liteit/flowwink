@@ -266,6 +266,7 @@ async function executeSkill(
   skillName: string,
   args: Record<string, unknown>,
   callerUserId?: string | null,
+  callerApiKeyId?: string | null,
 ): Promise<string> {
   const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/agent-execute`;
   const res = await fetch(url, {
@@ -279,6 +280,7 @@ async function executeSkill(
       arguments: args,
       agent_type: "mcp",
       caller_user_id: callerUserId ?? undefined,
+      caller_api_key_id: callerApiKeyId ?? undefined,
     }),
   });
 
