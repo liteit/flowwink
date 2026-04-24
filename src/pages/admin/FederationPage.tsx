@@ -65,6 +65,7 @@ export default function FederationPage() {
   const [editName, setEditName] = useState('');
   const [editUrl, setEditUrl] = useState('');
   const [editOutboundToken, setEditOutboundToken] = useState('');
+  const [editGatewayToken, setEditGatewayToken] = useState('');
 
   const [generatedInboundToken, setGeneratedInboundToken] = useState<string | null>(null);
    const [testingPeerId, setTestingPeerId] = useState<string | null>(null);
@@ -346,6 +347,7 @@ export default function FederationPage() {
     setEditName(peer.name);
     setEditUrl(peer.url || '');
     setEditOutboundToken('');
+    setEditGatewayToken(peer.gateway_token || '');
   };
 
   const handleSaveEdit = async () => {
@@ -353,15 +355,11 @@ export default function FederationPage() {
     const updates: Record<string, string> = { id: (editingPeer as any).id };
     if (editName !== (editingPeer as any).name) updates.name = editName;
     if (editUrl !== ((editingPeer as any).url || '')) updates.url = editUrl;
-    await updatePeer.mutateAsync(updates as any);
-
-    if (editOutboundToken) {
-      // Update outbound token separately via the raw supabase call
-      const { supabase } = await import('@/integrations/supabase/client');
-      await (supabase.from('a2a_peers') as any)
-        .update({ outbound_token: editOutboundToken })
-        .eq('id', (editingPeer as any).id);
+    if (editGatewayToken !== ((editingPeer as any).gateway_token || '')) {
+      updates.gateway_token = editGatewayToken;
     }
+    if (editOutboundToken) updates.outbound_token = editOutboundToken;
+    await updatePeer.mutateAsync(updates as any);
 
     setEditingPeer(null);
     toast({ title: 'Peer updated', description: `${editName} has been updated.` });
@@ -654,6 +652,19 @@ export default function FederationPage() {
                 />
                 <p className="text-xs text-muted-foreground">
                   Token FlowPilot sends when calling this peer. Only updates if you enter a new value.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Gateway Token (Bearer for /v1/responses)</Label>
+                <Input
+                  type="password"
+                  placeholder="For OpenClaw/Clawwink-style peers"
+                  value={editGatewayToken}
+                  onChange={e => setEditGatewayToken(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Required for /v1/responses peers (Clawable chat). Setting this auto-tags transport as <code>openresponses</code>.
                 </p>
               </div>
             </div>
