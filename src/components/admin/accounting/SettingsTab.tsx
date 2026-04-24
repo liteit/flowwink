@@ -64,6 +64,14 @@ export function SettingsTab() {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <Button asChild variant="outline" size="sm">
+          <Link to="/admin/accounting/locale-packs">
+            <ExternalLink className="h-3 w-3 mr-1" />
+            Manage locale packs
+          </Link>
+        </Button>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
