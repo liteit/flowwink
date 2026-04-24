@@ -38,6 +38,7 @@ import { McpActivityLog } from '@/components/admin/federation/McpActivityLog';
 import { McpFindings } from '@/components/admin/federation/McpFindings';
 import { PeerConnectionsTab } from '@/components/admin/federation/PeerConnectionsTab';
 import { ConnectionBadges } from '@/components/admin/federation/ConnectionBadges';
+import { PeerConnectionRow } from '@/components/admin/federation/PeerConnectionRow';
 import { useFederationConnections } from '@/hooks/useFederationConnections';
 import { useToast } from '@/hooks/use-toast';
 import { useA2APeers, useCreateA2APeer, useUpdateA2APeer, useDeleteA2APeer, useA2AActivity } from '@/hooks/useA2A';
