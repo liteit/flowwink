@@ -858,8 +858,6 @@ export default function FederationPage() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {peers?.map(peer => <PeerCardWithConnections key={peer.id} peer={peer}>
-              {(() => null)()}</PeerCardWithConnections> && false)}
             {peers?.map(peer => (
               <Card key={peer.id} className={peer.status === 'revoked' ? 'opacity-50' : ''}>
                 <CardHeader className="pb-3">
