@@ -36,9 +36,7 @@ import { A2AActivityLog } from '@/components/admin/federation/A2AActivityLog';
 import { AgentInvites } from '@/components/admin/federation/AgentInvites';
 import { McpActivityLog } from '@/components/admin/federation/McpActivityLog';
 import { McpFindings } from '@/components/admin/federation/McpFindings';
-import { PeerConnectionsTab } from '@/components/admin/federation/PeerConnectionsTab';
-import { ConnectionBadges } from '@/components/admin/federation/ConnectionBadges';
-import { PeerConnectionRow } from '@/components/admin/federation/PeerConnectionRow';
+import { PeerChannelsInline } from '@/components/admin/federation/PeerChannelsInline';
 import { useFederationConnections } from '@/hooks/useFederationConnections';
 import { useToast } from '@/hooks/use-toast';
 import { useA2APeers, useCreateA2APeer, useUpdateA2APeer, useDeleteA2APeer, useA2AActivity } from '@/hooks/useA2A';
@@ -454,8 +452,7 @@ export default function FederationPage() {
 
         <Tabs defaultValue="a2a-peers" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="a2a-peers">Peers</TabsTrigger>
-            <TabsTrigger value="connections">Connections</TabsTrigger>
+            <TabsTrigger value="a2a-peers">Peers & Channels</TabsTrigger>
             <TabsTrigger value="activity">Activity & Findings</TabsTrigger>
             <TabsTrigger value="agent-invites">Agent Invites</TabsTrigger>
           </TabsList>
@@ -903,7 +900,7 @@ export default function FederationPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <PeerConnectionRow peerId={peer.id} />
+                  <PeerChannelsInline peerId={peer.id} peerName={peer.name} />
 
                   {(() => {
                     const skills = (peer.capabilities as any)?.skills;
@@ -1175,10 +1172,6 @@ export default function FederationPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-          </TabsContent>
-
-          <TabsContent value="connections" className="space-y-6">
-            <PeerConnectionsTab />
           </TabsContent>
 
           <TabsContent value="activity" className="space-y-8">
