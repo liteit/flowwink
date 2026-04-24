@@ -106,6 +106,7 @@ import QuoteTemplatesPage from "./pages/admin/QuoteTemplatesPage";
 import PublicQuotePage from "./pages/PublicQuotePage";
 import PublicInvoicePage from "./pages/PublicInvoicePage";
 import AccountingPage from "./pages/admin/AccountingPage";
+import LocalePacksPage from "./pages/admin/LocalePacksPage";
 import ExpensesPage from "./pages/admin/ExpensesPage";
 import HandbookPage from "./pages/admin/HandbookPage";
 import TimesheetsPage from "./pages/admin/TimesheetsPage";
@@ -268,6 +269,7 @@ const router = createBrowserRouter([
       { path: "/quote/:token", element: <PublicQuotePage /> },
       { path: "/invoice/:token", element: <PublicInvoicePage /> },
       { path: "/admin/accounting", element: <AccountingPage /> },
+      { path: "/admin/accounting/locale-packs", element: <LocalePacksPage /> },
       { path: "/admin/expenses", element: <ExpensesPage /> },
       { path: "/admin/handbook", element: <HandbookPage /> },
       { path: "/admin/timesheets", element: <TimesheetsPage /> },
