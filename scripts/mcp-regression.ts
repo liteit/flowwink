@@ -16,6 +16,9 @@
  *                           external orchestrators.
  *   4. Expectation match  — every skill in EXPECTED_TOOLS must be present in
  *                           the live response. Missing → exit 1.
+ *   5. Live tools/call    — smoke test that JSON-RPC execution works end-to-end
+ *                           against a read-only tool (list_leads). Catches
+ *                           regressions in the SSE/Streamable HTTP layer.
  *
  * Env:
  *   MCP_URL          (default: https://<project>.supabase.co/functions/v1/mcp-server)
