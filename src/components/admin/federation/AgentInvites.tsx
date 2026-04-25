@@ -14,9 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Copy, Check, UserPlus, Sparkles, Shield, Search, BarChart3, ShoppingCart, Zap, TrendingUp, Pen, Bot } from 'lucide-react';
+import { Copy, Check, UserPlus, Sparkles, Shield, Search, BarChart3, ShoppingCart, Zap, TrendingUp, Pen, Bot, Users, Receipt, FolderKanban, PackageSearch, Calculator } from 'lucide-react';
 import { useCreateApiKey } from '@/hooks/useApiKeys';
+import { useModules, type ModulesSettings } from '@/hooks/useModules';
 import { toast } from 'sonner';
+
+type ModuleKey = keyof ModulesSettings;
 
 interface MissionTemplate {
   id: string;
@@ -27,6 +30,8 @@ interface MissionTemplate {
   instructions: string;
   focusResources: string[];
   focusTools: string[];
+  /** Modules that must be enabled for this mission to make sense. Empty = always available. */
+  requiredModules?: ModuleKey[];
 }
 
 const MISSION_TEMPLATES: MissionTemplate[] = [
