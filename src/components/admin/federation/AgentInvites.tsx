@@ -150,6 +150,7 @@ Every action should tie back to revenue. Score leads, advance deals, optimize pa
 Use \`acquire_lock\` when editing pages to prevent conflicts.`,
     focusResources: ['flowwink://briefing', 'flowwink://skills'],
     focusTools: ['list_pages', 'update_page_block', 'list_blog_posts', 'create_blog_post', 'list_products'],
+    requiredModules: ['pages'],
   },
   {
     id: 'commerce-operator',
