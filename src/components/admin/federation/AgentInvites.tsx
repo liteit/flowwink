@@ -600,7 +600,14 @@ Content-Type: application/json
 `}
 ## Verify Connection
 
-\`GET ${mcpUrl}/rest/resources/briefing\` — should return identity, health metrics, active objectives, and module status.`;
+\`GET ${mcpUrl}/rest/resources/briefing\` — should return identity, health metrics, active objectives, and module status.${mission.id === 'clawable-operator' ? `
+
+## How the platform will reach you back
+
+This platform will call **your** \`/v1/responses\` endpoint to deliver missions:
+- The admin will register your base URL and a \`gateway_token\` (Bearer) that you must accept on incoming calls.
+- Each Clawable Chat session is one thread — the platform passes \`previous_response_id\` so you keep memory inside a session.
+- Reply in plain text. The text becomes the assistant message visible in Clawable Chat.` : ''}`;
 
       setGeneratedPrompt(prompt);
       toast.success('Invite prompt generated with API key');
