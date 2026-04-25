@@ -171,7 +171,8 @@ export default function ModulesPage() {
         label: CATEGORY_LABELS[category],
         modules: Object.entries(localModules)
           .filter(([id, config]) => config.category === category && id !== 'globalElements')
-          .map(([id, config]) => ({ id: id as keyof ModulesSettings, ...config })),
+          .map(([id, config]) => ({ id: id as keyof ModulesSettings, ...config }))
+          .sort((a, b) => a.name.localeCompare(b.name)),
       })).filter(group => group.modules.length > 0)
     : [];
 
