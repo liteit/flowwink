@@ -809,6 +809,51 @@ export function ResetSiteDialog({ open, onOpenChange }: ResetSiteDialogProps) {
                   </label>
                 </div>
               </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">ERP — People & Ops</p>
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox checked={options.hr} onCheckedChange={(c) => setOptions(p => ({ ...p, hr: !!c }))} />
+                    <Briefcase className="h-4 w-4 text-muted-foreground" />
+                    HR (employees, leave, recruitment)
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox checked={options.operations} onCheckedChange={(c) => setOptions(p => ({ ...p, operations: !!c }))} />
+                    <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                    Projects, time & expenses
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox checked={options.procurement} onCheckedChange={(c) => setOptions(p => ({ ...p, procurement: !!c }))} />
+                    <Truck className="h-4 w-4 text-muted-foreground" />
+                    Procurement & inventory
+                  </label>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">ERP — Finance & Service</p>
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox checked={options.finance} onCheckedChange={(c) => setOptions(p => ({ ...p, finance: !!c }))} />
+                    <Receipt className="h-4 w-4 text-muted-foreground" />
+                    Quotes, invoices & accounting
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox checked={options.service} onCheckedChange={(c) => setOptions(p => ({ ...p, service: !!c }))} />
+                    <LifeBuoy className="h-4 w-4 text-muted-foreground" />
+                    Tickets, contracts & subscriptions
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox checked={options.growth} onCheckedChange={(c) => setOptions(p => ({ ...p, growth: !!c }))} />
+                    <Sparkles className="h-4 w-4 text-muted-foreground" />
+                    Growth (ads, webinars)
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox checked={options.federation} onCheckedChange={(c) => setOptions(p => ({ ...p, federation: !!c }))} />
+                    <Sparkles className="h-4 w-4 text-muted-foreground" />
+                    Federation, webhooks & API keys
+                  </label>
+                </div>
+              </div>
             </div>
 
             <DialogFooter className="mt-6">
