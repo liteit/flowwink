@@ -2,15 +2,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
 import type { Json } from '@/integrations/supabase/types';
 import { triggerWebhook } from '@/lib/webhook-utils';
+import { defineModule } from '@/lib/module-def';
 import {
-  ModuleDefinition,
   OrderModuleInput,
   OrderModuleOutput,
   orderModuleInputSchema,
   orderModuleOutputSchema,
 } from '@/types/module-contracts';
 
-export const ordersModule: ModuleDefinition<OrderModuleInput, OrderModuleOutput> = {
+export const ordersModule = defineModule<OrderModuleInput, OrderModuleOutput>({
   id: 'orders',
   name: 'Orders',
   version: '1.0.0',
@@ -73,4 +73,4 @@ export const ordersModule: ModuleDefinition<OrderModuleInput, OrderModuleOutput>
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   },
-};
+});
