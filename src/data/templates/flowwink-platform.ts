@@ -284,6 +284,28 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
             iconStyle: 'circle',
           },
         },
+        // ─── AGENT-PREPARED — The MCP layer ───
+        {
+          id: 'agent-prepared',
+          type: 'bento-grid',
+          data: {
+            eyebrow: 'AGENT-PREPARED PLATFORM',
+            title: 'One ERP. Any Agent.',
+            subtitle: 'Every module above is exposed via the Model Context Protocol. Run FlowWink with our built-in FlowPilot — or plug in Claude, GPT, or OpenClaw and let your existing agent operate FlowWink alongside the rest of your SaaS stack.',
+            columns: 3,
+            variant: 'glass',
+            gap: 'md',
+            staggeredReveal: true,
+            items: [
+              { id: 'ap-mcp', title: 'Universal MCP Server', description: 'Every module ships with a JSON-RPC contract. tools/list returns every skill across CRM, Accounting, HR, Payroll, P2P. Live-validated by a regression workflow on every release.', icon: 'Plug', span: 'wide', accentColor: '#3B82F6' },
+              { id: 'ap-byo', title: 'Bring Your Own Agent', description: 'Admin chooses the operator: built-in FlowPilot, Claude Desktop, Cursor, OpenClaw, GPT — or run several in parallel. The platform is operator-agnostic.\n\n• MCP API keys per agent\n• Toolset groups for selective tool loading\n• Per-agent audit trails\n• Trust levels and approval gates', icon: 'Users', span: 'large', accentColor: '#8B5CF6' },
+              { id: 'ap-flowpilot', title: 'FlowPilot Included', description: 'Self-hosted, OpenClaw-modeled agent: soul, memory, objectives, 6-hour heartbeat. Works out of the box, no external dependency.', icon: 'Bot', accentColor: '#10B981' },
+              { id: 'ap-multisaas', title: 'Cross-SaaS Operation', description: 'Connect an external agent to FlowWink + Gmail + Slack + Stripe + Linear and let it operate the whole stack. FlowWink contributes 40+ modules of business operations to whatever agent you already use.\n\n• MCP-native — no proprietary SDK\n• Federation via A2A and OpenResponses\n• Composio for 200+ third-party apps', icon: 'Network', span: 'large', accentColor: '#F97316' },
+              { id: 'ap-discovery', title: 'Discovery & Briefing', description: 'flowwink://briefing resource gives external agents instant context — active modules, current objectives, recent activity. Token-efficient onboarding without prompt-engineering hell.', icon: 'BookOpen', accentColor: '#F59E0B' },
+              { id: 'ap-sovereignty', title: 'Self-Hosted Means Sovereign', description: 'Your data, your LLM, your audit trail. The agent runs against your own database — not a vendor\'s shared multi-tenant cloud. Healthcare, finance, defense-ready.', icon: 'Shield', span: 'wide', accentColor: '#06B6D4' },
+            ],
+          },
+        },
         // TESTIMONIALS
         {
           id: 'testimonials-main',
