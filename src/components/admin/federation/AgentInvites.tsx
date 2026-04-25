@@ -395,6 +395,7 @@ Focus on improvements that directly impact visitor engagement and conversion.`,
 Focus on issues that could prevent or discourage purchases.`,
     focusResources: ['flowwink://health'],
     focusTools: ['openclaw_report_finding', 'list_products', 'list_pages'],
+    requiredModules: ['ecommerce'],
   },
   {
     id: 'custom',
