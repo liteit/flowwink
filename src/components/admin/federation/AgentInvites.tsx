@@ -620,7 +620,7 @@ Content-Type: application/json
               </SelectTrigger>
               <SelectContent>
                 <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Operator (Scenario B)</div>
-                {MISSION_TEMPLATES.filter(t => t.category === 'operator').map(t => (
+                {availableMissions.filter(t => t.category === 'operator').map(t => (
                   <SelectItem key={t.id} value={t.id}>
                     <span className="flex items-center gap-2">
                       {t.icon}
