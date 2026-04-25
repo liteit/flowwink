@@ -10,7 +10,7 @@ import {
 } from '@/types/module-contracts';
 
 export const globalBlocksModule = defineModule<GlobalBlockModuleInput, GlobalBlockModuleOutput>({
-  id: 'globalBlocks',
+  id: 'globalElements',
   name: 'Global Blocks',
   version: '1.0.0',
   description: 'Create reusable global content blocks (header, footer, etc.)',
