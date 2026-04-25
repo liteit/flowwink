@@ -99,16 +99,16 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
           type: 'section-divider',
           data: { shape: 'wave', height: 'md' },
         },
-        // STATS — The jaw-droppers
+        // STATS — Platform breadth
         {
           id: 'stats-hero',
           type: 'stats',
           data: {
             items: [
-              { id: 's1', value: '130+', label: 'Agentic Skills' },
-              { id: 's2', value: '28', label: 'Modules' },
-              { id: 's3', value: '63', label: 'Block Types' },
-              { id: 's4', value: '100%', label: 'Self-Hostable' },
+              { id: 's1', value: '40+', label: 'ERP Modules' },
+              { id: 's2', value: '150+', label: 'MCP-Exposed Skills' },
+              { id: 's3', value: 'BYO', label: 'Agent (FlowPilot or external)' },
+              { id: 's4', value: '100%', label: 'Self-Hostable & Open Source' },
             ],
             columns: 4,
             variant: 'minimal',
