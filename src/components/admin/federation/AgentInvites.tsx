@@ -431,8 +431,20 @@ export function AgentInvites() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const createApiKey = useCreateApiKey();
+  const { data: modulesSettings } = useModules();
 
-  const mission = MISSION_TEMPLATES.find(m => m.id === selectedMission)!;
+  // A mission is available when all its required modules are enabled
+  // (or when it has no module dependency at all).
+  const isMissionAvailable = (t: MissionTemplate): boolean => {
+    if (!t.requiredModules || t.requiredModules.length === 0) return true;
+    if (!modulesSettings) return true; // optimistic until loaded
+    return t.requiredModules.every(m => modulesSettings[m]?.enabled);
+  };
+
+  const availableMissions = MISSION_TEMPLATES.filter(isMissionAvailable);
+  const mission = (availableMissions.find(m => m.id === selectedMission)
+    ?? MISSION_TEMPLATES.find(m => m.id === selectedMission)
+    ?? availableMissions[0])!;
 
   const handleGenerate = async () => {
     setIsGenerating(true);
