@@ -17,25 +17,7 @@ const outputSchema = z.object({
 type Input = z.infer<typeof inputSchema>;
 type Output = z.infer<typeof outputSchema>;
 
-export const liveSupportModule = defineModule<Input, Output>({
-  id: 'liveSupport',
-  name: 'Live Support',
-  version: '1.0.0',
-  description: 'Human agent takeover for escalated chat conversations',
-  capabilities: ['data:read', 'data:write'],
-  inputSchema,
-  outputSchema,
-
-  skills: [
-    'support_list_conversations',
-    'support_assign_conversation',
-  ],
-  skillSeeds: LIVESUPPORT_SKILLS,
-
-  async publish(input: Input): Promise<Output> {
-    return { success: true, message: `Live support ${input.action} completed` };
-  },
-});// ── Bundled skill definitions (migrated from setup-flowpilot) ──
+// ── Bundled skill definitions (migrated from setup-flowpilot) ──
 const LIVESUPPORT_SKILLS: SkillSeed[] = [
   {
     name: 'support_list_conversations',
@@ -184,4 +166,22 @@ Retrieves chat feedback ratings and comments for quality monitoring.
   },
 ];
 
+export const liveSupportModule = defineModule<Input, Output>({
+  id: 'liveSupport',
+  name: 'Live Support',
+  version: '1.0.0',
+  description: 'Human agent takeover for escalated chat conversations',
+  capabilities: ['data:read', 'data:write'],
+  inputSchema,
+  outputSchema,
 
+  skills: [
+    'support_list_conversations',
+    'support_assign_conversation',
+  ],
+  skillSeeds: LIVESUPPORT_SKILLS,
+
+  async publish(input: Input): Promise<Output> {
+    return { success: true, message: `Live support ${input.action} completed` };
+  },
+});

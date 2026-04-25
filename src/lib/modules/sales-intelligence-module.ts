@@ -45,66 +45,7 @@ const ACTION_MAP: Record<string, string> = {
   'contact-finder': 'contact-finder',
 };
 
-export const salesIntelligenceModule = defineModule<SalesIntelligenceInput, SalesIntelligenceOutput>({
-  id: 'salesIntelligence',
-  name: 'Sales Intelligence',
-  version: '2.0.0',
-  description: 'Prospect research, fit analysis, profile management, and introduction letter generation',
-  capabilities: ['data:read', 'data:write'],
-  inputSchema: salesIntelligenceInputSchema,
-  outputSchema: salesIntelligenceOutputSchema,
-
-  skills: [
-    'prospect_research',
-    'prospect_fit_analysis',
-    'qualify_lead',
-    'enrich_company',
-    'contact_finder',
-    'sales_profile_setup',
-  ],
-  skillSeeds: SALESINTELLIGENCE_SKILLS,
-
-  async publish(input: SalesIntelligenceInput): Promise<SalesIntelligenceOutput> {
-    try {
-      const validated = salesIntelligenceInputSchema.parse(input);
-      const action = validated.action || 'research';
-      const edgeFunction = ACTION_MAP[action];
-
-      if (!edgeFunction) {
-        return { success: false, error: `Unknown action: ${action}` };
-      }
-
-      let body: Record<string, unknown>;
-      if (action === 'profile-setup') {
-        body = { type: validated.profile_type, data: validated.profile_data };
-      } else if (action === 'fit-analysis') {
-        body = {
-          company_id: validated.company_id,
-          company_name: validated.company_name,
-          decision_maker_first_name: validated.decision_maker_first_name,
-          decision_maker_last_name: validated.decision_maker_last_name,
-        };
-      } else {
-        body = {
-          company_name: validated.company_name,
-          company_url: validated.company_url,
-        };
-      }
-
-      const { data, error } = await supabase.functions.invoke(edgeFunction, { body });
-
-      if (error) {
-        logger.error(`[SalesIntelligenceModule] ${edgeFunction} error:`, error);
-        return { success: false, error: error.message };
-      }
-
-      return data as SalesIntelligenceOutput;
-    } catch (error) {
-      logger.error('[SalesIntelligenceModule] Error:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-    }
-  },
-});// ── Bundled skill definitions (migrated from setup-flowpilot) ──
+// ── Bundled skill definitions (migrated from setup-flowpilot) ──
 const SALESINTELLIGENCE_SKILLS: SkillSeed[] = [
   {
     name: 'prospect_research',
@@ -283,4 +224,63 @@ This skill is primarily triggered by automations, not directly by users.
   },
 ];
 
+export const salesIntelligenceModule = defineModule<SalesIntelligenceInput, SalesIntelligenceOutput>({
+  id: 'salesIntelligence',
+  name: 'Sales Intelligence',
+  version: '2.0.0',
+  description: 'Prospect research, fit analysis, profile management, and introduction letter generation',
+  capabilities: ['data:read', 'data:write'],
+  inputSchema: salesIntelligenceInputSchema,
+  outputSchema: salesIntelligenceOutputSchema,
 
+  skills: [
+    'prospect_research',
+    'prospect_fit_analysis',
+    'qualify_lead',
+    'enrich_company',
+    'contact_finder',
+    'sales_profile_setup',
+  ],
+  skillSeeds: SALESINTELLIGENCE_SKILLS,
+
+  async publish(input: SalesIntelligenceInput): Promise<SalesIntelligenceOutput> {
+    try {
+      const validated = salesIntelligenceInputSchema.parse(input);
+      const action = validated.action || 'research';
+      const edgeFunction = ACTION_MAP[action];
+
+      if (!edgeFunction) {
+        return { success: false, error: `Unknown action: ${action}` };
+      }
+
+      let body: Record<string, unknown>;
+      if (action === 'profile-setup') {
+        body = { type: validated.profile_type, data: validated.profile_data };
+      } else if (action === 'fit-analysis') {
+        body = {
+          company_id: validated.company_id,
+          company_name: validated.company_name,
+          decision_maker_first_name: validated.decision_maker_first_name,
+          decision_maker_last_name: validated.decision_maker_last_name,
+        };
+      } else {
+        body = {
+          company_name: validated.company_name,
+          company_url: validated.company_url,
+        };
+      }
+
+      const { data, error } = await supabase.functions.invoke(edgeFunction, { body });
+
+      if (error) {
+        logger.error(`[SalesIntelligenceModule] ${edgeFunction} error:`, error);
+        return { success: false, error: error.message };
+      }
+
+      return data as SalesIntelligenceOutput;
+    } catch (error) {
+      logger.error('[SalesIntelligenceModule] Error:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  },
+});

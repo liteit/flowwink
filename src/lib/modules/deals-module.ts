@@ -10,71 +10,7 @@ import {
   dealModuleOutputSchema,
 } from '@/types/module-contracts';
 
-export const dealsModule = defineModule<DealModuleInput, DealModuleOutput>({
-  id: 'deals',
-  name: 'Deals',
-  version: '1.0.0',
-  description: 'Create and manage sales deals/opportunities',
-  capabilities: ['content:receive', 'data:write', 'webhook:trigger'],
-  inputSchema: dealModuleInputSchema,
-  outputSchema: dealModuleOutputSchema,
-
-  skills: [
-    'manage_deal',
-    'deal_stale_check',
-  ],
-  skillSeeds: DEALS_SKILLS,
-
-  webhookEvents: [
-    { event: 'deal.created', description: 'A deal was created' },
-    { event: 'deal.updated', description: 'A deal was updated' },
-    { event: 'deal.stage_changed', description: 'A deal changed stage' },
-    { event: 'deal.won', description: 'A deal was won' },
-    { event: 'deal.lost', description: 'A deal was lost' },
-  ],
-
-  async publish(input: DealModuleInput): Promise<DealModuleOutput> {
-    try {
-      const validated = dealModuleInputSchema.parse(input);
-
-      const dealData: {
-        lead_id: string; value_cents: number; currency: string;
-        stage: 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
-        product_id: string | null; expected_close: string | null; notes: string | null;
-      } = {
-        lead_id: validated.lead_id,
-        value_cents: validated.value_cents,
-        currency: validated.currency,
-        stage: validated.stage,
-        product_id: validated.product_id || null,
-        expected_close: validated.expected_close || null,
-        notes: validated.notes || null,
-      };
-
-      const { data, error } = await supabase
-        .from('deals')
-        .insert(dealData)
-        .select('id, stage, value_cents')
-        .single();
-
-      if (error) {
-        logger.error('[DealsModule] Insert error:', error);
-        return { success: false, error: error.message };
-      }
-
-      try {
-        await updateLeadStatus(validated.lead_id, 'opportunity', { onlyIfCurrentStatus: 'lead' });
-      } catch (updateError) {
-        logger.warn('[DealsModule] Lead status update failed:', updateError);
-      }
-
-      return { success: true, id: data.id, stage: data.stage, value_cents: data.value_cents };
-    } catch (error) {
-      logger.error('[DealsModule] Error:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-    }
-  },
-});// ── Bundled skill definitions (migrated from setup-flowpilot) ──
+// ── Bundled skill definitions (migrated from setup-flowpilot) ──
 const DEALS_SKILLS: SkillSeed[] = [
   {
     name: 'manage_deal',
@@ -181,4 +117,68 @@ Manages sales deals: list, create, update, move between stages.
   },
 ];
 
+export const dealsModule = defineModule<DealModuleInput, DealModuleOutput>({
+  id: 'deals',
+  name: 'Deals',
+  version: '1.0.0',
+  description: 'Create and manage sales deals/opportunities',
+  capabilities: ['content:receive', 'data:write', 'webhook:trigger'],
+  inputSchema: dealModuleInputSchema,
+  outputSchema: dealModuleOutputSchema,
 
+  skills: [
+    'manage_deal',
+    'deal_stale_check',
+  ],
+  skillSeeds: DEALS_SKILLS,
+
+  webhookEvents: [
+    { event: 'deal.created', description: 'A deal was created' },
+    { event: 'deal.updated', description: 'A deal was updated' },
+    { event: 'deal.stage_changed', description: 'A deal changed stage' },
+    { event: 'deal.won', description: 'A deal was won' },
+    { event: 'deal.lost', description: 'A deal was lost' },
+  ],
+
+  async publish(input: DealModuleInput): Promise<DealModuleOutput> {
+    try {
+      const validated = dealModuleInputSchema.parse(input);
+
+      const dealData: {
+        lead_id: string; value_cents: number; currency: string;
+        stage: 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
+        product_id: string | null; expected_close: string | null; notes: string | null;
+      } = {
+        lead_id: validated.lead_id,
+        value_cents: validated.value_cents,
+        currency: validated.currency,
+        stage: validated.stage,
+        product_id: validated.product_id || null,
+        expected_close: validated.expected_close || null,
+        notes: validated.notes || null,
+      };
+
+      const { data, error } = await supabase
+        .from('deals')
+        .insert(dealData)
+        .select('id, stage, value_cents')
+        .single();
+
+      if (error) {
+        logger.error('[DealsModule] Insert error:', error);
+        return { success: false, error: error.message };
+      }
+
+      try {
+        await updateLeadStatus(validated.lead_id, 'opportunity', { onlyIfCurrentStatus: 'lead' });
+      } catch (updateError) {
+        logger.warn('[DealsModule] Lead status update failed:', updateError);
+      }
+
+      return { success: true, id: data.id, stage: data.stage, value_cents: data.value_cents };
+    } catch (error) {
+      logger.error('[DealsModule] Error:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  },
+});

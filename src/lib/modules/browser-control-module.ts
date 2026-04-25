@@ -17,24 +17,7 @@ export const browserControlOutputSchema = z.object({
 export type BrowserControlInput = z.infer<typeof browserControlInputSchema>;
 export type BrowserControlOutput = z.infer<typeof browserControlOutputSchema>;
 
-export const browserControlModule = defineModule<BrowserControlInput, BrowserControlOutput>({
-  id: 'browserControl',
-  name: 'Browser Control',
-  version: '1.0.0',
-  description: 'Chrome Extension relay for authenticated web browsing — enables FlowPilot to read login-walled sites (LinkedIn, X) using your browser session',
-  capabilities: ['data:read'],
-  inputSchema: browserControlInputSchema,
-  outputSchema: browserControlOutputSchema,
-
-  skills: [
-    // browser_fetch is cross-cutting, kept as core
-  ],
-  skillSeeds: BROWSERCONTROL_SKILLS,
-
-  async publish(input: BrowserControlInput): Promise<BrowserControlOutput> {
-    return { success: true, installed: false };
-  },
-});// ── Bundled skill definitions (migrated from setup-flowpilot) ──
+// ── Bundled skill definitions (migrated from setup-flowpilot) ──
 const BROWSERCONTROL_SKILLS: SkillSeed[] = [
   {
     name: 'browser_fetch',
@@ -99,4 +82,21 @@ When calling write_blog_post, ALWAYS provide the 'content' parameter with the fu
   },
 ];
 
+export const browserControlModule = defineModule<BrowserControlInput, BrowserControlOutput>({
+  id: 'browserControl',
+  name: 'Browser Control',
+  version: '1.0.0',
+  description: 'Chrome Extension relay for authenticated web browsing — enables FlowPilot to read login-walled sites (LinkedIn, X) using your browser session',
+  capabilities: ['data:read'],
+  inputSchema: browserControlInputSchema,
+  outputSchema: browserControlOutputSchema,
 
+  skills: [
+    // browser_fetch is cross-cutting, kept as core
+  ],
+  skillSeeds: BROWSERCONTROL_SKILLS,
+
+  async publish(input: BrowserControlInput): Promise<BrowserControlOutput> {
+    return { success: true, installed: false };
+  },
+});

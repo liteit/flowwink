@@ -33,39 +33,7 @@ type Output = z.infer<typeof outputSchema>;
  * Always-on core module — other modules call its skill via the registry
  * rather than talking to providers directly.
  */
-export const emailModule = defineModule<Input, Output>({
-  id: 'email' as any,
-  name: 'Email',
-  version: '1.0.0',
-  description:
-    'Provider-agnostic email sender. Routes system emails through SMTP or Resend.',
-  capabilities: ['data:write'],
-  inputSchema,
-  outputSchema,
-
-  skills: ['send_email', 'configure_email_provider', 'preview_email_template'],
-  skillSeeds: EMAIL_SKILLS,
-
-  async publish(input: Input): Promise<Output> {
-    try {
-      const v = inputSchema.parse(input);
-      const { data, error } = await supabase.functions.invoke('email-send', {
-        body: v,
-      });
-      if (error) throw error;
-      return {
-        success: !!data?.success,
-        provider: data?.provider,
-        error: data?.error,
-      };
-    } catch (e) {
-      return {
-        success: false,
-        error: e instanceof Error ? e.message : 'Unknown error',
-      };
-    }
-  },
-});// ── Bundled skill definitions (migrated from setup-flowpilot) ──
+// ── Bundled skill definitions (migrated from setup-flowpilot) ──
 const EMAIL_SKILLS: SkillSeed[] = [
   {
     name: 'scan_gmail_inbox',
@@ -110,4 +78,36 @@ Scans connected Gmail inbox for business signals — new leads, partnership inqu
   },
 ];
 
+export const emailModule = defineModule<Input, Output>({
+  id: 'email' as any,
+  name: 'Email',
+  version: '1.0.0',
+  description:
+    'Provider-agnostic email sender. Routes system emails through SMTP or Resend.',
+  capabilities: ['data:write'],
+  inputSchema,
+  outputSchema,
 
+  skills: ['send_email', 'configure_email_provider', 'preview_email_template'],
+  skillSeeds: EMAIL_SKILLS,
+
+  async publish(input: Input): Promise<Output> {
+    try {
+      const v = inputSchema.parse(input);
+      const { data, error } = await supabase.functions.invoke('email-send', {
+        body: v,
+      });
+      if (error) throw error;
+      return {
+        success: !!data?.success,
+        provider: data?.provider,
+        error: data?.error,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        error: e instanceof Error ? e.message : 'Unknown error',
+      };
+    }
+  },
+});

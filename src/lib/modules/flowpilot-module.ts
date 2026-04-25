@@ -15,25 +15,7 @@ const outputSchema = z.object({
 type Input = z.infer<typeof inputSchema>;
 type Output = z.infer<typeof outputSchema>;
 
-export const flowpilotModule = defineModule<Input, Output>({
-  id: 'flowpilot',
-  name: 'FlowPilot',
-  version: '1.0.0',
-  description: 'Autonomous AI operator — skills, objectives, automations and workflows',
-  capabilities: ['data:read', 'data:write'],
-  inputSchema,
-  outputSchema,
-
-  skills: [
-    // FlowPilot consumes skills from other modules — it doesn't own module-specific skills.
-    // Core skills (create_objective, manage_automations, etc.) are defined in CORE_SKILLS.
-  ],
-  skillSeeds: FLOWPILOT_SKILLS,
-
-  async publish(input: Input): Promise<Output> {
-    return { success: true, message: `FlowPilot ${input.action} completed` };
-  },
-});// ── Bundled skill definitions (migrated from setup-flowpilot) ──
+// ── Bundled skill definitions (migrated from setup-flowpilot) ──
 const FLOWPILOT_SKILLS: SkillSeed[] = [
   {
     name: 'create_objective',
@@ -462,4 +444,22 @@ Lists platform users with their roles.
   },
 ];
 
+export const flowpilotModule = defineModule<Input, Output>({
+  id: 'flowpilot',
+  name: 'FlowPilot',
+  version: '1.0.0',
+  description: 'Autonomous AI operator — skills, objectives, automations and workflows',
+  capabilities: ['data:read', 'data:write'],
+  inputSchema,
+  outputSchema,
 
+  skills: [
+    // FlowPilot consumes skills from other modules — it doesn't own module-specific skills.
+    // Core skills (create_objective, manage_automations, etc.) are defined in CORE_SKILLS.
+  ],
+  skillSeeds: FLOWPILOT_SKILLS,
+
+  async publish(input: Input): Promise<Output> {
+    return { success: true, message: `FlowPilot ${input.action} completed` };
+  },
+});

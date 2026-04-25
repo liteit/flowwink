@@ -9,51 +9,7 @@ import {
   type ComposioActionOutput,
 } from '@/types/module-contracts';
 
-export const composioModule = defineModule<ComposioActionInput, ComposioActionOutput>({
-  id: 'composio',
-  name: 'Composio',
-  version: '1.0.0',
-  description: 'Connect to 1000+ external apps via managed OAuth and intent-based tool resolution',
-  capabilities: ['data:read', 'data:write', 'webhook:trigger'],
-  inputSchema: composioActionInputSchema,
-  outputSchema: composioActionOutputSchema,
-
-  skills: [
-    'composio_execute',
-    'composio_search_tools',
-    'composio_gmail_read',
-    'composio_gmail_send',
-  ],
-  skillSeeds: COMPOSIO_SKILLS,
-
-  async publish(input: ComposioActionInput): Promise<ComposioActionOutput> {
-    try {
-      const validated = composioActionInputSchema.parse(input);
-
-      const { data, error } = await supabase.functions.invoke('composio-proxy', {
-        body: validated,
-      });
-
-      if (error) throw error;
-
-      logger.log(`[ComposioModule] Action executed: ${validated.action}`);
-
-      return {
-        success: true,
-        action: validated.action,
-        result: data?.result ?? null,
-      };
-    } catch (err) {
-      logger.error('[ComposioModule] Failed:', err);
-      return {
-        success: false,
-        action: input.action,
-        result: null,
-        error: err instanceof Error ? err.message : 'Unknown error',
-      };
-    }
-  },
-});// ── Bundled skill definitions (migrated from setup-flowpilot) ──
+// ── Bundled skill definitions (migrated from setup-flowpilot) ──
 const COMPOSIO_SKILLS: SkillSeed[] = [
   {
     name: 'composio_execute',
@@ -198,4 +154,48 @@ const COMPOSIO_SKILLS: SkillSeed[] = [
   },
 ];
 
+export const composioModule = defineModule<ComposioActionInput, ComposioActionOutput>({
+  id: 'composio',
+  name: 'Composio',
+  version: '1.0.0',
+  description: 'Connect to 1000+ external apps via managed OAuth and intent-based tool resolution',
+  capabilities: ['data:read', 'data:write', 'webhook:trigger'],
+  inputSchema: composioActionInputSchema,
+  outputSchema: composioActionOutputSchema,
 
+  skills: [
+    'composio_execute',
+    'composio_search_tools',
+    'composio_gmail_read',
+    'composio_gmail_send',
+  ],
+  skillSeeds: COMPOSIO_SKILLS,
+
+  async publish(input: ComposioActionInput): Promise<ComposioActionOutput> {
+    try {
+      const validated = composioActionInputSchema.parse(input);
+
+      const { data, error } = await supabase.functions.invoke('composio-proxy', {
+        body: validated,
+      });
+
+      if (error) throw error;
+
+      logger.log(`[ComposioModule] Action executed: ${validated.action}`);
+
+      return {
+        success: true,
+        action: validated.action,
+        result: data?.result ?? null,
+      };
+    } catch (err) {
+      logger.error('[ComposioModule] Failed:', err);
+      return {
+        success: false,
+        action: input.action,
+        result: null,
+        error: err instanceof Error ? err.message : 'Unknown error',
+      };
+    }
+  },
+});

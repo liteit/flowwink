@@ -25,52 +25,7 @@ const ticketModuleOutputSchema = z.object({
 type TicketModuleInput = z.infer<typeof ticketModuleInputSchema>;
 type TicketModuleOutput = z.infer<typeof ticketModuleOutputSchema>;
 
-export const ticketsModule = defineModule<TicketModuleInput, TicketModuleOutput>({
-  id: 'tickets',
-  name: 'Tickets',
-  version: '1.0.0',
-  description: 'Helpdesk ticket management with Kanban pipeline',
-  capabilities: ['content:receive', 'data:write', 'webhook:trigger'],
-  inputSchema: ticketModuleInputSchema,
-  outputSchema: ticketModuleOutputSchema,
-
-  skills: [
-    'ticket_triage',
-  ],
-  skillSeeds: TICKETS_SKILLS,
-
-  async publish(input: TicketModuleInput): Promise<TicketModuleOutput> {
-    try {
-      const validated = ticketModuleInputSchema.parse(input);
-
-      const { data, error } = await supabase
-        .from('tickets')
-        .insert([{
-          subject: validated.subject,
-          description: validated.description || null,
-          priority: validated.priority,
-          category: validated.category,
-          contact_email: validated.contact_email || null,
-          contact_name: validated.contact_name || null,
-          lead_id: validated.lead_id || null,
-          company_id: validated.company_id || null,
-          source: validated.source,
-        }])
-        .select('id')
-        .single();
-
-      if (error) {
-        logger.error('[TicketsModule] Insert error:', error);
-        return { success: false, error: error.message };
-      }
-
-      return { success: true, id: data.id };
-    } catch (error) {
-      logger.error('[TicketsModule] Error:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-    }
-  },
-});// ── Bundled skill definitions (migrated from setup-flowpilot) ──
+// ── Bundled skill definitions (migrated from setup-flowpilot) ──
 const TICKETS_SKILLS: SkillSeed[] = [
   {
     name: 'ticket_triage',
@@ -120,4 +75,49 @@ Rules:
   },
 ];
 
+export const ticketsModule = defineModule<TicketModuleInput, TicketModuleOutput>({
+  id: 'tickets',
+  name: 'Tickets',
+  version: '1.0.0',
+  description: 'Helpdesk ticket management with Kanban pipeline',
+  capabilities: ['content:receive', 'data:write', 'webhook:trigger'],
+  inputSchema: ticketModuleInputSchema,
+  outputSchema: ticketModuleOutputSchema,
 
+  skills: [
+    'ticket_triage',
+  ],
+  skillSeeds: TICKETS_SKILLS,
+
+  async publish(input: TicketModuleInput): Promise<TicketModuleOutput> {
+    try {
+      const validated = ticketModuleInputSchema.parse(input);
+
+      const { data, error } = await supabase
+        .from('tickets')
+        .insert([{
+          subject: validated.subject,
+          description: validated.description || null,
+          priority: validated.priority,
+          category: validated.category,
+          contact_email: validated.contact_email || null,
+          contact_name: validated.contact_name || null,
+          lead_id: validated.lead_id || null,
+          company_id: validated.company_id || null,
+          source: validated.source,
+        }])
+        .select('id')
+        .single();
+
+      if (error) {
+        logger.error('[TicketsModule] Insert error:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, id: data.id };
+    } catch (error) {
+      logger.error('[TicketsModule] Error:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  },
+});

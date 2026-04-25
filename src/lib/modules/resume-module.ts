@@ -30,41 +30,7 @@ export const resumeMatchOutputSchema = z.object({
 export type ResumeMatchInput = z.infer<typeof resumeMatchInputSchema>;
 export type ResumeMatchOutput = z.infer<typeof resumeMatchOutputSchema>;
 
-export const resumeModule = defineModule<ResumeMatchInput, ResumeMatchOutput>({
-  id: 'resume',
-  name: 'Consultants',
-  version: '1.0.0',
-  description: 'Match consultant profiles against job descriptions with AI-powered scoring and cover letters',
-  capabilities: ['data:read', 'content:produce'],
-  inputSchema: resumeMatchInputSchema,
-  outputSchema: resumeMatchOutputSchema,
-
-  skills: [
-    'manage_consultant_profile',
-    'match_consultant',
-  ],
-  skillSeeds: RESUME_SKILLS,
-
-  async publish(input: ResumeMatchInput): Promise<ResumeMatchOutput> {
-    try {
-      const validated = resumeMatchInputSchema.parse(input);
-
-      const { data, error } = await supabase.functions.invoke('resume-match', {
-        body: validated,
-      });
-
-      if (error) {
-        logger.error('[ResumeModule] Edge function error:', error);
-        return { success: false, error: error.message };
-      }
-
-      return data as ResumeMatchOutput;
-    } catch (error) {
-      logger.error('[ResumeModule] Error:', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-    }
-  },
-});// ── Bundled skill definitions (migrated from setup-flowpilot) ──
+// ── Bundled skill definitions (migrated from setup-flowpilot) ──
 const RESUME_SKILLS: SkillSeed[] = [
   {
     name: 'manage_consultant_profile',
@@ -177,4 +143,38 @@ AI-powered matching of consultants to a job description.
   },
 ];
 
+export const resumeModule = defineModule<ResumeMatchInput, ResumeMatchOutput>({
+  id: 'resume',
+  name: 'Consultants',
+  version: '1.0.0',
+  description: 'Match consultant profiles against job descriptions with AI-powered scoring and cover letters',
+  capabilities: ['data:read', 'content:produce'],
+  inputSchema: resumeMatchInputSchema,
+  outputSchema: resumeMatchOutputSchema,
 
+  skills: [
+    'manage_consultant_profile',
+    'match_consultant',
+  ],
+  skillSeeds: RESUME_SKILLS,
+
+  async publish(input: ResumeMatchInput): Promise<ResumeMatchOutput> {
+    try {
+      const validated = resumeMatchInputSchema.parse(input);
+
+      const { data, error } = await supabase.functions.invoke('resume-match', {
+        body: validated,
+      });
+
+      if (error) {
+        logger.error('[ResumeModule] Edge function error:', error);
+        return { success: false, error: error.message };
+      }
+
+      return data as ResumeMatchOutput;
+    } catch (error) {
+      logger.error('[ResumeModule] Error:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  },
+});

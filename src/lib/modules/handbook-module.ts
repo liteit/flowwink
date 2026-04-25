@@ -16,26 +16,7 @@ const handbookOutputSchema = z.object({
 type HandbookInput = z.infer<typeof handbookInputSchema>;
 type HandbookOutput = z.infer<typeof handbookOutputSchema>;
 
-export const handbookModule = defineModule<HandbookInput, HandbookOutput>({
-  id: 'handbook',
-  name: 'Agentic Handbook',
-  version: '1.0.0',
-  description: 'Agentic methodology handbook with search and reader capabilities',
-  capabilities: ['data:read'],
-  inputSchema: handbookInputSchema,
-  outputSchema: handbookOutputSchema,
-
-  skills: [
-    'handbook_search',
-  ],
-  skillSeeds: HANDBOOK_SKILLS,
-
-  async publish(input: HandbookInput): Promise<HandbookOutput> {
-    const validated = handbookInputSchema.parse(input);
-    logger.log('[handbook] action:', validated.action);
-    return { success: true, message: `Handbook ${validated.action} completed` };
-  },
-});// ── Bundled skill definitions (migrated from setup-flowpilot) ──
+// ── Bundled skill definitions (migrated from setup-flowpilot) ──
 const HANDBOOK_SKILLS: SkillSeed[] = [
   {
     name: 'handbook_search',
@@ -85,4 +66,23 @@ Searches and retrieves chapters from the synced GitHub handbook repository.
   },
 ];
 
+export const handbookModule = defineModule<HandbookInput, HandbookOutput>({
+  id: 'handbook',
+  name: 'Agentic Handbook',
+  version: '1.0.0',
+  description: 'Agentic methodology handbook with search and reader capabilities',
+  capabilities: ['data:read'],
+  inputSchema: handbookInputSchema,
+  outputSchema: handbookOutputSchema,
 
+  skills: [
+    'handbook_search',
+  ],
+  skillSeeds: HANDBOOK_SKILLS,
+
+  async publish(input: HandbookInput): Promise<HandbookOutput> {
+    const validated = handbookInputSchema.parse(input);
+    logger.log('[handbook] action:', validated.action);
+    return { success: true, message: `Handbook ${validated.action} completed` };
+  },
+});

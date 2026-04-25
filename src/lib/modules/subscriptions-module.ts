@@ -23,6 +23,55 @@ type Output = z.infer<typeof outputSchema>;
  * via webhooks into the `subscriptions` table so FlowWink owns visibility,
  * MRR, churn and self-service customer flows.
  */
+// ── Bundled skill definitions (migrated from setup-flowpilot) ──
+const SUBSCRIPTIONS_SKILLS: SkillSeed[] = [
+  {
+    name: 'list_subscriptions',
+    description: 'List recurring subscriptions with filters. Use when: admin asks "who is subscribed?", reviewing billing, auditing customer base. NOT for: one-off orders (lookup_order); MRR/ARR aggregates (subscription_mrr).',
+    category: 'subscriptions',
+    handler: 'edge:subscriptions-skills',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'list_subscriptions',
+        description: 'List subscriptions, optionally filtered by status (active, trialing, past_due, canceled).',
+        parameters: {
+          type: 'object',
+          properties: {
+            status: {
+              type: 'string',
+              description: 'Filter by status: active | trialing | past_due | canceled | unpaid',
+            },
+            limit: {
+              type: 'number',
+              description: 'Max rows (default 50, max 200)',
+            },
+          },
+        },
+      },
+    },
+  },
+  {
+    name: 'subscription_mrr',
+    description: 'Compute current MRR, ARR, active subscriber count, and 30-day churn. Use when: reviewing recurring revenue, weekly briefings, business health checks. NOT for: listing individual subs (list_subscriptions).',
+    category: 'subscriptions',
+    handler: 'edge:subscriptions-skills',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'subscription_mrr',
+        description: 'Returns aggregated recurring revenue metrics: MRR, ARR, active subscriber count, churn 30d.',
+        parameters: {
+          type: 'object',
+          properties: {},
+        },
+      },
+    },
+  },
+];
+
 export const subscriptionsModule = defineModule<Input, Output>({
   id: 'subscriptions',
   name: 'Subscriptions',
@@ -85,53 +134,4 @@ export const subscriptionsModule = defineModule<Input, Output>({
       return { success: false, error: e instanceof Error ? e.message : 'Unknown error' };
     }
   },
-});// ── Bundled skill definitions (migrated from setup-flowpilot) ──
-const SUBSCRIPTIONS_SKILLS: SkillSeed[] = [
-  {
-    name: 'list_subscriptions',
-    description: 'List recurring subscriptions with filters. Use when: admin asks "who is subscribed?", reviewing billing, auditing customer base. NOT for: one-off orders (lookup_order); MRR/ARR aggregates (subscription_mrr).',
-    category: 'subscriptions',
-    handler: 'edge:subscriptions-skills',
-    scope: 'internal',
-    tool_definition: {
-      type: 'function',
-      function: {
-        name: 'list_subscriptions',
-        description: 'List subscriptions, optionally filtered by status (active, trialing, past_due, canceled).',
-        parameters: {
-          type: 'object',
-          properties: {
-            status: {
-              type: 'string',
-              description: 'Filter by status: active | trialing | past_due | canceled | unpaid',
-            },
-            limit: {
-              type: 'number',
-              description: 'Max rows (default 50, max 200)',
-            },
-          },
-        },
-      },
-    },
-  },
-  {
-    name: 'subscription_mrr',
-    description: 'Compute current MRR, ARR, active subscriber count, and 30-day churn. Use when: reviewing recurring revenue, weekly briefings, business health checks. NOT for: listing individual subs (list_subscriptions).',
-    category: 'subscriptions',
-    handler: 'edge:subscriptions-skills',
-    scope: 'internal',
-    tool_definition: {
-      type: 'function',
-      function: {
-        name: 'subscription_mrr',
-        description: 'Returns aggregated recurring revenue metrics: MRR, ARR, active subscriber count, churn 30d.',
-        parameters: {
-          type: 'object',
-          properties: {},
-        },
-      },
-    },
-  },
-];
-
-
+});

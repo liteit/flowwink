@@ -17,30 +17,7 @@ const outputSchema = z.object({
 type Input = z.infer<typeof inputSchema>;
 type Output = z.infer<typeof outputSchema>;
 
-export const analyticsModule = defineModule<Input, Output>({
-  id: 'analytics',
-  name: 'Analytics',
-  version: '1.0.0',
-  description: 'Dashboard with insights on leads, deals, and newsletter performance',
-  capabilities: ['data:read'],
-  inputSchema,
-  outputSchema,
-
-  skills: [
-    'analyze_analytics',
-    'seo_audit_page',
-    'kb_gap_analysis',
-    'analyze_chat_feedback',
-    'weekly_business_digest',
-    'support_get_feedback',
-    'competitor_monitor',
-  ],
-  skillSeeds: ANALYTICS_SKILLS,
-
-  async publish(input: Input): Promise<Output> {
-    return { success: true, message: `Analytics ${input.action} completed` };
-  },
-});// ── Bundled skill definitions (migrated from setup-flowpilot) ──
+// ── Bundled skill definitions (migrated from setup-flowpilot) ──
 const ANALYTICS_SKILLS: SkillSeed[] = [
   {
     name: 'analyze_analytics',
@@ -208,4 +185,27 @@ Analyzes chat feedback: summary statistics, negative feedback drill-down.
   },
 ];
 
+export const analyticsModule = defineModule<Input, Output>({
+  id: 'analytics',
+  name: 'Analytics',
+  version: '1.0.0',
+  description: 'Dashboard with insights on leads, deals, and newsletter performance',
+  capabilities: ['data:read'],
+  inputSchema,
+  outputSchema,
 
+  skills: [
+    'analyze_analytics',
+    'seo_audit_page',
+    'kb_gap_analysis',
+    'analyze_chat_feedback',
+    'weekly_business_digest',
+    'support_get_feedback',
+    'competitor_monitor',
+  ],
+  skillSeeds: ANALYTICS_SKILLS,
+
+  async publish(input: Input): Promise<Output> {
+    return { success: true, message: `Analytics ${input.action} completed` };
+  },
+});
