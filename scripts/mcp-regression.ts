@@ -16,6 +16,9 @@
  *                           external orchestrators.
  *   4. Expectation match  — every skill in EXPECTED_TOOLS must be present in
  *                           the live response. Missing → exit 1.
+ *   5. Live tools/call    — smoke test that JSON-RPC execution works end-to-end
+ *                           against a read-only tool (list_leads). Catches
+ *                           regressions in the SSE/Streamable HTTP layer.
  *
  * Env:
  *   MCP_URL          (default: https://<project>.supabase.co/functions/v1/mcp-server)
@@ -140,7 +143,7 @@ async function rpc(method: string, params: Record<string, unknown> = {}) {
 // ── Steps ───────────────────────────────────────────────────────────────────
 
 function step1_preMcpGuard() {
-  bar('1/4  Pre-MCP guard (static module registry check)');
+  bar('1/5  Pre-MCP guard (static module registry check)');
   const result = spawnSync('npx', ['-y', 'tsx', path.join(ROOT, 'scripts/verify-hr-modules.ts')], {
     stdio: 'inherit',
   });
@@ -148,7 +151,7 @@ function step1_preMcpGuard() {
 }
 
 async function step2_initialize() {
-  bar('2/4  Live MCP initialize handshake');
+  bar('2/5  Live MCP initialize handshake');
   const result = (await rpc('initialize', {
     protocolVersion: '2024-11-05',
     capabilities: {},
@@ -160,7 +163,7 @@ async function step2_initialize() {
 }
 
 async function step3_listTools(): Promise<Set<string>> {
-  bar('3/4  Live MCP tools/list');
+  bar('3/5  Live MCP tools/list');
   const result = (await rpc('tools/list')) as { tools?: Array<{ name: string }> };
   const names = new Set((result.tools ?? []).map((t) => t.name));
   console.log(`  ✓ ${names.size} tools exposed`);
@@ -168,7 +171,7 @@ async function step3_listTools(): Promise<Set<string>> {
 }
 
 function step4_assertExpectations(live: Set<string>) {
-  bar('4/4  Expectation match');
+  bar('4/5  Expectation match');
 
   const missing: Array<{ module: string; tool: string }> = [];
   let total = 0;
@@ -204,6 +207,31 @@ function step4_assertExpectations(live: Set<string>) {
   }
 }
 
+async function step5_callSmokeTest(live: Set<string>) {
+  bar('5/5  Live MCP tools/call smoke test');
+
+  // Pick a safe read-only tool we know is exposed on every instance.
+  const candidates = ['list_leads', 'list_orders', 'list_pages'];
+  const target = candidates.find((t) => live.has(t));
+  if (!target) {
+    console.log('  ⚠  No safe read-only tool available — skipping tools/call smoke test.');
+    return;
+  }
+
+  const result = (await rpc('tools/call', {
+    name: target,
+    arguments: {},
+  })) as { content?: Array<{ type: string }>; isError?: boolean };
+
+  if (result?.isError) {
+    fail(1, `tools/call '${target}' returned isError=true — JSON-RPC execution is broken.`);
+  }
+  if (!Array.isArray(result?.content)) {
+    fail(1, `tools/call '${target}' returned no content array — response shape regression.`);
+  }
+  console.log(`  ✓ tools/call '${target}' returned ${result.content!.length} content block(s)`);
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -214,8 +242,9 @@ async function main() {
   await step2_initialize();
   const live = await step3_listTools();
   step4_assertExpectations(live);
+  await step5_callSmokeTest(live);
 
-  console.log('\n✅ MCP regression PASSED — all expected tools exposed.\n');
+  console.log('\n✅ MCP regression PASSED — all expected tools exposed + tools/call works.\n');
 }
 
 main().catch((e) => fail(3, `Unhandled: ${(e as Error).message}`));
