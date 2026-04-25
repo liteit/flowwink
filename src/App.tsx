@@ -97,6 +97,7 @@ import SalesIntelligencePage from "./pages/admin/SalesIntelligencePage";
 import ConsultantProfilesPage from "./pages/admin/ConsultantProfilesPage";
 import FederationPage from "./pages/admin/FederationPage";
 import ClawablePage from "./pages/admin/ClawablePage";
+import SkillsCatalogPage from "./pages/admin/SkillsCatalogPage";
 import CompanyInsightsPage from "./pages/admin/CompanyInsightsPage";
 import AutonomyTestSuitePage from "./pages/admin/AutonomyTestSuitePage";
 import GrowthDashboardPage from "./pages/admin/GrowthDashboardPage";
@@ -251,6 +252,8 @@ const router = createBrowserRouter([
       { path: "/admin/knowledge-base/:id", element: <KbArticleEditorPage /> },
       { path: "/admin/flowpilot", element: <CopilotPage /> },
       { path: "/admin/flowpilot/engine", element: <Navigate to="/admin/flowpilot" replace /> },
+      { path: "/admin/skills", element: <SkillsCatalogPage /> },
+      { path: "/admin/skill-hub", element: <Navigate to="/admin/skills" replace /> },
       { path: "/admin/live-support", element: <LiveSupportPage /> },
       { path: "/admin/template-export", element: <Navigate to="/admin/templates" replace /> },
       { path: "/admin/developer-tools", element: <Navigate to="/admin/developer" replace /> },

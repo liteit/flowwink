@@ -44,6 +44,7 @@ import { useExtensionRelay } from "@/hooks/useExtensionRelay";
 import { toast } from "sonner";
 import JSZip from "jszip";
 import { FlowPilotDetails } from "./FlowPilotDetails";
+import { ModuleSkillsSection } from "./ModuleSkillsSection";
 import { SubscriptionsDunningToggle } from "./SubscriptionsDunningToggle";
 import { ComposioPanel } from "./ComposioPanel";
 import { Label } from "@/components/ui/label";
@@ -520,6 +521,10 @@ export function ModuleDetailSheet({
                 {isEnabled ? 'Module Active' : 'Module Disabled'}
               </span>
             </div>
+
+            {/* Agent Skills (read-only operator view) */}
+            <Separator />
+            <ModuleSkillsSection moduleId={moduleId} variant="inline" defaultOpen={false} />
 
             {/* Browser Control Setup */}
             {moduleId === 'browserControl' && (
