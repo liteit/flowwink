@@ -115,6 +115,7 @@ You own the initiative. Don't wait for instructions — observe the platform sta
 Every action should tie back to revenue. Score leads, advance deals, optimize pages — in that priority order.`,
     focusResources: ['flowwink://briefing', 'flowwink://skills'],
     focusTools: ['list_leads', 'update_lead', 'list_deals', 'update_deal', 'list_pages', 'list_blog_posts'],
+    requiredModules: ['leads', 'deals'],
   },
   {
     id: 'content-operator',
