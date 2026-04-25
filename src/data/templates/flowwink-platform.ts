@@ -53,21 +53,21 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
           id: 'announcement-flowpilot',
           type: 'announcement-bar',
           data: {
-            message: '🤖 Next-gen ERP — The Business OS with an autonomous operator built in',
-            linkText: 'Meet the agent',
-            linkUrl: '/flowpilot',
+            message: '🤖 The first agent-native ERP — every module exposed via MCP. Bring your own agent.',
+            linkText: 'See how',
+            linkUrl: '#agent-prepared',
             variant: 'gradient',
             dismissable: true,
             sticky: false,
           },
         },
-        // HERO — The money shot
+        // HERO — Agent-native ERP positioning
         {
           id: 'hero-main',
           type: 'hero',
           data: {
-            title: 'Your Business Runs Itself',
-            subtitle: 'FlowWink is the next-generation ERP — with an autonomous AI operator built in natively. Not bolted on. Not prompted. A process engine that acts on objectives, learns from outcomes, and never stops operating.',
+            title: 'The First Agent-Native ERP',
+            subtitle: 'A complete ERP for mid-sized businesses — Quote-to-Cash, HR & Payroll, Accounting, Procure-to-Pay, Projects. Every module exposed via MCP. Run it with our built-in FlowPilot, or plug in your own agent (Claude, GPT, OpenClaw) to operate FlowWink alongside your other SaaS.',
             backgroundType: 'video',
             videoUrl: 'https://videos.pexels.com/video-files/3209828/3209828-uhd_2560_1440_25fps.mp4',
             videoPosterUrl: 'https://images.pexels.com/videos/3209828/free-video-3209828.jpg?auto=compress&w=1920',
@@ -76,8 +76,8 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
             overlayOpacity: 55,
             titleAnimation: 'slide-up',
             showScrollIndicator: true,
-            primaryButton: { text: 'Meet FlowPilot', url: '#chat-hero-usp' },
-            secondaryButton: { text: 'Self-Host Free', url: 'https://github.com/magnusfroste/flowwink' },
+            primaryButton: { text: 'See the Modules', url: '#modules-overview' },
+            secondaryButton: { text: 'Compare to Odoo & Salesforce', url: '#comparison-vs-competitors' },
           },
         },
         // CHAT LAUNCHER — Talk to FlowPilot
