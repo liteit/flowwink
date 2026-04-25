@@ -14,7 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Copy, Check, UserPlus, Sparkles, Shield, Search, BarChart3, ShoppingCart, Zap, TrendingUp, Pen, Bot, Users, Receipt, FolderKanban, PackageSearch, Calculator } from 'lucide-react';
+import { Copy, Check, UserPlus, Sparkles, Shield, Search, BarChart3, ShoppingCart, Zap, TrendingUp, Pen, Bot, Users, Receipt, FolderKanban, PackageSearch, Calculator, Snowflake, ArrowRight, MessageSquare, Network } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useCreateApiKey } from '@/hooks/useApiKeys';
 import { useModules, type ModulesSettings } from '@/hooks/useModules';
 import { toast } from 'sonner';
