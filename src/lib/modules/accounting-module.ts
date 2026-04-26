@@ -406,6 +406,8 @@ export const accountingModule = defineModule<AccountingInput, AccountingOutput>(
     'list_accounting_periods',
     'manage_analytic_account',
     'tag_journal_entry_analytics',
+    'manage_vendor_defaults',
+    'record_accounting_correction',
   ],
 
   skillSeeds: ACCOUNTING_SKILLS,
