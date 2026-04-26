@@ -203,7 +203,12 @@ serve(async (req) => {
 
       } else if (handler.startsWith('db:')) {
         const table = handler.replace('db:', '');
-        result = await executeDbAction(supabase, table, skill.name, args);
+        const auditCtx: AuditContext = {
+          agent_type, caller_user_id, caller_api_key_id,
+          conversation_id, trace_id,
+          skill_id: skill.id, skill_name: skill.name,
+        };
+        result = await executeDbAction(supabase, table, skill.name, args, auditCtx);
 
       } else if (handler.startsWith('webhook:')) {
         result = await executeWebhook(supabase, args);
