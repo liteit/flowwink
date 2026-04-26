@@ -25,12 +25,19 @@ import {
   useAutomations, useUpsertAutomation, useToggleAutomation, useDeleteAutomation,
 } from '@/hooks/useAutomations';
 import { useSkills } from '@/hooks/useSkillHub';
-import type { AgentAutomation, AutomationTriggerType } from '@/types/agent';
+import type { AgentAutomation, AutomationTriggerType, AutomationExecutor } from '@/types/agent';
 
 const triggerConfig: Record<AutomationTriggerType, { label: string; icon: typeof Timer; color: string }> = {
   cron: { label: 'Cron', icon: Timer, color: 'bg-violet-500/15 text-violet-700 dark:text-violet-400' },
   event: { label: 'Event', icon: Zap, color: 'bg-amber-500/15 text-amber-700 dark:text-amber-400' },
   signal: { label: 'Signal', icon: Radio, color: 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-400' },
+};
+
+const executorLabels: Record<AutomationExecutor, string> = {
+  platform: 'Platform',
+  flowpilot: 'FlowPilot',
+  openclaw: 'OpenClaw',
+  external: 'External',
 };
 
 export function AutomationsPanel() {
