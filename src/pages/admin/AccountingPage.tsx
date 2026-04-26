@@ -67,6 +67,9 @@ export default function AccountingPage() {
           <TabsContent value="templates">
             <TemplatesTab />
           </TabsContent>
+          <TabsContent value="audit">
+            <AuditTrailTab />
+          </TabsContent>
           <TabsContent value="settings">
             <SettingsTab />
           </TabsContent>
