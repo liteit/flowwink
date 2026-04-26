@@ -5688,7 +5688,7 @@ async function executeDbAction(
       // have a dedicated handler above. This enables all modules (HR,
       // Projects, Contracts, etc.) to work via MCP/Chat/Automations
       // without writing per-table code.
-      return await executeGenericCrud(supabase, table, skillName, args);
+      return await executeGenericCrud(supabase, table, skillName, args, auditCtx);
   }
 }
 
