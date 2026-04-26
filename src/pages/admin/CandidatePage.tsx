@@ -272,6 +272,7 @@ export default function CandidatePage() {
           </CardContent>
         </Card>
       )}
-    </div>
+      </div>
+    </AdminLayout>
   );
 }
