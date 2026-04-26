@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import {
-  Plus, Timer, Zap, Radio, Trash2, AlertCircle, Info,
+  Plus, Timer, Zap, Radio, Trash2, AlertCircle, Info, Play, Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
   useAutomations, useUpsertAutomation, useToggleAutomation, useDeleteAutomation,
+  useRunAutomationNow,
 } from '@/hooks/useAutomations';
 import { useSkills } from '@/hooks/useSkillHub';
 import type { AgentAutomation, AutomationTriggerType, AutomationExecutor } from '@/types/agent';
@@ -48,6 +49,7 @@ export function AutomationsPanel() {
   const upsert = useUpsertAutomation();
   const toggle = useToggleAutomation();
   const remove = useDeleteAutomation();
+  const runNow = useRunAutomationNow();
 
   const handleNew = () => { setEditing(null); setEditorOpen(true); };
   const handleEdit = (a: AgentAutomation) => { setEditing(a); setEditorOpen(true); };
@@ -96,6 +98,8 @@ export function AutomationsPanel() {
               onEdit={handleEdit}
               onToggle={(id, enabled) => toggle.mutate({ id, enabled })}
               onDelete={(id) => remove.mutate(id)}
+              onRun={(a) => runNow.mutate(a)}
+              isRunning={runNow.isPending && runNow.variables?.id === auto.id}
             />
           ))}
         </div>
@@ -114,12 +118,14 @@ export function AutomationsPanel() {
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
 function AutomationCard({
-  automation, onEdit, onToggle, onDelete,
+  automation, onEdit, onToggle, onDelete, onRun, isRunning,
 }: {
   automation: AgentAutomation;
   onEdit: (a: AgentAutomation) => void;
   onToggle: (id: string, enabled: boolean) => void;
   onDelete: (id: string) => void;
+  onRun: (a: AgentAutomation) => void;
+  isRunning: boolean;
 }) {
   const cfg = triggerConfig[automation.trigger_type];
   const TriggerIcon = cfg.icon;
@@ -198,17 +204,32 @@ function AutomationCard({
             </span>
           </div>
 
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100">
-                <Trash2 className="h-3.5 w-3.5 text-destructive" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete automation?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently remove this automation trigger.
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs gap-1"
+              disabled={isRunning || (!automation.skill_id && !automation.skill_name)}
+              onClick={() => onRun(automation)}
+              title="Run this automation now"
+            >
+              {isRunning
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : <Play className="h-3.5 w-3.5" />}
+              Run now
+            </Button>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100">
+                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete automation?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently remove this automation trigger.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -217,6 +238,7 @@ function AutomationCard({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          </div>
         </div>
       </CardContent>
     </Card>

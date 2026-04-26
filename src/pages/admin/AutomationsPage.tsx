@@ -12,9 +12,13 @@ import { AdminPageContainer } from '@/components/admin/AdminPageContainer';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AutomationsPanel } from '@/components/admin/skills/AutomationsPanel';
 import { WorkflowsPanel } from '@/components/admin/skills/WorkflowsPanel';
+import { AutomationHealthPanel } from '@/components/admin/skills/AutomationHealthPanel';
+import { EventsPanel } from '@/components/admin/skills/EventsPanel';
+
+type Tab = 'automations' | 'workflows' | 'events' | 'health';
 
 export default function AutomationsPage() {
-  const [tab, setTab] = useState<'automations' | 'workflows'>('automations');
+  const [tab, setTab] = useState<Tab>('automations');
 
   return (
     <AdminPageContainer>
@@ -23,10 +27,12 @@ export default function AutomationsPage() {
         description="Schedule skills, react to events, and chain multi-step flows. Runs whether or not FlowPilot is enabled."
       />
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
         <TabsList>
           <TabsTrigger value="automations">Automations</TabsTrigger>
           <TabsTrigger value="workflows">Workflows</TabsTrigger>
+          <TabsTrigger value="events">Events</TabsTrigger>
+          <TabsTrigger value="health">Health</TabsTrigger>
         </TabsList>
 
         <TabsContent value="automations" className="mt-6">
@@ -35,6 +41,14 @@ export default function AutomationsPage() {
 
         <TabsContent value="workflows" className="mt-6">
           <WorkflowsPanel />
+        </TabsContent>
+
+        <TabsContent value="events" className="mt-6">
+          <EventsPanel />
+        </TabsContent>
+
+        <TabsContent value="health" className="mt-6">
+          <AutomationHealthPanel />
         </TabsContent>
       </Tabs>
     </AdminPageContainer>
