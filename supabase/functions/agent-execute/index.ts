@@ -5831,6 +5831,8 @@ const GENERIC_CRUD_TABLES = new Set([
   'agent_memory', 'agent_activity',
   // Recruitment / ATS module
   'job_postings', 'candidates', 'job_applications', 'application_stages', 'interviews',
+  // Smart-bookkeeping learning loop
+  'accounting_corrections',
 ]);
 
 /**
