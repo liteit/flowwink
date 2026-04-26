@@ -43,6 +43,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useA2APeers, useCreateA2APeer, useUpdateA2APeer, useDeleteA2APeer, useA2AActivity } from '@/hooks/useA2A';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
+import { InvitationTree } from '@/components/admin/federation/InvitationTree';
 
 export default function FederationPage() {
   const { toast } = useToast();
@@ -384,6 +385,7 @@ export default function FederationPage() {
         <Tabs defaultValue="a2a-peers" className="space-y-6">
           <TabsList>
             <TabsTrigger value="a2a-peers">Peers & Channels</TabsTrigger>
+            <TabsTrigger value="tree">Invitation Tree</TabsTrigger>
             <TabsTrigger value="activity">Activity & Findings</TabsTrigger>
             <TabsTrigger value="agent-invites">Agent Invites</TabsTrigger>
           </TabsList>
@@ -957,6 +959,10 @@ export default function FederationPage() {
               </h2>
               <McpActivityLog />
             </div>
+          </TabsContent>
+
+          <TabsContent value="tree">
+            <InvitationTree />
           </TabsContent>
 
           <TabsContent value="agent-invites">
