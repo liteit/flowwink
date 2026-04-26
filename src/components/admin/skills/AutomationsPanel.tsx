@@ -340,6 +340,24 @@ function AutomationEditorSheet({
             </Select>
           </div>
 
+          <div className="space-y-2">
+            <Label>Executor</Label>
+            <Select value={executor} onValueChange={(v) => setExecutor(v as AutomationExecutor)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="platform">Platform — deterministic skill run</SelectItem>
+                <SelectItem value="flowpilot">FlowPilot — agentic execution</SelectItem>
+                <SelectItem value="openclaw">OpenClaw — external operator</SelectItem>
+                <SelectItem value="external">External — webhook only</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Who runs this when it fires. Platform = no AI required.
+            </p>
+          </div>
+
           {/* Trigger-specific config */}
           {triggerType === 'cron' && (
             <div className="space-y-2">
