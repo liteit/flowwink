@@ -35,6 +35,7 @@ import NewsletterPage from "./pages/admin/NewsletterPage";
 import BlogPage from "./pages/admin/BlogPage";
 import BlogPostEditorPage from "./pages/admin/BlogPostEditorPage";
 import ModulesPage from "./pages/admin/ModulesPage";
+import AutomationsPage from "./pages/admin/AutomationsPage";
 import WebhooksPage from "./pages/admin/WebhooksPage";
 import LeadsPage from "./pages/admin/LeadsPage";
 import LeadDetailPage from "./pages/admin/LeadDetailPage";
