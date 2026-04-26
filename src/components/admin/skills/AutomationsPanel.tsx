@@ -287,6 +287,7 @@ function AutomationEditorSheet({
       skill_name: selectedSkill?.name ?? null,
       skill_arguments,
       enabled: automation?.enabled ?? true,
+      executor,
     });
     onClose();
   };
