@@ -394,6 +394,81 @@ export type Database = {
           },
         ]
       }
+      agent_audit_trail: {
+        Row: {
+          after_snapshot: Json | null
+          agent_type: string | null
+          before_snapshot: Json | null
+          caller_api_key_id: string | null
+          caller_user_id: string | null
+          conversation_id: string | null
+          created_at: string
+          crud_action: string
+          diff: Json | null
+          entity_id: string | null
+          error_message: string | null
+          exported_at: string | null
+          id: string
+          occurred_at: string
+          request_payload: Json
+          request_payload_sha256: string
+          retention_until: string | null
+          skill_id: string | null
+          skill_name: string | null
+          success: boolean
+          table_name: string
+          trace_id: string | null
+        }
+        Insert: {
+          after_snapshot?: Json | null
+          agent_type?: string | null
+          before_snapshot?: Json | null
+          caller_api_key_id?: string | null
+          caller_user_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          crud_action: string
+          diff?: Json | null
+          entity_id?: string | null
+          error_message?: string | null
+          exported_at?: string | null
+          id?: string
+          occurred_at?: string
+          request_payload?: Json
+          request_payload_sha256: string
+          retention_until?: string | null
+          skill_id?: string | null
+          skill_name?: string | null
+          success?: boolean
+          table_name: string
+          trace_id?: string | null
+        }
+        Update: {
+          after_snapshot?: Json | null
+          agent_type?: string | null
+          before_snapshot?: Json | null
+          caller_api_key_id?: string | null
+          caller_user_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          crud_action?: string
+          diff?: Json | null
+          entity_id?: string | null
+          error_message?: string | null
+          exported_at?: string | null
+          id?: string
+          occurred_at?: string
+          request_payload?: Json
+          request_payload_sha256?: string
+          retention_until?: string | null
+          skill_id?: string | null
+          skill_name?: string | null
+          success?: boolean
+          table_name?: string
+          trace_id?: string | null
+        }
+        Relationships: []
+      }
       agent_automations: {
         Row: {
           created_at: string

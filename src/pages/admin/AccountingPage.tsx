@@ -12,6 +12,7 @@ import { TaxTab } from '@/components/admin/accounting/TaxTab';
 import { VatReportTab } from '@/components/admin/accounting/VatReportTab';
 import { SettingsTab } from '@/components/admin/accounting/SettingsTab';
 import { AnalyticAccountingTab } from '@/components/admin/accounting/AnalyticAccountingTab';
+import { AuditTrailTab } from '@/components/admin/accounting/AuditTrailTab';
 
 export default function AccountingPage() {
   const [tab, setTab] = useState('journal');
@@ -35,6 +36,7 @@ export default function AccountingPage() {
             <TabsTrigger value="vat">VAT Report</TabsTrigger>
             <TabsTrigger value="analytic">Analytic</TabsTrigger>
             <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsTrigger value="audit">Audit Trail</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -64,6 +66,9 @@ export default function AccountingPage() {
           </TabsContent>
           <TabsContent value="templates">
             <TemplatesTab />
+          </TabsContent>
+          <TabsContent value="audit">
+            <AuditTrailTab />
           </TabsContent>
           <TabsContent value="settings">
             <SettingsTab />
