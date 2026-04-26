@@ -103,7 +103,7 @@ export function useCreateRfq() {
       lines: Array<Omit<RfqLine, 'id' | 'rfq_id' | 'position'>>;
       vendor_ids: string[];
     }) => {
-      const { data: rfq, error: rfqErr } = await supabase
+      const { data: rfq, error: rfqErr } = await (supabase
         .from('rfqs')
         .insert([{
           title: input.title,
@@ -112,9 +112,9 @@ export function useCreateRfq() {
           expected_delivery: input.expected_delivery,
           currency: input.currency ?? 'SEK',
           status: 'draft' as const,
-        }])
+        }] as any)
         .select()
-        .single();
+        .single());
       if (rfqErr) throw rfqErr;
 
       if (input.lines.length) {
