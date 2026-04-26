@@ -5735,6 +5735,7 @@ const ACCOUNTING_AUDIT_TABLES = new Set([
   'goods_receipts', 'goods_receipt_lines', 'vendor_invoices', 'vendor_products',
   'rfqs', 'rfq_lines', 'rfq_bids',
   'expenses',
+  'accounting_corrections',
 ]);
 
 async function sha256Hex(input: string): Promise<string> {
