@@ -56,16 +56,35 @@ serve(async (req: Request) => {
         .maybeSingle();
       inviter = data as any;
     } else {
-      // Look up by mcp_api_key from Authorization header
+      // Look up by API key from Authorization header.
+      // The MCP server links peers via api_key_id, so we hash the bearer token,
+      // find the api_keys row, then the a2a_peers row that points to it.
       const auth = req.headers.get("authorization") ?? "";
       const token = auth.replace(/^Bearer\s+/i, "").trim();
       if (token.startsWith("fwk_")) {
-        const { data } = await supabase
-          .from("a2a_peers")
-          .select("id, name, toolset_groups")
-          .eq("mcp_api_key", token)
+        const tokenHash = await sha256Hex(token);
+        const { data: keyRow } = await supabase
+          .from("api_keys")
+          .select("id")
+          .eq("key_hash", tokenHash)
           .maybeSingle();
-        inviter = data as any;
+        if (keyRow?.id) {
+          const { data } = await supabase
+            .from("a2a_peers")
+            .select("id, name, toolset_groups")
+            .eq("api_key_id", keyRow.id)
+            .maybeSingle();
+          inviter = data as any;
+        }
+        // Fallback: legacy peers that stored the raw key in mcp_api_key
+        if (!inviter) {
+          const { data } = await supabase
+            .from("a2a_peers")
+            .select("id, name, toolset_groups")
+            .eq("mcp_api_key", token)
+            .maybeSingle();
+          inviter = data as any;
+        }
       }
     }
 
