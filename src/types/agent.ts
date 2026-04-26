@@ -13,6 +13,7 @@ export type AgentType = 'flowpilot' | 'chat';
 export type AgentMemoryCategory = 'preference' | 'context' | 'fact';
 export type AgentObjectiveStatus = 'active' | 'completed' | 'paused' | 'failed';
 export type AutomationTriggerType = 'cron' | 'event' | 'signal';
+export type AutomationExecutor = 'platform' | 'flowpilot' | 'openclaw' | 'external';
 
 // =============================================================================
 // Skill
