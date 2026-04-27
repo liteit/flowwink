@@ -274,7 +274,7 @@ async function buildContext(
         const company = l.companies?.name;
         return `[${r}] ${l.name || l.email || 'Lead'} ${company ? `@ ${company}` : ''} status=${l.status || 'n/a'} score=${l.score ?? '–'}`;
       });
-      blocks.push(`### Leads (top ${leads.length} by score)\n${lines.join('\n')}`);
+      rawBlocks.push({ source: 'leads', text: `### Leads (top ${leads.length} by score)\n${lines.join('\n')}` });
     }
 
     const { data: deals, error: dealsErr } = await supabase
