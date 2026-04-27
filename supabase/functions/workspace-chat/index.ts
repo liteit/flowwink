@@ -561,6 +561,7 @@ Deno.serve(async (req) => {
       async start(controller) {
         const encoder = new TextEncoder();
         controller.enqueue(encoder.encode(`event: citations\ndata: ${JSON.stringify(citations)}\n\n`));
+        controller.enqueue(encoder.encode(`event: context_meta\ndata: ${JSON.stringify(contextMeta)}\n\n`));
         const reader = upstream.body!.getReader();
         try {
           while (true) {
