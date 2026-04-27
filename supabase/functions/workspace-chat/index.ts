@@ -155,24 +155,27 @@ async function buildContext(
 
   // --- CRM (leads + deals) ---
   if (sources.includes('crm')) {
-    const { data: leads } = await supabase
+    const { data: leads, error: leadsErr } = await supabase
       .from('leads')
-      .select('id, name, email, company, status, score')
-      .order('created_at', { ascending: false })
+      .select('id, name, email, status, score, companies ( name )')
+      .order('score', { ascending: false, nullsFirst: false })
       .limit(PER_SOURCE_LIMIT);
+    if (leadsErr) console.error('workspace-chat: leads query failed', leadsErr);
     if (leads?.length) {
       const lines = leads.map((l: any) => {
         const r = push('lead', l.id, l.name || l.email || 'Lead', `/admin/leads/${l.id}`);
-        return `[${r}] ${l.name || l.email || 'Lead'} ${l.company ? `@ ${l.company}` : ''} status=${l.status || 'n/a'} score=${l.score ?? '–'}`;
+        const company = l.companies?.name;
+        return `[${r}] ${l.name || l.email || 'Lead'} ${company ? `@ ${company}` : ''} status=${l.status || 'n/a'} score=${l.score ?? '–'}`;
       });
-      blocks.push(`### Leads\n${lines.join('\n')}`);
+      blocks.push(`### Leads (top ${leads.length} by score)\n${lines.join('\n')}`);
     }
 
-    const { data: deals } = await supabase
+    const { data: deals, error: dealsErr } = await supabase
       .from('deals')
       .select('id, title, stage, value, currency, close_date')
       .order('updated_at', { ascending: false })
       .limit(PER_SOURCE_LIMIT);
+    if (dealsErr) console.error('workspace-chat: deals query failed', dealsErr);
     if (deals?.length) {
       const lines = deals.map((d: any) => {
         const r = push('deal', d.id, d.title || 'Deal', `/admin/deals/${d.id}`);
