@@ -590,11 +590,14 @@ Deno.serve(async (req) => {
 /* ------------------------------------------------------------------ */
 /* Helper: emit a single-shot answer in the same SSE shape as streaming */
 /* ------------------------------------------------------------------ */
-function streamFinal(citations: Citation[], text: string): Response {
+function streamFinal(citations: Citation[], text: string, contextMeta?: ContextMeta): Response {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     start(controller) {
       controller.enqueue(encoder.encode(`event: citations\ndata: ${JSON.stringify(citations)}\n\n`));
+      if (contextMeta) {
+        controller.enqueue(encoder.encode(`event: context_meta\ndata: ${JSON.stringify(contextMeta)}\n\n`));
+      }
       // Emit as a single OpenAI-style delta so the existing client parser handles it.
       const payload = { choices: [{ delta: { content: text } }] };
       controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
