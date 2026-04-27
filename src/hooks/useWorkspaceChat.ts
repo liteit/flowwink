@@ -37,6 +37,14 @@ export interface WorkspaceMessage {
 
 export type CoworkMode = 'strict' | 'cowork';
 
+export interface ContextMeta {
+  tokens_used: number;
+  tokens_budget: number;
+  sources_active: number;
+  sources_truncated: string[];
+  per_source: Record<string, number>;
+}
+
 interface UseWorkspaceChatOpts {
   sources: WorkspaceSource[];
   mode?: CoworkMode;
@@ -48,6 +56,7 @@ const ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/workspace-ch
 export function useWorkspaceChat({ sources, mode, onError }: UseWorkspaceChatOpts) {
   const [messages, setMessages] = useState<WorkspaceMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [lastContextMeta, setLastContextMeta] = useState<ContextMeta | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const reset = useCallback(() => {
@@ -189,6 +198,16 @@ export function useWorkspaceChat({ sources, mode, onError }: UseWorkspaceChatOpt
                 continue;
               }
 
+              if (currentEvent === 'context_meta') {
+                try {
+                  const meta = JSON.parse(data) as ContextMeta;
+                  setLastContextMeta(meta);
+                } catch (err) {
+                  logger.error('parse context_meta failed', err);
+                }
+                continue;
+              }
+
               try {
                 const parsed = JSON.parse(data);
                 const delta = parsed.choices?.[0]?.delta?.content;
@@ -236,5 +255,5 @@ export function useWorkspaceChat({ sources, mode, onError }: UseWorkspaceChatOpt
     [messages, sources, mode, isStreaming, onError],
   );
 
-  return { messages, isStreaming, send, stop, reset };
+  return { messages, isStreaming, send, stop, reset, lastContextMeta };
 }

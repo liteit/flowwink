@@ -70,14 +70,100 @@ const DEFAULT_SETTINGS: CoworkSettings = {
 const PER_SOURCE_LIMIT = 25;
 
 /* ------------------------------------------------------------------ */
+/* Token budget                                                        */
+/* ------------------------------------------------------------------ */
+// Rough char→token estimate (gpt-style): ~4 chars per token.
+const CHAR_PER_TOKEN = 4;
+const TOTAL_TOKEN_BUDGET = 15000;
+const MIN_PER_SOURCE_TOKENS = 600;
+
+interface ContextMeta {
+  tokens_used: number;
+  tokens_budget: number;
+  sources_active: number;
+  sources_truncated: string[];
+  per_source: Record<string, number>;
+}
+
+function estimateTokens(text: string): number {
+  return Math.ceil(text.length / CHAR_PER_TOKEN);
+}
+
+function truncateBlock(block: string, maxTokens: number): { block: string; truncated: boolean } {
+  const tokens = estimateTokens(block);
+  if (tokens <= maxTokens) return { block, truncated: false };
+  const maxChars = maxTokens * CHAR_PER_TOKEN;
+  const lines = block.split('\n');
+  const header = lines[0];
+  let out = header;
+  let used = header.length;
+  for (let i = 1; i < lines.length; i++) {
+    const next = '\n' + lines[i];
+    if (used + next.length > maxChars - 40) break;
+    out += next;
+    used += next.length;
+  }
+  out += `\n…[truncated to fit token budget]`;
+  return { block: out, truncated: true };
+}
+
+function applyTokenBudget(
+  rawBlocks: Array<{ source: string; text: string }>,
+): { contextText: string; meta: ContextMeta } {
+  const sourcesActive = rawBlocks.length;
+  if (sourcesActive === 0) {
+    return {
+      contextText: '',
+      meta: { tokens_used: 0, tokens_budget: TOTAL_TOKEN_BUDGET, sources_active: 0, sources_truncated: [], per_source: {} },
+    };
+  }
+  const fairShare = Math.max(MIN_PER_SOURCE_TOKENS, Math.floor(TOTAL_TOKEN_BUDGET / sourcesActive));
+  const truncated: string[] = [];
+  const trimmed = rawBlocks.map(({ source, text }) => {
+    const r = truncateBlock(text, fairShare);
+    if (r.truncated) truncated.push(source);
+    return { source, text: r.block, tokens: estimateTokens(r.block) };
+  });
+  let used = trimmed.reduce((s, b) => s + b.tokens, 0);
+  const leftover = TOTAL_TOKEN_BUDGET - used;
+  if (leftover > 0 && truncated.length > 0) {
+    const bonus = Math.floor(leftover / truncated.length);
+    for (let i = 0; i < trimmed.length; i++) {
+      if (!truncated.includes(trimmed[i].source)) continue;
+      const original = rawBlocks.find((b) => b.source === trimmed[i].source)!.text;
+      const r = truncateBlock(original, trimmed[i].tokens + bonus);
+      trimmed[i].text = r.block;
+      trimmed[i].tokens = estimateTokens(r.block);
+      if (!r.truncated) {
+        const idx = truncated.indexOf(trimmed[i].source);
+        if (idx >= 0) truncated.splice(idx, 1);
+      }
+    }
+  }
+  const finalText = trimmed.map((b) => b.text).join('\n\n');
+  const perSource: Record<string, number> = {};
+  trimmed.forEach((b) => { perSource[b.source] = b.tokens; });
+  return {
+    contextText: finalText,
+    meta: {
+      tokens_used: estimateTokens(finalText),
+      tokens_budget: TOTAL_TOKEN_BUDGET,
+      sources_active: sourcesActive,
+      sources_truncated: truncated,
+      per_source: perSource,
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ */
 /* Context builder                                                     */
 /* ------------------------------------------------------------------ */
 async function buildContext(
   supabase: any,
   sources: SourceKey[],
-): Promise<{ contextText: string; citations: Citation[] }> {
+): Promise<{ contextText: string; citations: Citation[]; meta: ContextMeta }> {
   const citations: Citation[] = [];
-  const blocks: string[] = [];
+  const rawBlocks: Array<{ source: string; text: string }> = [];
   let ref = 1;
 
   const push = (
@@ -104,7 +190,7 @@ async function buildContext(
         const desc = d.description ? ` — ${String(d.description).slice(0, 200)}` : '';
         return `[${r}] ${d.title || 'Untitled'}${meta}${desc}`;
       });
-      blocks.push(`### Documents\n${lines.join('\n')}`);
+      rawBlocks.push({ source: 'documents', text: `### Documents\n${lines.join('\n')}` });
     }
   }
 
@@ -125,7 +211,7 @@ async function buildContext(
         ].filter(Boolean).join(', ');
         return `[${r}] ${c.title || 'Contract'} (${parts})`;
       });
-      blocks.push(`### Contracts\n${lines.join('\n')}`);
+      rawBlocks.push({ source: 'contracts', text: `### Contracts\n${lines.join('\n')}` });
     }
 
     const { data: empContracts } = await supabase
@@ -138,7 +224,7 @@ async function buildContext(
         const r = push('employment_contract', c.id, `${c.employee_name || 'Employee'} — ${c.role || 'role'}`, `/admin/hr/contracts/${c.id}`);
         return `[${r}] ${c.employee_name || ''} ${c.role ? `(${c.role})` : ''} status=${c.status || 'n/a'} ${c.start_date ? `from ${c.start_date}` : ''}`;
       });
-      blocks.push(`### Employment Contracts\n${lines.join('\n')}`);
+      rawBlocks.push({ source: 'employment_contracts', text: `### Employment Contracts\n${lines.join('\n')}` });
     }
   }
 
@@ -154,7 +240,7 @@ async function buildContext(
         const summary = a.summary || (a.body ? String(a.body).slice(0, 200) : '');
         return `[${r}] ${a.title} — ${summary}`;
       });
-      blocks.push(`### Knowledge Base\n${lines.join('\n')}`);
+      rawBlocks.push({ source: 'kb', text: `### Knowledge Base\n${lines.join('\n')}` });
     }
   }
 
@@ -171,7 +257,7 @@ async function buildContext(
         const desc = p.seo_description ? ` — ${p.seo_description}` : '';
         return `[${r}] ${p.title} (/${p.slug || ''})${desc}`;
       });
-      blocks.push(`### Pages\n${lines.join('\n')}`);
+      rawBlocks.push({ source: 'pages', text: `### Pages\n${lines.join('\n')}` });
     }
   }
 
@@ -188,7 +274,7 @@ async function buildContext(
         const company = l.companies?.name;
         return `[${r}] ${l.name || l.email || 'Lead'} ${company ? `@ ${company}` : ''} status=${l.status || 'n/a'} score=${l.score ?? '–'}`;
       });
-      blocks.push(`### Leads (top ${leads.length} by score)\n${lines.join('\n')}`);
+      rawBlocks.push({ source: 'leads', text: `### Leads (top ${leads.length} by score)\n${lines.join('\n')}` });
     }
 
     const { data: deals, error: dealsErr } = await supabase
@@ -202,7 +288,7 @@ async function buildContext(
         const r = push('deal', d.id, d.title || 'Deal', `/admin/deals/${d.id}`);
         return `[${r}] ${d.title || 'Deal'} stage=${d.stage || 'n/a'} value=${d.value ?? '–'} ${d.currency || ''} ${d.close_date ? `close=${d.close_date}` : ''}`;
       });
-      blocks.push(`### Deals\n${lines.join('\n')}`);
+      rawBlocks.push({ source: 'deals', text: `### Deals\n${lines.join('\n')}` });
     }
   }
 
@@ -217,11 +303,12 @@ async function buildContext(
         const r = push('employee', e.id, e.full_name || e.email || 'Employee', `/admin/hr/employees/${e.id}`);
         return `[${r}] ${e.full_name || e.email} ${e.role ? `(${e.role})` : ''} ${e.department ? `— ${e.department}` : ''} status=${e.status || 'active'}`;
       });
-      blocks.push(`### Employees\n${lines.join('\n')}`);
+      rawBlocks.push({ source: 'employees', text: `### Employees\n${lines.join('\n')}` });
     }
   }
 
-  return { contextText: blocks.join('\n\n'), citations };
+  const { contextText, meta } = applyTokenBudget(rawBlocks);
+  return { contextText, citations, meta };
 }
 
 /* ------------------------------------------------------------------ */
@@ -349,7 +436,8 @@ Deno.serve(async (req) => {
     const allowWorld = mode === 'strict' ? false : settings.allowWorldKnowledge;
     const webSearchOn = mode === 'strict' ? false : settings.allowWebSearch && !!Deno.env.get('FIRECRAWL_API_KEY');
 
-    const { contextText, citations } = await buildContext(supabaseAdmin, requestedSources);
+    const { contextText, citations, meta: contextMeta } = await buildContext(supabaseAdmin, requestedSources);
+    console.log(`[cowork-chat] context: ${contextMeta.tokens_used}/${contextMeta.tokens_budget} tokens, ${contextMeta.sources_active} sources, truncated=[${contextMeta.sources_truncated.join(',')}]`);
 
     const { apiKey, apiUrl, model } = await resolveAiConfig(supabaseAdmin, 'fast');
     if (isAnthropicProvider(apiUrl)) {
@@ -421,7 +509,7 @@ Deno.serve(async (req) => {
         if (!toolCalls || toolCalls.length === 0) {
           // No tool calls — we have the final assistant message. Stream it back as a single chunk.
           const finalText: string = choice?.message?.content || '';
-          return streamFinal(citations, finalText);
+          return streamFinal(citations, finalText, contextMeta);
         }
         // Execute tool calls
         conversation.push(choice.message);
@@ -452,7 +540,7 @@ Deno.serve(async (req) => {
       });
       const json = await resp.json();
       const finalText: string = json.choices?.[0]?.message?.content || '';
-      return streamFinal(citations, finalText);
+      return streamFinal(citations, finalText, contextMeta);
     }
 
     /* -------- No tools: stream straight through -------- */
@@ -473,6 +561,7 @@ Deno.serve(async (req) => {
       async start(controller) {
         const encoder = new TextEncoder();
         controller.enqueue(encoder.encode(`event: citations\ndata: ${JSON.stringify(citations)}\n\n`));
+        controller.enqueue(encoder.encode(`event: context_meta\ndata: ${JSON.stringify(contextMeta)}\n\n`));
         const reader = upstream.body!.getReader();
         try {
           while (true) {
@@ -501,11 +590,14 @@ Deno.serve(async (req) => {
 /* ------------------------------------------------------------------ */
 /* Helper: emit a single-shot answer in the same SSE shape as streaming */
 /* ------------------------------------------------------------------ */
-function streamFinal(citations: Citation[], text: string): Response {
+function streamFinal(citations: Citation[], text: string, contextMeta?: ContextMeta): Response {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     start(controller) {
       controller.enqueue(encoder.encode(`event: citations\ndata: ${JSON.stringify(citations)}\n\n`));
+      if (contextMeta) {
+        controller.enqueue(encoder.encode(`event: context_meta\ndata: ${JSON.stringify(contextMeta)}\n\n`));
+      }
       // Emit as a single OpenAI-style delta so the existing client parser handles it.
       const payload = { choices: [{ delta: { content: text } }] };
       controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
