@@ -37,6 +37,14 @@ export interface WorkspaceMessage {
 
 export type CoworkMode = 'strict' | 'cowork';
 
+export interface ContextMeta {
+  tokens_used: number;
+  tokens_budget: number;
+  sources_active: number;
+  sources_truncated: string[];
+  per_source: Record<string, number>;
+}
+
 interface UseWorkspaceChatOpts {
   sources: WorkspaceSource[];
   mode?: CoworkMode;
