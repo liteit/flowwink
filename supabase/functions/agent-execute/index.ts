@@ -3651,21 +3651,64 @@ async function executeLeadPipelineReview(
 // Leads management handler
 // =============================================================================
 
+/**
+ * Lead status alias map — translates common agent values into the canonical
+ * lead_status enum (lead | opportunity | customer | lost). Returns:
+ *   - canonical enum string when input maps to one
+ *   - null when the input means "no filter" (all/any/* / undefined)
+ *   - the raw input (lowercased) otherwise, so DB still rejects truly unknown values
+ *
+ * Keep in sync with the enum in public.lead_status and the tool_definition
+ * schema for skill `manage_leads`.
+ */
+const LEAD_STATUS_ALIASES: Record<string, string> = {
+  // canonical
+  lead: 'lead',
+  opportunity: 'opportunity',
+  customer: 'customer',
+  lost: 'lost',
+  // common agent aliases
+  new: 'lead',
+  unqualified: 'lead',
+  contacted: 'lead',
+  qualified: 'opportunity',
+  open: 'opportunity',
+  active: 'opportunity',
+  negotiation: 'opportunity',
+  proposal: 'opportunity',
+  won: 'customer',
+  closed_won: 'customer',
+  'closed-won': 'customer',
+  client: 'customer',
+  disqualified: 'lost',
+  closed_lost: 'lost',
+  'closed-lost': 'lost',
+  rejected: 'lost',
+};
+
+function normalizeLeadStatus(input: unknown): string | null {
+  if (input === undefined || input === null || input === '') return null;
+  const key = String(input).trim().toLowerCase();
+  if (key === 'all' || key === 'any' || key === '*') return null;
+  return LEAD_STATUS_ALIASES[key] ?? key;
+}
+
 async function executeLeadsAction(
   supabase: any,
   args: Record<string, unknown>,
 ): Promise<unknown> {
   const { action = 'list', lead_id, status, score, search, limit = 50 } = args as any;
+  const normalizedStatus = normalizeLeadStatus(status);
 
   if (action === 'list') {
     let query = supabase.from('leads')
       .select('id, email, name, phone, status, score, source, ai_summary, created_at, updated_at')
       .order('updated_at', { ascending: false }).limit(limit);
-    if (status) query = query.eq('status', status);
+    if (normalizedStatus) query = query.eq('status', normalizedStatus);
     if (search) query = query.or(`email.ilike.%${search}%,name.ilike.%${search}%`);
     const { data, error } = await query;
     if (error) throw new Error(`List leads failed: ${error.message}`);
-    return { leads: data || [] };
+    return { leads: data || [], status_filter: normalizedStatus };
   }
 
   if (action === 'get' && lead_id) {
@@ -3681,7 +3724,12 @@ async function executeLeadsAction(
 
   if (action === 'update' && lead_id) {
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
-    if (status !== undefined) updates.status = status;
+    if (status !== undefined) {
+      if (!normalizedStatus) {
+        return { error: `Invalid status "${status}". Allowed: lead, opportunity, customer, lost.` };
+      }
+      updates.status = normalizedStatus;
+    }
     if (score !== undefined) updates.score = score;
     const { data, error } = await supabase.from('leads')
       .update(updates).eq('id', lead_id).select('id, email, status, score').single();
