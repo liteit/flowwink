@@ -190,7 +190,7 @@ async function buildContext(
         const desc = d.description ? ` — ${String(d.description).slice(0, 200)}` : '';
         return `[${r}] ${d.title || 'Untitled'}${meta}${desc}`;
       });
-      blocks.push(`### Documents\n${lines.join('\n')}`);
+      rawBlocks.push({ source: 'documents', text: `### Documents\n${lines.join('\n')}` });
     }
   }
 
@@ -211,7 +211,7 @@ async function buildContext(
         ].filter(Boolean).join(', ');
         return `[${r}] ${c.title || 'Contract'} (${parts})`;
       });
-      blocks.push(`### Contracts\n${lines.join('\n')}`);
+      rawBlocks.push({ source: 'contracts', text: `### Contracts\n${lines.join('\n')}` });
     }
 
     const { data: empContracts } = await supabase
@@ -224,7 +224,7 @@ async function buildContext(
         const r = push('employment_contract', c.id, `${c.employee_name || 'Employee'} — ${c.role || 'role'}`, `/admin/hr/contracts/${c.id}`);
         return `[${r}] ${c.employee_name || ''} ${c.role ? `(${c.role})` : ''} status=${c.status || 'n/a'} ${c.start_date ? `from ${c.start_date}` : ''}`;
       });
-      blocks.push(`### Employment Contracts\n${lines.join('\n')}`);
+      rawBlocks.push({ source: 'employment_contracts', text: `### Employment Contracts\n${lines.join('\n')}` });
     }
   }
 
@@ -240,7 +240,7 @@ async function buildContext(
         const summary = a.summary || (a.body ? String(a.body).slice(0, 200) : '');
         return `[${r}] ${a.title} — ${summary}`;
       });
-      blocks.push(`### Knowledge Base\n${lines.join('\n')}`);
+      rawBlocks.push({ source: 'kb', text: `### Knowledge Base\n${lines.join('\n')}` });
     }
   }
 
@@ -257,7 +257,7 @@ async function buildContext(
         const desc = p.seo_description ? ` — ${p.seo_description}` : '';
         return `[${r}] ${p.title} (/${p.slug || ''})${desc}`;
       });
-      blocks.push(`### Pages\n${lines.join('\n')}`);
+      rawBlocks.push({ source: 'pages', text: `### Pages\n${lines.join('\n')}` });
     }
   }
 
@@ -288,7 +288,7 @@ async function buildContext(
         const r = push('deal', d.id, d.title || 'Deal', `/admin/deals/${d.id}`);
         return `[${r}] ${d.title || 'Deal'} stage=${d.stage || 'n/a'} value=${d.value ?? '–'} ${d.currency || ''} ${d.close_date ? `close=${d.close_date}` : ''}`;
       });
-      blocks.push(`### Deals\n${lines.join('\n')}`);
+      rawBlocks.push({ source: 'deals', text: `### Deals\n${lines.join('\n')}` });
     }
   }
 
@@ -303,7 +303,7 @@ async function buildContext(
         const r = push('employee', e.id, e.full_name || e.email || 'Employee', `/admin/hr/employees/${e.id}`);
         return `[${r}] ${e.full_name || e.email} ${e.role ? `(${e.role})` : ''} ${e.department ? `— ${e.department}` : ''} status=${e.status || 'active'}`;
       });
-      blocks.push(`### Employees\n${lines.join('\n')}`);
+      rawBlocks.push({ source: 'employees', text: `### Employees\n${lines.join('\n')}` });
     }
   }
 
