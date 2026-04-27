@@ -26,6 +26,8 @@
     "expenses": ["user_id"],
     "invoices": ["invoice_number"],
     "quotes": ["quote_number"],
-    "job_postings": ["slug"]
+    "job_postings": ["slug"],
+    "vendors": ["name"],
+    "opening_balances": ["account_name"]
   }
 }

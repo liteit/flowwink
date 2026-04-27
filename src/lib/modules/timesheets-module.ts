@@ -127,7 +127,7 @@ export const timesheetsModule = defineModule<TimesheetsInput, TimesheetsOutput>(
   inputSchema: timesheetsInputSchema,
   outputSchema: timesheetsOutputSchema,
 
-  skills: ['log_time', 'manage_projects', 'manage_tasks', 'timesheet_summary', 'lock_timesheet_period'],
+  skills: ['log_time', 'timesheet_summary', 'lock_timesheet_period'],
   skillSeeds: TIMESHEET_SKILLS,
   automations: TIMESHEET_AUTOMATIONS,
 
