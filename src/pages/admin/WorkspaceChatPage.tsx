@@ -48,7 +48,7 @@ export default function WorkspaceChatPage() {
     }
   }, [settings?.defaultSources]);
 
-  const { messages, isStreaming, send, stop, reset } = useWorkspaceChat({
+  const { messages, isStreaming, send, stop, reset, lastContextMeta } = useWorkspaceChat({
     sources,
     mode: settings?.mode,
     onError: (msg) =>
