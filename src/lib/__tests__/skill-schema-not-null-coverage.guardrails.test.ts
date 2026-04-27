@@ -47,6 +47,7 @@ function collectManageSkills(): SkillSeed[] {
     const seeds: SkillSeed[] | undefined = exported.skillSeeds;
     if (!Array.isArray(seeds)) continue;
     for (const s of seeds) {
+      if (!s || typeof s !== 'object') continue;
       if (s.name?.startsWith('manage_') && s.handler?.startsWith('db:')) {
         out.push(s);
       }
