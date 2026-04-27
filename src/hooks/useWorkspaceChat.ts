@@ -56,6 +56,7 @@ const ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/workspace-ch
 export function useWorkspaceChat({ sources, mode, onError }: UseWorkspaceChatOpts) {
   const [messages, setMessages] = useState<WorkspaceMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [lastContextMeta, setLastContextMeta] = useState<ContextMeta | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const reset = useCallback(() => {
