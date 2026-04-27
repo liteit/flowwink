@@ -307,7 +307,8 @@ async function buildContext(
     }
   }
 
-  return { contextText: blocks.join('\n\n'), citations };
+  const { contextText, meta } = applyTokenBudget(rawBlocks);
+  return { contextText, citations, meta };
 }
 
 /* ------------------------------------------------------------------ */
