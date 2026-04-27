@@ -21,17 +21,50 @@ interface ToolProperty {
   enum?: string[];
 }
 
+interface JsonSchemaNode {
+  properties?: Record<string, ToolProperty>;
+  required?: string[];
+  allOf?: Array<{
+    if?: { properties?: Record<string, { const?: string; enum?: string[] }> };
+    then?: { required?: string[]; properties?: Record<string, ToolProperty> };
+  }>;
+  oneOf?: JsonSchemaNode[];
+  anyOf?: JsonSchemaNode[];
+}
+
 interface SkillSeed {
   name: string;
   handler?: string;
   tool_definition?: {
     function?: {
-      parameters?: {
-        properties?: Record<string, ToolProperty>;
-        required?: string[];
-      };
+      parameters?: JsonSchemaNode;
     };
   };
+}
+
+/** Collect the set of `action` enum values declared on the skill. */
+function getActions(params: JsonSchemaNode | undefined): string[] {
+  const actionProp = params?.properties?.action as ToolProperty | undefined;
+  return actionProp?.enum ?? [];
+}
+
+/** Compute which fields are required for a given action value, considering allOf/if-then branches. */
+function requiredForAction(
+  params: JsonSchemaNode | undefined,
+  action: string,
+): Set<string> {
+  const required = new Set<string>(params?.required ?? []);
+  for (const branch of params?.allOf ?? []) {
+    const ifAction = branch.if?.properties?.action;
+    if (!ifAction) continue;
+    const matches =
+      ifAction.const === action ||
+      (Array.isArray(ifAction.enum) && ifAction.enum.includes(action));
+    if (matches) {
+      for (const f of branch.then?.required ?? []) required.add(f);
+    }
+  }
+  return required;
 }
 
 const NOT_NULL_TABLES = (fixture as any).tables as Record<string, string[]>;
@@ -113,5 +146,41 @@ describe('Skill schema NOT NULL coverage guardrails', () => {
           `auto-generated invoice numbers, update-only skills).`,
       ).toEqual([]);
     });
+
+    // ── Per-action `required` enforcement ──────────────────────────────────
+    // For each *write* action declared on the skill, verify NOT NULL columns
+    // (minus skill-exempt + alias-resolved) are listed in `required` (either
+    // top-level or inside an allOf/if-then branch matching that action).
+    const params = skill.tool_definition?.function?.parameters;
+    const actions = getActions(params);
+    const WRITE_ACTIONS = new Set(['create', 'insert', 'add']);
+    const writeActions = actions.filter((a) => WRITE_ACTIONS.has(a));
+
+    for (const action of writeActions) {
+      it(`[${skill.name}] marks NOT NULL columns as required for action="${action}"`, () => {
+        const required = requiredForAction(params, action);
+        const aliasResolvedRequired = (col: string): boolean => {
+          if (required.has(col)) return true;
+          const aliases = aliasMap[col];
+          return aliases?.some((a) => required.has(a)) ?? false;
+        };
+
+        const notRequired = requiredCols
+          .filter((col) => !exemptCols.has(col))
+          .filter((col) => isExposed(col)) // already covered by other test if missing
+          .filter((col) => !aliasResolvedRequired(col));
+
+        expect(
+          notRequired,
+          `Skill "${skill.name}" exposes NOT NULL columns [${notRequired.join(', ')}] ` +
+            `but does not mark them as required for action="${action}". ` +
+            `Add them via:\n` +
+            `  allOf: [{ if: { properties: { action: { const: "${action}" } } }, ` +
+            `then: { required: ["action", ${notRequired.map((c) => `"${c}"`).join(', ')}] } }]\n` +
+            `Or, if the handler fills it automatically, add to ` +
+            `"_skill_auto_filled_columns.${skill.name}" in db-not-null-columns.json.`,
+        ).toEqual([]);
+      });
+    }
   }
 });
