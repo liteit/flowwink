@@ -20,14 +20,14 @@
     "site_settings": ["key"],
     "vendors": ["name"]
   },
-  "_auto_filled_columns": {
-    "_comment": "Columns the handler/service-layer fills automatically — exempt from schema exposure rule",
-    "documents": ["file_name"],
-    "expenses": ["user_id"],
-    "invoices": ["invoice_number"],
-    "quotes": ["quote_number"],
-    "job_postings": ["slug"],
-    "vendors": ["name"],
-    "opening_balances": ["account_name"]
+  "_skill_auto_filled_columns": {
+    "_comment": "Per-skill exemptions: columns the skill's handler/service-layer fills automatically (e.g. user_id from JWT, auto-generated invoice numbers, or update-only skills that never insert a new row).",
+    "manage_document": ["file_name"],
+    "manage_expenses": ["user_id"],
+    "manage_invoice": ["invoice_number"],
+    "manage_quote": ["quote_number"],
+    "manage_job_posting": ["slug"],
+    "manage_vendor_defaults": ["name"],
+    "manage_opening_balances": ["account_name"]
   }
 }

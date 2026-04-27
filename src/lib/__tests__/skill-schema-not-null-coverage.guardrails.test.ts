@@ -35,7 +35,7 @@ interface SkillSeed {
 }
 
 const NOT_NULL_TABLES = (fixture as any).tables as Record<string, string[]>;
-const AUTO_FILLED = ((fixture as any)._auto_filled_columns ?? {}) as Record<
+const SKILL_AUTO_FILLED = ((fixture as any)._skill_auto_filled_columns ?? {}) as Record<
   string,
   string[]
 >;
@@ -78,7 +78,7 @@ describe('Skill schema NOT NULL coverage guardrails', () => {
       continue;
     }
 
-    const exemptCols = new Set(AUTO_FILLED[table] ?? []);
+    const exemptCols = new Set(SKILL_AUTO_FILLED[skill.name] ?? []);
     const exposedProps = new Set(
       Object.keys(
         skill.tool_definition?.function?.parameters?.properties ?? {},
@@ -108,9 +108,9 @@ describe('Skill schema NOT NULL coverage guardrails', () => {
           `[${missing.join(', ')}] on table "${table}". ` +
           `Either add them to tool_definition.function.parameters.properties ` +
           `(and mark required via allOf/if-then for action=create), or add them ` +
-          `to "_auto_filled_columns.${table}" in db-not-null-columns.json if the ` +
-          `handler/service fills them automatically (e.g. user_id from auth, ` +
-          `auto-generated invoice numbers).`,
+          `to "_skill_auto_filled_columns.${skill.name}" in db-not-null-columns.json ` +
+          `if the handler/service fills them automatically (e.g. user_id from auth, ` +
+          `auto-generated invoice numbers, update-only skills).`,
       ).toEqual([]);
     });
   }
