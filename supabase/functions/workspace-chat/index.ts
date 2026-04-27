@@ -279,14 +279,18 @@ async function buildContext(
 
     const { data: deals, error: dealsErr } = await supabase
       .from('deals')
-      .select('id, title, stage, value, currency, close_date')
+      .select('id, stage, value_cents, currency, expected_close, notes, leads(name, email, companies(name))')
       .order('updated_at', { ascending: false })
       .limit(PER_SOURCE_LIMIT);
     if (dealsErr) console.error('cowork-chat: deals query failed', dealsErr);
     if (deals?.length) {
       const lines = deals.map((d: any) => {
-        const r = push('deal', d.id, d.title || 'Deal', `/admin/deals/${d.id}`);
-        return `[${r}] ${d.title || 'Deal'} stage=${d.stage || 'n/a'} value=${d.value ?? '–'} ${d.currency || ''} ${d.close_date ? `close=${d.close_date}` : ''}`;
+        const leadName = d.leads?.name || d.leads?.email || 'Unknown lead';
+        const company = d.leads?.companies?.name;
+        const label = `${leadName}${company ? ` @ ${company}` : ''}`;
+        const r = push('deal', d.id, label, `/admin/deals/${d.id}`);
+        const value = d.value_cents ? (d.value_cents / 100).toFixed(0) : '–';
+        return `[${r}] ${label} stage=${d.stage || 'n/a'} value=${value} ${d.currency || ''} ${d.expected_close ? `close=${d.expected_close}` : ''}${d.notes ? ` — ${d.notes.slice(0, 120)}` : ''}`;
       });
       rawBlocks.push({ source: 'deals', text: `### Deals\n${lines.join('\n')}` });
     }
