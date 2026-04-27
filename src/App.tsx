@@ -24,6 +24,7 @@ import SiteSettingsPage from "./pages/admin/SiteSettingsPage";
 import BrandingSettingsPage from "./pages/admin/BrandingSettingsPage";
 
 import ChatSettingsPage from "./pages/admin/ChatSettingsPage";
+import WorkspaceChatPage from "./pages/admin/WorkspaceChatPage";
 import ContentApiPage from "./pages/admin/ContentApiPage";
 import DeveloperPage from "./pages/admin/DeveloperPage";
 import ContentCampaignsPage from "./pages/admin/ContentCampaignsPage";
@@ -217,6 +218,7 @@ const router = createBrowserRouter([
       { path: "/admin/branding", element: <BrandingSettingsPage /> },
       
       { path: "/admin/chat", element: <ChatSettingsPage /> },
+      { path: "/admin/workspace", element: <WorkspaceChatPage /> },
       { path: "/admin/content-api", element: <Navigate to="/admin/developer" replace /> },
       { path: "/admin/developer", element: <DeveloperPage /> },
       { path: "/admin/campaigns", element: <ContentCampaignsPage /> },

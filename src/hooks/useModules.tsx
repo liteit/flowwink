@@ -88,6 +88,7 @@ export interface ModulesSettings {
   quotes: ModuleConfig;
   email: ModuleConfig;
   recruitment: ModuleConfig;
+  workspaceChat: ModuleConfig;
 }
 
 export const defaultModulesSettings: ModulesSettings = {
@@ -566,6 +567,18 @@ export const defaultModulesSettings: ModulesSettings = {
     autonomy: 'agent-capable',
     adminUI: true,
     enhancedByFlowPilot: true,
+  },
+  workspaceChat: {
+    enabled: false,
+    name: 'Workspace Chat',
+    description:
+      'Internal authenticated chat that answers questions about your documents, contracts, KB, CRM and HR data — read-only with source citations. Independent of FlowPilot.',
+    icon: 'Sparkles',
+    category: 'communication',
+    autonomy: 'view-required',
+    adminUI: true,
+    requiresAI: true,
+    optionalIntegrations: ['openai', 'gemini', 'local_llm'],
   },
 };
 

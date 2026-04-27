@@ -1,128 +1,125 @@
-## Mål
 
-Konsolidera skill-registret en gång för alltid enligt FlowWinks modulära filosofi:
+# Workspace Chat — intern RAG-chat mot din FlowWink-data
 
-1. **En modul = ett paket** — skill-definitionerna lever i `src/lib/modules/<modul>-module.ts`, inte i en monolitisk seed-fil
-2. **FlowPilot är opt-in** — default OFF; FlowWink fungerar som traditionellt SaaS utan agent
-3. **Skills seedas bara när modulen aktiveras** — ingen "seed allt vid first-boot"-logik kvar
-4. **Nya moduler = drop-in** — ny utvecklare lägger till en `*-module.ts` med sina skillSeeds, klart
+En ny intern chatyta där inloggade admins/employees kan ställa frågor om sina egna dokument, kontrakt, KB-artiklar, leads, employees och pages. Använder samma AI-provider som extern chat (Integrations), men med interna källor och källhänvisningar i svaren. Ingen mutation — ren läs-RAG. FlowPilot förblir den autonoma operatören; Workspace Chat är "fråga-din-data".
 
-## Nuläge (problemet)
+## Mental modell
 
-Två parallella system lever sida vid sida:
+Tre tydliga ytor:
 
+| Yta | Vem | Syfte | Mutation |
+|-----|-----|-------|----------|
+| AI Chat (`/chat`, ChatBlock) | Besökare | Försäljning, support, KB | Nej |
+| **Workspace Chat (NY)** | **Inloggad admin/employee** | **Fråga din interna data** | **Nej** |
+| FlowPilot (`/admin/flowpilot`) | Admin (när modul på) | Autonom operatör | Ja |
+
+## Vad som byggs
+
+### 1. Ny route + sida
+- `/admin/workspace` (eller `/admin/cowork`) — auth-krävd, registreras i `App.tsx` + `adminNavigation.ts`
+- Layout: vänster sidopanel (källfilter + tidigare konversationer), centerpanel (chat), höger drawer (citerade källor för senaste svar)
+- Återanvänder `UnifiedChat`-komponenten med ny `scope: 'internal'`
+
+### 2. Ny edge function `workspace-chat`
+- Verifierar JWT (admin/employee-roll via `has_role`)
+- Tar emot `messages[]`, `sources[]` (filter), `conversation_id`
+- Bygger CAG-kontext genom att läsa internt:
+  - **Documents** (signed URL-titlar + notes + senaste 30)
+  - **Contracts** + **employment_contracts** (status, parter, renewal-datum)
+  - **Knowledge base articles** (titel + excerpt)
+  - **Pages** (titel + slug + summary)
+  - **Leads / Deals / Employees** (top-N senaste, namn + status)
+- Anropar `resolveAiConfig()` → samma provider som extern chat
+- Streamar SSE tillbaka via samma pattern som `chat-completion`
+- Returnerar `citations[]` separat så UI kan visa källor
+
+### 3. Källfilter (chips i UI)
+Toggla av/på vad som inkluderas i context: `Documents`, `Contracts`, `KB`, `Pages`, `CRM`, `Employees`. Skickas som `sources` till edge function.
+
+### 4. Konversationer & historik
+Återanvänd `chat_conversations` + `chat_messages` med ny kolumn:
+- `chat_conversations.scope` (text, default `'visitor'`, ny värde `'internal'`)
+- RLS: `internal`-konversationer syns bara för inloggade admins/employees och bara egna (`user_id = auth.uid()`)
+
+### 5. Källhänvisningar i svar
+- Edge function bygger en `sources_index` (`[{id, type, title, url}]`) av allt som skickas in i prompt
+- Modellen instrueras att referera med `[1]`, `[2]` etc.
+- UI renderar referenser som klickbara chips → öppnar dokument/kontrakt/KB i ny panel eller route
+
+### 6. CAG nu, RAG senare
+- **v1 (denna plan):** CAG — packa in top-N entiteter direkt i system-prompt. Räcker för små/medelstora deployments.
+- **v2 (framtida):** pgvector embeddings på `documents.content`, `contracts.notes`, `kb_articles.body` när datavolymen kräver det. Koden struktureras så `buildContext()` är en bytbar funktion.
+
+### 7. Inga skills, inga mutationer
+- Workspace Chat anropar **inte** `agent-execute`
+- Inga tool calls
+- Användaren vill ändra data → öppnar respektive admin-sida (länk i citat-chip)
+- Vill man ha mutationer → slå på FlowPilot-modulen
+
+## Tekniska detaljer
+
+**Filer som skapas:**
+- `supabase/functions/workspace-chat/index.ts` — ny edge function (CAG + SSE-stream)
+- `supabase/migrations/<timestamp>_workspace_chat.sql` — `ALTER TABLE chat_conversations ADD COLUMN scope text DEFAULT 'visitor'` + RLS-update
+- `src/pages/admin/WorkspaceChatPage.tsx` — sidlayout
+- `src/components/admin/workspace/SourceFilterPanel.tsx` — vänsterpanel
+- `src/components/admin/workspace/CitationsDrawer.tsx` — högerpanel
+- `src/hooks/useWorkspaceChat.ts` — egen hook (kopia av `useChat` med scope=internal + citations state)
+- `src/lib/modules/workspace-chat-module.ts` — modul-manifest (per [New Module Checklist](mem://development/new-module-checklist))
+- `docs/modules/workspace-chat.md` — modul-docs (manuell)
+- `mem://features/workspace-chat-internal-rag.md` — memory
+
+**Filer som ändras:**
+- `src/App.tsx` — ny route
+- `src/components/admin/adminNavigation.ts` — ny nav-entry "Workspace" med `moduleId: 'workspace-chat'`
+- `supabase/config.toml` — ingen ändring krävs (`verify_jwt=false` default, vi validerar i kod)
+
+**Edge function flow (workspace-chat):**
 ```text
-A) MODULÄRT (det rätta)              B) MONOLITISKT (legacy)
-src/lib/modules/documents-module.ts  supabase/functions/setup-flowpilot/
-  └─ skillSeeds: [{ ... }]             └─ DEFAULT_SKILLS = [ ...212 skills... ]
-  └─ Seedas via bootstrapModule()      └─ Seedas vid first-boot, alltid
-  └─ Endast vid module enable          └─ Oavsett vilka moduler som är på
+1. CORS + OPTIONS
+2. Validera JWT → user_id, role (admin/employee?)
+3. Parse body: { messages, sources[], conversation_id }
+4. buildContext(supabase, user_id, sources) → { systemPromptAddon, citations[] }
+5. resolveAiConfig() → { apiKey, apiUrl, model }
+6. Skicka till provider med stream:true
+7. Pipe SSE tillbaka, prepend ett första event med citations
 ```
 
-Konsekvenser: skill-bloat på nya installationer, FlowPilot kan inte vara genuint av, "Sync Missing Skills" återinför ändringar, ny utvecklare vet inte var en skill ska läggas.
-
-## Lösning — modulär seed, opt-in agent
-
-### Arkitekturändringar
-
-```text
-FÖRE                                    EFTER
-─────────────────────────────────       ─────────────────────────────────
-setup-flowpilot kör vid install         setup-flowpilot kör BARA när
-  → seedar 212 skills                     FlowPilot-modulen aktiveras
-  → seedar soul + objectives              → seedar soul + objectives
-  → skapar agentic schema                 → skapar agentic schema (om saknas)
-                                          → INGA bundled skills här
-
-Skills definieras 2 ställen             Skills definieras 1 ställe
-(monolit + skillSeeds)                  (bara <modul>-module.ts → skillSeeds)
-
-Modul aktiv → enable existerande        Modul aktiv → INSERT skillSeeds
-                                          (de finns inte förrän modulen är på)
-
-FlowPilot default ON                    FlowPilot default OFF
-  → modules.flowpilot.enabled = true      → modules.flowpilot.enabled = false
-                                          → automations skippas tills den slås på
-                                          → övriga moduler funkar utan agent
+**RLS för internal-conversations:**
+```sql
+CREATE POLICY "Users see own internal conversations"
+ON chat_conversations FOR SELECT TO authenticated
+USING (scope = 'internal' AND user_id = auth.uid());
 ```
 
-### Faser
+**Modulens manifest:**
+- `id: 'workspace-chat'`, `requiresAI: true`, `requiresFlowPilot: false`, `enhancedByFlowPilot: false`
+- `skillSeeds: []` — modulen exponerar inga skills (det är en human-only yta)
+- Slås av/på som vanlig modul; UI gracefully degraderar med upsell när AI saknas
 
-**Fas 1 — Migrera skills till moduler (största jobbet)**
+## Vad som INTE ingår (medvetet)
 
-Flytta alla 212 skills från `DEFAULT_SKILLS[]` i `setup-flowpilot/index.ts` till respektive modulfils `skillSeeds`. Kategorisering baseras på `handler: 'module:<id>'` som redan finns på varje skill. Ungefärlig fördelning från grep:
+- Inga embeddings/pgvector i v1 (CAG först)
+- Ingen tool calling / mutation
+- Ingen multi-user delning av konversationer
+- Ingen integration med FlowPilot-objectives — separat yta
+- Ingen voice input i v1 (kan läggas till senare med samma pattern som extern chat)
 
-| Modul | Antal | Modul | Antal |
-|---|---|---|---|
-| pages | ~10 | crm/companies/deals | ~25 |
-| blog | ~15 | products/orders | ~12 |
-| kb | ~5 | booking | ~10 |
-| analytics | ~10 | newsletter | ~5 |
-| forms/webinars | ~5 | media/handbook | ~5 |
-| openclaw → federation | ~10 | resume/automations/etc | ~20 |
-| ... resterande utspridda | ~80 | | |
+## Glide-path till framtid
 
-Skills utan tydlig modul (t.ex. core flowpilot-tooling som `manage_objective`, `reflect`, `delegate_task`) flyttas till `flowpilot-module.ts` → `skillSeeds`. Då blir det glasklart: dessa kommer **bara** in om FlowPilot aktiveras.
+- **När FlowPilot är på:** lägg till en "Agent mode"-toggle på Workspace Chat som growth-path. Av = ren RAG. På = full agent (samma UI, byter bara endpoint till `chat-completion` + skills aktiverade).
+- **När data växer:** byt ut `buildContext()` mot pgvector-search, behåll allt annat.
+- **Multi-modal:** lägg till PDF-uppladdning i chatten → docs-modulen → automatiskt indexerat.
 
-**Fas 2 — Tunna ut setup-flowpilot**
+## Acceptance criteria
 
-`supabase/functions/setup-flowpilot/index.ts` ska bara behålla:
-- Agentic schema-migration (DDL, idempotent)
-- Soul + objectives seed (FlowPilot-konfig)
-- Default-rader i `agent_memory` (heartbeat-config etc.)
+- [ ] Ny route `/admin/workspace` syns i admin-nav när modulen är på
+- [ ] Inloggad admin kan ställa fråga om existerande dokument och få svar med citation
+- [ ] Källfilter ändrar vad som skickas i context (verifierbart i edge function logs)
+- [ ] Konversationer sparas med `scope='internal'` och syns i sidopanelen
+- [ ] Fungerar med OpenAI, Gemini OCH Local LLM (samma `resolveAiConfig` som extern chat)
+- [ ] Modul kan slås av → sida gracefully redirectar / upsell
+- [ ] FlowPilot förblir orörd och fortsätter fungera oberoende
+- [ ] `docs/modules/workspace-chat.md` skriven, memory sparad
 
-Tar bort `DEFAULT_SKILLS[]` (~5300 rader) helt. Filen krymper från 5679 → ~400 rader.
-
-**Fas 3 — Opt-in FlowPilot**
-
-- `useModules.tsx` / `ModulesSettings`: ändra `flowpilot.enabled` default från `true` → `false`
-- `useFlowPilotBootstrap.ts`: kör inte `setup-flowpilot` automatiskt vid app-start
-- Lägg en "Aktivera FlowPilot"-knapp i `/admin/modules` som triggar `setup-flowpilot` + `bootstrapModule('flowpilot', ...)` + seedar dess skillSeeds + automations
-- Befintliga installationer: migrationsskript som behåller `flowpilot.enabled = true` om de redan har det aktivt (no surprise downgrade)
-
-**Fas 4 — Säkerställ MCP & runtime fortfarande fungerar**
-
-- `agent-execute` läser från `agent_skills`-tabellen → inga ändringar behövs där, bara att rätt rader finns
-- MCP server filtrerar redan på aktiva moduler (per `mem://architecture/mcp-module-aware-filtering`) → fortsätter funka
-- `bootstrapModule()` har redan rätt logik (rad 86: `flowpilotEnabled` styr bara automations, inte skills) → ingen ändring
-
-**Fas 5 — Cleanup & guardrails**
-
-- Ta bort `src/lib/module-bootstraps/skill-map.ts` (legacy fallback) — alla moduler ska gå via unified
-- Uppdatera Vitest-guardrail (`mem://development/module-registry-guardrails`): assertion att `setup-flowpilot/index.ts` inte längre innehåller `DEFAULT_SKILLS`
-- Skriv migration som markerar skills i `agent_skills` med `origin = 'orphan'` om deras handler refererar till en modul som inte längre äger dem (för diagnostik)
-- Uppdatera `docs/reference/skills-source.md` → "skills lever i `src/lib/modules/<id>-module.ts`. Period."
-- Uppdatera `.windsurf/workflows/new-module.md` checklistan
-
-### Backward compatibility
-
-För befintliga installationer (som du och eventuella tidiga adopters):
-- Migration: `UPDATE agent_skills SET enabled = false WHERE handler LIKE 'module:%' AND <modul-disabled>` körs INTE — vi rör inte data
-- Modulbootstrap upserts på namn — om en skill redan finns i DB och modulen aktiveras, uppdateras description/instructions, inget tappas
-- Om FlowPilot redan är på i en befintlig instans → den stannar på (migrationen läser nuvarande state)
-
-### Filer som ändras (sammanfattning)
-
-| Typ | Antal | Exempel |
-|---|---|---|
-| Modulfiler får nya `skillSeeds` | ~25 | `blog-module.ts`, `pages-module.ts`, `crm-module.ts`, ... |
-| Edge function bantas | 1 | `supabase/functions/setup-flowpilot/index.ts` (5679 → ~400 rader) |
-| Default-toggle ändras | 2 | `useModules.tsx`, `useFlowPilotBootstrap.ts` |
-| UI för manuell aktivering | 1–2 | `/admin/modules` FlowPilot-kort |
-| Docs/guardrails | 3 | `docs/reference/skills-source.md`, vitest-test, workflow |
-
-### Risker & mitigation
-
-- **Risk**: Skill saknas efter migrering om jag missar någon. **Mitigation**: skript som diff:ar `DEFAULT_SKILLS` namn mot summan av alla `skillSeeds` i moduler — ska bli 0.
-- **Risk**: En skill har `handler: 'module:foo'` där `foo` inte är en modul. **Mitigation**: lista upp avvikare under fas 1, placera dem i flowpilot-module eller skapa en "core"-modul.
-- **Risk**: FlowPilot-användare i drift förlorar funktionalitet. **Mitigation**: bootstrap kör automatiskt när modulen är på → upsert återskapar allt utan dataförlust.
-
-## Leverans
-
-Jag gör hela jobbet i en session — modulmigrering är mekanisk när väl mappningen är klar (handler:module-prefix → modulfil). Du får ett färdigt resultat där:
-
-- Inga monolitiska skill-listor finns kvar
-- Alla nya installationer startar med tom FlowPilot
-- Aktivera blog-modulen → 15 blog-skills seedas, inget annat
-- Aktivera FlowPilot → den får sina core-skills + börjar exekvera automations från övriga aktiva moduler
-- Source-of-truth för en skill är glasklart: filen som äger modulen
+Säg till om du vill justera scope (t.ex. börja bara med Documents+Contracts+KB i v1 och utöka leads/employees senare), annars kör jag på hela paketet ovan när du godkänner.
