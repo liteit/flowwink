@@ -568,6 +568,18 @@ export const defaultModulesSettings: ModulesSettings = {
     adminUI: true,
     enhancedByFlowPilot: true,
   },
+  workspaceChat: {
+    enabled: false,
+    name: 'Workspace Chat',
+    description:
+      'Internal authenticated chat that answers questions about your documents, contracts, KB, CRM and HR data — read-only with source citations. Independent of FlowPilot.',
+    icon: 'Sparkles',
+    category: 'communication',
+    autonomy: 'view-required',
+    adminUI: true,
+    requiresAI: true,
+    optionalIntegrations: ['openai', 'gemini', 'local_llm'],
+  },
 };
 
 // Map sidebar items to module IDs
