@@ -2354,6 +2354,7 @@ export type Database = {
           escalation_reason: string | null
           id: string
           priority: string | null
+          scope: string
           sentiment_score: number | null
           session_id: string | null
           title: string | null
@@ -2371,6 +2372,7 @@ export type Database = {
           escalation_reason?: string | null
           id?: string
           priority?: string | null
+          scope?: string
           sentiment_score?: number | null
           session_id?: string | null
           title?: string | null
@@ -2388,6 +2390,7 @@ export type Database = {
           escalation_reason?: string | null
           id?: string
           priority?: string | null
+          scope?: string
           sentiment_score?: number | null
           session_id?: string | null
           title?: string | null
