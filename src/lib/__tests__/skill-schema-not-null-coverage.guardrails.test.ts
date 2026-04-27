@@ -13,7 +13,7 @@
 
 import { describe, expect, it } from 'vitest';
 import fixture from './fixtures/db-not-null-columns.json';
-import { ALL_MODULES } from '@/lib/modules';
+import * as modules from '@/lib/modules';
 
 interface ToolProperty {
   type?: string | string[];
@@ -42,8 +42,10 @@ const AUTO_FILLED = ((fixture as any)._auto_filled_columns ?? {}) as Record<
 
 function collectManageSkills(): SkillSeed[] {
   const out: SkillSeed[] = [];
-  for (const mod of ALL_MODULES as any[]) {
-    const seeds: SkillSeed[] = mod.skillSeeds ?? [];
+  for (const exported of Object.values(modules) as any[]) {
+    if (!exported || typeof exported !== 'object') continue;
+    const seeds: SkillSeed[] | undefined = exported.skillSeeds;
+    if (!Array.isArray(seeds)) continue;
     for (const s of seeds) {
       if (s.name?.startsWith('manage_') && s.handler?.startsWith('db:')) {
         out.push(s);
