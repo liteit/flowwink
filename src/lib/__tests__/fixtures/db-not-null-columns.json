@@ -1,0 +1,33 @@
+{
+  "_comment": "NOT NULL columns without DB defaults, per public table that backs a db:<table> manage_* skill. Regenerate with: bun run scripts/snapshot-db-not-nulls.ts",
+  "_generated_at": "2026-04-27",
+  "tables": {
+    "accounting_templates": ["template_name"],
+    "analytic_accounts": ["code", "name"],
+    "chart_of_accounts": ["account_category", "account_code", "account_name", "account_type", "normal_balance"],
+    "contracts": ["counterparty_name", "title"],
+    "documents": ["file_name", "file_url", "title"],
+    "employees": ["name"],
+    "expenses": ["user_id"],
+    "invoices": ["invoice_number"],
+    "job_postings": ["slug", "title"],
+    "journal_entries": ["description"],
+    "leave_requests": ["employee_id", "end_date", "start_date"],
+    "opening_balances": ["account_code", "account_name"],
+    "project_tasks": ["project_id", "title"],
+    "projects": ["name"],
+    "quotes": ["quote_number"],
+    "site_settings": ["key"],
+    "vendors": ["name"]
+  },
+  "_skill_auto_filled_columns": {
+    "_comment": "Per-skill exemptions: columns the skill's handler/service-layer fills automatically (e.g. user_id from JWT, auto-generated invoice numbers, or update-only skills that never insert a new row).",
+    "manage_document": ["file_name"],
+    "manage_expenses": ["user_id"],
+    "manage_invoice": ["invoice_number"],
+    "manage_quote": ["quote_number"],
+    "manage_job_posting": ["slug"],
+    "manage_vendor_defaults": ["name"],
+    "manage_opening_balances": ["account_name"]
+  }
+}
