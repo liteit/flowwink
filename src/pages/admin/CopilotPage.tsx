@@ -47,19 +47,13 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 type FlowPilotTab =
   | 'chat'
   | 'objectives'
-  | 'automations'
-  | 'workflows'
   | 'evolution'
-  | 'health'
   | 'autonomy';
 
 const ENGINE_TABS: { id: FlowPilotTab; label: string; icon?: typeof MessagesSquare }[] = [
   { id: 'chat', label: 'Chat', icon: MessagesSquare },
   { id: 'objectives', label: 'Objectives' },
-  { id: 'automations', label: 'Automations' },
-  { id: 'workflows', label: 'Workflows' },
   { id: 'evolution', label: 'Evolution' },
-  { id: 'health', label: 'Health' },
   { id: 'autonomy', label: 'Autonomy' },
 ];
 
@@ -458,27 +452,16 @@ export default function CopilotPage() {
 
                 <Alert>
                   <Info className="h-4 w-4" />
-                  <AlertTitle className="text-sm">Skills & MCP exposure live in Developer</AlertTitle>
+                  <AlertTitle className="text-sm">Platform tools live elsewhere</AlertTitle>
                   <AlertDescription className="text-xs">
-                    The skills catalog and MCP exposure toggles are under{' '}
-                    <Link to="/admin/developer?tab=mcp-skills" className="underline font-medium">
-                      Developer → MCP Skills
-                    </Link>
-                    . FlowPilot consumes the same catalog as external MCP clients (OpenClaw,
-                    ClawWink, Claude Desktop) — turning FlowPilot off does not hide skills from MCP.
+                    Skills & MCP exposure: <Link to="/admin/developer?tab=mcp-skills" className="underline font-medium">Developer → MCP Skills</Link>.
+                    Automations, Workflows, Events & Health: <Link to="/admin/automations" className="underline font-medium">Automations</Link>.
+                    FlowPilot is one consumer among many — these run even when FlowPilot is disabled.
                   </AlertDescription>
                 </Alert>
 
                 {activeTab === 'objectives' && <ObjectivesPanel />}
-                {activeTab === 'automations' && <AutomationsPanel />}
-                {activeTab === 'workflows' && <WorkflowsPanel />}
                 {activeTab === 'evolution' && <EvolutionPanel />}
-                {activeTab === 'health' && (
-                  <div className="space-y-6">
-                    <SystemIntegrityPanel />
-                    <AutomationHealthPanel />
-                  </div>
-                )}
                 {activeTab === 'autonomy' && (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
