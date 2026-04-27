@@ -540,7 +540,7 @@ Deno.serve(async (req) => {
       });
       const json = await resp.json();
       const finalText: string = json.choices?.[0]?.message?.content || '';
-      return streamFinal(citations, finalText);
+      return streamFinal(citations, finalText, contextMeta);
     }
 
     /* -------- No tools: stream straight through -------- */
