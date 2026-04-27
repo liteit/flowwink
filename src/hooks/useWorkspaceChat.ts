@@ -198,6 +198,16 @@ export function useWorkspaceChat({ sources, mode, onError }: UseWorkspaceChatOpt
                 continue;
               }
 
+              if (currentEvent === 'context_meta') {
+                try {
+                  const meta = JSON.parse(data) as ContextMeta;
+                  setLastContextMeta(meta);
+                } catch (err) {
+                  logger.error('parse context_meta failed', err);
+                }
+                continue;
+              }
+
               try {
                 const parsed = JSON.parse(data);
                 const delta = parsed.choices?.[0]?.delta?.content;
