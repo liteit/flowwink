@@ -268,10 +268,13 @@ export function useWorkspaceChat({ sources, mode, onError, onPersistUser, onPers
             ),
           );
         }
+        if (onPersistAssistant && assistantContent) {
+          try { await onPersistAssistant(assistantContent, assistantCitations); } catch (e) { logger.error('onPersistAssistant failed', e); }
+        }
       }
     },
-    [messages, sources, mode, isStreaming, onError],
+    [messages, sources, mode, isStreaming, onError, onPersistUser, onPersistAssistant, onFirstMessage],
   );
 
-  return { messages, isStreaming, send, stop, reset, lastContextMeta };
+  return { messages, isStreaming, send, stop, reset, loadHistory, lastContextMeta };
 }
