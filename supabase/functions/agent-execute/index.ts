@@ -5833,6 +5833,8 @@ const GENERIC_CRUD_TABLES = new Set([
   'job_postings', 'candidates', 'job_applications', 'application_stages', 'interviews',
   // Smart-bookkeeping learning loop
   'accounting_corrections',
+  // HR onboarding (templates + per-employee checklists)
+  'onboarding_templates', 'onboarding_checklists',
 ]);
 
 /**
