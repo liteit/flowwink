@@ -85,6 +85,9 @@ const PROJECT_SKILLS: SkillSeed[] = [
             due_date: { type: 'string' },
           },
           required: ['action'],
+          allOf: [
+            { if: { properties: { action: { const: 'create' } } }, then: { required: ['action', 'project_id', 'title'] } },
+          ],
         },
       },
     },
