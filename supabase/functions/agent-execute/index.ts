@@ -5997,6 +5997,10 @@ async function executeGenericCrud(
   // Defensive: re-normalize in case caller bypassed the top-level normalizer
   // (e.g. nested data:{} that survived). Never let `data` reach insert().
   args = normalizeSkillArgs(args as Record<string, unknown>);
+
+  // Friendly aliases — let agents say "applications" instead of "job_applications"
+  table = applyTableAlias(table);
+
   // Block tables that have dedicated business-logic skills
   if (DEDICATED_SKILL_TABLES[table]) {
     return { 
@@ -6010,7 +6014,49 @@ async function executeGenericCrud(
     return { error: `Unknown db table: ${table}. Generic CRUD is not enabled for this table.` };
   }
 
-  const { action = 'list', id, ...fields } = args as any;
+  let { action = 'list', id, ...fields } = args as any;
+
+  // Action aliases — common natural variants like "list_pending" → list + filter
+  const ACTION_ALIASES: Record<string, { action: string; extraFilters?: Record<string, any> }> = {
+    list_pending:  { action: 'list', extraFilters: { status: 'pending' } },
+    list_active:   { action: 'list', extraFilters: { status: 'active' } },
+    list_open:     { action: 'list', extraFilters: { status: 'open' } },
+    list_approved: { action: 'list', extraFilters: { status: 'approved' } },
+    list_draft:    { action: 'list', extraFilters: { status: 'draft' } },
+    fetch:         { action: 'get' },
+    read:          { action: 'get' },
+    insert:        { action: 'create' },
+    add:           { action: 'create' },
+    edit:          { action: 'update' },
+    modify:        { action: 'update' },
+    remove:        { action: 'delete' },
+  };
+  const aliasResolved = ACTION_ALIASES[action];
+  if (aliasResolved) {
+    action = aliasResolved.action;
+    if (aliasResolved.extraFilters) {
+      fields.filters = { ...(fields.filters as Record<string, any> ?? {}), ...aliasResolved.extraFilters };
+    }
+  }
+
+  // Apply per-table column aliases (e.g. mime_type → file_type for documents).
+  // Only touches data fields — leaves reserved CRUD keys untouched.
+  const RESERVED_FIELD_KEYS = new Set(['limit', 'offset', 'order_by', 'ascending', 'filters', 'search']);
+  const reservedExtract: Record<string, any> = {};
+  const dataExtract: Record<string, any> = {};
+  for (const [k, v] of Object.entries(fields)) {
+    if (RESERVED_FIELD_KEYS.has(k) || k.startsWith('_')) {
+      reservedExtract[k] = v;
+    } else {
+      dataExtract[k] = v;
+    }
+  }
+  const { mapped, dropped } = applyColumnAliases(table, dataExtract);
+  fields = { ...reservedExtract, ...mapped };
+  if (dropped.length) {
+    console.log(`[agent-execute] dropped unsupported columns for ${table}: ${dropped.join(', ')}`);
+  }
+
   const auditEnabled = !!auditCtx && ACCOUNTING_AUDIT_TABLES.has(table);
 
   // Sanitize payload for audit (remove agent-internal _ fields)
