@@ -77,6 +77,7 @@ export default function WorkspaceChatPage() {
   }
 
   return (
+    <AdminLayout>
     <div className="h-[calc(100vh-4rem)] flex flex-col">
       {/* Header */}
       <div className="border-b border-border/60 px-6 py-4 flex items-center justify-between bg-background">
