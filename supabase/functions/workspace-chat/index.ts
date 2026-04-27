@@ -1,12 +1,21 @@
 /**
- * Workspace Chat — Internal RAG/CAG endpoint
+ * Cowork Chat (internal id: workspace-chat)
  *
- * Authenticated chat for admins/employees to ask questions about their own
- * FlowWink data (documents, contracts, KB, pages, leads, deals, employees).
+ * Authenticated chat for admins/employees. Two modes:
+ *   - 'strict' (default): only answers from grounded workspace data, refuses trivia.
+ *   - 'cowork'           : grounded in workspace data first, may then use the model's
+ *                          own knowledge AND a web_search tool (if configured).
  *
- * - Uses the same AI provider resolved by `system_ai` settings (Integrations).
- * - Pure read/RAG: NO mutations, NO tool calls.
- * - Streams SSE back to the client, prepending a single `event: citations` frame.
+ * Settings live in `site_settings` under key `cowork_chat`:
+ *   {
+ *     mode: 'strict' | 'cowork',
+ *     allowWorldKnowledge: boolean,
+ *     allowWebSearch: boolean,
+ *     defaultSources: string[]
+ *   }
+ *
+ * NOTE: Endpoint name kept as `workspace-chat` for backward compat with existing
+ * frontend hooks. The user-facing brand is "Cowork Chat".
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
@@ -44,8 +53,25 @@ interface Citation {
   url?: string;
 }
 
+interface CoworkSettings {
+  mode: 'strict' | 'cowork';
+  allowWorldKnowledge: boolean;
+  allowWebSearch: boolean;
+  defaultSources: SourceKey[];
+}
+
+const DEFAULT_SETTINGS: CoworkSettings = {
+  mode: 'cowork',
+  allowWorldKnowledge: true,
+  allowWebSearch: true,
+  defaultSources: ALL_SOURCES,
+};
+
 const PER_SOURCE_LIMIT = 25;
 
+/* ------------------------------------------------------------------ */
+/* Context builder                                                     */
+/* ------------------------------------------------------------------ */
 async function buildContext(
   supabase: any,
   sources: SourceKey[],
@@ -65,7 +91,6 @@ async function buildContext(
     return r;
   };
 
-  // --- Documents ---
   if (sources.includes('documents')) {
     const { data } = await supabase
       .from('documents')
@@ -83,7 +108,6 @@ async function buildContext(
     }
   }
 
-  // --- Contracts (legal) + Employment contracts ---
   if (sources.includes('contracts')) {
     const { data: contracts } = await supabase
       .from('contracts')
@@ -118,7 +142,6 @@ async function buildContext(
     }
   }
 
-  // --- Knowledge Base ---
   if (sources.includes('kb')) {
     const { data } = await supabase
       .from('kb_articles')
@@ -135,7 +158,6 @@ async function buildContext(
     }
   }
 
-  // --- Pages ---
   if (sources.includes('pages')) {
     const { data } = await supabase
       .from('pages')
@@ -153,14 +175,13 @@ async function buildContext(
     }
   }
 
-  // --- CRM (leads + deals) ---
   if (sources.includes('crm')) {
     const { data: leads, error: leadsErr } = await supabase
       .from('leads')
       .select('id, name, email, status, score, companies ( name )')
       .order('score', { ascending: false, nullsFirst: false })
       .limit(PER_SOURCE_LIMIT);
-    if (leadsErr) console.error('workspace-chat: leads query failed', leadsErr);
+    if (leadsErr) console.error('cowork-chat: leads query failed', leadsErr);
     if (leads?.length) {
       const lines = leads.map((l: any) => {
         const r = push('lead', l.id, l.name || l.email || 'Lead', `/admin/leads/${l.id}`);
@@ -175,7 +196,7 @@ async function buildContext(
       .select('id, title, stage, value, currency, close_date')
       .order('updated_at', { ascending: false })
       .limit(PER_SOURCE_LIMIT);
-    if (dealsErr) console.error('workspace-chat: deals query failed', dealsErr);
+    if (dealsErr) console.error('cowork-chat: deals query failed', dealsErr);
     if (deals?.length) {
       const lines = deals.map((d: any) => {
         const r = push('deal', d.id, d.title || 'Deal', `/admin/deals/${d.id}`);
@@ -185,7 +206,6 @@ async function buildContext(
     }
   }
 
-  // --- Employees ---
   if (sources.includes('employees')) {
     const { data } = await supabase
       .from('employees')
@@ -201,12 +221,75 @@ async function buildContext(
     }
   }
 
+  return { contextText: blocks.join('\n\n'), citations };
+}
+
+/* ------------------------------------------------------------------ */
+/* Web search tool (uses existing firecrawl-search edge function)     */
+/* ------------------------------------------------------------------ */
+const WEB_SEARCH_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'web_search',
+    description:
+      'Search the public web for current/live information not present in the workspace context. Use ONLY when the answer is not in the provided workspace context and the user is asking for external/world information.',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Concise search query' },
+        limit: { type: 'number', description: 'Max results (1-5, default 4)' },
+      },
+      required: ['query'],
+      additionalProperties: false,
+    },
+  },
+};
+
+async function runWebSearch(supabaseUrl: string, serviceKey: string, query: string, limit = 4) {
+  const resp = await fetch(`${supabaseUrl}/functions/v1/firecrawl-search`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${serviceKey}`,
+    },
+    body: JSON.stringify({ query, limit, scrapeContent: false }),
+  });
+  const json = await resp.json().catch(() => ({}));
+  if (!resp.ok || !json?.success) {
+    return { ok: false, error: json?.error || `web_search failed (${resp.status})` };
+  }
+  // Normalize result shape
+  const results = (json.data || []).slice(0, limit).map((r: any) => ({
+    title: r.title || r.metadata?.title || '',
+    url: r.url || r.metadata?.sourceURL || '',
+    snippet: r.description || r.snippet || (r.markdown ? String(r.markdown).slice(0, 300) : ''),
+  }));
+  return { ok: true, results };
+}
+
+/* ------------------------------------------------------------------ */
+/* Settings loader                                                     */
+/* ------------------------------------------------------------------ */
+async function loadSettings(supabaseAdmin: any): Promise<CoworkSettings> {
+  const { data } = await supabaseAdmin
+    .from('site_settings')
+    .select('value')
+    .eq('key', 'cowork_chat')
+    .maybeSingle();
+  const v = (data?.value || {}) as Partial<CoworkSettings>;
   return {
-    contextText: blocks.join('\n\n'),
-    citations,
+    mode: v.mode === 'strict' ? 'strict' : 'cowork',
+    allowWorldKnowledge: v.allowWorldKnowledge !== false,
+    allowWebSearch: v.allowWebSearch !== false,
+    defaultSources: Array.isArray(v.defaultSources) && v.defaultSources.length > 0
+      ? (v.defaultSources.filter((s) => ALL_SOURCES.includes(s as SourceKey)) as SourceKey[])
+      : ALL_SOURCES,
   };
 }
 
+/* ------------------------------------------------------------------ */
+/* Main handler                                                        */
+/* ------------------------------------------------------------------ */
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -215,128 +298,181 @@ Deno.serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Authenticate the request
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     const supabaseUser = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
-
     const { data: userData, error: userErr } = await supabaseUser.auth.getUser();
     if (userErr || !userData?.user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
     const user = userData.user;
 
-    // Parse body
     const body = await req.json().catch(() => ({}));
     const messages: Array<{ role: string; content: string }> = body.messages || [];
-    const requestedSources: SourceKey[] = Array.isArray(body.sources) && body.sources.length > 0
-      ? body.sources.filter((s: string) => ALL_SOURCES.includes(s as SourceKey))
-      : ALL_SOURCES;
-
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: 'messages[] required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Use service-role client for context building (bypasses RLS — admin/employee context)
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Verify the user has admin or employee role before exposing internal data
+    // Role gate
     const { data: roleRows } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id);
+      .from('user_roles').select('role').eq('user_id', user.id);
     const roles = (roleRows || []).map((r: any) => r.role);
-    const allowed = roles.includes('admin') || roles.includes('employee') || roles.includes('manager');
-    if (!allowed) {
+    if (!(roles.includes('admin') || roles.includes('employee') || roles.includes('manager'))) {
       return new Response(JSON.stringify({ error: 'Forbidden — admin or employee role required' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Build context
+    const settings = await loadSettings(supabaseAdmin);
+
+    // Per-request overrides (UI can pass mode/sources)
+    const requestedSources: SourceKey[] = Array.isArray(body.sources) && body.sources.length > 0
+      ? body.sources.filter((s: string) => ALL_SOURCES.includes(s as SourceKey))
+      : settings.defaultSources;
+    const mode: 'strict' | 'cowork' =
+      body.mode === 'strict' || body.mode === 'cowork' ? body.mode : settings.mode;
+    const allowWorld = mode === 'strict' ? false : settings.allowWorldKnowledge;
+    const webSearchOn = mode === 'strict' ? false : settings.allowWebSearch && !!Deno.env.get('FIRECRAWL_API_KEY');
+
     const { contextText, citations } = await buildContext(supabaseAdmin, requestedSources);
 
-    // Resolve AI provider
     const { apiKey, apiUrl, model } = await resolveAiConfig(supabaseAdmin, 'fast');
-
     if (isAnthropicProvider(apiUrl)) {
-      // Anthropic uses a different format — not supported in this v1.
       return new Response(JSON.stringify({
-        error: 'Anthropic provider not yet supported by Workspace Chat. Switch to OpenAI, Gemini or Local LLM in Integrations.',
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+        error: 'Anthropic provider not yet supported by Cowork Chat. Switch to OpenAI, Gemini or Local LLM in Integrations.',
+      }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    /* -------- System prompt (mode-aware) ---------- */
+    const strictRules = [
+      'HARD RULES (do not break):',
+      '1. Answer ONLY using facts in the CONTEXT block. Do NOT use outside / world knowledge.',
+      '2. If not in context, reply with EXACTLY: "I can\'t find that in your workspace data. Try selecting more sources, or rephrase your question."',
+      '3. NEVER answer general-knowledge or trivia questions.',
+      '4. READ-ONLY. Point to admin pages for changes.',
+      '5. Cite every claim with [N] markers from the context.',
+    ].join('\n');
+
+    const coworkRules = [
+      'OPERATING RULES:',
+      '1. Prefer facts from the CONTEXT block — it is the user\'s own workspace data. Cite them with [N].',
+      `2. You ${allowWorld ? 'MAY' : 'MUST NOT'} use your own training knowledge when context is insufficient. Be explicit when you do (e.g. "Outside your workspace: …").`,
+      `3. You ${webSearchOn ? 'MAY' : 'MUST NOT'} call the web_search tool for current/live external info — but only when the answer is not in the workspace context.`,
+      '4. Workspace items must be cited with [N] markers. Web results should be cited as plain markdown links.',
+      '5. READ-ONLY: never claim to have changed data. For mutations, point to the relevant admin page.',
+      '6. Be concise, use markdown, and match the user\'s language.',
+    ].join('\n');
+
     const systemPrompt = [
-      'You are FlowWink Workspace Chat — an internal assistant strictly grounded in the user\'s own business data shown in the CONTEXT block below.',
+      mode === 'strict'
+        ? 'You are FlowWink Workspace Chat — strictly grounded in the user\'s workspace data.'
+        : 'You are FlowWink Cowork Chat — a co-working assistant for an admin/employee. You combine the user\'s workspace data with your own knowledge (and optionally the web) to give the most useful answer.',
       '',
-      'HARD RULES (do not break under any circumstances):',
-      '1. Answer ONLY using facts present in the CONTEXT block. Do NOT use outside / world knowledge.',
-      '2. If the answer is not in the context, reply with EXACTLY: "I can\'t find that in your workspace data. Try selecting more sources, or rephrase your question."',
-      '3. NEVER answer general-knowledge or trivia questions (e.g. "what is London", "who is X", "explain Y"). For those, use rule #2.',
-      '4. You are READ-ONLY. If the user asks you to change something, point them to the relevant admin page instead.',
-      '5. Cite every claim with [N] markers matching the reference numbers in the context. Only cite sources you actually used.',
-      '6. Match the user\'s language. Be concise. Use markdown.',
+      mode === 'strict' ? strictRules : coworkRules,
       '',
-      '--- CONTEXT (your ONLY allowed knowledge for this conversation) ---',
+      '--- WORKSPACE CONTEXT ---',
       contextText || '(No data available for the selected sources.)',
       '--- END CONTEXT ---',
     ].join('\n');
 
+    /* -------- Tool loop (only when web_search is on) -------- */
+    const conversation: any[] = [
+      { role: 'system', content: systemPrompt },
+      ...messages,
+    ];
+
+    const tools = webSearchOn ? [WEB_SEARCH_TOOL] : undefined;
+
+    // First, run a (non-streaming) pass if tools are enabled, so we can resolve tool calls.
+    // If no tools needed → switch to streaming on the second pass.
+    if (tools) {
+      // Up to 2 tool-call rounds to keep latency bounded.
+      for (let round = 0; round < 2; round++) {
+        const resp = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model, messages: conversation, tools, tool_choice: 'auto' }),
+        });
+        if (!resp.ok) {
+          const errText = await resp.text();
+          console.error('AI provider error (tool pass):', resp.status, errText);
+          return new Response(JSON.stringify({
+            error: `AI provider returned ${resp.status}`, detail: errText.slice(0, 500),
+          }), { status: resp.status === 429 ? 429 : 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        const json = await resp.json();
+        const choice = json.choices?.[0];
+        const toolCalls = choice?.message?.tool_calls;
+        if (!toolCalls || toolCalls.length === 0) {
+          // No tool calls — we have the final assistant message. Stream it back as a single chunk.
+          const finalText: string = choice?.message?.content || '';
+          return streamFinal(citations, finalText);
+        }
+        // Execute tool calls
+        conversation.push(choice.message);
+        for (const tc of toolCalls) {
+          if (tc.function?.name === 'web_search') {
+            let args: any = {};
+            try { args = JSON.parse(tc.function.arguments || '{}'); } catch { /* */ }
+            const out = await runWebSearch(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, args.query || '', args.limit ?? 4);
+            conversation.push({
+              role: 'tool',
+              tool_call_id: tc.id,
+              content: JSON.stringify(out),
+            });
+          } else {
+            conversation.push({
+              role: 'tool',
+              tool_call_id: tc.id,
+              content: JSON.stringify({ error: `Unknown tool: ${tc.function?.name}` }),
+            });
+          }
+        }
+      }
+      // Force a final answer with no tools
+      const resp = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model, messages: conversation }),
+      });
+      const json = await resp.json();
+      const finalText: string = json.choices?.[0]?.message?.content || '';
+      return streamFinal(citations, finalText);
+    }
+
+    /* -------- No tools: stream straight through -------- */
     const upstream = await fetch(apiUrl, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        stream: true,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...messages,
-        ],
-      }),
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, stream: true, messages: conversation }),
     });
-
     if (!upstream.ok || !upstream.body) {
       const errText = await upstream.text();
       console.error('AI provider error:', upstream.status, errText);
       return new Response(JSON.stringify({
-        error: `AI provider returned ${upstream.status}`,
-        detail: errText.slice(0, 500),
-      }), {
-        status: upstream.status === 429 ? 429 : 502,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+        error: `AI provider returned ${upstream.status}`, detail: errText.slice(0, 500),
+      }), { status: upstream.status === 429 ? 429 : 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Stream back: prepend a citations frame as the first SSE event
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
-        // Custom event for citations
         controller.enqueue(encoder.encode(`event: citations\ndata: ${JSON.stringify(citations)}\n\n`));
-
         const reader = upstream.body!.getReader();
         try {
           while (true) {
@@ -351,20 +487,33 @@ Deno.serve(async (req) => {
         }
       },
     });
-
     return new Response(stream, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
+      headers: { ...corsHeaders, 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' },
     });
   } catch (e) {
-    console.error('workspace-chat error:', e);
+    console.error('cowork-chat error:', e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : 'Unknown error' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
+
+/* ------------------------------------------------------------------ */
+/* Helper: emit a single-shot answer in the same SSE shape as streaming */
+/* ------------------------------------------------------------------ */
+function streamFinal(citations: Citation[], text: string): Response {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(`event: citations\ndata: ${JSON.stringify(citations)}\n\n`));
+      // Emit as a single OpenAI-style delta so the existing client parser handles it.
+      const payload = { choices: [{ delta: { content: text } }] };
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
+      controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+      controller.close();
+    },
+  });
+  return new Response(stream, {
+    headers: { ...corsHeaders, 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' },
+  });
+}
