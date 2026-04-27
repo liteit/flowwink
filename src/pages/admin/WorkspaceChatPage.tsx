@@ -14,9 +14,11 @@ import {
   useWorkspaceChat,
   type WorkspaceSource,
 } from '@/hooks/useWorkspaceChat';
+import { useWorkspaceSessions } from '@/hooks/useWorkspaceSessions';
 import { useCoworkSettings } from '@/hooks/useCoworkSettings';
 import { CitationsDrawer } from '@/components/admin/workspace/CitationsDrawer';
 import { CoworkSettingsPanel } from '@/components/admin/workspace/CoworkSettingsPanel';
+import { SessionPicker } from '@/components/admin/workspace/SessionPicker';
 import {
   Send,
   Square,
