@@ -107,7 +107,7 @@ export function getUnifiedSkillNames(moduleId: keyof ModulesSettings): string[] 
   const names = new Set<string>(mod.skills ?? []);
   if (mod.skillSeeds) {
     for (const seed of mod.skillSeeds) {
-      names.add(seed.name);
+      if (seed?.name) names.add(seed.name);
     }
   }
   return Array.from(names);
