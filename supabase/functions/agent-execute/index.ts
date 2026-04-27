@@ -5883,7 +5883,82 @@ const GENERIC_CRUD_TABLES = new Set([
   'accounting_corrections',
   // HR onboarding (templates + per-employee checklists)
   'onboarding_templates', 'onboarding_checklists',
+  // Sales quotes (CPQ)
+  'quotes',
 ]);
+
+/**
+ * Friendly table aliases — external agents often use shorter / natural names
+ * (e.g. "applications" instead of "job_applications"). Map them to the real
+ * physical table before whitelist + CRUD lookup.
+ */
+const TABLE_ALIASES: Record<string, string> = {
+  applications: 'job_applications',
+  application: 'job_applications',
+  candidate: 'candidates',
+  job_posting: 'job_postings',
+};
+
+/**
+ * Per-table column aliases. Lets external agents use natural names that don't
+ * exactly match the DB schema (e.g. mime_type → file_type for documents).
+ * Unknown / dropped columns: any column not in the table will throw a clear
+ * error from Postgres; this map only covers the very common cases.
+ */
+const COLUMN_ALIASES: Record<string, Record<string, string>> = {
+  documents: {
+    mime_type: 'file_type',
+    content_type: 'file_type',
+    size_bytes: 'file_size_bytes',
+    file_size: 'file_size_bytes',
+    storage_path: 'file_url',
+    path: 'file_url',
+    url: 'file_url',
+    name: 'file_name',
+    filename: 'file_name',
+  },
+  leave_requests: {
+    employee: 'employee_id',
+    type: 'leave_type',
+    from: 'start_date',
+    to: 'end_date',
+  },
+};
+
+/**
+ * Columns that should be silently dropped (with a hint) for a given table.
+ * Useful when external agents send "narrative" fields that have no DB column
+ * (e.g. body_markdown / content for documents — the actual content is the
+ * file at file_url).
+ */
+const DROPPED_COLUMNS: Record<string, string[]> = {
+  documents: ['body_markdown', 'content', 'body', 'markdown'],
+};
+
+function applyTableAlias(table: string): string {
+  return TABLE_ALIASES[table] ?? table;
+}
+
+function applyColumnAliases(table: string, fields: Record<string, any>): { mapped: Record<string, any>; dropped: string[] } {
+  const aliases = COLUMN_ALIASES[table];
+  const dropList = DROPPED_COLUMNS[table] ?? [];
+  const dropped: string[] = [];
+  const mapped: Record<string, any> = {};
+  for (const [k, v] of Object.entries(fields)) {
+    if (dropList.includes(k)) {
+      dropped.push(k);
+      continue;
+    }
+    const target = aliases?.[k];
+    if (target) {
+      // Prefer existing canonical value if both supplied
+      if (mapped[target] === undefined) mapped[target] = v;
+    } else {
+      mapped[k] = v;
+    }
+  }
+  return { mapped, dropped };
+}
 
 /**
  * Tables with business logic that MUST go through dedicated skills.
