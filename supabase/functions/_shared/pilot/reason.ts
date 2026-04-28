@@ -742,7 +742,7 @@ export async function reason(
   }
 
   try {
-    const { apiKey, apiUrl, model } = await resolveAiConfig(supabase, config.tier || 'fast');
+    const { apiKey, apiUrl, model, provider } = await resolveAiConfig(supabase, config.tier || 'fast');
     const tokenBudget = config.tokenBudget || DEFAULT_TOKEN_BUDGET;
 
     const initialTier = resolveSkillBudgetTier(tokenBudget, 0);
