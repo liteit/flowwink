@@ -3839,6 +3839,69 @@ export type Database = {
           },
         ]
       }
+      expense_payments: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          id: string
+          journal_entry_id: string | null
+          method: string
+          notes: string | null
+          paid_at: string
+          recorded_by: string | null
+          reference: string | null
+          report_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          id?: string
+          journal_entry_id?: string | null
+          method?: string
+          notes?: string | null
+          paid_at?: string
+          recorded_by?: string | null
+          reference?: string | null
+          report_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          journal_entry_id?: string | null
+          method?: string
+          notes?: string | null
+          paid_at?: string
+          recorded_by?: string | null
+          reference?: string | null
+          report_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_payments_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_payments_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "expense_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expense_reports: {
         Row: {
           approved_at: string | null
@@ -8729,6 +8792,7 @@ export type Database = {
       }
     }
     Functions: {
+      _ensure_manual_journal: { Args: never; Returns: string }
       apply_onboarding_template: {
         Args: { p_employee_id: string; p_template_id: string }
         Returns: {
@@ -8776,6 +8840,16 @@ export type Database = {
         }[]
       }
       award_rfq: { Args: { _bid_id: string; _rfq_id: string }; Returns: string }
+      book_expense_report: {
+        Args: {
+          _entry_date?: string
+          _expense_account?: string
+          _liability_account?: string
+          _report_id: string
+          _vat_account?: string
+        }
+        Returns: Json
+      }
       bulk_invoice_from_timesheets: {
         Args: {
           p_due_days?: number
@@ -9097,6 +9171,18 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      mark_expense_report_paid: {
+        Args: {
+          _bank_account?: string
+          _liability_account?: string
+          _method?: string
+          _notes?: string
+          _paid_at?: string
+          _reference?: string
+          _report_id: string
+        }
+        Returns: Json
       }
       match_po_to_invoice: {
         Args: { p_invoice_id: string; p_variance_tolerance_pct?: number }
