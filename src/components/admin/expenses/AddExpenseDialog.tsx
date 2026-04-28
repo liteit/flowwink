@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useCreateExpense } from '@/hooks/useExpenses';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose,
 } from '@/components/ui/dialog';
@@ -9,7 +11,7 @@ import { MoneyInput } from '@/components/ui/money-input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, ScanLine, Loader2 } from 'lucide-react';
 
 const CATEGORIES = [
   { value: 'travel', label: 'Travel' },
@@ -39,6 +41,46 @@ export function AddExpenseDialog() {
   const [currency, setCurrency] = useState('SEK');
   const [isRepresentation, setIsRepresentation] = useState(false);
   const [attendees, setAttendees] = useState<Attendee[]>([]);
+  const [scanning, setScanning] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleScanFile(file: File) {
+    setScanning(true);
+    try {
+      const buf = await file.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      const file_base64 = btoa(binary);
+
+      const { data, error } = await supabase.functions.invoke('extract-receipt', {
+        body: { file_base64, mime_type: file.type, filename: file.name },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || 'Extraction failed');
+
+      const r = data.data || {};
+      if (r.expense_date) setDate(r.expense_date);
+      if (r.description) setDescription(r.description);
+      if (r.vendor) setVendor(r.vendor);
+      if (r.currency) setCurrency(r.currency);
+      if (typeof r.total_cents === 'number') setTotalCents(r.total_cents);
+      if (typeof r.vat_cents === 'number') setVatOverrideCents(r.vat_cents);
+      if (r.vat_rate != null) setVatRate(String(r.vat_rate));
+      if (r.category && CATEGORIES.some((c) => c.value === r.category)) {
+        setCategory(r.category);
+        if (r.category === 'representation') {
+          setIsRepresentation(true);
+          if (attendees.length === 0) setAttendees([{ name: '', company: '' }]);
+        }
+      }
+      toast.success('Receipt scanned — review the fields and save.');
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not read receipt');
+    } finally {
+      setScanning(false);
+    }
+  }
 
   const totalNum = totalCents / 100;
   const computedVatNum = vatOverrideCents !== null
@@ -106,6 +148,34 @@ export function AddExpenseDialog() {
         <DialogHeader>
           <DialogTitle>Add Expense</DialogTitle>
         </DialogHeader>
+
+        {/* Scan receipt — AI utility, pre-fills the form */}
+        <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 flex items-center justify-between gap-3">
+          <div className="text-xs text-muted-foreground leading-snug">
+            Have a receipt? Scan it and we'll fill in the fields for you to review.
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,application/pdf"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleScanFile(f);
+              e.target.value = '';
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={scanning}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {scanning ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <ScanLine className="h-4 w-4 mr-1.5" />}
+            {scanning ? 'Reading…' : 'Scan Receipt'}
+          </Button>
+        </div>
 
         <div className="grid gap-4 py-2">
           {/* Date + Category */}
