@@ -20,6 +20,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { resolveAiConfig, isAnthropicProvider } from '../_shared/ai-config.ts';
+import { logAiUsage } from '../_shared/ai-usage-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
