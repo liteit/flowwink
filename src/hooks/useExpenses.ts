@@ -263,3 +263,49 @@ export function useApproveExpenseReport() {
     },
   });
 }
+
+export function useBookExpenseReport() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (reportId: string) => {
+      const { data, error } = await supabase.rpc('book_expense_report', { _report_id: reportId });
+      if (error) throw error;
+      return data as { ok: boolean; journal_entry_id: string; total_cents: number };
+    },
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['expense-reports'] });
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
+      toast({ title: 'Booked to ledger', description: `Journal entry ${res.journal_entry_id.slice(0, 8)}…` });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Booking failed', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
+export function useMarkExpenseReportPaid() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (input: { reportId: string; method?: string; reference?: string }) => {
+      const { data, error } = await supabase.rpc('mark_expense_report_paid', {
+        _report_id: input.reportId,
+        _method: input.method ?? 'manual',
+        _reference: input.reference ?? null,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expense-reports'] });
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
+      toast({ title: 'Marked as paid' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Payment failed', description: err.message, variant: 'destructive' });
+    },
+  });
+}
