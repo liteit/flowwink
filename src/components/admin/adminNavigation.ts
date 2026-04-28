@@ -130,6 +130,7 @@ export const navigationGroups: NavGroup[] = [
     collapsible: false,
     items: [
       
+      { name: "Chat Widget", href: "/admin/chat", icon: MessageSquare, moduleId: "chat" },
       { name: "Templates", href: "/admin/templates", icon: Puzzle, moduleId: "templates" },
       { name: "Modules", href: "/admin/modules", icon: Puzzle },
       { name: "Automations", href: "/admin/automations", icon: Zap },
