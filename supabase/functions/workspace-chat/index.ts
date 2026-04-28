@@ -463,7 +463,7 @@ Deno.serve(async (req) => {
     const { contextText, citations, meta: contextMeta } = await buildContext(supabaseAdmin, requestedSources);
     console.log(`[cowork-chat] context: ${contextMeta.tokens_used}/${contextMeta.tokens_budget} tokens, ${contextMeta.sources_active} sources, truncated=[${contextMeta.sources_truncated.join(',')}]`);
 
-    const { apiKey, apiUrl, model } = await resolveAiConfig(supabaseAdmin, 'fast');
+    const { apiKey, apiUrl, model, provider } = await resolveAiConfig(supabaseAdmin, 'fast');
     if (isAnthropicProvider(apiUrl)) {
       return new Response(JSON.stringify({
         error: 'Anthropic provider not yet supported by Cowork Chat. Switch to OpenAI, Gemini or Local LLM in Integrations.',
