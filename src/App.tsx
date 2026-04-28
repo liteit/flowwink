@@ -19,6 +19,7 @@ import PagesListPage from "./pages/admin/PagesListPage";
 import NewPagePage from "./pages/admin/NewPagePage";
 import PageEditorPage from "./pages/admin/PageEditorPage";
 import UsersPage from "./pages/admin/UsersPage";
+import RolePermissionsPage from "./pages/admin/RolePermissionsPage";
 import MediaLibraryPage from "./pages/admin/MediaLibraryPage";
 import SiteSettingsPage from "./pages/admin/SiteSettingsPage";
 import BrandingSettingsPage from "./pages/admin/BrandingSettingsPage";
@@ -213,6 +214,7 @@ const router = createBrowserRouter([
       { path: "/admin/blog/:id", element: <BlogPostEditorPage /> },
       { path: "/admin/media", element: <MediaLibraryPage /> },
       { path: "/admin/users", element: <UsersPage /> },
+      { path: "/admin/roles", element: <RolePermissionsPage /> },
       { path: "/admin/settings", element: <SiteSettingsPage /> },
       { path: "/admin/profile", element: <ProfilePage /> },
       { path: "/admin/branding", element: <BrandingSettingsPage /> },

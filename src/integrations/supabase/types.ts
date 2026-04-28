@@ -7264,6 +7264,30 @@ export type Database = {
           },
         ]
       }
+      role_module_access: {
+        Row: {
+          created_at: string
+          id: string
+          module_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sales_intelligence_profiles: {
         Row: {
           created_at: string
