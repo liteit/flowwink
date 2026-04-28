@@ -35,32 +35,47 @@ export function SystemAiSettingsTab({ data, onChange }: SystemAiSettingsTabProps
     local: localEnabled,
   };
 
+  // Default models used by edge functions when no explicit override is set.
+  // Keep in sync with supabase/functions/_shared/ai-config.ts.
+  const DEFAULT_FALLBACK_MODEL: Record<SystemAiProvider, { fast: string; reasoning: string; multimodal: string }> = {
+    openai: { fast: 'gpt-4.1-mini', reasoning: 'gpt-4.1', multimodal: 'gpt-4.1-mini' },
+    gemini: { fast: 'gemini-2.5-flash', reasoning: 'gemini-2.5-pro', multimodal: 'gemini-2.5-flash' },
+    anthropic: { fast: 'claude-3-5-haiku', reasoning: 'claude-3-5-sonnet', multimodal: 'claude-3-5-sonnet' },
+    local: { fast: '', reasoning: '', multimodal: '' },
+  };
+
   // Mirror of resolveAiConfig() server-side logic for UI display.
   // For 'fast'/'reasoning': use selected provider if configured, otherwise auto-fall-back to env.
   // For 'multimodal': only vision-capable providers count; local LLM forces fallback.
   const resolveTier = (tier: 'fast' | 'reasoning' | 'multimodal'): {
     provider: SystemAiProvider | null;
     fallback: boolean;
+    fallbackModel?: string;
   } => {
     const primary = data.provider as SystemAiProvider;
+
+    const withFallbackModel = (provider: SystemAiProvider) => ({
+      provider,
+      fallback: !!primary,
+      fallbackModel: DEFAULT_FALLBACK_MODEL[provider]?.[tier],
+    });
 
     if (tier === 'multimodal') {
       if (primary && VISION_CAPABLE.has(primary) && enabledByProvider[primary]) {
         return { provider: primary, fallback: false };
       }
-      // Fallback chain: Gemini → OpenAI → Anthropic
-      if (geminiEnabled) return { provider: 'gemini', fallback: !!primary };
-      if (openaiEnabled) return { provider: 'openai', fallback: !!primary };
-      if (anthropicEnabled) return { provider: 'anthropic', fallback: !!primary };
+      if (geminiEnabled) return withFallbackModel('gemini');
+      if (openaiEnabled) return withFallbackModel('openai');
+      if (anthropicEnabled) return withFallbackModel('anthropic');
       return { provider: null, fallback: false };
     }
 
     if (primary && enabledByProvider[primary]) {
       return { provider: primary, fallback: false };
     }
-    if (openaiEnabled) return { provider: 'openai', fallback: !!primary };
-    if (anthropicEnabled) return { provider: 'anthropic', fallback: !!primary };
-    if (geminiEnabled) return { provider: 'gemini', fallback: !!primary };
+    if (openaiEnabled) return withFallbackModel('openai');
+    if (anthropicEnabled) return withFallbackModel('anthropic');
+    if (geminiEnabled) return withFallbackModel('gemini');
     return { provider: null, fallback: false };
   };
 
