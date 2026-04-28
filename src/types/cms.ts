@@ -892,10 +892,33 @@ export const STATUS_ICONS: Record<PageStatus, string> = {
 };
 
 export const ROLE_LABELS: Record<AppRole, string> = {
-  writer: 'Writer',
-  approver: 'Approver',
   admin: 'Administrator',
   customer: 'Customer',
+  sales: 'Sales',
+  hr: 'HR',
+  accounting: 'Accounting',
+  support: 'Support',
+  warehouse: 'Warehouse',
+  marketing: 'Marketing',
+  purchasing: 'Purchasing',
+  projects: 'Projects',
+  writer: 'Writer (legacy)',
+  approver: 'Approver (legacy)',
+};
+
+export const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
+  admin: 'Full access to everything',
+  customer: 'External customer account',
+  sales: 'CRM, leads, deals, quotes, companies, calendar',
+  hr: 'Employees, leave, attendance, recruitment, contracts',
+  accounting: 'Invoices, expenses, reconciliation, period locks',
+  support: 'Tickets, live support, cowork chat',
+  warehouse: 'Inventory, products, vendors, purchase orders',
+  marketing: 'Newsletter, webinars, forms, campaigns',
+  purchasing: 'Vendors, RFQs, purchase orders',
+  projects: 'Projects, tasks, timesheets',
+  writer: 'Legacy CMS role — treated as admin',
+  approver: 'Legacy CMS role — treated as admin',
 };
 
 // ==================== BLOG TYPES ====================
