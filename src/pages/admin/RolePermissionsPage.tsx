@@ -129,6 +129,8 @@ export default function RolePermissionsPage() {
         Changes apply immediately. Affected users will see the updated sidebar on
         next page load.
       </p>
+
+      <RoleAccessAuditPanel />
     </div>
   );
 }
