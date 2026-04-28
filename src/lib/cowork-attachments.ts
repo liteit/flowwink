@@ -207,6 +207,24 @@ async function parsePdfFile(file: File): Promise<ParseResult> {
     });
     if (error) throw new Error(error.message || 'extract-pdf-text failed');
     if (data?.queued) {
+      window.setTimeout(async () => {
+        if (!docId) return;
+        const { data: doc } = await supabase
+          .from('documents')
+          .select('extraction_status')
+          .eq('id', docId)
+          .maybeSingle();
+
+        if (doc?.extraction_status === 'pending') {
+          await writeBackExtraction(
+            docId,
+            'failed',
+            null,
+            'PDF extraction timed out or upstream parser was unavailable.',
+          );
+        }
+      }, 20000);
+
       return {
         text: '',
         truncated: false,
