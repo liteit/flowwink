@@ -575,25 +575,45 @@ Deno.serve(async (req) => {
         }
       }
       // Force a final answer with no tools
+      const tForce = Date.now();
       const resp = await fetch(apiUrl, {
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ model, messages: conversation }),
       });
       const json = await resp.json();
+      const fUsage = json?.usage || {};
+      void logAiUsage({
+        supabase: supabaseAdmin, source: 'workspace-chat', provider, model,
+        promptTokens: fUsage.prompt_tokens || 0,
+        completionTokens: fUsage.completion_tokens || 0,
+        totalTokens: fUsage.total_tokens || (fUsage.prompt_tokens || 0) + (fUsage.completion_tokens || 0),
+        latencyMs: Date.now() - tForce,
+        status: resp.ok ? 'success' : 'error',
+        userId: user.id, metadata: { mode, phase: 'force-final' },
+      });
       const finalText: string = json.choices?.[0]?.message?.content || '';
       return streamFinal(citations, finalText, contextMeta);
     }
 
     /* -------- No tools: stream straight through -------- */
+    const tStream = Date.now();
     const upstream = await fetch(apiUrl, {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, stream: true, messages: conversation }),
+      body: JSON.stringify({ model, stream: true, messages: conversation, stream_options: { include_usage: true } }),
     });
     if (!upstream.ok || !upstream.body) {
       const errText = await upstream.text();
       console.error('AI provider error:', upstream.status, errText);
+      void logAiUsage({
+        supabase: supabaseAdmin, source: 'workspace-chat', provider, model,
+        promptTokens: 0, completionTokens: 0, totalTokens: 0,
+        latencyMs: Date.now() - tStream,
+        status: upstream.status === 429 ? 'rate_limited' : 'error',
+        error: errText.slice(0, 500), userId: user.id,
+        metadata: { mode, http_status: upstream.status, phase: 'stream' },
+      });
       return new Response(JSON.stringify({
         error: `AI provider returned ${upstream.status}`, detail: errText.slice(0, 500),
       }), { status: upstream.status === 429 ? 429 : 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -605,16 +625,39 @@ Deno.serve(async (req) => {
         controller.enqueue(encoder.encode(`event: citations\ndata: ${JSON.stringify(citations)}\n\n`));
         controller.enqueue(encoder.encode(`event: context_meta\ndata: ${JSON.stringify(contextMeta)}\n\n`));
         const reader = upstream.body!.getReader();
+        const decoder = new TextDecoder();
+        let buf = '';
+        let pTok = 0, cTok = 0, tTok = 0;
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
             controller.enqueue(value);
+            // Sniff usage from chunks (OpenAI/Gemini emit usage in last data: line when stream_options.include_usage)
+            buf += decoder.decode(value, { stream: true });
+            // Keep buf bounded
+            if (buf.length > 8000) buf = buf.slice(-4000);
+          }
+          // Parse any "usage" object found in buf
+          const matches = buf.match(/"usage"\s*:\s*\{[^}]*\}/g);
+          if (matches && matches.length) {
+            try {
+              const lastUsage = JSON.parse(`{${matches[matches.length - 1]}}`).usage;
+              pTok = lastUsage.prompt_tokens || 0;
+              cTok = lastUsage.completion_tokens || 0;
+              tTok = lastUsage.total_tokens || pTok + cTok;
+            } catch { /* ignore */ }
           }
         } catch (e) {
           console.error('stream error:', e);
         } finally {
           controller.close();
+          void logAiUsage({
+            supabase: supabaseAdmin, source: 'workspace-chat', provider, model,
+            promptTokens: pTok, completionTokens: cTok, totalTokens: tTok,
+            latencyMs: Date.now() - tStream, status: 'success',
+            userId: user.id, metadata: { mode, phase: 'stream' },
+          });
         }
       },
     });
