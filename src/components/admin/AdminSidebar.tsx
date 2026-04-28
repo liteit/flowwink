@@ -90,6 +90,8 @@ import {
 
 import { navigationGroups, type NavItem, type NavGroup } from './adminNavigation';
 import { useNavFeatureFlags, isFeatureFlagOn } from '@/hooks/useNavFeatureFlags';
+import { useRoleModuleAccess } from '@/hooks/useRoleModuleAccess';
+import type { AppRole } from '@/types/cms';
 
 
 export function AdminSidebar() {
