@@ -411,10 +411,17 @@ export function SystemAiSettingsTab({ data, onChange }: SystemAiSettingsTabProps
                   <>
                     <div className="text-base font-serif">{PROVIDER_LABEL[tier.provider]}</div>
                     {tier.fallback && (
-                      <Badge variant="secondary" className="text-xs gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        Fallback (selected provider can't handle this)
-                      </Badge>
+                      <div className="space-y-1">
+                        <Badge variant="secondary" className="text-xs gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          Fallback (selected provider can't handle this)
+                        </Badge>
+                        {tier.fallbackModel && (
+                          <div className="text-xs text-muted-foreground font-mono">
+                            {tier.fallbackModel}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </>
                 ) : (
