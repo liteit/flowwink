@@ -343,6 +343,110 @@ export default function ReconciliationPage() {
           </Card>
         )}
       </AdminPageContainer>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Review extracted transactions</DialogTitle>
+            <DialogDescription>
+              {previewRows.length} row{previewRows.length === 1 ? '' : 's'} from{' '}
+              <span className="font-medium">{previewFileName}</span>. Edit or delete any row before
+              importing — vision models can misread amounts.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="max-h-[55vh] overflow-auto">
+            {previewRows.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">
+                No transactions extracted.
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-32">Date</TableHead>
+                    <TableHead>Counterparty</TableHead>
+                    <TableHead>Reference / description</TableHead>
+                    <TableHead className="text-right w-32">Amount</TableHead>
+                    <TableHead className="w-20">CCY</TableHead>
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {previewRows.map((r, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <Input
+                          value={r.transaction_date}
+                          onChange={(e) => updatePreviewRow(i, { transaction_date: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={r.counterparty || ''}
+                          onChange={(e) => updatePreviewRow(i, { counterparty: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={r.reference || r.description || ''}
+                          onChange={(e) => updatePreviewRow(i, { description: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Input
+                          type="number"
+                          value={(r.amount_cents / 100).toFixed(2)}
+                          onChange={(e) =>
+                            updatePreviewRow(i, {
+                              amount_cents: Math.round(parseFloat(e.target.value || '0') * 100),
+                            })
+                          }
+                          className="h-8 text-xs text-right tabular-nums"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={r.currency}
+                          onChange={(e) =>
+                            updatePreviewRow(i, { currency: e.target.value.toUpperCase() })
+                          }
+                          className="h-8 text-xs uppercase"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => removePreviewRow(i)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCommit}
+              disabled={!previewRows.length || commitImage.isPending}
+            >
+              {commitImage.isPending ? 'Importing…' : `Import ${previewRows.length} rows`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
