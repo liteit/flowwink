@@ -170,6 +170,7 @@ export default function WorkspaceChatPage() {
           size: file.size,
           kind,
           status: kind === 'image' || kind === 'other' ? 'error' : 'parsing',
+          startedAt: Date.now(),
           error:
             kind === 'image'
               ? 'Images not supported yet'
