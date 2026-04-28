@@ -44,6 +44,41 @@ function truncate(text: string): { text: string; truncated: boolean } {
   };
 }
 
+async function extractTextFromPdfClient(file: File): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+  try {
+    type PdfJsModule = {
+      GlobalWorkerOptions: { workerSrc: string };
+      getDocument: (params: { data: ArrayBuffer }) => { promise: Promise<{ numPages: number; getPage: (pageNumber: number) => Promise<{ getTextContent: () => Promise<{ items: Array<{ str?: string }> }> }> }> };
+    };
+
+    const pdfjsLib = await (Function(
+      'return import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs")',
+    )() as Promise<PdfJsModule>);
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pageTexts: string[] = [];
+
+    for (let i = 1; i <= Math.min(pdf.numPages, 40); i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const text = content.items
+        .map((item: { str?: string }) => item.str || '')
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (text) pageTexts.push(text);
+    }
+
+    return pageTexts.join('\n\n');
+  } catch (error) {
+    logger.error('client PDF extraction failed', error);
+    return '';
+  }
+}
+
 /**
  * Create a documents row for the upload via SECURITY DEFINER RPC.
  * Returns documents.id, or null if creation failed (we still want the chat
@@ -113,6 +148,25 @@ async function parseTextFile(file: File): Promise<ParseResult> {
 }
 
 async function parsePdfFile(file: File): Promise<ParseResult> {
+  const clientExtracted = await extractTextFromPdfClient(file);
+  if (clientExtracted && clientExtracted.trim().length > 100) {
+    const { text, truncated } = truncate(clientExtracted);
+    const docId = await createShadowDocument({
+      title: file.name,
+      fileName: file.name,
+      fileUrl: 'inline:pdf-text',
+      fileType: file.type || PDF_MIME,
+      fileSizeBytes: file.size,
+      description: 'PDF uploaded in cowork chat',
+    });
+
+    if (docId) {
+      await writeBackExtraction(docId, 'success', text, null);
+    }
+
+    return { text, truncated, kind: 'pdf', documentId: docId };
+  }
+
   const { data: sessionData } = await supabase.auth.getSession();
   const userId = sessionData.session?.user?.id;
   if (!userId) throw new Error('Not authenticated');

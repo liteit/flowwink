@@ -57,7 +57,7 @@ export function AttachmentChip({
       className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/40 pl-2 pr-1 py-1 text-xs max-w-[280px]"
       title={
         attachment.status === 'parsing' && isLargePdf
-          ? 'Large PDFs can take 20–60s to extract.'
+          ? 'Large or scanned PDFs can take longer to extract.'
           : attachment.error || attachment.name
       }
     >
