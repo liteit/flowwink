@@ -9,16 +9,28 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
-import { Upload, RefreshCw, Wand2, X, FileText } from 'lucide-react';
+import { Upload, RefreshCw, Wand2, X, FileText, ScanLine, Trash2 } from 'lucide-react';
 import {
   useBankTransactions,
   useImportBatches,
   useSyncStripe,
   useImportBankFile,
+  usePreviewBankImage,
+  useCommitBankImage,
   useAutoMatch,
   useIgnoreTransaction,
   type BankTxStatus,
+  type OcrTransaction,
 } from '@/hooks/useReconciliation';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 const STATUS_COLORS: Record<BankTxStatus, string> = {
   unmatched: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
@@ -27,11 +39,20 @@ const STATUS_COLORS: Record<BankTxStatus, string> = {
   ignored: 'bg-muted text-muted-foreground',
 };
 
+type ImportFormat = 'csv' | 'camt053' | 'sie' | 'image';
+
 export default function ReconciliationPage() {
   const [tab, setTab] = useState<'transactions' | 'imports'>('transactions');
   const [statusFilter, setStatusFilter] = useState<BankTxStatus | 'all'>('unmatched');
-  const [importFormat, setImportFormat] = useState<'csv' | 'camt053' | 'sie'>('csv');
+  const [importFormat, setImportFormat] = useState<ImportFormat>('csv');
+  const [ocrProvider, setOcrProvider] = useState<'openai' | 'gemini'>('openai');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // OCR preview state
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewFileName, setPreviewFileName] = useState('');
+  const [previewRows, setPreviewRows] = useState<OcrTransaction[]>([]);
+  const [previewCurrency, setPreviewCurrency] = useState('SEK');
 
   const { data: txs = [], isLoading } = useBankTransactions(
     statusFilter === 'all' ? undefined : statusFilter,
@@ -39,18 +60,61 @@ export default function ReconciliationPage() {
   const { data: batches = [] } = useImportBatches();
   const syncStripe = useSyncStripe();
   const importFile = useImportBankFile();
+  const previewImage = usePreviewBankImage();
+  const commitImage = useCommitBankImage();
   const autoMatch = useAutoMatch();
   const ignoreTx = useIgnoreTransaction();
 
   const fmt = (cents: number, currency: string) =>
     new Intl.NumberFormat('sv-SE', { style: 'currency', currency }).format(cents / 100);
 
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => {
+        const s = r.result as string;
+        resolve(s.includes(',') ? s.split(',')[1] : s);
+      };
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const content = await file.text();
-    importFile.mutate({ fileName: file.name, content, format: importFormat });
+    if (importFormat === 'image') {
+      const contentBase64 = await fileToBase64(file);
+      const res = await previewImage.mutateAsync({
+        fileName: file.name,
+        contentBase64,
+        mimeType: file.type || 'application/octet-stream',
+        provider: ocrProvider,
+      });
+      setPreviewFileName(file.name);
+      setPreviewRows(res.transactions);
+      setPreviewCurrency(res.currency_default || 'SEK');
+      setPreviewOpen(true);
+    } else {
+      const content = await file.text();
+      importFile.mutate({ fileName: file.name, content, format: importFormat });
+    }
     e.target.value = '';
+  };
+
+  const updatePreviewRow = (i: number, patch: Partial<OcrTransaction>) =>
+    setPreviewRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  const removePreviewRow = (i: number) =>
+    setPreviewRows((prev) => prev.filter((_, idx) => idx !== i));
+
+  const handleCommit = async () => {
+    if (!previewRows.length) return;
+    await commitImage.mutateAsync({
+      fileName: previewFileName,
+      transactions: previewRows,
+      currency_default: previewCurrency,
+    });
+    setPreviewOpen(false);
+    setPreviewRows([]);
   };
 
   return (
