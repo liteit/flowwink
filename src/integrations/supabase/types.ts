@@ -7288,6 +7288,21 @@ export type Database = {
         }
         Relationships: []
       }
+      role_module_access_defaults: {
+        Row: {
+          module_id: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          module_id: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          module_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
       sales_intelligence_profiles: {
         Row: {
           created_at: string
@@ -9167,6 +9182,11 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      reset_all_role_module_access: { Args: never; Returns: undefined }
+      reset_role_module_access: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: undefined
       }
       resolve_approval: {
         Args: {
