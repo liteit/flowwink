@@ -198,6 +198,51 @@ export function ExpenseReportsTab() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={!!payTarget} onOpenChange={(o) => !o && setPayTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mark report as paid</DialogTitle>
+            <DialogDescription>
+              {payTarget && `${payTarget.period} · ${formatCents(payTarget.total_cents, payTarget.currency)}`}
+              <br />
+              Posts a payment journal entry (Dt 2890 / Cr 1930).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="pay-method">Payment method</Label>
+              <Select value={payMethod} onValueChange={setPayMethod}>
+                <SelectTrigger id="pay-method"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manual">Manual</SelectItem>
+                  <SelectItem value="sepa">SEPA</SelectItem>
+                  <SelectItem value="swish">Swish</SelectItem>
+                  <SelectItem value="bankgiro">Bankgiro</SelectItem>
+                  <SelectItem value="stripe">Stripe</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="pay-ref">Reference (optional)</Label>
+              <Input
+                id="pay-ref"
+                value={payReference}
+                onChange={(e) => setPayReference(e.target.value)}
+                placeholder="Bank reference / payout ID"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPayTarget(null)}>Cancel</Button>
+            <Button onClick={handleConfirmPay} disabled={pay.isPending}>
+              {pay.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wallet className="h-4 w-4 mr-2" />}
+              Confirm payment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
