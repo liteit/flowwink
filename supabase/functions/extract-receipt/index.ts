@@ -96,9 +96,28 @@ Deno.serve(async (req) => {
 
     const ai = await resolveAiConfig(supabase, 'multimodal');
 
-    const dataUrl = `data:${mime_type};base64,${file_base64}`;
+    const isImage = mime_type.startsWith('image/');
+    const isPdf = mime_type === 'application/pdf';
+    if (!isImage && !isPdf) {
+      return new Response(
+        JSON.stringify({ error: `Unsupported file type "${mime_type}". Use an image (JPG/PNG/HEIC) or PDF.` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+    // PDF support varies across vision providers (Gemini's OpenAI-compat layer
+    // rejects application/pdf on image_url). Until we render PDFs to images
+    // server-side, ask the user to provide an image.
+    if (isPdf && ai.provider !== 'openai') {
+      return new Response(
+        JSON.stringify({
+          error:
+            'PDF receipts are not yet supported on this AI provider. Please upload a photo of the receipt (JPG/PNG/HEIC), or take a screenshot of the PDF.',
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
 
-    // OpenAI / Gemini chat-completions compatible vision payload
+    const dataUrl = `data:${mime_type};base64,${file_base64}`;
     const messages = [
       { role: 'system', content: SYSTEM_PROMPT },
       {
