@@ -90,8 +90,18 @@ serve(async (req) => {
       );
     }
 
-    // Convert PDF to base64 for multimodal extraction
-    const base64Pdf = btoa(String.fromCharCode(...pdfBytes));
+    // Convert PDF to base64 for multimodal extraction.
+    // Chunked to avoid "Maximum call stack size exceeded" on large PDFs
+    // (spread operator on big Uint8Arrays blows the stack).
+    const CHUNK = 0x8000; // 32 KB
+    let binary = '';
+    for (let i = 0; i < pdfBytes.length; i += CHUNK) {
+      binary += String.fromCharCode.apply(
+        null,
+        pdfBytes.subarray(i, i + CHUNK) as unknown as number[],
+      );
+    }
+    const base64Pdf = btoa(binary);
 
     const extractionPrompt = `Extract ALL text content from this PDF document. 
 Preserve the structure: headings, paragraphs, lists, tables.
