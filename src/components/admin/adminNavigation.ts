@@ -7,6 +7,8 @@ import {
   RefreshCw, AlertTriangle, CheckSquare, Sparkles,
 } from 'lucide-react';
 
+import type { AppRole } from '@/types/cms';
+
 export type NavItem = {
   name: string;
   href: string;
@@ -18,12 +20,17 @@ export type NavItem = {
    * Format: 'site_settings_key.field' — e.g. 'dunning.enabled'.
    */
   featureFlag?: string;
+  /** Functional roles allowed to see this item. Admin always sees everything. */
+  allowedRoles?: AppRole[];
 };
 
 export type NavGroup = {
   label: string;
   items: NavItem[];
+  /** @deprecated Use allowedRoles instead. Kept for backwards compatibility — equivalent to admin-only. */
   adminOnly?: boolean;
+  /** Functional roles allowed to see this group. Admin always sees everything. */
+  allowedRoles?: AppRole[];
   collapsible?: boolean;
 };
 
