@@ -46,8 +46,28 @@ export function ExpenseReportsTab() {
   const generate = useGenerateMonthlyReport();
   const submit = useSubmitExpenseReport();
   const approve = useApproveExpenseReport();
+  const book = useBookExpenseReport();
+  const pay = useMarkExpenseReportPaid();
+
+  const [payTarget, setPayTarget] = useState<ExpenseReport | null>(null);
+  const [payMethod, setPayMethod] = useState('manual');
+  const [payReference, setPayReference] = useState('');
 
   const currentPeriod = new Date().toISOString().slice(0, 7);
+
+  const handleConfirmPay = () => {
+    if (!payTarget) return;
+    pay.mutate(
+      { reportId: payTarget.id, method: payMethod, reference: payReference || undefined },
+      {
+        onSuccess: () => {
+          setPayTarget(null);
+          setPayReference('');
+          setPayMethod('manual');
+        },
+      },
+    );
+  };
 
   return (
     <div className="space-y-4">
