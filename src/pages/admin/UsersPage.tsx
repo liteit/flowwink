@@ -75,6 +75,11 @@ export default function UsersPage() {
     enabled: isAdmin,
   });
 
+  // no-op placeholder to keep diff small
+    },
+    enabled: isAdmin,
+  });
+
   const toggleRole = useMutation({
     mutationFn: async ({ userId, role, enabled }: { userId: string; role: AppRole; enabled: boolean }) => {
       if (enabled) {
