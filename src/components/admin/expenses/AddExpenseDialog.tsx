@@ -41,6 +41,46 @@ export function AddExpenseDialog() {
   const [currency, setCurrency] = useState('SEK');
   const [isRepresentation, setIsRepresentation] = useState(false);
   const [attendees, setAttendees] = useState<Attendee[]>([]);
+  const [scanning, setScanning] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleScanFile(file: File) {
+    setScanning(true);
+    try {
+      const buf = await file.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      const file_base64 = btoa(binary);
+
+      const { data, error } = await supabase.functions.invoke('extract-receipt', {
+        body: { file_base64, mime_type: file.type, filename: file.name },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || 'Extraction failed');
+
+      const r = data.data || {};
+      if (r.expense_date) setDate(r.expense_date);
+      if (r.description) setDescription(r.description);
+      if (r.vendor) setVendor(r.vendor);
+      if (r.currency) setCurrency(r.currency);
+      if (typeof r.total_cents === 'number') setTotalCents(r.total_cents);
+      if (typeof r.vat_cents === 'number') setVatOverrideCents(r.vat_cents);
+      if (r.vat_rate != null) setVatRate(String(r.vat_rate));
+      if (r.category && CATEGORIES.some((c) => c.value === r.category)) {
+        setCategory(r.category);
+        if (r.category === 'representation') {
+          setIsRepresentation(true);
+          if (attendees.length === 0) setAttendees([{ name: '', company: '' }]);
+        }
+      }
+      toast.success('Receipt scanned — review the fields and save.');
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not read receipt');
+    } finally {
+      setScanning(false);
+    }
+  }
 
   const totalNum = totalCents / 100;
   const computedVatNum = vatOverrideCents !== null
