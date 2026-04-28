@@ -374,3 +374,74 @@ export function useAccountingTemplates(locale?: string) {
     },
   });
 }
+
+export interface TemplateInput {
+  id?: string;
+  template_name: string;
+  description: string;
+  category: string;
+  keywords: string[] | null;
+  template_lines: TemplateLine[];
+  locale: string;
+  is_system?: boolean;
+}
+
+export function useUpsertAccountingTemplate() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (input: TemplateInput) => {
+      const payload: any = {
+        template_name: input.template_name,
+        description: input.description,
+        category: input.category,
+        keywords: input.keywords,
+        template_lines: input.template_lines,
+        locale: input.locale,
+        is_system: input.is_system ?? false,
+      };
+      if (input.id) {
+        const { data, error } = await supabase
+          .from('accounting_templates')
+          .update(payload)
+          .eq('id', input.id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      }
+      const { data, error } = await supabase
+        .from('accounting_templates')
+        .insert(payload)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['accounting-templates'] });
+      toast({ title: vars.id ? 'Template updated' : 'Template created' });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
+export function useDeleteAccountingTemplate() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('accounting_templates').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounting-templates'] });
+      toast({ title: 'Template deleted' });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    },
+  });
+}
