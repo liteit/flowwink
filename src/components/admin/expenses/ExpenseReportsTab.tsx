@@ -1,15 +1,27 @@
+import { useState } from 'react';
 import {
   useExpenseReports,
   useGenerateMonthlyReport,
   useSubmitExpenseReport,
   useApproveExpenseReport,
+  useBookExpenseReport,
+  useMarkExpenseReportPaid,
+  type ExpenseReport,
 } from '@/hooks/useExpenses';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, Loader2, Send, Check, RefreshCw } from 'lucide-react';
+import { FileText, Loader2, Send, Check, RefreshCw, BookOpen, Wallet } from 'lucide-react';
 import { format } from 'date-fns';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -18,6 +30,7 @@ const STATUS_COLORS: Record<string, string> = {
   approved: 'bg-green-500/10 text-green-700 dark:text-green-400',
   rejected: 'bg-destructive/10 text-destructive',
   booked: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
+  paid: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
 };
 
 function formatCents(cents: number, currency = 'SEK'): string {
@@ -34,8 +47,28 @@ export function ExpenseReportsTab() {
   const generate = useGenerateMonthlyReport();
   const submit = useSubmitExpenseReport();
   const approve = useApproveExpenseReport();
+  const book = useBookExpenseReport();
+  const pay = useMarkExpenseReportPaid();
+
+  const [payTarget, setPayTarget] = useState<ExpenseReport | null>(null);
+  const [payMethod, setPayMethod] = useState('manual');
+  const [payReference, setPayReference] = useState('');
 
   const currentPeriod = new Date().toISOString().slice(0, 7);
+
+  const handleConfirmPay = () => {
+    if (!payTarget) return;
+    pay.mutate(
+      { reportId: payTarget.id, method: payMethod, reference: payReference || undefined },
+      {
+        onSuccess: () => {
+          setPayTarget(null);
+          setPayReference('');
+          setPayMethod('manual');
+        },
+      },
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -137,6 +170,25 @@ export function ExpenseReportsTab() {
                             Approve
                           </Button>
                         )}
+                        {isAdmin && report.status === 'approved' && (
+                          <Button
+                            size="sm"
+                            onClick={() => book.mutate(report.id)}
+                            disabled={book.isPending}
+                          >
+                            <BookOpen className="h-3.5 w-3.5 mr-1" />
+                            Book
+                          </Button>
+                        )}
+                        {isAdmin && report.status === 'booked' && (
+                          <Button
+                            size="sm"
+                            onClick={() => setPayTarget(report)}
+                          >
+                            <Wallet className="h-3.5 w-3.5 mr-1" />
+                            Mark paid
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -146,6 +198,51 @@ export function ExpenseReportsTab() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={!!payTarget} onOpenChange={(o) => !o && setPayTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mark report as paid</DialogTitle>
+            <DialogDescription>
+              {payTarget && `${payTarget.period} · ${formatCents(payTarget.total_cents, payTarget.currency)}`}
+              <br />
+              Posts a payment journal entry (Dt 2890 / Cr 1930).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="pay-method">Payment method</Label>
+              <Select value={payMethod} onValueChange={setPayMethod}>
+                <SelectTrigger id="pay-method"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manual">Manual</SelectItem>
+                  <SelectItem value="sepa">SEPA</SelectItem>
+                  <SelectItem value="swish">Swish</SelectItem>
+                  <SelectItem value="bankgiro">Bankgiro</SelectItem>
+                  <SelectItem value="stripe">Stripe</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="pay-ref">Reference (optional)</Label>
+              <Input
+                id="pay-ref"
+                value={payReference}
+                onChange={(e) => setPayReference(e.target.value)}
+                placeholder="Bank reference / payout ID"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPayTarget(null)}>Cancel</Button>
+            <Button onClick={handleConfirmPay} disabled={pay.isPending}>
+              {pay.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wallet className="h-4 w-4 mr-2" />}
+              Confirm payment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
