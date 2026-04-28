@@ -170,6 +170,25 @@ export function ExpenseReportsTab() {
                             Approve
                           </Button>
                         )}
+                        {isAdmin && report.status === 'approved' && (
+                          <Button
+                            size="sm"
+                            onClick={() => book.mutate(report.id)}
+                            disabled={book.isPending}
+                          >
+                            <BookOpen className="h-3.5 w-3.5 mr-1" />
+                            Book
+                          </Button>
+                        )}
+                        {isAdmin && report.status === 'booked' && (
+                          <Button
+                            size="sm"
+                            onClick={() => setPayTarget(report)}
+                          >
+                            <Wallet className="h-3.5 w-3.5 mr-1" />
+                            Mark paid
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
