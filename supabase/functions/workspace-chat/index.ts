@@ -515,6 +515,7 @@ Deno.serve(async (req) => {
     if (tools) {
       // Up to 2 tool-call rounds to keep latency bounded.
       for (let round = 0; round < 2; round++) {
+        const t0 = Date.now();
         const resp = await fetch(apiUrl, {
           method: 'POST',
           headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
@@ -523,11 +524,28 @@ Deno.serve(async (req) => {
         if (!resp.ok) {
           const errText = await resp.text();
           console.error('AI provider error (tool pass):', resp.status, errText);
+          void logAiUsage({
+            supabase: supabaseAdmin, source: 'workspace-chat', provider, model,
+            promptTokens: 0, completionTokens: 0, totalTokens: 0,
+            latencyMs: Date.now() - t0,
+            status: resp.status === 429 ? 'rate_limited' : 'error',
+            error: errText.slice(0, 500), userId: user.id,
+            metadata: { mode, http_status: resp.status, phase: 'tool-pass' },
+          });
           return new Response(JSON.stringify({
             error: `AI provider returned ${resp.status}`, detail: errText.slice(0, 500),
           }), { status: resp.status === 429 ? 429 : 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
         const json = await resp.json();
+        const usage = json?.usage || {};
+        void logAiUsage({
+          supabase: supabaseAdmin, source: 'workspace-chat', provider, model,
+          promptTokens: usage.prompt_tokens || 0,
+          completionTokens: usage.completion_tokens || 0,
+          totalTokens: usage.total_tokens || (usage.prompt_tokens || 0) + (usage.completion_tokens || 0),
+          latencyMs: Date.now() - t0, status: 'success', userId: user.id,
+          metadata: { mode, phase: 'tool-pass', round },
+        });
         const choice = json.choices?.[0];
         const toolCalls = choice?.message?.tool_calls;
         if (!toolCalls || toolCalls.length === 0) {
