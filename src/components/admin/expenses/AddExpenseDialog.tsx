@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useCreateExpense } from '@/hooks/useExpenses';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose,
 } from '@/components/ui/dialog';
@@ -9,7 +11,7 @@ import { MoneyInput } from '@/components/ui/money-input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, ScanLine, Loader2 } from 'lucide-react';
 
 const CATEGORIES = [
   { value: 'travel', label: 'Travel' },
