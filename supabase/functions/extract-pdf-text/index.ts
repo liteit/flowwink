@@ -61,10 +61,24 @@ serve(async (req) => {
       );
     }
 
-    // Resolve a vision-capable AI via the central config layer
+    // Resolve a vision-capable AI via the central config layer.
+    // PDF preference: Gemini handles PDFs in a single call via inline_data.
+    // OpenAI requires the Files API (2-step upload). Anthropic supports document blocks.
+    // If Gemini key exists, prefer it for PDFs even when another provider is primary.
     let ai;
     try {
-      ai = await resolveAiConfig(supabase, 'multimodal');
+      const geminiKey = Deno.env.get('GEMINI_API_KEY') || Deno.env.get('GOOGLE_API_KEY');
+      if (geminiKey) {
+        ai = {
+          provider: 'gemini' as const,
+          apiKey: geminiKey,
+          apiUrl: '',
+          model: 'gemini-2.5-flash',
+          fallback: false,
+        };
+      } else {
+        ai = await resolveAiConfig(supabase, 'multimodal');
+      }
     } catch (err: any) {
       return new Response(
         JSON.stringify({ success: false, error: err.message || 'No vision-capable AI provider configured' }),
