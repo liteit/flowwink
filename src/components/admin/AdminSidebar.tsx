@@ -97,7 +97,7 @@ import type { AppRole } from '@/types/cms';
 export function AdminSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, profile, role, signOut, isAdmin, hasAnyRole } = useAuth();
+  const { user, profile, role, roles, signOut, isAdmin, hasAnyRole } = useAuth();
   const { state } = useSidebar();
   const { data: modules } = useModules();
   const { addPin, removePin, isPinned } = usePinnedPages(user?.id);
