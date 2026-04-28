@@ -85,7 +85,6 @@ const RECONCILIATION_SKILLS: SkillSeed[] = [
     },
     instructions:
       'Two-step flow. (1) Preview: send contentBase64+mimeType, commit=false → get parsed transactions back. (2) Show them to the human, let them edit/remove rows, then re-call with commit=true and the approved transactions array. Never auto-commit OCR output unattended — vision models hallucinate amounts.',
-    mcp_exposed: true,
   },
 ];
 
