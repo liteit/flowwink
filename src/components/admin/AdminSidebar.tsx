@@ -133,24 +133,34 @@ export function AdminSidebar() {
   const isItemActive = (href: string) =>
     location.pathname === href || (href !== "/admin" && location.pathname.startsWith(href));
 
-  // Filter groups by role: admin sees all; functional roles see groups where allowedRoles intersects.
-  // Groups without allowedRoles and without adminOnly are visible to everyone authenticated.
+  // Role → module access map (from DB). Admin bypasses all role checks.
+  const { data: accessMap } = useRoleModuleAccess();
+  const { data: featureFlags } = useNavFeatureFlags();
+
+  // Build the set of moduleIds the current non-admin user can see based on their roles.
+  const allowedModuleIds = useMemo(() => {
+    if (isAdmin) return null; // null = no restriction
+    const allowed = new Set<string>();
+    (roles as AppRole[]).forEach((r) => {
+      const set = accessMap?.[r];
+      if (set) set.forEach((id) => allowed.add(id));
+    });
+    return allowed;
+  }, [isAdmin, roles, accessMap]);
+
+  // Filter groups: admin sees all; admin-only groups hidden for non-admins; other groups
+  // visible if any item inside is visible (computed below).
   const roleFilteredGroups = navigationGroups.filter((group) => {
     if (isAdmin) return true;
     if (group.adminOnly) return false;
-    if (group.allowedRoles && group.allowedRoles.length > 0) {
-      return hasAnyRole(group.allowedRoles);
-    }
     return true;
   });
-  
-  // Filter by enabled modules
-  const { data: featureFlags } = useNavFeatureFlags();
 
   const filteredGroups = useMemo(() => roleFilteredGroups
     .map(group => ({
       ...group,
       items: group.items.filter(item => {
+        // Module enabled gate (everyone)
         if (item.moduleId) {
           if (!modules) return true;
           const mod = modules[item.moduleId];
@@ -158,14 +168,26 @@ export function AdminSidebar() {
           if (mod.adminUI === false) return false;
         }
         if (!isFeatureFlagOn(featureFlags, item.featureFlag)) return false;
-        // Per-item role gate (admin always passes)
-        if (!isAdmin && item.allowedRoles && item.allowedRoles.length > 0) {
-          if (!hasAnyRole(item.allowedRoles)) return false;
+
+        // Role gate (admin bypasses)
+        if (!isAdmin) {
+          // Items without a moduleId in role-restricted groups are hidden for
+          // non-admins (no way to grant them via the matrix).
+          if (item.moduleId) {
+            if (!allowedModuleIds?.has(item.moduleId)) return false;
+          } else {
+            // Non-module items (e.g. Dashboard) — allow only in groups without
+            // an allowedRoles restriction (Main, Content, etc.).
+            if (group.allowedRoles && group.allowedRoles.length > 0) return false;
+            if (item.allowedRoles && item.allowedRoles.length > 0) {
+              if (!hasAnyRole(item.allowedRoles)) return false;
+            }
+          }
         }
         return true;
       }),
     }))
-    .filter(group => group.items.length > 0), [roleFilteredGroups, modules, featureFlags, isAdmin, hasAnyRole]);
+    .filter(group => group.items.length > 0), [roleFilteredGroups, modules, featureFlags, isAdmin, hasAnyRole, allowedModuleIds]);
 
   // All items for search
   const allSearchItems = useMemo(() =>
