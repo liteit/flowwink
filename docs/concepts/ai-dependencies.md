@@ -275,24 +275,7 @@ If AI is not configured:
 - **For privacy:** Local LLM - No external API costs, full data control
 - **For advanced workflows:** N8N - Custom logic, connect to any AI
 
-## Migration from Lovable AI
-
-If you previously used Lovable AI (deprecated):
-
-1. **Update Chat Settings:**
-   - Go to Admin → Chat Settings
-   - Change AI Provider from "Lovable" to "OpenAI" or "Gemini"
-   - Add API key in Supabase Secrets
-
-2. **Remove Old Secrets:**
-   ```bash
-   # Remove from Supabase Secrets:
-   LOVABLE_API_KEY (no longer used)
-   ```
-
-3. **Update Templates:**
-   - All templates now default to OpenAI
-   - Your AI configuration is preserved when switching templates
+> **Note:** FlowWink is a self-hosted project. The only supported AI providers are **OpenAI**, **Gemini**, and **Local LLM** (plus N8N as a custom-flow proxy). No managed/hosted AI gateways are used.
 
 ## Troubleshooting
 
