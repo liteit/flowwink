@@ -9,16 +9,28 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
-import { Upload, RefreshCw, Wand2, X, FileText } from 'lucide-react';
+import { Upload, RefreshCw, Wand2, X, FileText, ScanLine, Trash2 } from 'lucide-react';
 import {
   useBankTransactions,
   useImportBatches,
   useSyncStripe,
   useImportBankFile,
+  usePreviewBankImage,
+  useCommitBankImage,
   useAutoMatch,
   useIgnoreTransaction,
   type BankTxStatus,
+  type OcrTransaction,
 } from '@/hooks/useReconciliation';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 const STATUS_COLORS: Record<BankTxStatus, string> = {
   unmatched: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
@@ -27,11 +39,20 @@ const STATUS_COLORS: Record<BankTxStatus, string> = {
   ignored: 'bg-muted text-muted-foreground',
 };
 
+type ImportFormat = 'csv' | 'camt053' | 'sie' | 'image';
+
 export default function ReconciliationPage() {
   const [tab, setTab] = useState<'transactions' | 'imports'>('transactions');
   const [statusFilter, setStatusFilter] = useState<BankTxStatus | 'all'>('unmatched');
-  const [importFormat, setImportFormat] = useState<'csv' | 'camt053' | 'sie'>('csv');
+  const [importFormat, setImportFormat] = useState<ImportFormat>('csv');
+  const [ocrProvider, setOcrProvider] = useState<'openai' | 'gemini'>('openai');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // OCR preview state
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewFileName, setPreviewFileName] = useState('');
+  const [previewRows, setPreviewRows] = useState<OcrTransaction[]>([]);
+  const [previewCurrency, setPreviewCurrency] = useState('SEK');
 
   const { data: txs = [], isLoading } = useBankTransactions(
     statusFilter === 'all' ? undefined : statusFilter,
@@ -39,18 +60,61 @@ export default function ReconciliationPage() {
   const { data: batches = [] } = useImportBatches();
   const syncStripe = useSyncStripe();
   const importFile = useImportBankFile();
+  const previewImage = usePreviewBankImage();
+  const commitImage = useCommitBankImage();
   const autoMatch = useAutoMatch();
   const ignoreTx = useIgnoreTransaction();
 
   const fmt = (cents: number, currency: string) =>
     new Intl.NumberFormat('sv-SE', { style: 'currency', currency }).format(cents / 100);
 
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => {
+        const s = r.result as string;
+        resolve(s.includes(',') ? s.split(',')[1] : s);
+      };
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const content = await file.text();
-    importFile.mutate({ fileName: file.name, content, format: importFormat });
+    if (importFormat === 'image') {
+      const contentBase64 = await fileToBase64(file);
+      const res = await previewImage.mutateAsync({
+        fileName: file.name,
+        contentBase64,
+        mimeType: file.type || 'application/octet-stream',
+        provider: ocrProvider,
+      });
+      setPreviewFileName(file.name);
+      setPreviewRows(res.transactions);
+      setPreviewCurrency(res.currency_default || 'SEK');
+      setPreviewOpen(true);
+    } else {
+      const content = await file.text();
+      importFile.mutate({ fileName: file.name, content, format: importFormat });
+    }
     e.target.value = '';
+  };
+
+  const updatePreviewRow = (i: number, patch: Partial<OcrTransaction>) =>
+    setPreviewRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  const removePreviewRow = (i: number) =>
+    setPreviewRows((prev) => prev.filter((_, idx) => idx !== i));
+
+  const handleCommit = async () => {
+    if (!previewRows.length) return;
+    await commitImage.mutateAsync({
+      fileName: previewFileName,
+      transactions: previewRows,
+      currency_default: previewCurrency,
+    });
+    setPreviewOpen(false);
+    setPreviewRows([]);
   };
 
   return (
@@ -79,23 +143,43 @@ export default function ReconciliationPage() {
             Sync Stripe
           </Button>
           <Select value={importFormat} onValueChange={(v: any) => setImportFormat(v)}>
-            <SelectTrigger className="w-32 h-9">
+            <SelectTrigger className="w-40 h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="csv">CSV</SelectItem>
               <SelectItem value="camt053">CAMT.053</SelectItem>
               <SelectItem value="sie">SIE</SelectItem>
+              <SelectItem value="image">Image / PDF (OCR)</SelectItem>
             </SelectContent>
           </Select>
-          <Button size="sm" onClick={() => fileInputRef.current?.click()} disabled={importFile.isPending}>
-            <Upload className="h-4 w-4 mr-1" />
-            Import file
+          {importFormat === 'image' && (
+            <Select value={ocrProvider} onValueChange={(v: any) => setOcrProvider(v)}>
+              <SelectTrigger className="w-32 h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="openai">OpenAI</SelectItem>
+                <SelectItem value="gemini">Gemini</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+          <Button
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importFile.isPending || previewImage.isPending}
+          >
+            {importFormat === 'image' ? (
+              <ScanLine className="h-4 w-4 mr-1" />
+            ) : (
+              <Upload className="h-4 w-4 mr-1" />
+            )}
+            {previewImage.isPending ? 'Reading…' : importFormat === 'image' ? 'Scan image' : 'Import file'}
           </Button>
           <input
             ref={fileInputRef}
             type="file"
-            accept=".csv,.xml,.sie,.se"
+            accept={importFormat === 'image' ? 'image/*,application/pdf' : '.csv,.xml,.sie,.se'}
             className="hidden"
             onChange={handleFile}
           />
@@ -259,6 +343,110 @@ export default function ReconciliationPage() {
           </Card>
         )}
       </AdminPageContainer>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Review extracted transactions</DialogTitle>
+            <DialogDescription>
+              {previewRows.length} row{previewRows.length === 1 ? '' : 's'} from{' '}
+              <span className="font-medium">{previewFileName}</span>. Edit or delete any row before
+              importing — vision models can misread amounts.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="max-h-[55vh] overflow-auto">
+            {previewRows.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">
+                No transactions extracted.
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-32">Date</TableHead>
+                    <TableHead>Counterparty</TableHead>
+                    <TableHead>Reference / description</TableHead>
+                    <TableHead className="text-right w-32">Amount</TableHead>
+                    <TableHead className="w-20">CCY</TableHead>
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {previewRows.map((r, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <Input
+                          value={r.transaction_date}
+                          onChange={(e) => updatePreviewRow(i, { transaction_date: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={r.counterparty || ''}
+                          onChange={(e) => updatePreviewRow(i, { counterparty: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={r.reference || r.description || ''}
+                          onChange={(e) => updatePreviewRow(i, { description: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Input
+                          type="number"
+                          value={(r.amount_cents / 100).toFixed(2)}
+                          onChange={(e) =>
+                            updatePreviewRow(i, {
+                              amount_cents: Math.round(parseFloat(e.target.value || '0') * 100),
+                            })
+                          }
+                          className="h-8 text-xs text-right tabular-nums"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={r.currency}
+                          onChange={(e) =>
+                            updatePreviewRow(i, { currency: e.target.value.toUpperCase() })
+                          }
+                          className="h-8 text-xs uppercase"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => removePreviewRow(i)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCommit}
+              disabled={!previewRows.length || commitImage.isPending}
+            >
+              {commitImage.isPending ? 'Importing…' : `Import ${previewRows.length} rows`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
