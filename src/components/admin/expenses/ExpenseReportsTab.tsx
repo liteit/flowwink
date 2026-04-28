@@ -1,15 +1,27 @@
+import { useState } from 'react';
 import {
   useExpenseReports,
   useGenerateMonthlyReport,
   useSubmitExpenseReport,
   useApproveExpenseReport,
+  useBookExpenseReport,
+  useMarkExpenseReportPaid,
+  type ExpenseReport,
 } from '@/hooks/useExpenses';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, Loader2, Send, Check, RefreshCw } from 'lucide-react';
+import { FileText, Loader2, Send, Check, RefreshCw, BookOpen, Wallet } from 'lucide-react';
 import { format } from 'date-fns';
 
 const STATUS_COLORS: Record<string, string> = {
