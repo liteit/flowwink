@@ -65,7 +65,6 @@ export const navigationGroups: NavGroup[] = [
     label: "Support",
     adminOnly: true,
     items: [
-      { name: "AI Chat", href: "/admin/chat", icon: MessageSquare, moduleId: "chat" },
       { name: "Cowork Chat", href: "/admin/cowork", icon: Sparkles, moduleId: "workspaceChat" },
       { name: "Live Support", href: "/admin/live-support", icon: Headphones, moduleId: "liveSupport" },
       { name: "Tickets", href: "/admin/tickets", icon: Inbox, moduleId: "tickets" },
@@ -131,6 +130,7 @@ export const navigationGroups: NavGroup[] = [
     collapsible: false,
     items: [
       
+      { name: "Chat Widget", href: "/admin/chat", icon: MessageSquare, moduleId: "chat" },
       { name: "Templates", href: "/admin/templates", icon: Puzzle, moduleId: "templates" },
       { name: "Modules", href: "/admin/modules", icon: Puzzle },
       { name: "Automations", href: "/admin/automations", icon: Zap },
