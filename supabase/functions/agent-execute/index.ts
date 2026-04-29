@@ -7213,30 +7213,26 @@ function lintOne(
     });
   }
 
-  // Layer 4 — module registration
-  if (!skill.module_id) {
+  // Layer 4 — module registration / MCP exposure
+  if (!skill.category) {
     findings.push({
-      layer: 4, severity: 'warn', rule: 'no-module',
-      message: `Skill has no module_id — won't be filtered by MCP module-aware filtering.`,
-      fix: `Set module_id to owning module.`,
-    });
-  } else if (ctx.moduleSettings[skill.module_id]?.enabled === false) {
-    findings.push({
-      layer: 4, severity: 'info', rule: 'module-disabled',
-      message: `Owning module "${skill.module_id}" is disabled — skill hidden from MCP.`,
+      layer: 4, severity: 'warn', rule: 'no-category',
+      message: `Skill has no category — won't be grouped correctly in skill discovery.`,
+      fix: `Set category to one of the agent_skill_category enum values.`,
     });
   }
   if (skill.mcp_exposed === false) {
     findings.push({
       layer: 4, severity: 'info', rule: 'not-mcp-exposed',
-      message: `Skill not mcp_exposed — only callable via FlowPilot.`,
+      message: `Skill not mcp_exposed — only callable via FlowPilot, not external peers.`,
+      fix: `Set mcp_exposed=true if external agents should call this skill.`,
     });
   }
 
   return {
     skill_name: skill.name,
     handler: skill.handler,
-    module_id: skill.module_id,
+    category: skill.category ?? null,
     ok: !findings.some((f) => f.severity === 'error'),
     findings,
   };
