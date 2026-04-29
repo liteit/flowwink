@@ -71,6 +71,7 @@ const RECRUITMENT_SKILLS = [
   'move_application_stage',
   'draft_candidate_outreach',
   'hire_candidate',
+  'hire_application',
   'summarize_candidate_pipeline',
 ];
 
@@ -90,7 +91,7 @@ afterEach(() => {
 });
 
 describe('recruitment module — end-to-end autonomy contract', () => {
-  it('declares exactly the 7 ClawWink-callable skills in its manifest', () => {
+  it('declares exactly the 8 ClawWink-callable skills in its manifest', () => {
     expect(recruitmentModule.skills).toEqual(RECRUITMENT_SKILLS);
     expect(recruitmentModule.skillSeeds).toBeDefined();
     expect(recruitmentModule.skillSeeds!.map((s) => s.name).sort()).toEqual(
@@ -98,7 +99,7 @@ describe('recruitment module — end-to-end autonomy contract', () => {
     );
   });
 
-  it('on enable: inserts all 7 skills with enabled=true AND mcp_exposed=true', async () => {
+  it('on enable: inserts all 8 skills with enabled=true AND mcp_exposed=true', async () => {
     // None exist yet → INSERT path
     const result = await bootstrapModule('recruitment', allModulesEnabled);
 
@@ -108,7 +109,7 @@ describe('recruitment module — end-to-end autonomy contract', () => {
       .filter((c) => c.table === 'agent_skills')
       .flatMap((c) => c.rows);
 
-    expect(inserted).toHaveLength(7);
+    expect(inserted).toHaveLength(8);
     for (const name of RECRUITMENT_SKILLS) {
       const row = inserted.find((r) => r.name === name);
       expect(row, `skill ${name} must be inserted`).toBeTruthy();
@@ -128,14 +129,14 @@ describe('recruitment module — end-to-end autonomy contract', () => {
     const perSkillUpdates = updateCalls.filter(
       (c) => c.table === 'agent_skills' && c.filter.col === 'id',
     );
-    expect(perSkillUpdates.length).toBe(7);
+    expect(perSkillUpdates.length).toBe(8);
     for (const u of perSkillUpdates) {
       expect(u.values.enabled).toBe(true);
       expect(u.values.mcp_exposed).toBe(true);
     }
   });
 
-  it('teardown disables the 7 skills (without deleting them)', async () => {
+  it('teardown disables the 8 skills (without deleting them)', async () => {
     await teardownModule('recruitment');
     const disable = updateCalls.find(
       (c) =>
