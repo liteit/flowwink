@@ -9065,7 +9065,7 @@ export type Database = {
         }[]
       }
       generate_monthly_expense_report: {
-        Args: { _period?: string; _user_id?: string }
+        Args: { p_period?: string; p_user_id?: string }
         Returns: Json
       }
       generate_payroll_export: {
