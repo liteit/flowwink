@@ -229,7 +229,7 @@ export function useSubmitExpenseReport() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async (reportId: string) => {
-      const { data, error } = await supabase.rpc('submit_expense_report', { _report_id: reportId });
+      const { data, error } = await supabase.rpc('submit_expense_report', { p_report_id: reportId });
       if (error) throw error;
       return data;
     },
