@@ -251,9 +251,7 @@
       "p_activate"
     ],
     "skill_props": [
-      "action",
       "activate",
-      "bom_id",
       "lines",
       "product_id",
       "quantity_produced",
