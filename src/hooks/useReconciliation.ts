@@ -51,9 +51,9 @@ export interface BankImportBatch {
   created_at: string;
 }
 
-export function useBankTransactions(statusFilter?: BankTxStatus) {
+export function useBankTransactions(statusFilter?: BankTxStatus, bankAccountId?: string) {
   return useQuery({
-    queryKey: ['bank_transactions', statusFilter],
+    queryKey: ['bank_transactions', statusFilter, bankAccountId],
     queryFn: async () => {
       let q = supabase
         .from('bank_transactions')
@@ -61,6 +61,7 @@ export function useBankTransactions(statusFilter?: BankTxStatus) {
         .order('transaction_date', { ascending: false })
         .limit(500);
       if (statusFilter) q = q.eq('status', statusFilter);
+      if (bankAccountId) q = q.eq('bank_account_id', bankAccountId);
       const { data, error } = await q;
       if (error) throw error;
       return (data || []) as unknown as BankTransaction[];
