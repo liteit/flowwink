@@ -249,6 +249,7 @@ const RECRUITMENT_SKILLS: SkillSeed[] = [
       'Calls hire_application RPC. Single transaction: creates employee, draft employment_contracts row using template + tokens (candidate_name, job_title, start_date, salary, currency, etc.), and onboarding checklist. Application.stage→hired, links employee_id + contract_id. Idempotent — fails if already hired.',
   },
   {
+    name: 'summarize_candidate_pipeline',
     description:
       'Summarize current pipeline state: per-job counts by stage, candidates stuck >X days, top-scored unreviewed candidates. Use when: admin asks "how is recruiting going?" or for daily briefing. NOT for: detailed candidate data (use list/get).',
     category: 'analytics',
