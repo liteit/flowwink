@@ -219,7 +219,36 @@ const RECRUITMENT_SKILLS: SkillSeed[] = [
       'Calls hire_candidate_from_application RPC. Creates employees row from candidate_name/email/phone + job title, sets application.stage=hired, links employee_id, and creates a default onboarding checklist (IT, access, welcome, contract, policies, buddy). Idempotent — fails if already hired.',
   },
   {
-    name: 'summarize_candidate_pipeline',
+    name: 'hire_application',
+    description:
+      'Full hire transaction: convert application → employee + create draft employment contract from a template (with token substitution) + seed onboarding checklist, all in one atomic RPC. Use when: candidate has accepted and you also want a draft contract ready for signature. NOT for: hires without a contract template (use hire_candidate). Closes hire-to-paperwork loop.',
+    category: 'crm',
+    handler: 'rpc:hire_application',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'hire_application',
+        description: 'Application → employee + draft contract + onboarding (atomic)',
+        parameters: {
+          type: 'object',
+          properties: {
+            application_id: { type: 'string' },
+            template_id: { type: 'string', description: 'contract_templates.id used to draft contract' },
+            start_date: { type: 'string', description: 'YYYY-MM-DD, defaults to today' },
+            employment_type: { type: 'string', enum: ['full_time', 'part_time', 'contractor'] },
+            department: { type: 'string', description: 'Override job posting department if needed' },
+            salary: { type: 'number', description: 'Optional, fills {{salary}} token' },
+            currency: { type: 'string', description: 'Optional, fills {{currency}} token' },
+          },
+          required: ['application_id', 'template_id'],
+        },
+      },
+    },
+    instructions:
+      'Calls hire_application RPC. Single transaction: creates employee, draft employment_contracts row using template + tokens (candidate_name, job_title, start_date, salary, currency, etc.), and onboarding checklist. Application.stage→hired, links employee_id + contract_id. Idempotent — fails if already hired.',
+  },
+  {
     description:
       'Summarize current pipeline state: per-job counts by stage, candidates stuck >X days, top-scored unreviewed candidates. Use when: admin asks "how is recruiting going?" or for daily briefing. NOT for: detailed candidate data (use list/get).',
     category: 'analytics',
