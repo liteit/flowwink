@@ -113,6 +113,7 @@ function MoList() {
                 createdAt={mo.created_at as string | null | undefined}
                 startedAt={mo.started_at as string | null | undefined}
                 completedAt={mo.completed_at as string | null | undefined}
+                cancelledAt={(mo as { cancelled_at?: string | null }).cancelled_at ?? null}
               />
             </CardContent>
           </Card>
