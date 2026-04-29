@@ -176,7 +176,13 @@ export function BomEditorDialog({ open, onOpenChange, bom }: Props) {
         return;
       }
       seen.add(parse.data.component_product_id);
-      cleanLines.push({ ...parse.data, position: idx });
+      cleanLines.push({
+        component_product_id: parse.data.component_product_id,
+        quantity: parse.data.quantity,
+        unit: parse.data.unit,
+        scrap_pct: parse.data.scrap_pct,
+        position: idx,
+      });
     });
 
     if (cleanLines.length === 0 && issues.length === 0) {
