@@ -1585,6 +1585,48 @@ export type Database = {
           },
         ]
       }
+      bank_accounts: {
+        Row: {
+          account_number: string | null
+          archived: boolean
+          created_at: string
+          currency: string
+          gl_account: string
+          id: string
+          is_default: boolean
+          name: string
+          notes: string | null
+          stripe_account_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_number?: string | null
+          archived?: boolean
+          created_at?: string
+          currency?: string
+          gl_account?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          notes?: string | null
+          stripe_account_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string | null
+          archived?: boolean
+          created_at?: string
+          currency?: string
+          gl_account?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          notes?: string | null
+          stripe_account_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bank_import_batches: {
         Row: {
           created_at: string
@@ -1630,6 +1672,7 @@ export type Database = {
       bank_transactions: {
         Row: {
           amount_cents: number
+          bank_account_id: string | null
           batch_id: string | null
           counterparty: string | null
           created_at: string
@@ -1648,6 +1691,7 @@ export type Database = {
         }
         Insert: {
           amount_cents: number
+          bank_account_id?: string | null
           batch_id?: string | null
           counterparty?: string | null
           created_at?: string
@@ -1666,6 +1710,7 @@ export type Database = {
         }
         Update: {
           amount_cents?: number
+          bank_account_id?: string | null
           batch_id?: string | null
           counterparty?: string | null
           created_at?: string
@@ -1683,6 +1728,13 @@ export type Database = {
           value_date?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "bank_transactions_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bank_transactions_batch_id_fkey"
             columns: ["batch_id"]
