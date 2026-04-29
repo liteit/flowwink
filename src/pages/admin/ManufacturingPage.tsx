@@ -8,9 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BomEditorDialog } from '@/components/admin/manufacturing/BomEditorDialog';
+import { MoStatusBadge } from '@/components/admin/manufacturing/MoStatusBadge';
+import { MoTimeline } from '@/components/admin/manufacturing/MoTimeline';
 import { useProducts } from '@/hooks/useProducts';
 import {
   useManufacturingOrders,
+  useManufacturingOrdersRealtime,
   useBoms,
   useActivateBom,
   useConfirmMo,
