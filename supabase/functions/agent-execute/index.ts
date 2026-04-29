@@ -224,6 +224,9 @@ serve(async (req) => {
       } else if (handler === 'internal:upload_document') {
         result = await executeUploadDocument(supabase, args, { caller_user_id, caller_api_key_id });
 
+      } else if (handler === 'internal:lint_skill') {
+        result = await executeLintSkill(supabase, args);
+
       } else if (handler.startsWith('rpc:')) {
         const fnName = handler.replace('rpc:', '');
         // Map skill arg names → RPC param names by prefixing p_
