@@ -21,6 +21,7 @@ export interface BankTransaction {
   raw_data: Record<string, unknown>;
   status: BankTxStatus;
   matched_amount_cents: number;
+  bank_account_id: string | null;
   created_at: string;
   updated_at: string;
 }
