@@ -205,7 +205,7 @@ export function useGenerateMonthlyReport() {
   return useMutation({
     mutationFn: async (period?: string) => {
       const { data, error } = await supabase.rpc('generate_monthly_expense_report', {
-        _period: period ?? new Date().toISOString().slice(0, 7),
+        p_period: period ?? new Date().toISOString().slice(0, 7),
       });
       if (error) throw error;
       return data as { ok: boolean; report_id: string; period: string; expense_count: number; total_cents: number };
@@ -229,7 +229,7 @@ export function useSubmitExpenseReport() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async (reportId: string) => {
-      const { data, error } = await supabase.rpc('submit_expense_report', { _report_id: reportId });
+      const { data, error } = await supabase.rpc('submit_expense_report', { p_report_id: reportId });
       if (error) throw error;
       return data;
     },
@@ -249,7 +249,7 @@ export function useApproveExpenseReport() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async (reportId: string) => {
-      const { data, error } = await supabase.rpc('approve_expense_report', { _report_id: reportId });
+      const { data, error } = await supabase.rpc('approve_expense_report', { p_report_id: reportId });
       if (error) throw error;
       return data;
     },
@@ -269,7 +269,7 @@ export function useBookExpenseReport() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async (reportId: string) => {
-      const { data, error } = await supabase.rpc('book_expense_report', { _report_id: reportId });
+      const { data, error } = await supabase.rpc('book_expense_report', { p_report_id: reportId });
       if (error) throw error;
       return data as { ok: boolean; journal_entry_id: string; total_cents: number };
     },
@@ -291,9 +291,9 @@ export function useMarkExpenseReportPaid() {
   return useMutation({
     mutationFn: async (input: { reportId: string; method?: string; reference?: string }) => {
       const { data, error } = await supabase.rpc('mark_expense_report_paid', {
-        _report_id: input.reportId,
-        _method: input.method ?? 'manual',
-        _reference: input.reference ?? null,
+        p_report_id: input.reportId,
+        p_method: input.method ?? 'manual',
+        p_reference: input.reference ?? null,
       });
       if (error) throw error;
       return data;

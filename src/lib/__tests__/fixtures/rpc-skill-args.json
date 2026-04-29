@@ -1,0 +1,19 @@
+[
+  { "skill_name": "approve_expense_report", "rpc_name": "approve_expense_report", "pg_args": ["p_report_id"] },
+  { "skill_name": "auto_allocate_vacation", "rpc_name": "auto_allocate_vacation", "pg_args": ["p_year", "p_dry_run"] },
+  { "skill_name": "auto_approve_vendor_invoice", "rpc_name": "auto_approve_vendor_invoice", "pg_args": ["p_invoice_id"] },
+  { "skill_name": "auto_generate_purchase_orders", "rpc_name": "auto_generate_purchase_orders", "pg_args": ["p_dry_run"] },
+  { "skill_name": "book_expense_report", "rpc_name": "book_expense_report", "pg_args": ["p_report_id", "p_expense_account", "p_vat_account", "p_liability_account", "p_entry_date"] },
+  { "skill_name": "bulk_invoice_from_timesheets", "rpc_name": "bulk_invoice_from_timesheets", "pg_args": ["p_project_id", "p_start_date", "p_end_date", "p_group_by", "p_due_days"] },
+  { "skill_name": "close_accounting_period", "rpc_name": "close_accounting_period", "pg_args": ["p_year", "p_month", "p_notes"] },
+  { "skill_name": "generate_monthly_expense_report", "rpc_name": "generate_monthly_expense_report", "pg_args": ["p_period", "p_user_id"] },
+  { "skill_name": "hire_application", "rpc_name": "hire_application", "pg_args": ["p_application_id", "p_start_date", "p_monthly_salary_cents", "p_contract_template_id", "p_onboarding_template_id", "p_department", "p_manager_id"] },
+  { "skill_name": "hire_candidate", "rpc_name": "hire_candidate_from_application", "pg_args": ["p_application_id", "p_start_date", "p_employment_type", "p_department"] },
+  { "skill_name": "list_reorder_candidates", "rpc_name": "list_reorder_candidates", "pg_args": [] },
+  { "skill_name": "lock_timesheet_period", "rpc_name": "close_accounting_period", "pg_args": ["p_year", "p_month", "p_notes"] },
+  { "skill_name": "mark_expense_report_paid", "rpc_name": "mark_expense_report_paid", "pg_args": ["p_report_id", "p_method", "p_reference", "p_paid_at", "p_bank_account", "p_liability_account", "p_notes"] },
+  { "skill_name": "match_po_to_invoice", "rpc_name": "match_po_to_invoice", "pg_args": ["p_invoice_id", "p_variance_tolerance_pct"] },
+  { "skill_name": "reopen_accounting_period", "rpc_name": "reopen_accounting_period", "pg_args": ["p_year", "p_month", "p_reason"] },
+  { "skill_name": "send_dunning_reminders", "rpc_name": "send_dunning_reminders", "pg_args": ["p_dry_run"] },
+  { "skill_name": "submit_expense_report", "rpc_name": "submit_expense_report", "pg_args": ["p_report_id"] }
+]

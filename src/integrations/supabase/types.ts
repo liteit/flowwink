@@ -8864,7 +8864,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      approve_expense_report: { Args: { _report_id: string }; Returns: Json }
+      approve_expense_report: { Args: { p_report_id: string }; Returns: Json }
       auto_allocate_vacation: {
         Args: { p_dry_run?: boolean; p_year: number }
         Returns: {
@@ -8894,11 +8894,11 @@ export type Database = {
       award_rfq: { Args: { _bid_id: string; _rfq_id: string }; Returns: string }
       book_expense_report: {
         Args: {
-          _entry_date?: string
-          _expense_account?: string
-          _liability_account?: string
-          _report_id: string
-          _vat_account?: string
+          p_entry_date?: string
+          p_expense_account?: string
+          p_liability_account?: string
+          p_report_id: string
+          p_vat_account?: string
         }
         Returns: Json
       }
@@ -9065,7 +9065,7 @@ export type Database = {
         }[]
       }
       generate_monthly_expense_report: {
-        Args: { _period?: string; _user_id?: string }
+        Args: { p_period?: string; p_user_id?: string }
         Returns: Json
       }
       generate_payroll_export: {
@@ -9226,13 +9226,13 @@ export type Database = {
       }
       mark_expense_report_paid: {
         Args: {
-          _bank_account?: string
-          _liability_account?: string
-          _method?: string
-          _notes?: string
-          _paid_at?: string
-          _reference?: string
-          _report_id: string
+          p_bank_account?: string
+          p_liability_account?: string
+          p_method?: string
+          p_notes?: string
+          p_paid_at?: string
+          p_reference?: string
+          p_report_id: string
         }
         Returns: Json
       }
@@ -9522,7 +9522,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      submit_expense_report: { Args: { _report_id: string }; Returns: Json }
+      submit_expense_report: { Args: { p_report_id: string }; Returns: Json }
       try_acquire_agent_lock: {
         Args: { p_lane: string; p_locked_by?: string; p_ttl_seconds?: number }
         Returns: boolean
