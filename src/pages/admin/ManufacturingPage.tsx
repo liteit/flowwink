@@ -1,3 +1,5 @@
+import { useMemo, useState } from 'react';
+import { Plus, Pencil, CheckCircle2 } from 'lucide-react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,9 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { BomEditorDialog } from '@/components/admin/manufacturing/BomEditorDialog';
+import { useProducts } from '@/hooks/useProducts';
 import {
   useManufacturingOrders,
   useBoms,
+  useActivateBom,
   useConfirmMo,
   useStartMo,
   useCompleteMo,
@@ -15,6 +20,7 @@ import {
   useCheckAvailability,
   useTriggerProcurement,
   type MoStatus,
+  type BomHeader,
 } from '@/hooks/useManufacturing';
 
 const STATUS_VARIANT: Record<MoStatus, 'secondary' | 'outline' | 'default'> = {
@@ -102,30 +108,93 @@ function MoList() {
 
 function BomList() {
   const { data, isLoading } = useBoms();
-  if (isLoading) return <Skeleton className="h-64 w-full" />;
-  if (!data || data.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center text-sm text-muted-foreground">
-          No Bills of Materials yet. Create one via the <code>manage_bom</code> skill (action: create).
-        </CardContent>
-      </Card>
-    );
+  const { data: products = [] } = useProducts();
+  const activate = useActivateBom();
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<BomHeader | undefined>();
+
+  const productById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of products) map.set(p.id, p.name);
+    return map;
+  }, [products]);
+
+  function openCreate() {
+    setEditing(undefined);
+    setDialogOpen(true);
   }
+
+  function openEdit(bom: BomHeader) {
+    setEditing(bom);
+    setDialogOpen(true);
+  }
+
   return (
-    <div className="grid gap-3 md:grid-cols-2">
-      {data.map((bom) => (
-        <Card key={String(bom.id)}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">
-              {String(bom.version)} {bom.is_active ? <Badge className="ml-2">active</Badge> : null}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            Produces {String(bom.quantity_produced)} unit(s) per run.
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Versioned recipes that drive Manufacturing Orders.
+        </p>
+        <Button size="sm" onClick={openCreate}>
+          <Plus className="mr-1 h-4 w-4" /> New BOM
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <Skeleton className="h-64 w-full" />
+      ) : !data || data.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+            No Bills of Materials yet. Click <strong>New BOM</strong> to define your first recipe.
           </CardContent>
         </Card>
-      ))}
+      ) : (
+        <div className="grid gap-3 md:grid-cols-2">
+          {data.map((bom) => (
+            <Card key={bom.id}>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-start justify-between gap-2 text-base">
+                  <span className="space-x-2">
+                    <span>{productById.get(bom.product_id) ?? 'Unknown product'}</span>
+                    <span className="text-xs font-normal text-muted-foreground">
+                      · {bom.version}
+                    </span>
+                  </span>
+                  {bom.is_active && <Badge variant="default">active</Badge>}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-xs text-muted-foreground">
+                <div>
+                  Produces <strong>{Number(bom.quantity_produced)}</strong> unit(s) per run.
+                  {bom.routing_notes && <p className="mt-1 italic">{bom.routing_notes}</p>}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() => openEdit(bom)}>
+                    <Pencil className="mr-1 h-3 w-3" /> Edit
+                  </Button>
+                  {!bom.is_active && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => activate.mutate({ bomId: bom.id, productId: bom.product_id })}
+                      disabled={activate.isPending}
+                    >
+                      <CheckCircle2 className="mr-1 h-3 w-3" /> Activate
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <BomEditorDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        bom={editing}
+      />
     </div>
   );
 }
