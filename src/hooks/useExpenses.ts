@@ -291,9 +291,9 @@ export function useMarkExpenseReportPaid() {
   return useMutation({
     mutationFn: async (input: { reportId: string; method?: string; reference?: string }) => {
       const { data, error } = await supabase.rpc('mark_expense_report_paid', {
-        _report_id: input.reportId,
-        _method: input.method ?? 'manual',
-        _reference: input.reference ?? null,
+        p_report_id: input.reportId,
+        p_method: input.method ?? 'manual',
+        p_reference: input.reference ?? null,
       });
       if (error) throw error;
       return data;
