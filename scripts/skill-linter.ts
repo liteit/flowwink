@@ -264,25 +264,15 @@ function lintSingleSkill(skill: AgentSkillRow, ctx: LintCtx): SkillReport {
     });
   }
 
-  // ─── Layer 4: Module registration ──────────────────────────────────
-  if (!skill.module_id) {
+  // ─── Layer 4: Category & MCP exposure ──────────────────────────────
+  if (!skill.category) {
     findings.push({
       layer: 4,
       severity: 'warn',
-      rule: 'no-module',
-      message: `Skill has no module_id — won't be filtered correctly by MCP module-aware filtering.`,
-      fix: `Set module_id to the owning module so MCP /rest/groups can include/exclude correctly.`,
+      rule: 'no-category',
+      message: `Skill has no category — won't be grouped correctly in skill discovery.`,
+      fix: `Set category to one of the agent_skill_category enum values.`,
     });
-  } else {
-    const moduleEnabled = ctx.moduleSettings[skill.module_id]?.enabled;
-    if (moduleEnabled === false) {
-      findings.push({
-        layer: 4,
-        severity: 'info',
-        rule: 'module-disabled',
-        message: `Owning module "${skill.module_id}" is currently disabled — skill is hidden from MCP.`,
-      });
-    }
   }
 
   if (skill.mcp_exposed === false) {
@@ -291,6 +281,7 @@ function lintSingleSkill(skill: AgentSkillRow, ctx: LintCtx): SkillReport {
       severity: 'info',
       rule: 'not-mcp-exposed',
       message: `Skill is not mcp_exposed — only callable via FlowPilot, not external peers.`,
+      fix: `Set mcp_exposed=true if external agents (OpenClaw/Jan/Claude Code) should call it.`,
     });
   }
 
@@ -298,7 +289,7 @@ function lintSingleSkill(skill: AgentSkillRow, ctx: LintCtx): SkillReport {
   return {
     skill_name: skill.name,
     handler: skill.handler,
-    module_id: skill.module_id,
+    category: skill.category ?? null,
     enabled: skill.enabled,
     mcp_exposed: !!skill.mcp_exposed,
     findings,
