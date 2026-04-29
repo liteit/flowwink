@@ -139,7 +139,6 @@ interface LintCtx {
   rpcArgsByName: Map<string, Set<string>>;
   notNullByTable: Map<string, Set<string>>;
   autoFilled: Record<string, string[]>;
-  moduleSettings: Record<string, { enabled?: boolean }>;
 }
 
 function lintSingleSkill(skill: AgentSkillRow, ctx: LintCtx): SkillReport {
