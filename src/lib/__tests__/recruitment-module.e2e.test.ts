@@ -109,7 +109,7 @@ describe('recruitment module — end-to-end autonomy contract', () => {
       .filter((c) => c.table === 'agent_skills')
       .flatMap((c) => c.rows);
 
-    expect(inserted).toHaveLength(7);
+    expect(inserted).toHaveLength(8);
     for (const name of RECRUITMENT_SKILLS) {
       const row = inserted.find((r) => r.name === name);
       expect(row, `skill ${name} must be inserted`).toBeTruthy();
@@ -129,7 +129,7 @@ describe('recruitment module — end-to-end autonomy contract', () => {
     const perSkillUpdates = updateCalls.filter(
       (c) => c.table === 'agent_skills' && c.filter.col === 'id',
     );
-    expect(perSkillUpdates.length).toBe(7);
+    expect(perSkillUpdates.length).toBe(8);
     for (const u of perSkillUpdates) {
       expect(u.values.enabled).toBe(true);
       expect(u.values.mcp_exposed).toBe(true);
