@@ -64,6 +64,7 @@ import CopilotPage from "./pages/admin/CopilotPage";
 import LiveSupportPage from "./pages/admin/LiveSupportPage";
 
 import TemplateLivePreviewPage from "./pages/admin/TemplateLivePreviewPage";
+import DocsAdminPage from "./pages/admin/DocsAdminPage";
 
 import PreviewPage from "./pages/PreviewPage";
 import PublicPage from "./pages/PublicPage";
@@ -74,6 +75,9 @@ import BlogPostPage from "./pages/BlogPostPage";
 import BlogCategoryPage from "./pages/BlogCategoryPage";
 import BlogTagPage from "./pages/BlogTagPage";
 import ChatPage from "./pages/ChatPage";
+const DocsLandingPage = lazy(() => import("./pages/DocsLandingPage"));
+const DocsCategoryPage = lazy(() => import("./pages/DocsCategoryPage"));
+const DocsArticlePage = lazy(() => import("./pages/DocsArticlePage"));
 import NewsletterManagePage from "./pages/NewsletterManagePage";
 import NewsletterConfirmedPage from "./pages/NewsletterConfirmedPage";
 import NotFound from "./pages/NotFound";
