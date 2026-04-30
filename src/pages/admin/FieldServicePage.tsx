@@ -118,6 +118,7 @@ export default function FieldServicePage() {
         </TabsContent>
       </Tabs>
     </div>
+    </AdminLayout>
   );
 }
 
