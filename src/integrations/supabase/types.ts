@@ -8685,6 +8685,50 @@ export type Database = {
           },
         ]
       }
+      subscription_churn_reasons: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          feedback: string | null
+          id: string
+          metadata: Json | null
+          nps_score: number | null
+          reason: Database["public"]["Enums"]["churn_reason_category"]
+          subscription_id: string | null
+          would_return: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          feedback?: string | null
+          id?: string
+          metadata?: Json | null
+          nps_score?: number | null
+          reason?: Database["public"]["Enums"]["churn_reason_category"]
+          subscription_id?: string | null
+          would_return?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          feedback?: string | null
+          id?: string
+          metadata?: Json | null
+          nps_score?: number | null
+          reason?: Database["public"]["Enums"]["churn_reason_category"]
+          subscription_id?: string | null
+          would_return?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_churn_reasons_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_events: {
         Row: {
           created_at: string
@@ -8723,8 +8767,121 @@ export type Database = {
           },
         ]
       }
+      subscription_winback_campaigns: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          cta_url: string | null
+          description: string | null
+          discount_duration_months: number | null
+          discount_percent: number | null
+          email_body: string | null
+          email_subject: string | null
+          id: string
+          name: string
+          offer_type: string
+          target_segment: Json | null
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          cta_url?: string | null
+          description?: string | null
+          discount_duration_months?: number | null
+          discount_percent?: number | null
+          email_body?: string | null
+          email_subject?: string | null
+          id?: string
+          name: string
+          offer_type?: string
+          target_segment?: Json | null
+          trigger_type?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          cta_url?: string | null
+          description?: string | null
+          discount_duration_months?: number | null
+          discount_percent?: number | null
+          email_body?: string | null
+          email_subject?: string | null
+          id?: string
+          name?: string
+          offer_type?: string
+          target_segment?: Json | null
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subscription_winback_sends: {
+        Row: {
+          campaign_id: string | null
+          channel: string
+          converted_at: string | null
+          created_at: string
+          customer_email: string
+          id: string
+          metadata: Json | null
+          opened_at: string | null
+          sent_at: string | null
+          status: string
+          subscription_id: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          channel?: string
+          converted_at?: string | null
+          created_at?: string
+          customer_email: string
+          id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          sent_at?: string | null
+          status?: string
+          subscription_id?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          channel?: string
+          converted_at?: string | null
+          created_at?: string
+          customer_email?: string
+          id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          sent_at?: string | null
+          status?: string
+          subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_winback_sends_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_winback_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_winback_sends_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
+          at_risk: boolean
+          at_risk_reason: string | null
           billing_interval: string | null
           cancel_at: string | null
           cancel_at_period_end: boolean
@@ -8736,6 +8893,7 @@ export type Database = {
           customer_email: string | null
           customer_name: string | null
           ended_at: string | null
+          health_score: number | null
           id: string
           metadata: Json
           product_id: string | null
@@ -8745,6 +8903,7 @@ export type Database = {
           provider_price_id: string | null
           provider_subscription_id: string | null
           quantity: number
+          renewal_reminder_sent_at: string | null
           status: Database["public"]["Enums"]["subscription_status"]
           trial_end: string | null
           trial_start: string | null
@@ -8753,6 +8912,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          at_risk?: boolean
+          at_risk_reason?: string | null
           billing_interval?: string | null
           cancel_at?: string | null
           cancel_at_period_end?: boolean
@@ -8764,6 +8925,7 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string | null
           ended_at?: string | null
+          health_score?: number | null
           id?: string
           metadata?: Json
           product_id?: string | null
@@ -8773,6 +8935,7 @@ export type Database = {
           provider_price_id?: string | null
           provider_subscription_id?: string | null
           quantity?: number
+          renewal_reminder_sent_at?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_end?: string | null
           trial_start?: string | null
@@ -8781,6 +8944,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          at_risk?: boolean
+          at_risk_reason?: string | null
           billing_interval?: string | null
           cancel_at?: string | null
           cancel_at_period_end?: boolean
@@ -8792,6 +8957,7 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string | null
           ended_at?: string | null
+          health_score?: number | null
           id?: string
           metadata?: Json
           product_id?: string | null
@@ -8801,6 +8967,7 @@ export type Database = {
           provider_price_id?: string | null
           provider_subscription_id?: string | null
           quantity?: number
+          renewal_reminder_sent_at?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_end?: string | null
           trial_start?: string | null
@@ -10388,6 +10555,7 @@ export type Database = {
           rule_name: string
         }[]
       }
+      flag_at_risk_subscriptions: { Args: never; Returns: Json }
       generate_monthly_expense_report: {
         Args: { p_period?: string; p_user_id?: string }
         Returns: Json
@@ -10711,6 +10879,16 @@ export type Database = {
               isSetofReturn: false
             }
           }
+      record_churn_reason: {
+        Args: {
+          p_feedback?: string
+          p_nps_score?: number
+          p_reason: Database["public"]["Enums"]["churn_reason_category"]
+          p_subscription_id: string
+          p_would_return?: boolean
+        }
+        Returns: string
+      }
       register_flowpilot_cron: {
         Args: { p_anon_key: string; p_supabase_url: string }
         Returns: Json
@@ -10994,6 +11172,21 @@ export type Database = {
             }
           }
       unschedule_cron_job: { Args: { p_jobname: string }; Returns: boolean }
+      upcoming_renewals: {
+        Args: { p_days_ahead?: number }
+        Returns: {
+          cancel_at_period_end: boolean
+          currency: string
+          current_period_end: string
+          customer_email: string
+          customer_name: string
+          days_until_renewal: number
+          id: string
+          product_name: string
+          status: string
+          unit_amount_cents: number
+        }[]
+      }
       update_cowork_document_extraction: {
         Args: {
           p_content_md?: string
@@ -11070,6 +11263,15 @@ export type Database = {
       approval_decision_kind: "approve" | "reject"
       approval_status: "pending" | "approved" | "rejected" | "cancelled"
       automation_trigger_type: "cron" | "event" | "signal"
+      churn_reason_category:
+        | "too_expensive"
+        | "missing_feature"
+        | "switched_competitor"
+        | "no_longer_needed"
+        | "poor_support"
+        | "technical_issues"
+        | "temporary_pause"
+        | "other"
       company_lifecycle_stage: "prospect" | "customer" | "churned"
       connection_direction: "outbound" | "inbound" | "bidirectional"
       connection_transport: "a2a" | "openresponses" | "mcp"
@@ -11389,6 +11591,16 @@ export const Constants = {
       approval_decision_kind: ["approve", "reject"],
       approval_status: ["pending", "approved", "rejected", "cancelled"],
       automation_trigger_type: ["cron", "event", "signal"],
+      churn_reason_category: [
+        "too_expensive",
+        "missing_feature",
+        "switched_competitor",
+        "no_longer_needed",
+        "poor_support",
+        "technical_issues",
+        "temporary_pause",
+        "other",
+      ],
       company_lifecycle_stage: ["prospect", "customer", "churned"],
       connection_direction: ["outbound", "inbound", "bidirectional"],
       connection_transport: ["a2a", "openresponses", "mcp"],
