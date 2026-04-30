@@ -58,11 +58,14 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
       stock_quantity: '',
       low_stock_threshold: '5',
       allow_backorder: false,
+      available_in_pos: false,
+      barcode: '',
     },
   });
 
   const productType = watch('type');
   const trackInventory = watch('track_inventory');
+  const availableInPos = watch('available_in_pos');
   const priceCents = watch('price_cents');
 
   useEffect(() => {
@@ -78,6 +81,8 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
         stock_quantity: product.stock_quantity?.toString() ?? '',
         low_stock_threshold: product.low_stock_threshold.toString(),
         allow_backorder: product.allow_backorder,
+        available_in_pos: product.available_in_pos ?? false,
+        barcode: product.barcode ?? '',
       });
     } else {
       reset({
@@ -91,6 +96,8 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
         stock_quantity: '',
         low_stock_threshold: '5',
         allow_backorder: false,
+        available_in_pos: false,
+        barcode: '',
       });
     }
   }, [product, reset]);
@@ -110,6 +117,8 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
       stock_quantity: data.track_inventory ? (data.stock_quantity ? parseInt(data.stock_quantity) : 0) : null,
       low_stock_threshold: parseInt(data.low_stock_threshold) || 5,
       allow_backorder: data.allow_backorder,
+      available_in_pos: data.available_in_pos,
+      barcode: data.barcode?.trim() || null,
     };
 
     if (product) {
