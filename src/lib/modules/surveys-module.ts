@@ -51,7 +51,7 @@ const SURVEY_SKILLS: SkillSeed[] = [
       },
     },
     instructions:
-      'Default trigger is "manual" if not specified. Set delay_hours=24 for post-purchase surveys, delay_hours=0 for ticket.closed (strike while it''s fresh).',
+      'Default trigger is "manual" if not specified. Set delay_hours=24 for post-purchase surveys, delay_hours=0 for ticket.closed (strike while it is fresh).',
   },
   {
     name: 'send_survey',
