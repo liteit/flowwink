@@ -93,6 +93,7 @@ export interface ModulesSettings {
   docs: ModuleConfig;
   customer360: ModuleConfig;
   surveys: ModuleConfig;
+  fieldService: ModuleConfig;
 }
 
 export const defaultModulesSettings: ModulesSettings = {
