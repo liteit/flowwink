@@ -29,7 +29,7 @@ Closes the procure-to-pay loop on top of `purchasing-module` and inventory v2.
 
 - `Auto-match vendor invoice on registration` — `event: invoice.registered` → `match_invoice_to_receipt({ p_invoice_id: '{{event.payload.invoice_id}}' })`.
 
-The `invoice.registered` event is NOT yet emitted automatically. To wire it: emit from `register_vendor_invoice` or add an `AFTER INSERT` trigger on `vendor_invoices` calling `emit_platform_event('invoice.registered', ...)`. Left as TODO.
+The `invoice.registered` event is emitted automatically by the `trg_emit_vendor_invoice_registered` AFTER INSERT trigger on `vendor_invoices` (function `emit_vendor_invoice_registered`, SECURITY DEFINER, fail-soft via `RAISE WARNING`). Fires regardless of source: UI, MCP skill, OCR import, manual SQL. Closes the loop end-to-end: receipt → invoice insert → auto-match → auto-approve.
 
 ## UI
 

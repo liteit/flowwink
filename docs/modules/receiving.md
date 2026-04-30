@@ -71,7 +71,7 @@ Refuses if `match_status <> 'matched'`. Idempotent on already-approved invoices.
 
 - **Auto-match vendor invoice on registration** — `event: invoice.registered` → `match_invoice_to_receipt({ p_invoice_id: '{{event.payload.invoice_id}}' })`.
 
-The `invoice.registered` event needs to be emitted by `register_vendor_invoice` (or by a DB trigger on `vendor_invoices.INSERT`) — left to the vendor-invoice flow to wire.
+The `invoice.registered` event is emitted automatically by the `trg_emit_vendor_invoice_registered` AFTER INSERT trigger on `vendor_invoices`. The trigger is fail-soft (`RAISE WARNING` on error) so it never blocks invoice creation. Fires for every insert source: UI, MCP skill, OCR import, manual SQL.
 
 ## UI
 
