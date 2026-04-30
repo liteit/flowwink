@@ -1,6 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import { Link, useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Github, ChevronRight } from 'lucide-react';
 import { PublicNavigation } from '@/components/public/PublicNavigation';
 import { PublicFooter } from '@/components/public/PublicFooter';
@@ -18,7 +19,7 @@ export default function DocsArticlePage() {
   const description =
     typeof page?.frontmatter?.description === 'string'
       ? (page.frontmatter.description as string)
-      : page?.content.slice(0, 160).replace(/\n/g, ' ') ?? '';
+      : '';
 
   const githubUrl = page
     ? `https://github.com/${page.repo_owner}/${page.repo_name}/blob/main/${page.file_path}`
@@ -72,7 +73,7 @@ export default function DocsArticlePage() {
                   </header>
 
                   <div className="prose prose-neutral dark:prose-invert max-w-none prose-headings:scroll-mt-20 prose-a:text-primary prose-pre:bg-muted prose-pre:border prose-pre:border-border">
-                    <ReactMarkdown>{page.content}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{page.content}</ReactMarkdown>
                   </div>
 
                   <footer className="mt-12 pt-6 border-t border-border flex items-center justify-between">
