@@ -89,8 +89,59 @@ function parseModuleFile(filePath: string): ModuleInfo | null {
     inputFields,
     outputFields,
     actions,
+    skills: extractSkillSeeds(src),
     sourceFile: path.relative(ROOT, filePath),
   };
+}
+
+/**
+ * Extract skillSeeds from a module file. Each seed has at minimum `name` and
+ * `description`. We do a tolerant parse — name + description per seed object.
+ */
+function extractSkillSeeds(src: string): SkillInfo[] {
+  const seeds: SkillInfo[] = [];
+  // Match the SKILL_SEEDS or *Skills array definition body
+  const arrMatch = src.match(/(?:SKILLS?|skillSeeds|_SKILLS|Skills)[^=]*=\s*\[([\s\S]*?)\n\];/);
+  if (!arrMatch) return seeds;
+  const body = arrMatch[1];
+
+  // Split into top-level objects {  } at depth 1
+  let depth = 0;
+  let start = -1;
+  const objects: string[] = [];
+  for (let i = 0; i < body.length; i++) {
+    const c = body[i];
+    if (c === '{') {
+      if (depth === 0) start = i;
+      depth++;
+    } else if (c === '}') {
+      depth--;
+      if (depth === 0 && start !== -1) {
+        objects.push(body.slice(start, i + 1));
+        start = -1;
+      }
+    }
+  }
+
+  for (const obj of objects) {
+    const nameM = obj.match(/\bname:\s*['"]([^'"]+)['"]/);
+    if (!nameM) continue;
+    // description may be a backtick template, single, or double quote string
+    const descM =
+      obj.match(/\bdescription:\s*`([^`]+)`/) ||
+      obj.match(/\bdescription:\s*'([^']+)'/) ||
+      obj.match(/\bdescription:\s*"([^"]+)"/);
+    const catM = obj.match(/\bcategory:\s*['"]([^'"]+)['"]/);
+    const scopeM = obj.match(/\bscope:\s*['"]([^'"]+)['"]/);
+
+    seeds.push({
+      name: nameM[1],
+      description: descM?.[1]?.replace(/\s+/g, ' ').trim() ?? '',
+      category: catM?.[1],
+      scope: scopeM?.[1],
+    });
+  }
+  return seeds;
 }
 
 function extractDefineModuleBlock(src: string): string | null {
