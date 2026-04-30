@@ -19,7 +19,7 @@ export default function DocsArticlePage() {
   const description =
     typeof page?.frontmatter?.description === 'string'
       ? (page.frontmatter.description as string)
-      : page?.content.slice(0, 160).replace(/\n/g, ' ') ?? '';
+      : '';
 
   const githubUrl = page
     ? `https://github.com/${page.repo_owner}/${page.repo_name}/blob/main/${page.file_path}`
