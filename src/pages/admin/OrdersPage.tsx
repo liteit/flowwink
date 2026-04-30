@@ -79,6 +79,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function OrdersPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
