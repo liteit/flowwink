@@ -625,6 +625,17 @@ export const defaultModulesSettings: ModulesSettings = {
     adminUI: true,
     enhancedByFlowPilot: true,
   },
+  fieldService: {
+    enabled: false,
+    name: 'Field Service',
+    description:
+      'Dispatch on-site service orders: schedule technicians, track visits with calendar integration, capture customer signatures, and auto-generate invoices on completion. FlowPilot can auto-schedule open orders to available time slots.',
+    icon: 'Truck',
+    category: 'data',
+    autonomy: 'view-required',
+    adminUI: true,
+    enhancedByFlowPilot: true,
+  },
 };
 
 // Map sidebar items to module IDs
