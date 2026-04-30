@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Package, TrendingDown, TrendingUp, AlertTriangle, Plus, ArrowDownUp } from 'lucide-react';
 import { useProductStock, useStockMoves, useAdjustStock, useSetReorderPoint, useInitializeStock } from '@/hooks/useInventory';
+import { ReorderMrpPanel, LocationsPanel } from '@/components/admin/inventory/InventoryV2Panels';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
