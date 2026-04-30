@@ -8738,6 +8738,223 @@ export type Database = {
           },
         ]
       }
+      survey_campaigns: {
+        Row: {
+          created_at: string
+          delay_hours: number
+          email_intro: string
+          email_subject: string
+          id: string
+          is_active: boolean
+          name: string
+          template_id: string
+          trigger: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delay_hours?: number
+          email_intro?: string
+          email_subject?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          template_id: string
+          trigger?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delay_hours?: number
+          email_intro?: string
+          email_subject?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          template_id?: string
+          trigger?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_campaigns_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "survey_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      survey_responses: {
+        Row: {
+          answers: Json
+          campaign_id: string
+          category: string | null
+          comment: string | null
+          created_at: string
+          flowpilot_processed_at: string | null
+          id: string
+          lead_id: string | null
+          recipient_email: string
+          score: number | null
+          send_id: string
+          template_id: string
+        }
+        Insert: {
+          answers?: Json
+          campaign_id: string
+          category?: string | null
+          comment?: string | null
+          created_at?: string
+          flowpilot_processed_at?: string | null
+          id?: string
+          lead_id?: string | null
+          recipient_email: string
+          score?: number | null
+          send_id: string
+          template_id: string
+        }
+        Update: {
+          answers?: Json
+          campaign_id?: string
+          category?: string | null
+          comment?: string | null
+          created_at?: string
+          flowpilot_processed_at?: string | null
+          id?: string
+          lead_id?: string | null
+          recipient_email?: string
+          score?: number | null
+          send_id?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_responses_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "survey_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "survey_responses_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "survey_nps_stats"
+            referencedColumns: ["campaign_id"]
+          },
+          {
+            foreignKeyName: "survey_responses_send_id_fkey"
+            columns: ["send_id"]
+            isOneToOne: false
+            referencedRelation: "survey_sends"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "survey_responses_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "survey_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      survey_sends: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          lead_id: string | null
+          opened_at: string | null
+          recipient_email: string
+          recipient_name: string | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          responded_at: string | null
+          sent_at: string | null
+          token: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          lead_id?: string | null
+          opened_at?: string | null
+          recipient_email: string
+          recipient_name?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          responded_at?: string | null
+          sent_at?: string | null
+          token?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          lead_id?: string | null
+          opened_at?: string | null
+          recipient_email?: string
+          recipient_name?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          responded_at?: string | null
+          sent_at?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_sends_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "survey_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "survey_sends_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "survey_nps_stats"
+            referencedColumns: ["campaign_id"]
+          },
+        ]
+      }
+      survey_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          kind: string
+          name: string
+          questions: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: string
+          name: string
+          questions?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: string
+          name?: string
+          questions?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tax_code_grids: {
         Row: {
           applies_to: string
@@ -9648,6 +9865,19 @@ export type Database = {
         }
         Relationships: []
       }
+      survey_nps_stats: {
+        Row: {
+          avg_score: number | null
+          campaign_id: string | null
+          campaign_name: string | null
+          detractors: number | null
+          nps_score: number | null
+          passives: number | null
+          promoters: number | null
+          total_responses: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _ensure_manual_journal: { Args: never; Returns: string }
@@ -9965,6 +10195,7 @@ export type Database = {
           year: number
         }[]
       }
+      get_survey_by_token: { Args: { _token: string }; Returns: Json }
       get_team_member_ids: {
         Args: { _manager_user_id: string }
         Returns: {
@@ -10448,6 +10679,15 @@ export type Database = {
       }
       start_mo: { Args: { p_mo_id: string }; Returns: Json }
       submit_expense_report: { Args: { p_report_id: string }; Returns: Json }
+      submit_survey_response: {
+        Args: {
+          _answers?: Json
+          _comment?: string
+          _score?: number
+          _token: string
+        }
+        Returns: Json
+      }
       transfer_stock: {
         Args: {
           p_from_location_id: string
