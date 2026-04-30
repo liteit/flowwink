@@ -1,29 +1,29 @@
 ---
-title: "Forms Module"
-module_id: "forms"
+title: "Media Library Module"
+module_id: "mediaLibrary"
 version: "1.0.0"
 category: "data"
-autonomy: "view-required"
+autonomy: "config-required"
 generated: true
 generated_at: "2026-04-30"
 ---
 
-# Forms
+# Media Library
 
-> Process form submissions and create leads
+> Manage media assets and files
 
-Ships with **1 agent skill**.
+Ships with **1 agent skill**, an **admin UI**.
 
 ## Quick Facts
 
 | Property | Value |
 |----------|-------|
-| **Module ID** | `forms` |
+| **Module ID** | `mediaLibrary` |
 | **Version** | 1.0.0 |
 | **Category** | data |
-| **Autonomy** | view-required |
-| **Core** | No |
-| **Capabilities** | `content:receive`, `data:write`, `webhook:trigger` |
+| **Autonomy** | config-required |
+| **Core** | Yes |
+| **Capabilities** | `data:read`, `data:write` |
 | **MCP-exposed skills** | 1 |
 | **Owns tables** | — |
 
@@ -34,19 +34,15 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 
 | Skill | Scope | Description |
 |-------|-------|-------------|
-| `manage_form_submissions` | internal | View and manage form submissions. Use when: reviewing customer inquiries from website forms; processing collected data; deleting spam submissions. NOT for: analyzing feedback sentiment (analyze_cha… |
-
-## Used in Processes
-
-This module participates in the following end-to-end business processes:
-
-- [lead-to-customer](../processes/lead-to-customer.md)
+| `media_browse` | internal | Browse, search, and manage media files in the media library. Supports listing, getting URLs, deleting files, and clearing library. Use when: finding an uploaded image; managing media assets; cleani… |
 
 ## File Map
 
 | Purpose | Path |
 |---------|------|
-| Module definition | `src/lib/modules/forms-module.ts` |
+| Module definition | `src/lib/modules/media-module.ts` |
+| Hook | `src/hooks/useMediaLibrary.ts` |
+| Admin page | `src/pages/admin/MediaLibraryPage.tsx` |
 
 ## Contributing
 
