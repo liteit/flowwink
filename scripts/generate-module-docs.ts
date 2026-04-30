@@ -701,8 +701,10 @@ function main() {
     const adminPage = findAdminPage(mod.name, mod.id);
     const blocks = findBlocks(mod.name);
     const migrations = findMigrations(mod.id);
+    const tables = extractTablesFromMigrations(migrations);
+    const processes = MODULE_TO_PROCESSES[mod.id] ?? [];
 
-    const markdown = generateMarkdown(mod, settings, webhookEvents, hooks, adminPage, blocks, migrations);
+    const markdown = generateMarkdown(mod, settings, webhookEvents, hooks, adminPage, blocks, migrations, tables, processes);
     const kebabId = mod.id.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
     const outFile = path.join(OUTPUT_DIR, `${kebabId}.md`);
     fs.writeFileSync(outFile, markdown, 'utf-8');
