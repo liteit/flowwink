@@ -293,6 +293,7 @@ const router = createBrowserRouter([
       { path: "/admin/quotes/templates", element: <QuoteTemplatesPage /> },
       { path: "/quote/:token", element: <PublicQuotePage /> },
       { path: "/invoice/:token", element: <PublicInvoicePage /> },
+      { path: "/s/:token", element: <PublicSurveyPage /> },
       { path: "/admin/accounting", element: <AccountingPage /> },
       { path: "/admin/accounting/locale-packs", element: <LocalePacksPage /> },
       { path: "/admin/expenses", element: <ExpensesPage /> },
