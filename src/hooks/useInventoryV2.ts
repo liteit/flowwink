@@ -141,7 +141,7 @@ export function useApproveSuggestion() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { data, error } = await supabase.rpc('approve_procurement_suggestion' as never, { p_id: id });
+      const { data, error } = await supabase.rpc('approve_procurement_suggestion' as never, { p_id: id } as never);
       if (error) throw error;
       return data as { type: string; id: string; po_number?: string };
     },
@@ -158,7 +158,7 @@ export function useRejectSuggestion() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, reason }: { id: string; reason?: string }) => {
-      const { error } = await supabase.rpc('reject_procurement_suggestion' as never, { p_id: id, p_reason: reason ?? null });
+      const { error } = await supabase.rpc('reject_procurement_suggestion' as never, { p_id: id, p_reason: reason ?? null } as never);
       if (error) throw error;
     },
     onSuccess: () => {
