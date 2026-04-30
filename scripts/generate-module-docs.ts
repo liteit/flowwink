@@ -483,6 +483,8 @@ function generateMarkdown(
   adminPage: string | null,
   blocks: string[],
   migrations: string[],
+  tables: string[],
+  processes: string[],
 ): string {
   const lines: string[] = [];
 
@@ -498,11 +500,26 @@ function generateMarkdown(
   lines.push('---');
   lines.push('');
 
-  // Title
+  // Title + lead
   lines.push(`# ${mod.name}`);
   lines.push('');
-  lines.push(`> ${mod.description || settings?.settingsDescription || 'No description available.'}`);
+  const lead = mod.description || settings?.settingsDescription || 'No description available.';
+  lines.push(`> ${lead}`);
   lines.push('');
+
+  // What it gives you (high-signal one-liner)
+  const skillCount = mod.skills.length;
+  const tableCount = tables.length;
+  const blockCount = blocks.length;
+  const summaryParts: string[] = [];
+  if (skillCount) summaryParts.push(`**${skillCount} agent skill${skillCount === 1 ? '' : 's'}**`);
+  if (tableCount) summaryParts.push(`**${tableCount} database table${tableCount === 1 ? '' : 's'}**`);
+  if (blockCount) summaryParts.push(`**${blockCount} public block${blockCount === 1 ? '' : 's'}**`);
+  if (adminPage) summaryParts.push('an **admin UI**');
+  if (summaryParts.length) {
+    lines.push(`Ships with ${summaryParts.join(', ')}.`);
+    lines.push('');
+  }
 
   // Quick facts
   lines.push('## Quick Facts');
@@ -515,6 +532,8 @@ function generateMarkdown(
   lines.push(`| **Autonomy** | ${settings?.autonomy ?? '—'} |`);
   lines.push(`| **Core** | ${settings?.core ? 'Yes' : 'No'} |`);
   lines.push(`| **Capabilities** | ${mod.capabilities.map(c => `\`${c}\``).join(', ') || '—'} |`);
+  lines.push(`| **MCP-exposed skills** | ${skillCount || '—'} |`);
+  lines.push(`| **Owns tables** | ${tableCount || '—'} |`);
   lines.push('');
 
   // Integrations
@@ -530,32 +549,50 @@ function generateMarkdown(
     lines.push('');
   }
 
+  // Skills (the real value for an agent integrator)
+  if (mod.skills.length) {
+    lines.push('## Skills');
+    lines.push('');
+    lines.push('These skills are seeded into `agent_skills` when the module is enabled and exposed via MCP.');
+    lines.push('External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can call them directly.');
+    lines.push('');
+    lines.push('| Skill | Scope | Description |');
+    lines.push('|-------|-------|-------------|');
+    for (const s of mod.skills) {
+      const desc = s.description.length > 200 ? s.description.slice(0, 197) + '…' : s.description;
+      lines.push(`| \`${s.name}\` | ${s.scope ?? '—'} | ${desc} |`);
+    }
+    lines.push('');
+  }
+
+  // Database tables owned
+  if (tables.length) {
+    lines.push('## Data Model');
+    lines.push('');
+    lines.push('Tables created by this module (from migrations):');
+    lines.push('');
+    for (const t of tables) lines.push(`- \`public.${t}\``);
+    lines.push('');
+    lines.push('All tables ship with Row-Level Security policies. See migration files for the exact rules.');
+    lines.push('');
+  }
+
   // API Contract
-  lines.push('## API Contract');
-  lines.push('');
-  if (mod.actions.length) {
-    lines.push(`**Actions:** ${mod.actions.map(a => `\`${a}\``).join(', ')}`);
+  if (mod.actions.length || mod.inputFields.length || mod.outputFields.length) {
+    lines.push('## Module API Contract');
     lines.push('');
-  }
-  if (mod.inputFields.length) {
-    lines.push('### Input Fields');
-    lines.push('');
-    lines.push('| Field | Source |');
-    lines.push('|-------|--------|');
-    for (const f of mod.inputFields) {
-      lines.push(`| \`${f}\` | \`${mod.sourceFile}\` |`);
+    if (mod.actions.length) {
+      lines.push(`**Actions:** ${mod.actions.map(a => `\`${a}\``).join(', ')}`);
+      lines.push('');
     }
-    lines.push('');
-  }
-  if (mod.outputFields.length) {
-    lines.push('### Output Fields');
-    lines.push('');
-    lines.push('| Field | Source |');
-    lines.push('|-------|--------|');
-    for (const f of mod.outputFields) {
-      lines.push(`| \`${f}\` | \`${mod.sourceFile}\` |`);
+    if (mod.inputFields.length) {
+      lines.push(`**Input fields:** ${mod.inputFields.map(f => `\`${f}\``).join(', ')}`);
+      lines.push('');
     }
-    lines.push('');
+    if (mod.outputFields.length) {
+      lines.push(`**Output fields:** ${mod.outputFields.map(f => `\`${f}\``).join(', ')}`);
+      lines.push('');
+    }
   }
 
   // Webhook Events
@@ -568,6 +605,18 @@ function generateMarkdown(
     lines.push('|-------|-------------|');
     for (const e of webhookEvents) {
       lines.push(`| \`${e.event}\` | ${e.description} |`);
+    }
+    lines.push('');
+  }
+
+  // Related processes
+  if (processes.length) {
+    lines.push('## Used in Processes');
+    lines.push('');
+    lines.push('This module participates in the following end-to-end business processes:');
+    lines.push('');
+    for (const p of processes) {
+      lines.push(`- [${p}](../processes/${p}.md)`);
     }
     lines.push('');
   }
@@ -587,25 +636,30 @@ function generateMarkdown(
   for (const b of blocks) {
     lines.push(`| Public block | \`${b}\` |`);
   }
-  for (const m of migrations) {
-    lines.push(`| Migration | \`${m}\` |`);
+  if (migrations.length) {
+    const shown = migrations.slice(0, 5);
+    for (const m of shown) lines.push(`| Migration | \`${m}\` |`);
+    if (migrations.length > shown.length) {
+      lines.push(`| … | _${migrations.length - shown.length} more migration${migrations.length - shown.length === 1 ? '' : 's'}_ |`);
+    }
   }
   lines.push('');
 
   // Contributing
   lines.push('## Contributing');
   lines.push('');
-  lines.push('To enhance this module, see [Contributing Guide](../contributing/contributing.md) and [Module API](../reference/module-api.md).');
+  lines.push('To enhance this module, see [Contributing Guide](../contributing/contributing.md).');
   lines.push('');
   lines.push('Key rules:');
   lines.push('- Follow `ModuleDefinition<I, O>` contract pattern');
   lines.push('- All schema changes require idempotent migrations');
-  lines.push('- Skills must be self-describing (Law 2)');
-  lines.push('- Blocks are interfaces, not pipelines (Law 3)');
+  lines.push('- Skills must be self-describing ([Law 2](../concepts/openclaw-law.md))');
+  lines.push('- Blocks are interfaces, not pipelines ([Law 3](../concepts/openclaw-law.md))');
+  lines.push('- New skills must pass the [Agent Contract Integrity](../architecture/agent-contract-integrity.md) checklist (`bun run lint:skills`)');
   lines.push('');
   lines.push('---');
   lines.push('');
-  lines.push('*This file is auto-generated by `scripts/generate-module-docs.ts`. Do not edit manually.*');
+  lines.push('*This file is auto-generated by `scripts/generate-module-docs.ts`. Do not edit manually — re-run the script after changing the module definition.*');
 
   return lines.join('\n');
 }
