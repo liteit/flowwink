@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Package, TrendingDown, TrendingUp, AlertTriangle, Plus, ArrowDownUp } from 'lucide-react';
 import { useProductStock, useStockMoves, useAdjustStock, useSetReorderPoint, useInitializeStock } from '@/hooks/useInventory';
+import { ReorderMrpPanel, LocationsPanel } from '@/components/admin/inventory/InventoryV2Panels';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
@@ -141,6 +142,8 @@ export default function InventoryPage() {
         <TabsList>
           <TabsTrigger value="stock">Stock Levels</TabsTrigger>
           <TabsTrigger value="moves">Movements</TabsTrigger>
+          <TabsTrigger value="reorder">Reorder & MRP</TabsTrigger>
+          <TabsTrigger value="locations">Locations</TabsTrigger>
           <TabsTrigger value="untracked">Untracked ({untrackedProducts.length})</TabsTrigger>
         </TabsList>
 
@@ -246,6 +249,14 @@ export default function InventoryPage() {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="reorder">
+          <ReorderMrpPanel />
+        </TabsContent>
+
+        <TabsContent value="locations">
+          <LocationsPanel />
         </TabsContent>
 
         <TabsContent value="untracked">
