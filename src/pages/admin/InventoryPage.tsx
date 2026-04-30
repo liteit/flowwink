@@ -251,6 +251,14 @@ export default function InventoryPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="reorder">
+          <ReorderMrpPanel />
+        </TabsContent>
+
+        <TabsContent value="locations">
+          <LocationsPanel />
+        </TabsContent>
+
         <TabsContent value="untracked">
           <Card>
             <CardHeader>
