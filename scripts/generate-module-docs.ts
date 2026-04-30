@@ -354,6 +354,69 @@ function capitalize(s: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// 4b. Extract table names from migrations
+// ---------------------------------------------------------------------------
+
+function extractTablesFromMigrations(migrationPaths: string[]): string[] {
+  const tables = new Set<string>();
+  for (const rel of migrationPaths) {
+    try {
+      const sql = fs.readFileSync(path.join(ROOT, rel), 'utf-8');
+      const matches = sql.matchAll(
+        /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:public\.)?["`]?(\w+)["`]?/gi,
+      );
+      for (const m of matches) tables.add(m[1]);
+    } catch { /* ignore */ }
+  }
+  return [...tables].sort();
+}
+
+// ---------------------------------------------------------------------------
+// 4c. Map module → end-to-end processes it participates in
+// ---------------------------------------------------------------------------
+
+const MODULE_TO_PROCESSES: Record<string, string[]> = {
+  // CRM / Sales
+  forms: ['lead-to-customer'],
+  crm: ['lead-to-customer'],
+  companies: ['lead-to-customer'],
+  'sales-intelligence': ['lead-to-customer'],
+  deals: ['lead-to-customer', 'quote-to-cash'],
+  newsletter: ['lead-to-customer', 'content-to-conversion'],
+  // Quote-to-cash
+  quotes: ['quote-to-cash'],
+  invoicing: ['quote-to-cash'],
+  subscriptions: ['quote-to-cash'],
+  // Order-to-delivery
+  products: ['order-to-delivery'],
+  orders: ['order-to-delivery'],
+  inventory: ['order-to-delivery', 'procure-to-pay'],
+  // Procure-to-pay
+  purchasing: ['procure-to-pay'],
+  expenses: ['procure-to-pay', 'record-to-report'],
+  // Record-to-report
+  accounting: ['record-to-report'],
+  reconciliation: ['record-to-report'],
+  // Hire-to-retire
+  hr: ['hire-to-retire'],
+  recruitment: ['hire-to-retire'],
+  contracts: ['hire-to-retire'],
+  timesheets: ['hire-to-retire', 'quote-to-cash'],
+  // Content
+  pages: ['content-to-conversion'],
+  blog: ['content-to-conversion'],
+  kb: ['content-to-conversion', 'support-to-resolution'],
+  // Support
+  tickets: ['support-to-resolution'],
+  'live-support': ['support-to-resolution'],
+  sla: ['support-to-resolution'],
+  // Cross-cutting
+  documents: ['hire-to-retire', 'procure-to-pay'],
+  approvals: ['procure-to-pay', 'quote-to-cash'],
+  projects: ['quote-to-cash'],
+};
+
+// ---------------------------------------------------------------------------
 // 5. Map module ID ↔ settings key
 // ---------------------------------------------------------------------------
 
