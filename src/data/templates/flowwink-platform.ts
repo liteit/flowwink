@@ -30,7 +30,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
   aiChatPosition: 'Embedded autonomous agent for site operations',
   blogPosts: flowwinkBlogPosts,
   kbCategories: flowwinkKbCategories,
-  requiredModules: ['blog', 'knowledgeBase', 'chat', 'liveSupport', 'newsletter', 'leads', 'deals', 'companies', 'forms', 'ecommerce', 'bookings', 'analytics', 'developer', 'webinars', 'resume', 'tickets', 'federation', 'salesIntelligence', 'paidGrowth'],
+  requiredModules: ['blog', 'knowledgeBase', 'docs', 'chat', 'liveSupport', 'newsletter', 'leads', 'deals', 'companies', 'forms', 'ecommerce', 'bookings', 'analytics', 'developer', 'webinars', 'resume', 'tickets', 'federation', 'salesIntelligence', 'paidGrowth'],
   pages: [
     // ═══════════════════════════════════════════════════════════
     // HOME — The Pitch + Pricing (convince & convert in one scroll)
@@ -1798,6 +1798,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
     showQuickLinks: true,
     showContact: true,
     legalLinks: [
+      { id: 'docs', label: 'Docs', url: '/docs', enabled: true },
       { id: 'privacy', label: 'Privacy Policy', url: '/privacy-policy', enabled: true },
       { id: 'terms', label: 'Terms', url: '/terms-of-service', enabled: true },
     ],
