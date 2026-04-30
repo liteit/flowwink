@@ -276,6 +276,33 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
             )}
           </div>
 
+          {/* Point of Sale */}
+          <div className="space-y-3 rounded-lg border p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Available in POS</Label>
+                <p className="text-xs text-muted-foreground">Show this product in the in-store register</p>
+              </div>
+              <Switch
+                checked={availableInPos}
+                onCheckedChange={(v) => setValue('available_in_pos', v)}
+              />
+            </div>
+            {availableInPos && (
+              <div className="space-y-2 pt-2">
+                <Label htmlFor="barcode">Barcode (optional)</Label>
+                <Input
+                  id="barcode"
+                  {...register('barcode')}
+                  placeholder="Scan or type EAN/UPC"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Used for barcode scanner lookup at the register.
+                </p>
+              </div>
+            )}
+          </div>
+
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
