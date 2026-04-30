@@ -123,17 +123,21 @@ const FIELD_SERVICE_AUTOMATIONS: AutomationSeed[] = [
 const fieldServiceModule = defineModule<Input, Output>({
   id: 'fieldService',
   name: 'Field Service',
-  category: 'system',
+  version: '1.0.0',
   description:
     'Dispatch on-site service orders: schedule technicians, track visits, capture signatures and auto-generate invoices on completion.',
-  icon: 'Truck',
-  autonomy: 'view-required',
-  enhancedByFlowPilot: true,
+  capabilities: ['data:write', 'data:read'],
   inputSchema,
   outputSchema,
+  skills: ['manage_service_order'],
   skillSeeds: FIELD_SERVICE_SKILLS,
   automations: FIELD_SERVICE_AUTOMATIONS,
-  execute: async (input: Input): Promise<Output> => {
+  async publish(input: Input): Promise<Output> {
+    return await execute(input);
+  },
+});
+
+async function execute(input: Input): Promise<Output> {
     try {
       switch (input.action) {
         case 'create': {
