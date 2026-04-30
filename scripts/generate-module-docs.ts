@@ -379,6 +379,7 @@ const MODULE_TO_PROCESSES: Record<string, string[]> = {
   // CRM / Sales
   forms: ['lead-to-customer'],
   crm: ['lead-to-customer'],
+  leads: ['lead-to-customer'],
   companies: ['lead-to-customer'],
   'sales-intelligence': ['lead-to-customer'],
   deals: ['lead-to-customer', 'quote-to-cash'],
