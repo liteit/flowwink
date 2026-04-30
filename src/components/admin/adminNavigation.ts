@@ -4,7 +4,7 @@ import {
   CalendarDays, Plug, Bot, Zap, MessageSquare, Headphones, Megaphone, Code2, FileText as FileQuote,
   Video, Target, Inbox, UserCircle, FileUser, Receipt, Timer, Wallet, Shield, ShieldCheck,
   Network, Snowflake, UserRound, BookMarked, Truck, FileSignature, FolderOpen, FolderKanban,
-  RefreshCw, AlertTriangle, CheckSquare, Sparkles, Factory, UserSearch,
+  RefreshCw, AlertTriangle, CheckSquare, Sparkles, Factory, UserSearch, Plus,
 } from 'lucide-react';
 
 import type { AppRole } from '@/types/cms';
@@ -94,6 +94,7 @@ export const navigationGroups: NavGroup[] = [
       { name: "Calendar", href: "/admin/calendar", icon: CalendarDays, moduleId: "calendar" },
       { name: "Surveys & NPS", href: "/admin/surveys", icon: Sparkles, moduleId: "surveys" },
       { name: "Field Service", href: "/admin/field-service", icon: Truck, moduleId: "fieldService" },
+      { name: "New service order", href: "/admin/field-service?new=1", icon: Plus, moduleId: "fieldService" },
     ],
   },
   {
