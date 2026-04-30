@@ -38,6 +38,8 @@ interface FormData {
   stock_quantity: string;
   low_stock_threshold: string;
   allow_backorder: boolean;
+  available_in_pos: boolean;
+  barcode: string;
 }
 
 export function ProductDialog({ open, onOpenChange, product }: ProductDialogProps) {
