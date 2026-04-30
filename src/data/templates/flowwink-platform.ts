@@ -1789,6 +1789,9 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
     showBorder: false,
     headerHeight: 'tall',
     linkColorScheme: 'default',
+    customNavItems: [
+      { id: 'docs', label: 'Docs', url: '/docs', enabled: true },
+    ],
   },
 
   footerSettings: {
