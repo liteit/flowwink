@@ -142,6 +142,8 @@ export default function InventoryPage() {
         <TabsList>
           <TabsTrigger value="stock">Stock Levels</TabsTrigger>
           <TabsTrigger value="moves">Movements</TabsTrigger>
+          <TabsTrigger value="reorder">Reorder & MRP</TabsTrigger>
+          <TabsTrigger value="locations">Locations</TabsTrigger>
           <TabsTrigger value="untracked">Untracked ({untrackedProducts.length})</TabsTrigger>
         </TabsList>
 
