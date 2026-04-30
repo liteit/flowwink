@@ -199,6 +199,101 @@ const INVENTORY_SKILLS: SkillSeed[] = [
       },
     },
   },
+  // ── Pick & Pack flow ──
+  {
+    name: 'allocate_picking',
+    description:
+      'Create a pick-list for a paid order: generates a picking_order, reserves stock per order line, and flags stockouts. Idempotent — reuses existing open picking_order for the same order. Use when: an order moves to paid and needs fulfillment. NOT for: shipping (use ship_picking) or manual stock moves (use transfer_stock).',
+    category: 'commerce',
+    handler: 'rpc:allocate_picking',
+    scope: 'both',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'allocate_picking',
+        description: 'Allocate stock and create a pick-list for an order',
+        parameters: {
+          type: 'object',
+          properties: {
+            p_order_id: { type: 'string', description: 'Order UUID to allocate' },
+            p_source_location_id: { type: 'string', description: 'Optional source location; defaults to first internal location' },
+          },
+          required: ['p_order_id'],
+        },
+      },
+    },
+  },
+  {
+    name: 'confirm_pick',
+    description:
+      'Operator confirms a single pick line: records picked quantity and optional lot/serial. Auto-advances the picking_order status when all lines are picked or short. Use when: warehouse operator scans/confirms an item.',
+    category: 'commerce',
+    handler: 'rpc:confirm_pick',
+    scope: 'both',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'confirm_pick',
+        description: 'Confirm a picked line with qty and optional lot',
+        parameters: {
+          type: 'object',
+          properties: {
+            p_line_id: { type: 'string' },
+            p_qty_picked: { type: 'number' },
+            p_lot_id: { type: 'string', description: 'Optional lot/serial id' },
+          },
+          required: ['p_line_id', 'p_qty_picked'],
+        },
+      },
+    },
+  },
+  {
+    name: 'ship_picking',
+    description:
+      'Ship a fully-picked picking_order: consumes reservations into real outbound stock_moves, sets order.status=shipped, emits picking.shipped event with tracking info. Use when: package leaves the warehouse. NOT for: cancelling (use cancel_picking).',
+    category: 'commerce',
+    handler: 'rpc:ship_picking',
+    scope: 'both',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'ship_picking',
+        description: 'Mark picking_order as shipped and consume reservations',
+        parameters: {
+          type: 'object',
+          properties: {
+            p_picking_order_id: { type: 'string' },
+            p_tracking_number: { type: 'string' },
+            p_carrier: { type: 'string' },
+          },
+          required: ['p_picking_order_id'],
+        },
+      },
+    },
+  },
+  {
+    name: 'cancel_picking',
+    description:
+      'Cancel an open picking_order and release all its reservations. Use when: order is cancelled or stock is unavailable. Idempotent.',
+    category: 'commerce',
+    handler: 'rpc:cancel_picking',
+    scope: 'both',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'cancel_picking',
+        description: 'Cancel a picking_order and release reservations',
+        parameters: {
+          type: 'object',
+          properties: {
+            p_picking_order_id: { type: 'string' },
+            p_reason: { type: 'string' },
+          },
+          required: ['p_picking_order_id'],
+        },
+      },
+    },
+  },
 ];
 
 const INVENTORY_AUTOMATIONS: AutomationSeed[] = [
@@ -210,13 +305,21 @@ const INVENTORY_AUTOMATIONS: AutomationSeed[] = [
     skill_name: 'procurement_run',
     skill_arguments: {},
   },
+  {
+    name: 'Auto-allocate picking on order paid',
+    description: 'When an order moves to paid, automatically create a pick-list and reserve stock so the warehouse can start picking immediately.',
+    trigger_type: 'event',
+    trigger_config: { event: 'order.paid' },
+    skill_name: 'allocate_picking',
+    skill_arguments: { p_order_id: '{{event.payload.order_id}}' },
+  },
 ];
 
 export const inventoryModule = defineModule<InventoryInput, InventoryOutput>({
   id: 'inventory',
   name: 'Inventory',
-  version: '2.0.0',
-  description: 'Multi-location inventory: locations, lots/serials, quants, reservations, transfers, and the MRP scheduler that generates procurement suggestions.',
+  version: '2.1.0',
+  description: 'Multi-location inventory: locations, lots/serials, quants, reservations, transfers, MRP scheduler, and a full Pick & Pack flow that fulfills paid orders end-to-end.',
   capabilities: ['data:read', 'data:write'],
   inputSchema: inventoryInputSchema,
   outputSchema: inventoryOutputSchema,
@@ -234,6 +337,10 @@ export const inventoryModule = defineModule<InventoryInput, InventoryOutput>({
     'procurement_run',
     'approve_procurement_suggestion',
     'reject_procurement_suggestion',
+    'allocate_picking',
+    'confirm_pick',
+    'ship_picking',
+    'cancel_picking',
   ],
   skillSeeds: INVENTORY_SKILLS,
   automations: INVENTORY_AUTOMATIONS,
