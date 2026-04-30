@@ -51,6 +51,25 @@ export function PoInvoicesDrilldown({ purchaseOrderId, currency = 'SEK' }: Props
   const rematch = useMatchInvoice();
   const autoApprove = useAutoApproveInvoice();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [filter, setFilter] = useState<'all' | 'registered' | 'matched' | 'auto_approved' | 'variance'>('all');
+
+  const counts = useMemo(() => ({
+    all: invoices.length,
+    registered: invoices.filter(i => i.status === 'registered').length,
+    matched: invoices.filter(i => i.match_status === 'matched').length,
+    auto_approved: invoices.filter(i => i.status === 'approved' && i.match_status === 'matched' && !i.approved_by).length,
+    variance: invoices.filter(i => i.match_status === 'over_invoiced' || i.match_status === 'under_invoiced').length,
+  }), [invoices]);
+
+  const filteredInvoices = useMemo(() => {
+    switch (filter) {
+      case 'registered': return invoices.filter(i => i.status === 'registered');
+      case 'matched': return invoices.filter(i => i.match_status === 'matched');
+      case 'auto_approved': return invoices.filter(i => i.status === 'approved' && i.match_status === 'matched' && !i.approved_by);
+      case 'variance': return invoices.filter(i => i.match_status === 'over_invoiced' || i.match_status === 'under_invoiced');
+      default: return invoices;
+    }
+  }, [invoices, filter]);
 
   const historyByInvoice = useMemo(() => {
     const map = new Map<string, InvoiceHistoryEvent[]>();
