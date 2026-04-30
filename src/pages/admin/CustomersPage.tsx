@@ -14,8 +14,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, ShoppingCart, Coins, UserCheck } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Users, ShoppingCart, Coins, UserCheck, UserSearch } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 interface AggregatedCustomer {
   email: string;
@@ -29,6 +31,7 @@ interface AggregatedCustomer {
 }
 
 export default function CustomersPage() {
+  const navigate = useNavigate();
   // Aggregate customers from orders + augment with profile data when available
   const { data: customers, isLoading } = useQuery({
     queryKey: ['admin-customers-aggregated'],
@@ -186,6 +189,7 @@ export default function CustomersPage() {
                     <TableHead className="text-center">Orders</TableHead>
                     <TableHead className="text-right">Lifetime Value</TableHead>
                     <TableHead>Last Order</TableHead>
+                    <TableHead className="w-16"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -217,6 +221,16 @@ export default function CustomersPage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {formatDistanceToNow(new Date(customer.last_order_at), { addSuffix: true })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/admin/customer/${encodeURIComponent(customer.email)}`)}
+                          title="Open Customer 360°"
+                        >
+                          <UserSearch className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
