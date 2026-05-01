@@ -405,6 +405,7 @@ export type Database = {
       agent_activity: {
         Row: {
           agent: Database["public"]["Enums"]["agent_type"]
+          approval_request_id: string | null
           conversation_id: string | null
           created_at: string
           duration_ms: number | null
@@ -424,6 +425,7 @@ export type Database = {
         }
         Insert: {
           agent?: Database["public"]["Enums"]["agent_type"]
+          approval_request_id?: string | null
           conversation_id?: string | null
           created_at?: string
           duration_ms?: number | null
@@ -443,6 +445,7 @@ export type Database = {
         }
         Update: {
           agent?: Database["public"]["Enums"]["agent_type"]
+          approval_request_id?: string | null
           conversation_id?: string | null
           created_at?: string
           duration_ms?: number | null
@@ -461,6 +464,13 @@ export type Database = {
           token_usage?: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "agent_activity_approval_request_id_fkey"
+            columns: ["approval_request_id"]
+            isOneToOne: false
+            referencedRelation: "approval_requests"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "agent_activity_skill_id_fkey"
             columns: ["skill_id"]
@@ -11260,6 +11270,20 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      request_skill_approval: {
+        Args: {
+          p_activity_id: string
+          p_agent?: string
+          p_amount_cents?: number
+          p_args: Json
+          p_conversation_id?: string
+          p_currency?: string
+          p_reason?: string
+          p_skill_id: string
+          p_skill_name: string
+        }
+        Returns: string
       }
       reserve_stock: {
         Args: {
