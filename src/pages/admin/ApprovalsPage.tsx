@@ -424,7 +424,4 @@ function GatedSkillsPanel() {
 type GatedSkillRow = ReturnType<typeof useGatedSkills>['data'] extends (infer U)[] | undefined
   ? U
   : never;
-    </div>
-    </AdminLayout>
-  );
-}
+
