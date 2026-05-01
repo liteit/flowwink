@@ -352,7 +352,13 @@ function GatedSkillsPanel() {
         </CardContent>
       </Card>
 
-      {Array.from(groups.entries()).map(([moduleName, items]) => (
+      {Array.from(groups.entries())
+        .sort(([a], [b]) => {
+          if (a.startsWith('—')) return -1;
+          if (b.startsWith('—')) return 1;
+          return a.localeCompare(b);
+        })
+        .map(([moduleName, items]) => (
         <Card key={moduleName}>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
