@@ -28,10 +28,22 @@ jobs:
     name: Live MCP handshake + tools/list diff
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Skippa bot-pushar (Lovable agent committar ofta moduländringar — inte värt en live-check varje gång)
+    if: github.actor != 'lovable-dev[bot]' && github.actor != 'lovable[bot]'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Check MCP_API_KEY presence
+        id: secret_check
+        run: |
+          if [ -z "${{ secrets.MCP_API_KEY }}" ]; then
+            echo "has_key=false" >> $GITHUB_OUTPUT
+            echo "::warning::MCP_API_KEY saknas — hoppar över live-regression."
+          else
+            echo "has_key=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
