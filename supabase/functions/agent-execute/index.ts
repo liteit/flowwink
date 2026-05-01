@@ -146,12 +146,44 @@ serve(async (req) => {
         conversation_id, duration_ms: Date.now() - startTime,
       });
 
+      // Spår B consolidation: create a real approval_requests row so /admin/approvals
+      // is the single source of truth for ALL pending decisions (business objects + agent skills).
+      // Surfaces amount_cents from common arg shapes so amount-threshold rules can match.
+      let amountCents: number | null = null;
+      const a = args as Record<string, unknown>;
+      if (typeof a?.amount_cents === 'number') amountCents = a.amount_cents as number;
+      else if (typeof a?.budget_cents === 'number') amountCents = a.budget_cents as number;
+      else if (typeof a?.total_cents === 'number') amountCents = a.total_cents as number;
+
+      let approvalRequestId: string | null = null;
+      try {
+        const { data: reqId, error: reqErr } = await supabase.rpc('request_skill_approval', {
+          p_skill_name: skill.name,
+          p_skill_id: skill.id,
+          p_args: args,
+          p_activity_id: activityId,
+          p_agent: agent_type,
+          p_conversation_id: conversation_id ?? null,
+          p_amount_cents: amountCents,
+          p_currency: (typeof a?.currency === 'string' ? (a.currency as string) : 'SEK'),
+          p_reason: `Skill "${skill.name}" requires approval before execution`,
+        });
+        if (reqErr) {
+          console.error('[agent-execute] request_skill_approval failed:', reqErr);
+        } else {
+          approvalRequestId = reqId as string;
+        }
+      } catch (e) {
+        console.error('[agent-execute] request_skill_approval threw:', e);
+      }
+
       return new Response(JSON.stringify({
         status: 'pending_approval',
         activity_id: activityId,
+        approval_request_id: approvalRequestId,
         skill: skill.name,
         trust_level: 'approve',
-        message: `Action '${skill.name}' requires admin approval before executing.`,
+        message: `Action '${skill.name}' requires approval. Decision page: /admin/approvals${approvalRequestId ? `?request=${approvalRequestId}` : ''}. Poll agent_activity for status='approved' then re-call with _approved=true.`,
         input: args,
       }), {
         status: 202, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
