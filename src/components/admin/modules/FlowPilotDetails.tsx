@@ -250,10 +250,14 @@ export function FlowPilotDetails() {
   const handleSyncSkills = async () => {
     setIsBootstrapping(true);
     try {
-      const { error } = await supabase.functions.invoke('setup-flowpilot', {
-        body: { seed_skills: true, seed_soul: true },
-      });
-      if (error) throw error;
+      const { bootstrapModule } = await import('@/lib/module-bootstrap');
+      const { data: modulesRow } = await supabase
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'modules')
+        .maybeSingle();
+      const modules = (modulesRow?.value as Record<string, unknown>) ?? {};
+      await bootstrapModule('flowpilot', modules);
 
       queryClient.invalidateQueries({ queryKey: ['agent-skills'] });
       queryClient.invalidateQueries({ queryKey: ['flowpilot-bootstrap-check'] });
