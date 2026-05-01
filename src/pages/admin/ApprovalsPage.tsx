@@ -10,12 +10,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { CheckCircle2, XCircle, ShieldCheck, Plus, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, ShieldCheck, Plus, Loader2, Bot, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { useGatedSkills } from '@/hooks/useGatedSkills';
 
 function formatAmount(cents: number | null, currency: string) {
   if (cents == null) return '—';
@@ -100,6 +101,7 @@ export default function ApprovalsPage() {
             Pending {pending && pending.length > 0 && <Badge variant="secondary" className="ml-2">{pending.length}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="rules">Rules</TabsTrigger>
+          <TabsTrigger value="gated-skills">Gated Skills</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pending" className="space-y-4">
