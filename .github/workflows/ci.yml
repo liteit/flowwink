@@ -6,6 +6,11 @@ on:
   push:
     branches: [main]
 
+# Skip entire workflow for Lovable bot pushes — they sync frequently and
+# would otherwise spam notifications on every save. Manual pushes and PRs
+# still run CI as normal.
+run-name: CI${{ (github.actor == 'lovable-dev[bot]' || github.actor == 'lovable[bot]') && ' (skipped — bot push)' || '' }}
+
 jobs:
   lint-and-typecheck:
     name: Lint & Type Check
