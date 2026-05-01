@@ -197,6 +197,7 @@ export default function ApprovalsPage() {
                           <SelectItem value="invoice">Invoice</SelectItem>
                           <SelectItem value="quote">Quote</SelectItem>
                           <SelectItem value="contract">Contract</SelectItem>
+                          <SelectItem value="agent_skill">Agent skill (autonomous action)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
