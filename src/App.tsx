@@ -307,6 +307,7 @@ const router = createBrowserRouter([
       { path: "/admin/surveys", element: <SurveysPage /> },
       { path: "/admin/field-service", element: <FieldServicePage /> },
       { path: "/admin/pos", element: <POSPage /> },
+      { path: "/admin/pos/audit", element: <PosAuditPage /> },
       { path: "/admin/timesheets", element: <TimesheetsPage /> },
       { path: "/admin/contracts", element: <ContractsPage /> },
       { path: "/admin/contracts/:id", element: <ContractEditorPage /> },
