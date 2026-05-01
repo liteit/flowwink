@@ -256,7 +256,8 @@ export function FlowPilotDetails() {
         .select('value')
         .eq('key', 'modules')
         .maybeSingle();
-      const modules = (modulesRow?.value as Record<string, unknown>) ?? {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const modules = ((modulesRow?.value as any) ?? {});
       await bootstrapModule('flowpilot', modules);
 
       queryClient.invalidateQueries({ queryKey: ['agent-skills'] });
