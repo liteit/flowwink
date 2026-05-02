@@ -19,3 +19,5 @@
 
 ## Claws & Integration
 - Claws (external agents) use `?openai_safe=true` for compatibility. Schemas are now flat in the DB, so this flag is a no-op but remains supported for existing configurations.
+- MCP best practices: Anthropic Sept 2025-guidance applied (self-describing tools, `Use when:`/`NOT for:`, composite high-impact tools). Gaps: ingen `response_format`-enum än, ingen per-tool token-budget. Se mem://architecture/anthropic-mcp-best-practices-applied.
+- MCP-dokumentation: docs/architecture/mcp-overview.md är operational reference (endpoints, auth, schemas, gruppfiltrering, caching). docs/architecture/mcp-as-platform.md = arkitektoniskt varför.
