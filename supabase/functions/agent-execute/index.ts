@@ -1211,7 +1211,7 @@ async function executeOpenClawAction(
         try {
           const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
           const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-          const outboundRes = await fetch(`${supabaseUrl}/functions/v1/a2a-outbound`, {
+          const outboundRes = await fetch(`${supabaseUrl}/functions/v1/a2a/outbound`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -6706,7 +6706,7 @@ async function executeA2AOutbound(
   rawMessage?: string,
 ): Promise<unknown> {
   try {
-    const response = await fetch(`${supabaseUrl}/functions/v1/a2a-outbound`, {
+    const response = await fetch(`${supabaseUrl}/functions/v1/a2a/outbound`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
