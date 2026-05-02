@@ -11140,6 +11140,7 @@ export type Database = {
           suggestions_created: number
         }[]
       }
+      publish_scheduled_pages: { Args: never; Returns: Json }
       purge_audit_logs_past_retention: { Args: never; Returns: Json }
       receive_purchase_order: {
         Args: {
