@@ -192,7 +192,10 @@ describe('Skill schema NOT NULL coverage guardrails', () => {
           notRequired,
           `Skill "${skill.name}" exposes NOT NULL columns [${notRequired.join(', ')}] ` +
             `but does not mark them as required for action="${action}". ` +
-            `Add them via:\n` +
+            `RECOMMENDED (OpenAI-safe — flat top-level schema):\n` +
+            `  parameters: { type: 'object', properties: {...}, required: ['action'],\n` +
+            `    'x-action-required': { ${action}: [${notRequired.map((c) => `'${c}'`).join(', ')}] } }\n` +
+            `LEGACY (allOf/if-then — breaks gpt-4.1 strict tool-calling):\n` +
             `  allOf: [{ if: { properties: { action: { const: "${action}" } } }, ` +
             `then: { required: ["action", ${notRequired.map((c) => `"${c}"`).join(', ')}] } }]\n` +
             `Or, if the handler fills it automatically, add to ` +
