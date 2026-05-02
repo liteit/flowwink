@@ -181,7 +181,7 @@ export const documentsModule = defineModule<DocumentsInput, DocumentsOutput>({
   outputSchema: documentsOutputSchema,
 
   // ── FlowPilot Integration ──
-  skills: ['manage_document'],
+  skills: ['manage_document', 'extract_pdf_text', 'upload_document'],
   skillSeeds: DOCS_SKILLS,
   automations: [],
 
