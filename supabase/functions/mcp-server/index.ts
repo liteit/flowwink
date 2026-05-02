@@ -964,26 +964,33 @@ app.get("/rest/groups", async (c) => {
 });
 
 app.get("/rest/tools", async (c) => {
-  // ?groups=crm,commerce filters to only those categories
   const groupsParam = c.req.query("groups");
   const filterGroups = groupsParam
     ? groupsParam.split(",").map((g) => g.trim()).filter(Boolean)
     : undefined;
+  const openaiSafe = c.req.query("openai_safe") === "true";
 
   const skills = await loadExposedSkills(filterGroups);
   const tools = skills
     .filter((s) => s.tool_definition?.function?.name)
-    .map((s) => ({
-      name: s.tool_definition.function.name,
-      description: s.tool_definition.function.description || s.description,
-      group: s.category,
-      parameters: s.tool_definition.function.parameters || {},
-    }));
+    .map((s) => {
+      const rawParams = s.tool_definition.function.parameters || {};
+      const params = openaiSafe && hasUnsafeTopLevelKeyword(rawParams)
+        ? flattenSchemaForOpenAI(rawParams)
+        : rawParams;
+      return {
+        name: s.tool_definition.function.name,
+        description: s.tool_definition.function.description || s.description,
+        group: s.category,
+        parameters: params,
+      };
+    });
   return c.json(
-    { tools, count: tools.length, available_groups: TOOLSET_GROUPS },
+    { tools, count: tools.length, available_groups: TOOLSET_GROUPS, openai_safe: openaiSafe },
     200, corsHeaders,
   );
 });
+
 
 app.get("/rest/resources", (c) => {
   const resources = [
