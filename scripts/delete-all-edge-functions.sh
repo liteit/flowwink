@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # Delete ALL deployed Supabase Edge Functions for a project.
 # Usage: ./scripts/delete-all-edge-functions.sh <project-ref>
-# Example: ./scripts/delete-all-edge-functions.sh rzhjotxffjfsdlhrdkpj
 #
-# Requires: supabase CLI (logged in), jq
+# Requires: supabase CLI (logged in). jq optional but recommended.
 # DANGER: Irreversible. You must type DELETE to confirm.
 
 set -euo pipefail
@@ -14,34 +13,45 @@ if [[ -z "$PROJECT_REF" ]]; then
   exit 1
 fi
 
-for cmd in supabase jq; do
-  if ! command -v "$cmd" >/dev/null 2>&1; then
-    echo "Error: '$cmd' not found in PATH."
-    exit 1
+if ! command -v supabase >/dev/null 2>&1; then
+  echo "Error: 'supabase' CLI not found in PATH."
+  exit 1
+fi
+
+# Strict validator: must match Supabase function-name rules.
+VALID_RE='^[A-Za-z][A-Za-z0-9_-]*$'
+
+extract_names() {
+  # Try JSON first.
+  if command -v jq >/dev/null 2>&1; then
+    local json
+    json="$(supabase functions list --project-ref "$PROJECT_REF" --output json 2>/dev/null || true)"
+    if [[ -n "$json" ]] && echo "$json" | jq empty 2>/dev/null; then
+      echo "$json" | jq -r '.[] | (.slug // .name // empty)'
+      return
+    fi
   fi
-done
+
+  # Fallback: parse the table. Strip ALL non-ASCII (box chars) + pipes,
+  # then keep only tokens that look like valid function names.
+  supabase functions list --project-ref "$PROJECT_REF" 2>/dev/null \
+    | LC_ALL=C tr -d '\200-\377' \
+    | tr '|' ' ' \
+    | awk '{for(i=1;i<=NF;i++) print $i}' \
+    | grep -E "$VALID_RE" \
+    | grep -Ev '^(ID|NAME|SLUG|VERSION|STATUS|UPDATED|CREATED|ACTIVE|VERIFY_JWT|true|false)$'
+}
 
 echo "Fetching deployed functions for project: $PROJECT_REF"
+RAW="$(extract_names || true)"
 
-# Use JSON output (works on supabase CLI >= 1.150). Fallback to table parsing if JSON fails.
-RAW_JSON="$(supabase functions list --project-ref "$PROJECT_REF" --output json 2>/dev/null || true)"
-
-if [[ -n "$RAW_JSON" ]] && echo "$RAW_JSON" | jq empty 2>/dev/null; then
-  FUNCTIONS=$(echo "$RAW_JSON" | jq -r '.[] | (.slug // .name)' | grep -v '^$' || true)
-else
-  echo "JSON output unavailable, falling back to table parsing..."
-  # Strip box-drawing chars, then grab the 2nd column (NAME / SLUG).
-  FUNCTIONS=$(supabase functions list --project-ref "$PROJECT_REF" \
-    | sed 's/[│┃|]/ /g; s/[─━┄┈]//g' \
-    | awk 'NR>2 && NF>=2 && $2 !~ /^(NAME|SLUG|ID)$/ {print $2}' \
-    | grep -v '^$' || true)
-fi
+# Final filter: dedupe + validate strictly.
+FUNCTIONS="$(echo "$RAW" | grep -E "$VALID_RE" | sort -u || true)"
 
 if [[ -z "$FUNCTIONS" ]]; then
   echo "No deployed functions found (or could not parse output)."
   echo ""
-  echo "Try running manually to see raw output:"
-  echo "  supabase functions list --project-ref $PROJECT_REF"
+  echo "Try manually: supabase functions list --project-ref $PROJECT_REF"
   exit 0
 fi
 
@@ -61,6 +71,11 @@ FAILED=()
 DELETED=0
 while IFS= read -r fn; do
   [[ -z "$fn" ]] && continue
+  # Re-validate every name right before calling delete.
+  if ! [[ "$fn" =~ ^[A-Za-z][A-Za-z0-9_-]*$ ]]; then
+    echo "→ Skipping invalid name: '$fn'"
+    continue
+  fi
   echo "→ Deleting $fn ..."
   if supabase functions delete "$fn" --project-ref "$PROJECT_REF"; then
     echo "  ✓ deleted"
