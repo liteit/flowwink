@@ -29,7 +29,7 @@ const SUBSCRIPTIONS_SKILLS: SkillSeed[] = [
     name: 'list_subscriptions',
     description: 'List recurring subscriptions with filters. Use when: admin asks "who is subscribed?", reviewing billing, auditing customer base. NOT for: one-off orders (lookup_order); MRR/ARR aggregates (subscription_mrr).',
     category: 'commerce',
-    handler: 'edge:subscriptions-skills',
+    handler: 'edge:subscriptions',
     scope: 'internal',
     tool_definition: {
       type: 'function',
@@ -56,7 +56,7 @@ const SUBSCRIPTIONS_SKILLS: SkillSeed[] = [
     name: 'subscription_mrr',
     description: 'Compute current MRR, ARR, active subscriber count, and 30-day churn. Use when: reviewing recurring revenue, weekly briefings, business health checks. NOT for: listing individual subs (list_subscriptions).',
     category: 'commerce',
-    handler: 'edge:subscriptions-skills',
+    handler: 'edge:subscriptions',
     scope: 'internal',
     tool_definition: {
       type: 'function',

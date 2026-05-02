@@ -106,7 +106,11 @@ export function useSubscriptionAction() {
       newPriceId?: string;
       atPeriodEnd?: boolean;
     }) => {
-      const { data, error } = await supabase.functions.invoke('subscriptions-manage', { body: input });
+      // Unified subscriptions router: action="manage" + subAction="cancel|resume|change_plan"
+      const { action: subAction, ...rest } = input;
+      const { data, error } = await supabase.functions.invoke('subscriptions', {
+        body: { action: 'manage', subAction, ...rest },
+      });
       if (error) throw error;
       return data;
     },
@@ -122,8 +126,8 @@ export function useSubscriptionAction() {
 }
 
 export async function openCustomerPortal(subscriptionId: string) {
-  const { data, error } = await supabase.functions.invoke('subscriptions-portal', {
-    body: { subscriptionId, returnUrl: window.location.href },
+  const { data, error } = await supabase.functions.invoke('subscriptions', {
+    body: { action: 'portal', subscriptionId, returnUrl: window.location.href },
   });
   if (error) throw error;
   if (data?.url) window.open(data.url, '_blank');
