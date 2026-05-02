@@ -287,11 +287,9 @@ export function useUpdatePageStatus() {
           created_by: user?.id,
         });
 
-        // Invalidate edge cache for this page
+        // Log cache invalidation (RPC instead of edge function)
         try {
-          await supabase.functions.invoke('invalidate-cache', {
-            body: { slug: data.slug },
-          });
+          await supabase.rpc('log_cache_invalidation', { p_slug: data.slug, p_all: false });
           logger.log(`[usePages] Cache invalidated for: ${data.slug}`);
         } catch (cacheError) {
           logger.warn('[usePages] Cache invalidation failed:', cacheError);
