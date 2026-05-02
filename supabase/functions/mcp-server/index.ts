@@ -687,7 +687,7 @@ async function fetchResource(resourceKey: string): Promise<unknown> {
 
 // ---------- MCP server factory ----------
 
-async function createMcpServer(filterGroups?: string[]): Promise<McpServer> {
+async function createMcpServer(filterGroups?: string[], openaiSafe = false): Promise<McpServer> {
   const server = new McpServer({
     name: "flowwink",
     version: "1.0.0",
@@ -695,16 +695,23 @@ async function createMcpServer(filterGroups?: string[]): Promise<McpServer> {
 
   const skills = await loadExposedSkills(filterGroups);
 
+  let flattenedCount = 0;
   for (const skill of skills) {
     const fn = skill.tool_definition?.function;
     if (!fn?.name) continue;
 
+    let inputSchema: any = (fn.parameters as any) || {
+      type: "object" as const,
+      properties: {},
+    };
+    if (openaiSafe && hasUnsafeTopLevelKeyword(inputSchema)) {
+      inputSchema = flattenSchemaForOpenAI(inputSchema);
+      flattenedCount++;
+    }
+
     server.tool(fn.name, {
       description: `[${skill.category}] ${fn.description || skill.description || skill.name}`,
-      inputSchema: (fn.parameters as any) || {
-        type: "object" as const,
-        properties: {},
-      },
+      inputSchema,
       handler: async (args: Record<string, unknown>) => {
         const ctx = requestContext.getStore();
         const result = await executeSkill(skill.name, args, ctx?.callerUserId ?? null, ctx?.callerApiKeyId ?? null);
@@ -713,6 +720,9 @@ async function createMcpServer(filterGroups?: string[]): Promise<McpServer> {
         };
       },
     });
+  }
+  if (openaiSafe && flattenedCount > 0) {
+    console.log(`MCP: flattened ${flattenedCount} schemas for OpenAI compatibility`);
   }
 
   // ── Lock tools for concurrency ──
