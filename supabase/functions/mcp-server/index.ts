@@ -1095,11 +1095,12 @@ app.post("/rest/execute", async (c) => {
 // Cache MCP handlers by group key
 const mcpHandlerCache = new Map<string, (req: Request) => Promise<Response>>();
 
-async function getMcpHandler(filterGroups?: string[]) {
-  const cacheKey = filterGroups ? filterGroups.sort().join(",") : "__all__";
+async function getMcpHandler(filterGroups?: string[], openaiSafe = false) {
+  const groupKey = filterGroups ? filterGroups.sort().join(",") : "__all__";
+  const cacheKey = openaiSafe ? `${groupKey}::safe` : groupKey;
   let handler = mcpHandlerCache.get(cacheKey);
   if (!handler) {
-    const server = await createMcpServer(filterGroups);
+    const server = await createMcpServer(filterGroups, openaiSafe);
     const transport = new StreamableHttpTransport();
     handler = transport.bind(server);
     mcpHandlerCache.set(cacheKey, handler);
@@ -1111,12 +1112,16 @@ async function getMcpHandler(filterGroups?: string[]) {
 
 app.all("/*", async (c) => {
   // Support ?groups=crm,commerce for MCP native clients
-  const groupsParam = new URL(c.req.url).searchParams.get("groups");
+  const url = new URL(c.req.url);
+  const groupsParam = url.searchParams.get("groups");
   const filterGroups = groupsParam
     ? groupsParam.split(",").map((g) => g.trim()).filter(Boolean)
     : undefined;
+  // ?openai_safe=true → flatten allOf/oneOf/anyOf/if-then schemas (gpt-4.1 / litellm compatibility)
+  const openaiSafe = url.searchParams.get("openai_safe") === "true";
 
-  const handler = await getMcpHandler(filterGroups);
+  const handler = await getMcpHandler(filterGroups, openaiSafe);
+
   const callerUserId = (c.get("apiKeyCreatedBy" as any) as string | null) ?? null;
   const callerApiKeyId = (c.get("apiKeyId" as any) as string | null) ?? null;
   const response = await requestContext.run({ callerUserId, callerApiKeyId }, () => handler(c.req.raw));
