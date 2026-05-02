@@ -68,7 +68,7 @@ export function A2ATestChat({ peer }: A2ATestChatProps) {
 
       const start = Date.now();
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/a2a-outbound`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/a2a/outbound`,
         {
           method: 'POST',
           headers: {

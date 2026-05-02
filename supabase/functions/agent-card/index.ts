@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
       version: '1.0.0',
       name: id?.name || 'FlowPilot',
       description: id?.role || 'Autonomous CMS operator for FlowWink',
-      url: `${supabaseUrl}/functions/v1/a2a-ingest`,
+      url: `${supabaseUrl}/functions/v1/a2a/ingest`,
       capabilities: {
         streaming: false,
         pushNotifications: false,

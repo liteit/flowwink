@@ -108,7 +108,7 @@ export default function FederationPage() {
         if (!session) return;
 
         const res = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/a2a-discover`,
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/a2a/discover`,
           {
             method: 'POST',
             headers: {
@@ -164,7 +164,7 @@ export default function FederationPage() {
         : { peer_name: peer.name, message: 'ping' };
 
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/a2a-outbound`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/a2a/outbound`,
         {
           method: 'POST',
           headers: {
@@ -202,7 +202,7 @@ export default function FederationPage() {
     setDiscoveringPeerId(peer.id);
     try {
       // Use edge function to discover (avoids CORS issues with direct browser fetch)
-      const { data, error } = await supabase.functions.invoke('a2a-discover', {
+      const { data, error } = await supabase.functions.invoke('a2a/discover', {
         body: { peer_id: peer.id, action: 'discover' },
       });
 
@@ -235,7 +235,7 @@ export default function FederationPage() {
       toast({ title: 'Audit started', description: `Asking ${peer.name} to audit your site...` });
 
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/a2a-discover`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/a2a/discover`,
         {
           method: 'POST',
           headers: {
@@ -462,8 +462,8 @@ export default function FederationPage() {
                 <div className="space-y-1">
                   <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">A2A (JSON-RPC)</p>
                   <div className="flex items-center gap-2 p-2.5 bg-muted rounded-md font-mono text-xs break-all">
-                    <span className="flex-1">{import.meta.env.VITE_SUPABASE_URL}/functions/v1/a2a-ingest</span>
-                    <Button variant="ghost" size="icon" className="shrink-0 h-7 w-7" onClick={() => handleCopyToken(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/a2a-ingest`)}>
+                    <span className="flex-1">{import.meta.env.VITE_SUPABASE_URL}/functions/v1/a2a/ingest</span>
+                    <Button variant="ghost" size="icon" className="shrink-0 h-7 w-7" onClick={() => handleCopyToken(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/a2a/ingest`)}>
                       {copiedToken ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                     </Button>
                   </div>
