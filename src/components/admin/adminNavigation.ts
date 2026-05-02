@@ -3,7 +3,7 @@ import {
   Puzzle, UserCheck, Briefcase, Building2, Package, Library, ShoppingCart,
   CalendarDays, Plug, Bot, Zap, MessageSquare, Headphones, Megaphone, Code2, FileText as FileQuote,
   Video, Target, Inbox, UserCircle, FileUser, Receipt, Timer, Wallet, Shield, ShieldCheck,
-  Network, Snowflake, UserRound, BookMarked, Truck, FileSignature, FolderOpen, FolderKanban,
+  Network, UserRound, BookMarked, Truck, FileSignature, FolderOpen, FolderKanban,
   RefreshCw, AlertTriangle, CheckSquare, Sparkles, Factory, UserSearch, Plus,
 } from 'lucide-react';
 
@@ -43,7 +43,6 @@ export const navigationGroups: NavGroup[] = [
       { name: "Skills", href: "/admin/skills", icon: Sparkles },
       { name: "Federation", href: "/admin/federation", icon: Network, moduleId: "federation" },
       { name: "Clawable", href: "/admin/clawable", icon: MessageSquare },
-      { name: "OpenClaw", href: "/admin/openclaw", icon: Snowflake, moduleId: "openclaw" },
       { name: "Analytics", href: "/admin/analytics", icon: BarChart3, moduleId: "analytics" },
       { name: "Growth", href: "/admin/growth", icon: Megaphone, moduleId: "paidGrowth" },
     ],
@@ -149,6 +148,7 @@ export const navigationGroups: NavGroup[] = [
       { name: "Modules", href: "/admin/modules", icon: Puzzle },
       { name: "Automations", href: "/admin/automations", icon: Zap },
       { name: "Integrations", href: "/admin/integrations", icon: Plug },
+      { name: "Branding", href: "/admin/branding", icon: Image },
       { name: "Developer", href: "/admin/developer", icon: Code2, moduleId: "developer" },
       
       { name: "Users", href: "/admin/users", icon: Users },
