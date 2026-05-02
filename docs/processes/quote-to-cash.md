@@ -11,11 +11,13 @@
 
 | Module | Role in the process |
 |--------|---------------------|
+| **Quotes** | Pre-deal offers / proposals — convert to deal on accept |
 | **Deals** | Source — a won deal triggers project start |
 | **Projects** | Projects + tasks (Kanban) |
 | **Timesheets** | Time logging against projects/tasks |
 | **Invoicing** | Invoice generation from timesheets |
-| **Accounting** | Booking invoices against the chart of accounts (BAS 2024) |
+| **Accounting** | Booking invoices against the chart of accounts (BAS 2024) + period lock |
+| **Reconciliation** | Stripe payouts + bank file matching against AR |
 | **Contracts** | Underlying agreements that govern price/terms |
 
 ---
@@ -60,12 +62,12 @@ Overdue check → reminders
 
 ## Known gaps (missing for L5)
 
-- ❌ Quote/proposal module (offer before deal won)
+- ✅ Quote/proposal module — `manage_quote` available; deal-conversion automation still WIP
 - ❌ Versioned price lists
-- ❌ Recurring billing / subscriptions (partly via Stripe integration)
+- ⚠️ Recurring billing — `subscriptions` module covers MRR/dunning; Stripe is primary processor
 - ❌ Multi-currency at the invoice level
 - ❌ Approval workflow for invoices above X
-- ⚠️ Reconciliation requires manual matching for ambiguous cases
+- ⚠️ Reconciliation requires manual matching for ambiguous cases (auto via `auto_match_transactions`)
 
 ---
 

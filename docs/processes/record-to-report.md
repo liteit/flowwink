@@ -2,8 +2,8 @@
 
 > From transaction to financial report. Bookkeeping + period-end close.
 
-**Maturity level:** L2 — Manual (parts L3 via templates)
-**Status:** ⚠️ Basic double-entry bookkeeping; lacks period-end automation
+**Maturity level:** L3 — Operational (period lock + reconciliation live)
+**Status:** ✅ Double-entry bookkeeping, period lock, bank file/image OCR import; ⚠️ no tax filings
 
 ---
 
@@ -11,9 +11,10 @@
 
 | Module | Role in the process |
 |--------|---------------------|
-| **Accounting** | Chart of accounts (BAS 2024), journal entries, templates |
+| **Accounting** | Chart of accounts (BAS 2024 / IFRS / US GAAP via locale packs), journal entries, templates, period lock, export adapters (SIE 4 / SAF-T) |
+| **Reconciliation** | Stripe payouts sync, bank file/image (OCR) import, auto-matching |
 | **Invoicing** | Source for AR bookings |
-| **Expenses** | Source for AP / expense bookings |
+| **Expenses** | Source for AP / expense bookings (auto-booked on approval) |
 | **Analytics** | Financial KPI reports |
 | **Documents** | Voucher / supporting document archive |
 
@@ -52,19 +53,19 @@ accounting_reports (BS, P&L, general ledger)
 | Opening balances | ✅ | ✅ (`manage_opening_balances`) | — |
 | Reconciliations | ✅ | ⚠️ Partial (autonomous reconciliation) | — |
 | Reports | ✅ | ✅ (`accounting_reports`) | — |
-| Period-end close | ❌ Missing | — | — |
+| Period-end close | ✅ | ✅ (`close_accounting_period`, `reopen_accounting_period`) | — |
 | Tax reporting | ❌ Missing | — | — |
 
 ---
 
-## Known gaps (missing for L3+)
+## Known gaps (missing for L4+)
 
-- ❌ **Period-end close workflow** (lock period, adjustments, reversal)
+- ✅ **Period-end close workflow** — `close_accounting_period` locks JE + JE-lines + time_entries via guard triggers
 - ❌ Tax reporting (VAT, employer reports, K10)
-- ❌ SIE export (for accountants)
-- ❌ Bank feed / automatic reconciliation against bank statements
+- ✅ SIE export — pluggable adapters per locale pack (SE → SIE 4, generic → SAF-T + CSV)
+- ✅ Bank feed / reconciliation — `import_bank_file`, `import_bank_image` (OCR), `sync_stripe_payouts`, `auto_match_transactions`
 - ❌ Multi-currency revaluation
-- ❌ Cost center / project-level bookkeeping
+- ⚠️ Cost center / project-level — `manage_analytic_account` + `tag_journal_entry_analytics` exist; reporting limited
 - ❌ Consolidation (multi-entity)
 
 ---
