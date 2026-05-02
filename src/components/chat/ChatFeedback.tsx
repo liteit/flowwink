@@ -47,14 +47,11 @@ export function ChatFeedback({
 
       if (error) throw error;
 
-      // Update KB article feedback counts if negative
+      // Update KB article feedback counts if negative (RPC instead of edge function)
       if (rating === 'negative' && contextKbArticles.length > 0) {
-        // Call edge function to update KB stats
-        await supabase.functions.invoke('update-kb-feedback', {
-          body: { 
-            articleSlugs: contextKbArticles, 
-            rating 
-          }
+        await supabase.rpc('bump_kb_article_feedback', {
+          p_slugs: contextKbArticles,
+          p_rating: rating,
         });
       }
 
