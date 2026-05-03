@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { defineModule } from '@/lib/module-def';
+import type { SkillSeed } from '@/lib/module-bootstrap';
 import { getEnabledCalendarSources, type CalendarEvent } from '@/lib/calendar-sources';
 import { supabase } from '@/integrations/supabase/client';
 
