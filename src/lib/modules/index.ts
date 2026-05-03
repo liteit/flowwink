@@ -57,6 +57,9 @@ export { calendarModule } from './calendar-module';
 export { approvalsModule } from './approvals-module';
 export { quotesModule } from './quotes-module';
 export { reconciliationModule } from './reconciliation-module';
+export { pricelistsModule } from './pricelists-module';
+export { returnsModule } from './returns-module';
+export { shippingModule } from './shipping-module';
 
 // ── Growth ──
 export { salesIntelligenceModule } from './sales-intelligence-module';
