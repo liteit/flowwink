@@ -739,6 +739,9 @@ export const SIDEBAR_TO_MODULE: Record<string, keyof ModulesSettings> = {
   '/admin/approvals': 'approvals',
   '/admin/reconciliation': 'reconciliation',
   '/admin/recruitment': 'recruitment',
+  '/admin/pricelists': 'pricelists',
+  '/admin/returns': 'returns',
+  '/admin/shipping': 'shipping',
 };
 
 export function useModules() {
