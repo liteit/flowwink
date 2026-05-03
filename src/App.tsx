@@ -143,6 +143,9 @@ import DunningPage from "./pages/admin/DunningPage";
 import ApprovalsPage from "./pages/admin/ApprovalsPage";
 import ReconciliationPage from "./pages/admin/ReconciliationPage";
 import ActivitiesPage from "./pages/admin/ActivitiesPage";
+import PricelistsPage from "./pages/admin/PricelistsPage";
+import ReturnsPage from "./pages/admin/ReturnsPage";
+import ShippingPage from "./pages/admin/ShippingPage";
 
 
 const TemplateGalleryPage = lazy(() => import("./pages/admin/TemplateGalleryPage"));
@@ -323,6 +326,9 @@ const router = createBrowserRouter([
       { path: "/admin/subscriptions/dunning", element: <DunningPage /> },
       { path: "/admin/approvals", element: <ApprovalsPage /> },
       { path: "/admin/reconciliation", element: <ReconciliationPage /> },
+      { path: "/admin/pricelists", element: <PricelistsPage /> },
+      { path: "/admin/returns", element: <ReturnsPage /> },
+      { path: "/admin/shipping", element: <ShippingPage /> },
       { path: "/admin/api-keys", element: <Navigate to="/admin/developer?tab=mcp-keys" replace /> },
       { path: "/admin/autonomy-tests", element: <AutonomyTestSuitePage /> },
       { path: "/preview/:id", element: <PreviewPage /> },

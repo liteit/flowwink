@@ -95,6 +95,9 @@ export interface ModulesSettings {
   surveys: ModuleConfig;
   fieldService: ModuleConfig;
   pos: ModuleConfig;
+  pricelists: ModuleConfig;
+  returns: ModuleConfig;
+  shipping: ModuleConfig;
 }
 
 export const defaultModulesSettings: ModulesSettings = {
@@ -648,6 +651,37 @@ export const defaultModulesSettings: ModulesSettings = {
     adminUI: true,
     enhancedByFlowPilot: false,
   },
+  pricelists: {
+    enabled: false,
+    name: 'Pricelists',
+    description:
+      'Versioned pricing per customer, company, or period — Odoo-style price lists with fixed prices or discount %. Resolves the best applicable price for any product+customer+date.',
+    icon: 'Tag',
+    category: 'data',
+    autonomy: 'config-required',
+    adminUI: true,
+  },
+  returns: {
+    enabled: false,
+    name: 'Returns / RMA',
+    description:
+      'Return-merchandise-authorization flow with line-item tracking, approval, restock-on-receive, and refund processing.',
+    icon: 'Undo2',
+    category: 'data',
+    autonomy: 'view-required',
+    adminUI: true,
+  },
+  shipping: {
+    enabled: false,
+    name: 'Shipping',
+    description:
+      'Outbound shipping with multi-parcel support and carrier integrations (PostNord, DHL, Bring). Tracking URLs auto-rendered from per-carrier templates.',
+    icon: 'Truck',
+    category: 'data',
+    autonomy: 'config-required',
+    adminUI: true,
+    optionalIntegrations: ['postnord', 'dhl', 'bring'],
+  },
 };
 
 // Map sidebar items to module IDs
@@ -705,6 +739,9 @@ export const SIDEBAR_TO_MODULE: Record<string, keyof ModulesSettings> = {
   '/admin/approvals': 'approvals',
   '/admin/reconciliation': 'reconciliation',
   '/admin/recruitment': 'recruitment',
+  '/admin/pricelists': 'pricelists',
+  '/admin/returns': 'returns',
+  '/admin/shipping': 'shipping',
 };
 
 export function useModules() {
