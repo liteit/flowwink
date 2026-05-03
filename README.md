@@ -4,7 +4,9 @@
   <img src=".github/social-preview.jpg" alt="FlowWink — The Business Operating System" width="100%" />
 </p>
 
-> **The Business Operating System — powered by an autonomous AI operator.**
+> **The Business Operating System — operable by any agent. Ships with one.**
+>
+> A modular, self-hosted SaaS platform whose every capability is exposed as a skill over **MCP**. Run it with the built-in vertically-integrated operator **FlowPilot**, swap in an external one like **[OpenClaw](https://github.com/magnusfroste/clawable)**, mix several in parallel — or run it as a pure SaaS with humans in the loop. The platform doesn't care.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docker Image](https://img.shields.io/badge/Docker-ghcr.io-blue)](https://github.com/magnusfroste/flowwink/pkgs/container/flowwink)
