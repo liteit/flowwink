@@ -35,7 +35,9 @@ export const calendarModule = defineModule<Input, Output>({
   inputSchema,
   outputSchema,
 
-  skills: ['check_calendar'],
+  skills: ['check_calendar', 'list_events'],
+  skillSeeds: CALENDAR_SKILLS,
+
 
   async publish(input: Input): Promise<Output> {
     try {
