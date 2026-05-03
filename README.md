@@ -95,30 +95,58 @@ FlowPilot is not a chatbot, a copilot, or a content suggester. It is an **autono
 
 ---
 
-## Modules — 37 integrated domains
+## Modules — 50+ integrated domains
 
-FlowWink follows an **Odoo-inspired modular architecture** where each module owns its data, views, and FlowPilot integration. Modules are registered as plugins with typed contracts.
+FlowWink follows an **Odoo-inspired modular architecture** where each module owns its data, views, and skill seeds. Modules register via `defineModule()` with typed contracts.
 
 | Category | Modules |
 |----------|---------|
-| **Content** | Pages, Blog, Knowledge Base, Global Blocks, Media, Templates, Handbook |
-| **CRM** | Leads, Companies, Deals, Forms, Sales Intelligence |
-| **Commerce** | Products, Orders, Bookings, Invoicing, Inventory |
-| **Finance** | Accounting, Expenses, Timesheets |
-| **Communication** | Newsletter, Webinars |
-| **Support** | Tickets (Kanban + auto-triage via FlowPilot), Live Support |
-| **Growth** | Analytics, Paid Growth, Company Insights, Resume/CV, Content Hub |
-| **System** | FlowPilot, Federation (A2A), Browser Control, Developer, Site Migration |
+| **Content** | Pages, Blog, Knowledge Base, Docs, Global Blocks, Global Elements, Media Library, Templates, Handbook, Forms, Surveys |
+| **CRM & Sales** | Leads, Companies, Deals, Quotes, Sales Intelligence, Customer 360, Company Insights |
+| **Commerce** | Products, Orders, POS, Bookings, Subscriptions, Inventory |
+| **Finance** | Accounting (BAS 2024 / IFRS / US GAAP), Invoicing, Expenses, Reconciliation, Timesheets |
+| **HR & People** | HR, Recruitment, Resume, Contracts, Signature, Calendar |
+| **Operations** | Projects, Tasks, Field Service, Manufacturing (MRP-light), Purchasing, SLA, Approvals |
+| **Communication** | Email, Newsletter, Webinars, Chat, Workspace Chat |
+| **Support** | Tickets (Kanban + auto-triage), Live Support |
+| **Growth** | Analytics, Paid Growth, Content Campaigns |
+| **System & Operator** | FlowPilot, Federation (A2A + MCP), Browser Control, Composio, Site Migration, Developer, Documents |
 
 Each module provides:
-- **Data layer** — Supabase table + RLS policies
-- **Admin views** — React components in `/admin/`
-- **FlowPilot skills** — Agent capabilities auto-registered
-- **Webhook events** — `module.action` signals for automation
+- **Data layer** — Supabase tables + RLS policies + RPCs
+- **Admin UI** — React pages under `/admin/`
+- **Skill seeds** — capabilities auto-registered into `agent_skills` and exposed over MCP
+- **Webhook events** — `module.action` signals on the platform event bus
+
+Composite MCP groups (`marketing`, `sales`, `operations`, …) let an external operator request a curated toolkit with `?groups=marketing` — no need to know the internal taxonomy.
 
 ---
 
-## FlowPilot — Full Autonomy Engine
+## Skills — 187 capabilities, exposed over MCP
+
+| Domain | Sample skills |
+|--------|---------------|
+| **CMS & Content** | `manage_page`, `manage_blog_post`, `manage_kb_article`, `manage_global_block`, `migrate_url`, `scrape_url` |
+| **CRM** | `manage_leads`, `manage_companies`, `manage_deals`, `qualify_lead`, `enrich_company`, `process_signal` |
+| **Commerce** | `manage_product`, `place_order`, `record_pos_sale_v2`, `close_pos_session_v2`, `manage_subscription` |
+| **Finance** | `manage_journal_entry`, `import_bank_image`, `reconcile_transaction`, `auto_approve_vendor_invoice`, `book_expense`, `mark_paid` |
+| **HR & People** | `hire_application`, `auto_allocate_vacation`, `lock_timesheet_period`, `manage_contract`, `manage_employee` |
+| **Procure-to-Pay** | `generate_expense`, `submit_expense`, `approve_expense`, `book_expense`, `create_purchase_order`, `receive_goods` |
+| **Operations** | `manage_project`, `manage_task`, `manage_field_service`, `sla_check`, `dispatch_automation_event` |
+| **Communication** | `send_newsletter_campaign`, `manage_webinar`, `upload_document` |
+| **Support** | `triage_ticket`, KB-powered auto-resolve |
+| **Intelligence** | `search_web`, `extract_pdf_text`, `competitor_monitor`, `prospect_research` |
+| **Operator-internal** *(FlowPilot only, not MCP)* | objectives, soul, reflect, planning, A2A delegation |
+
+All skills follow Anthropic's MCP best practices: self-describing (`Use when:` / `NOT for:`), flat OpenAI-strict-mode-safe JSON Schemas, namespaced. See [`docs/architecture/mcp-overview.md`](docs/architecture/mcp-overview.md).
+
+---
+
+## FlowPilot — the included operator
+
+FlowPilot is FlowWink's **vertically-integrated, local autonomous operator** — one of many possible MCP consumers, but the one that ships in the box. It runs *inside* the platform's trust boundary, which gives it advantages no external operator can replicate: zero-config onboarding, direct DB/event access, brand-aligned defaults, predictable cost.
+
+External operators like **[OpenClaw](https://github.com/magnusfroste/clawable)** instead win on velocity, plugin ecosystem and frontier reasoning. FlowWink supports both — see [`docs/concepts/operator-strategy.md`](docs/concepts/operator-strategy.md) for the honest trade-off.
 
 ### Heartbeat Protocol (7 steps)
 
@@ -131,21 +159,6 @@ Each module provides:
 6. REFLECT   — Review recent actions, distill learnings
 7. REMEMBER  — Save insights to semantic memory for future cycles
 ```
-
-### Skills — 118 across your business
-
-| Domain | Skills |
-|--------|--------|
-| **CMS** | Pages (create/publish/rollback), block manipulation, Global Elements |
-| **Content** | Blog posts, KB articles, content research, SEO briefs, social batches |
-| **CRM** | Leads, Companies, Deals, Form processing, Lead qualification, Company enrichment |
-| **Commerce** | Products, Orders, Bookings, Invoicing, Inventory management |
-| **Finance** | Accounting entries, Expense tracking, Timesheet analysis |
-| **Communication** | Newsletter campaigns, Webinars |
-| **Support** | Ticket triage, KB-powered auto-resolve |
-| **Intelligence** | Analytics, SEO audits, web research, browser automation, prospect research |
-| **Growth** | Ad campaigns, competitor monitoring, prospect fit analysis |
-| **Learning** | Memory read/write (vector search), reflection, soul evolution |
 
 ### Workflow DAGs — Multi-step automation chains
 
