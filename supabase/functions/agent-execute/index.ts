@@ -5923,6 +5923,12 @@ const GENERIC_CRUD_TABLES = new Set([
   'onboarding_templates', 'onboarding_checklists',
   // Sales quotes (CPQ)
   'quotes',
+  // Pricelists (Odoo-style versioned pricing)
+  'pricelists', 'pricelist_items',
+  // P2P tolerance policies
+  'tolerance_policies',
+  // O2D — carriers, shipments, returns/RMA
+  'carriers', 'shipments', 'returns', 'return_items',
 ]);
 
 /**
