@@ -1,24 +1,18 @@
+// newsletter-send — sends a newsletter to all confirmed subscribers via the
+// provider-agnostic `email-send` router. Provider selection (SMTP / Resend)
+// lives in `email-send` — this function only handles list expansion,
+// per-recipient tracking pixel rewriting, link click rewriting, and status.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Dynamic import of Resend
-const getResend = async () => {
-  const { Resend } = await import("https://esm.sh/resend@2.0.0");
-  return Resend;
-};
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface SendNewsletterRequest {
   newsletter_id: string;
-}
-
-interface EmailConfig {
-  fromEmail: string;
-  fromName: string;
 }
 
 interface NewsletterTrackingConfig {
@@ -27,11 +21,7 @@ interface NewsletterTrackingConfig {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
@@ -42,314 +32,163 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
-
-    if (!resendApiKey) {
-      return new Response(JSON.stringify({ error: "RESEND_API_KEY not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if Resend integration is enabled and get email config
-    const { data: integrationSettings } = await supabase
-      .from("site_settings")
-      .select("value")
-      .eq("key", "integrations")
-      .maybeSingle();
-
-    const resendSettings = (integrationSettings?.value as any)?.resend;
-    const resendEnabled = resendSettings?.enabled ?? false;
-    
-    if (!resendEnabled) {
-      console.log("[newsletter-send] Resend integration is disabled");
-      return new Response(JSON.stringify({ error: "Email sending is currently disabled" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Get email configuration
-    const emailConfig: EmailConfig = resendSettings?.config?.emailConfig || {
-      fromEmail: "onboarding@resend.dev",
-      fromName: "Newsletter",
-    };
-    
-    // Get tracking configuration (default to disabled for deliverability)
-    const trackingConfig: NewsletterTrackingConfig = resendSettings?.config?.newsletterTracking || {
-      enableOpenTracking: false,
-      enableClickTracking: false,
-    };
-    
-    console.log(`[newsletter-send] Using sender: ${emailConfig.fromName} <${emailConfig.fromEmail}>`);
-    console.log(`[newsletter-send] Open tracking: ${trackingConfig.enableOpenTracking}, Click tracking: ${trackingConfig.enableClickTracking}`);
-
-    const ResendClass = await getResend();
-    const resend = new ResendClass(resendApiKey);
-
-    // Verify auth
+    // Auth: admin only
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
     const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace("Bearer ", "")
+      authHeader.replace("Bearer ", ""),
     );
-
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // Check admin role
     const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .single();
-
+      .from("user_roles").select("role").eq("user_id", user.id).single();
     if (roleData?.role !== "admin") {
       return new Response(JSON.stringify({ error: "Admin access required" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Tracking config (provider+from is resolved inside email-send)
+    const { data: integrationSettings } = await supabase
+      .from("site_settings").select("value").eq("key", "integrations").maybeSingle();
+    const resendSettings = (integrationSettings?.value as any)?.resend;
+    const trackingConfig: NewsletterTrackingConfig =
+      resendSettings?.config?.newsletterTracking || {
+        enableOpenTracking: false,
+        enableClickTracking: false,
+      };
 
     const { newsletter_id }: SendNewsletterRequest = await req.json();
 
-    // Get newsletter
     const { data: newsletter, error: newsletterError } = await supabase
-      .from("newsletters")
-      .select("*")
-      .eq("id", newsletter_id)
-      .single();
-
+      .from("newsletters").select("*").eq("id", newsletter_id).single();
     if (newsletterError || !newsletter) {
       return new Response(JSON.stringify({ error: "Newsletter not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
     if (newsletter.status === "sent") {
       return new Response(JSON.stringify({ error: "Newsletter already sent" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Update status to sending
-    await supabase
-      .from("newsletters")
-      .update({ status: "sending" })
-      .eq("id", newsletter_id);
+    await supabase.from("newsletters").update({ status: "sending" }).eq("id", newsletter_id);
 
-    // Get confirmed subscribers
     const { data: subscribers, error: subError } = await supabase
-      .from("newsletter_subscribers")
-      .select("email, name")
-      .eq("status", "confirmed");
-
+      .from("newsletter_subscribers").select("email, name").eq("status", "confirmed");
     if (subError) {
-      console.error("[newsletter-send] Error fetching subscribers:", subError);
-      await supabase
-        .from("newsletters")
-        .update({ status: "failed" })
-        .eq("id", newsletter_id);
-      
+      await supabase.from("newsletters").update({ status: "failed" }).eq("id", newsletter_id);
       return new Response(JSON.stringify({ error: "Failed to fetch subscribers" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
     if (!subscribers || subscribers.length === 0) {
-      await supabase
-        .from("newsletters")
-        .update({ status: "draft" })
-        .eq("id", newsletter_id);
-
+      await supabase.from("newsletters").update({ status: "draft" }).eq("id", newsletter_id);
       return new Response(JSON.stringify({ error: "No subscribers to send to" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log(`[newsletter-send] Sending to ${subscribers.length} subscribers`);
-
-    // Get site URL for proper domain-matching links (helps email deliverability)
     const { data: siteUrlSetting } = await supabase
-      .from("site_settings")
-      .select("value")
-      .eq("key", "siteUrl")
-      .maybeSingle();
-
-    // Use site URL if available, otherwise fall back to a default
+      .from("site_settings").select("value").eq("key", "siteUrl").maybeSingle();
     const siteUrl = (siteUrlSetting?.value as string) || "";
-    
-    // Use site URL for unsubscribe links to avoid spam filters
-    const unsubscribeUrl = siteUrl 
-      ? `${siteUrl}/newsletter/manage?action=unsubscribe`
-      : `${supabaseUrl}/functions/v1/newsletter-subscribe?action=unsubscribe`;
-    
     const trackingBaseUrl = `${supabaseUrl}/functions/v1/newsletter-track`;
     const linkTrackingBaseUrl = `${supabaseUrl}/functions/v1/newsletter-link`;
-    
-    console.log(`[newsletter-send] Using unsubscribe URL: ${unsubscribeUrl}`);
 
-    let sentCount = 0;
-    
-    // Helper function to rewrite links for tracking (only if enabled)
     const rewriteLinksForTracking = async (
-      html: string, 
-      newsletterId: string, 
-      recipientEmail: string
+      html: string, newsletterId: string, recipientEmail: string,
     ): Promise<string> => {
-      if (!trackingConfig.enableClickTracking) {
-        return html;
-      }
-      
-      // Match all href attributes with http/https links
+      if (!trackingConfig.enableClickTracking) return html;
       const linkRegex = /href=["'](https?:\/\/[^"']+)["']/gi;
       const matches = [...html.matchAll(linkRegex)];
-      
       let processedHtml = html;
-      
       for (const match of matches) {
         const originalUrl = match[1];
-        
-        // Skip unsubscribe links and newsletter-related links
-        if (originalUrl.includes('newsletter-subscribe') || originalUrl.includes('newsletter/manage')) {
-          continue;
-        }
-        
-        // Create link tracking record
+        if (originalUrl.includes("newsletter-subscribe") || originalUrl.includes("newsletter/manage")) continue;
         const { data: linkRecord, error: linkError } = await supabase
           .from("newsletter_link_clicks")
-          .insert({
-            newsletter_id: newsletterId,
-            recipient_email: recipientEmail,
-            original_url: originalUrl,
-          })
-          .select("link_id")
-          .single();
-        
-        if (linkError) {
-          console.error(`[newsletter-send] Failed to create link tracking:`, linkError);
-          continue;
-        }
-        
-        // Replace original URL with tracking URL
+          .insert({ newsletter_id: newsletterId, recipient_email: recipientEmail, original_url: originalUrl })
+          .select("link_id").single();
+        if (linkError || !linkRecord) continue;
         const trackingUrl = `${linkTrackingBaseUrl}?l=${linkRecord.link_id}`;
-        processedHtml = processedHtml.replace(
-          `href="${originalUrl}"`,
-          `href="${trackingUrl}"`
-        );
-        processedHtml = processedHtml.replace(
-          `href='${originalUrl}'`,
-          `href='${trackingUrl}'`
-        );
+        processedHtml = processedHtml.replaceAll(`href="${originalUrl}"`, `href="${trackingUrl}"`);
+        processedHtml = processedHtml.replaceAll(`href='${originalUrl}'`, `href='${trackingUrl}'`);
       }
-      
       return processedHtml;
     };
 
-    // Send emails in batches
+    let sentCount = 0;
     for (const subscriber of subscribers) {
       try {
-        // Create tracking record for open tracking (only if enabled)
         let trackingPixel = "";
         if (trackingConfig.enableOpenTracking) {
-          const { data: trackingRecord, error: trackingError } = await supabase
+          const { data: trackingRecord } = await supabase
             .from("newsletter_email_opens")
-            .insert({
-              newsletter_id: newsletter_id,
-              recipient_email: subscriber.email,
-            })
-            .select("tracking_id")
-            .single();
-
-          if (trackingError) {
-            console.error(`[newsletter-send] Failed to create tracking for ${subscriber.email}:`, trackingError);
-          } else if (trackingRecord) {
+            .insert({ newsletter_id, recipient_email: subscriber.email })
+            .select("tracking_id").single();
+          if (trackingRecord) {
             trackingPixel = `<img src="${trackingBaseUrl}?t=${trackingRecord.tracking_id}" width="1" height="1" alt="" style="display:none;" />`;
           }
         }
-
-        // Build personalized unsubscribe link
         const personalUnsubscribe = siteUrl
           ? `${siteUrl}/newsletter/manage?action=unsubscribe&email=${encodeURIComponent(subscriber.email)}`
           : `${supabaseUrl}/functions/v1/newsletter-subscribe?action=unsubscribe&email=${encodeURIComponent(subscriber.email)}`;
-        
-        // Process content (with or without link tracking based on settings)
+
         const contentHtml = newsletter.content_html || "<p>No content</p>";
-        const processedContent = await rewriteLinksForTracking(
-          contentHtml, 
-          newsletter_id, 
-          subscriber.email
-        );
-        
-        await resend.emails.send({
-          from: `${emailConfig.fromName} <${emailConfig.fromEmail}>`,
-          to: [subscriber.email],
-          subject: newsletter.subject,
-          html: `
-            ${processedContent}
-            <hr style="margin-top: 40px; border: none; border-top: 1px solid #eee;" />
-            <p style="font-size: 12px; color: #666; text-align: center;">
-              <a href="${personalUnsubscribe}" style="color: #666;">Unsubscribe</a>
-            </p>
-            ${trackingPixel}
-          `,
+        const processedContent = await rewriteLinksForTracking(contentHtml, newsletter_id, subscriber.email);
+
+        const html = `
+          ${processedContent}
+          <hr style="margin-top: 40px; border: none; border-top: 1px solid #eee;" />
+          <p style="font-size: 12px; color: #666; text-align: center;">
+            <a href="${personalUnsubscribe}" style="color: #666;">Unsubscribe</a>
+          </p>
+          ${trackingPixel}
+        `;
+
+        const { data: sendData, error: sendErr } = await supabase.functions.invoke("email-send", {
+          body: {
+            to: subscriber.email,
+            subject: newsletter.subject,
+            html,
+            tags: { source: "newsletter-send", newsletter_id },
+          },
         });
-        
+        if (sendErr || !sendData?.success) {
+          console.error(`[newsletter-send] failed for ${subscriber.email}:`, sendErr ?? sendData?.error);
+          continue;
+        }
         sentCount++;
-        console.log(`[newsletter-send] Sent to: ${subscriber.email}`);
       } catch (emailError) {
         console.error(`[newsletter-send] Failed to send to ${subscriber.email}:`, emailError);
       }
     }
 
-    // Update newsletter status
-    await supabase
-      .from("newsletters")
-      .update({
-        status: "sent",
-        sent_at: new Date().toISOString(),
-        sent_count: sentCount,
-        unique_opens: 0,
-        open_count: 0,
-        unique_clicks: 0,
-        click_count: 0,
-      })
-      .eq("id", newsletter_id);
-
-    console.log(`[newsletter-send] Complete. Sent: ${sentCount}/${subscribers.length}`);
+    await supabase.from("newsletters").update({
+      status: "sent",
+      sent_at: new Date().toISOString(),
+      sent_count: sentCount,
+      unique_opens: 0, open_count: 0, unique_clicks: 0, click_count: 0,
+    }).eq("id", newsletter_id);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        sent_count: sentCount,
-        total_subscribers: subscribers.length 
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ success: true, sent_count: sentCount, total_subscribers: subscribers.length }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error: any) {
     console.error("[newsletter-send] Error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
