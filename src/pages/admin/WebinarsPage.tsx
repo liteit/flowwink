@@ -32,6 +32,8 @@ import {
   useDeleteWebinar,
   useWebinarRegistrations,
   useWebinarStats,
+  useWebinarLifecycle,
+  useMarkAttendance,
   type Webinar,
   type WebinarStatus,
   type WebinarPlatform,
