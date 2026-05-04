@@ -61,52 +61,127 @@ Manages webinars and registrations.
   },
   {
     name: 'register_webinar',
-    description: 'Register a visitor for an upcoming webinar. Use when: visitor wants to sign up for a webinar. NOT for: managing webinars (use manage_webinar).',
+    description: 'Register a visitor for an upcoming webinar. Auto-links to existing lead by email or creates a new lead with source=webinar (+15 score). Use when: visitor wants to sign up for a webinar. NOT for: managing webinars (use manage_webinar).',
     category: 'communication',
-    handler: 'module:webinars',
+    handler: 'rpc:register_for_webinar',
     scope: 'external',
     tool_definition: {
       type: 'function',
       function: {
         name: 'register_webinar',
+        description: 'Register a visitor for an upcoming webinar.',
         parameters: {
           type: 'object',
-          required: [
-            'action',
-          ],
+          required: ['p_webinar_id', 'p_name', 'p_email'],
           properties: {
-            name: {
-              type: 'string',
-              description: 'Attendee name',
-            },
-            email: {
-              type: 'string',
-              description: 'Attendee email',
-            },
-            phone: {
-              type: 'string',
-              description: 'Optional phone',
-            },
-            action: {
-              enum: [
-                'list_upcoming',
-                'register',
-              ],
-              type: 'string',
-              default: 'list_upcoming',
-            },
-            webinar_id: {
-              type: 'string',
-              description: 'Webinar to register for',
-            },
+            p_webinar_id: { type: 'string', format: 'uuid' },
+            p_name: { type: 'string' },
+            p_email: { type: 'string', format: 'email' },
+            p_phone: { type: 'string' },
           },
         },
-        description: 'Register a visitor for an upcoming webinar. Use when: visitor wants to sign up for a webinar. NOT for: managing webinars (use manage_webinar).',
       },
     },
-    instructions: `## Webinar Registration
-Help visitors register for upcoming webinars. Collect name, email, and optional phone.
-Only show upcoming webinars. Confirm registration details.`,
+    instructions: 'Collect name + email (phone optional). Only published/live webinars accept registrations.',
+  },
+  // ── Lifecycle skills (SECURITY DEFINER RPCs) ──
+  {
+    name: 'publish_webinar',
+    description: 'Publish a draft webinar so it becomes visible and registrable. Emits webinar.published event.',
+    category: 'communication',
+    handler: 'rpc:publish_webinar',
+    scope: 'internal',
+    trust_level: 'notify',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'publish_webinar',
+        description: 'Publish a draft webinar.',
+        parameters: { type: 'object', required: ['p_webinar_id'], properties: { p_webinar_id: { type: 'string', format: 'uuid' } } },
+      },
+    },
+  },
+  {
+    name: 'start_webinar',
+    description: 'Manually flip a webinar to live status. Normally automatic via cron when date passes.',
+    category: 'communication',
+    handler: 'rpc:start_webinar',
+    scope: 'internal',
+    trust_level: 'notify',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'start_webinar',
+        description: 'Mark a webinar as live.',
+        parameters: { type: 'object', required: ['p_webinar_id'], properties: { p_webinar_id: { type: 'string', format: 'uuid' } } },
+      },
+    },
+  },
+  {
+    name: 'complete_webinar',
+    description: 'Close a webinar after it has run. Optionally attach the recording URL. Emits webinar.completed event.',
+    category: 'communication',
+    handler: 'rpc:complete_webinar',
+    scope: 'internal',
+    trust_level: 'notify',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'complete_webinar',
+        description: 'Mark a webinar as completed.',
+        parameters: {
+          type: 'object',
+          required: ['p_webinar_id'],
+          properties: {
+            p_webinar_id: { type: 'string', format: 'uuid' },
+            p_recording_url: { type: 'string', format: 'uri' },
+          },
+        },
+      },
+    },
+  },
+  {
+    name: 'cancel_webinar',
+    description: 'Cancel a webinar. Emits webinar.cancelled event so automations can notify registrants.',
+    category: 'communication',
+    handler: 'rpc:cancel_webinar',
+    scope: 'internal',
+    trust_level: 'approve',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'cancel_webinar',
+        description: 'Cancel a webinar.',
+        parameters: {
+          type: 'object',
+          required: ['p_webinar_id'],
+          properties: { p_webinar_id: { type: 'string', format: 'uuid' }, p_reason: { type: 'string' } },
+        },
+      },
+    },
+  },
+  {
+    name: 'mark_webinar_attendance',
+    description: 'Flag a registration as attended (or not). Boosts lead score +10 on attended=true. Emits webinar.attended event.',
+    category: 'communication',
+    handler: 'rpc:mark_webinar_attendance',
+    scope: 'internal',
+    trust_level: 'auto',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'mark_webinar_attendance',
+        description: 'Mark webinar attendance.',
+        parameters: {
+          type: 'object',
+          required: ['p_registration_id'],
+          properties: {
+            p_registration_id: { type: 'string', format: 'uuid' },
+            p_attended: { type: 'boolean', default: true },
+          },
+        },
+      },
+    },
   },
 ];
 
@@ -122,6 +197,11 @@ export const webinarsModule = defineModule<WebinarModuleInput, WebinarModuleOutp
   skills: [
     'manage_webinar',
     'register_webinar',
+    'publish_webinar',
+    'start_webinar',
+    'complete_webinar',
+    'cancel_webinar',
+    'mark_webinar_attendance',
   ],
   skillSeeds: WEBINARS_SKILLS,
 
