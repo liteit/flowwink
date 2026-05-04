@@ -88,7 +88,7 @@ const HR_SKILLS: SkillSeed[] = [
         },
       },
     },
-    instructions: 'Leave request lifecycle: pending → approved/rejected. Calculate days automatically from start/end dates when possible. Swedish: "ledighet", "semester", "sjukfrånvaro", "föräldraledighet".',
+    instructions: 'Leave request lifecycle: pending → approved/rejected. Calculate days automatically from start/end dates when possible. Leave types: vacation, sick, parental.',
   },
   {
     name: 'onboarding_checklist',
