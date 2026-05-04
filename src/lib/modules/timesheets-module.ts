@@ -95,7 +95,7 @@ const TIMESHEET_SKILLS: SkillSeed[] = [
         },
       },
     },
-    instructions: 'For custom date ranges pass start_date/end_date (from_date/to_date also accepted) — period auto-switches to "custom". When include_revenue is true, multiply hours × hourly_rate per project. Swedish: "tidssammanställning", "fakturerbar tid", "rapportera timmar".',
+    instructions: 'For custom date ranges pass start_date/end_date (from_date/to_date also accepted) — period auto-switches to "custom". When include_revenue is true, multiply hours × hourly_rate per project.',
   },
 ];
 
