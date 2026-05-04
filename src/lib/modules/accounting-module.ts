@@ -65,7 +65,7 @@ const ACCOUNTING_SKILLS: SkillSeed[] = [
   },
   {
     name: 'accounting_reports',
-    description: 'Generate financial reports: balance sheet (balansräkning), income statement (resultaträkning), general ledger (huvudbok), trial balance, or check for unbooked invoices. Use when: admin asks for financial overview, month-end closing, reconciliation checks. NOT for: creating entries (use manage_journal_entry).',
+    description: 'Generate financial reports: balance sheet, income statement, general ledger, trial balance, or check for unbooked invoices. Use when: admin asks for financial overview, month-end closing, reconciliation checks. NOT for: creating entries (use manage_journal_entry).',
     category: 'commerce',
     handler: 'db:journal_entries',
     scope: 'internal',
