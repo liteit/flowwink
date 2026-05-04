@@ -181,7 +181,20 @@ export function useUpdateQuote() {
 
       let computed = {};
       if (dbUpdates.line_items || dbUpdates.tax_rate !== undefined) {
-        const lineItems = dbUpdates.line_items || [];
+        let lineItems = dbUpdates.line_items || [];
+        if (dbUpdates.line_items) {
+          const { data: current } = await supabase
+            .from('quotes')
+            .select('lead_id, currency, leads(company_id)')
+            .eq('id', id)
+            .maybeSingle();
+          lineItems = await applyPricelistToLineItems(lineItems, {
+            lead_id: (current as any)?.lead_id ?? null,
+            company_id: (current as any)?.leads?.company_id ?? null,
+            currency: dbUpdates.currency || (current as any)?.currency || 'SEK',
+          });
+          dbUpdates.line_items = lineItems;
+        }
         const taxRate = dbUpdates.tax_rate ?? 0.25;
         computed = computeInvoiceTotals(lineItems, taxRate);
       }
