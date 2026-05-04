@@ -60,15 +60,26 @@ serve(async (req) => {
     if (!spec) return jsonResponse({ error: `Unknown task: ${taskName}`, available: Object.keys(TASKS) }, 404);
 
     // Validate input
-    const parsed = spec.inputSchema.safeParse(input);
-    if (!parsed.success) {
-      return jsonResponse({ error: "Invalid input", details: parsed.error.flatten() }, 400);
+    const parsedInput = spec.inputSchema.safeParse(input);
+    if (!parsedInput.success) {
+      return jsonResponse({ error: "Invalid input", details: parsedInput.error.flatten() }, 400);
     }
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    // Optional load step — hydrate context from DB
+    let promptInput: any = parsedInput.data;
+    if (spec.load) {
+      try {
+        const loaded = await spec.load(parsedInput.data, supabase);
+        promptInput = { ...parsedInput.data, ...loaded };
+      } catch (err: any) {
+        return jsonResponse({ error: err?.message || "load step failed" }, 400);
+      }
+    }
 
     // Resolve AI provider for the task's tier (handles vision fallback, local LLM, etc.)
     let ai;
@@ -78,9 +89,9 @@ serve(async (req) => {
       return jsonResponse({ error: err?.message || "AI not configured" }, 500);
     }
 
-    const userContent = spec.user(parsed.data);
+    const userContent = spec.user(promptInput);
     const messages: any[] = [
-      { role: "system", content: spec.system(parsed.data) },
+      { role: "system", content: spec.system(promptInput) },
       { role: "user", content: userContent },
     ];
 
