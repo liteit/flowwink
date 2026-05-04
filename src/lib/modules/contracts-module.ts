@@ -89,7 +89,7 @@ const CONTRACT_SKILLS: SkillSeed[] = [
   },
   {
     name: 'contract_renewal_check',
-    description: 'Check for contracts expiring soon and alert. Use when: autonomous heartbeat checks for renewal deadlines, or admin asks "vilka avtal går ut snart?". NOT for: creating contracts (use manage_contract).',
+    description: 'Check for contracts expiring soon and alert. Use when: autonomous heartbeat checks for renewal deadlines, or admin asks "which contracts are expiring soon?". NOT for: creating contracts (use manage_contract).',
     category: 'commerce',
     handler: 'db:contracts',
     scope: 'internal',
