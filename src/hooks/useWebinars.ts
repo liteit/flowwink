@@ -2,7 +2,7 @@ import { logger } from '@/lib/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { createLeadFromWebinar } from '@/lib/lead-utils';
+
 
 export type WebinarStatus = 'draft' | 'published' | 'live' | 'completed' | 'cancelled';
 export type WebinarPlatform = 'google_meet' | 'zoom' | 'teams' | 'custom';
@@ -203,48 +203,15 @@ export function useRegisterForWebinar() {
 
   return useMutation({
     mutationFn: async (input: { webinar_id: string; name: string; email: string; phone?: string }) => {
-      // Check if already registered
-      const { data: existing } = await supabase
-        .from('webinar_registrations')
-        .select('id')
-        .eq('webinar_id', input.webinar_id)
-        .eq('email', input.email)
-        .maybeSingle();
-
-      if (existing) {
-        throw new Error('Already registered for this webinar');
-      }
-
-      // Get webinar title for lead activity
-      const { data: webinar } = await supabase
-        .from('webinars')
-        .select('title')
-        .eq('id', input.webinar_id)
-        .single();
-
-      // Create/update lead via centralized lead-utils contract
-      const { leadId } = await createLeadFromWebinar({
-        email: input.email,
-        name: input.name,
-        phone: input.phone,
-        webinarId: input.webinar_id,
-        webinarTitle: webinar?.title || 'Unknown webinar',
+      // SECURITY DEFINER RPC handles dedup, lead-link/create, score boost and event emission.
+      const { data, error } = await (supabase.rpc as any)('register_for_webinar', {
+        p_webinar_id: input.webinar_id,
+        p_name: input.name,
+        p_email: input.email,
+        p_phone: input.phone ?? null,
       });
-
-      const { data, error } = await supabase
-        .from('webinar_registrations')
-        .insert({
-          webinar_id: input.webinar_id,
-          name: input.name,
-          email: input.email,
-          phone: input.phone || null,
-          lead_id: leadId,
-        })
-        .select()
-        .single();
-
       if (error) throw error;
-      return data as WebinarRegistration;
+      return data as { success: boolean; registration_id: string; lead_id: string };
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['webinar-registrations', variables.webinar_id] });
@@ -286,5 +253,84 @@ export function useWebinarStats() {
         totalRegistrations: totalRegistrations || 0,
       };
     },
+  });
+}
+
+// ─── Lifecycle (RPC-backed) ──────────────────────────────────
+
+type LifecycleAction =
+  | { kind: 'publish'; webinarId: string }
+  | { kind: 'start'; webinarId: string }
+  | { kind: 'complete'; webinarId: string; recordingUrl?: string }
+  | { kind: 'cancel'; webinarId: string; reason?: string };
+
+export function useWebinarLifecycle() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (action: LifecycleAction) => {
+      let result;
+      switch (action.kind) {
+        case 'publish':
+          result = await (supabase.rpc as any)('publish_webinar', { p_webinar_id: action.webinarId });
+          break;
+        case 'start':
+          result = await (supabase.rpc as any)('start_webinar', { p_webinar_id: action.webinarId });
+          break;
+        case 'complete':
+          result = await (supabase.rpc as any)('complete_webinar', {
+            p_webinar_id: action.webinarId,
+            p_recording_url: action.recordingUrl ?? null,
+          });
+          break;
+        case 'cancel':
+          result = await (supabase.rpc as any)('cancel_webinar', {
+            p_webinar_id: action.webinarId,
+            p_reason: action.reason ?? null,
+          });
+          break;
+      }
+      if (result?.error) throw result.error;
+      return result?.data;
+    },
+    onSuccess: (_d, action) => {
+      queryClient.invalidateQueries({ queryKey: ['webinars'] });
+      queryClient.invalidateQueries({ queryKey: ['webinar-stats'] });
+      toast({ title: `Webinar ${action.kind}ed` });
+    },
+    onError: (e) => {
+      logger.error('webinar lifecycle error', e);
+      toast({
+        title: 'Error',
+        description: e instanceof Error ? e.message : 'Lifecycle action failed',
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useMarkAttendance() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async ({ registrationId, attended }: { registrationId: string; attended: boolean }) => {
+      const { error, data } = await (supabase.rpc as any)('mark_webinar_attendance', {
+        p_registration_id: registrationId,
+        p_attended: attended,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['webinar-registrations'] });
+      toast({ title: 'Attendance updated' });
+    },
+    onError: (e) =>
+      toast({
+        title: 'Error',
+        description: e instanceof Error ? e.message : 'Failed to update attendance',
+        variant: 'destructive',
+      }),
   });
 }

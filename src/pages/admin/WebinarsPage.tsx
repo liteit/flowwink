@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { format, isPast, isFuture } from 'date-fns';
-import { Video, Plus, Pencil, Trash2, Users, Calendar, Clock, ExternalLink, Play, CheckCircle, Eye } from 'lucide-react';
+import { Video, Plus, Pencil, Trash2, Users, Calendar, Clock, ExternalLink, Play, CheckCircle, Eye, Send, Radio, Square, XCircle } from 'lucide-react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPageContainer } from '@/components/admin/AdminPageContainer';
@@ -32,6 +32,8 @@ import {
   useDeleteWebinar,
   useWebinarRegistrations,
   useWebinarStats,
+  useWebinarLifecycle,
+  useMarkAttendance,
   type Webinar,
   type WebinarStatus,
   type WebinarPlatform,
@@ -136,6 +138,8 @@ export default function WebinarsPage() {
     }
   };
 
+  const lifecycle = useWebinarLifecycle();
+
   const WebinarCard = ({ webinar }: { webinar: Webinar }) => {
     const isUpcoming = isFuture(new Date(webinar.date));
     return (
@@ -168,6 +172,30 @@ export default function WebinarsPage() {
               </div>
             </div>
             <div className="flex items-center gap-1">
+              {webinar.status === 'draft' && (
+                <Button variant="ghost" size="icon" title="Publish"
+                  onClick={() => lifecycle.mutate({ kind: 'publish', webinarId: webinar.id })}>
+                  <Send className="h-4 w-4" />
+                </Button>
+              )}
+              {webinar.status === 'published' && (
+                <Button variant="ghost" size="icon" title="Mark as live"
+                  onClick={() => lifecycle.mutate({ kind: 'start', webinarId: webinar.id })}>
+                  <Radio className="h-4 w-4" />
+                </Button>
+              )}
+              {webinar.status === 'live' && (
+                <Button variant="ghost" size="icon" title="Complete"
+                  onClick={() => lifecycle.mutate({ kind: 'complete', webinarId: webinar.id })}>
+                  <Square className="h-4 w-4" />
+                </Button>
+              )}
+              {(webinar.status === 'draft' || webinar.status === 'published' || webinar.status === 'live') && (
+                <Button variant="ghost" size="icon" title="Cancel"
+                  onClick={() => lifecycle.mutate({ kind: 'cancel', webinarId: webinar.id })}>
+                  <XCircle className="h-4 w-4" />
+                </Button>
+              )}
               <Button variant="ghost" size="icon" onClick={() => setDetailWebinar(webinar)}>
                 <Eye className="h-4 w-4" />
               </Button>
@@ -449,6 +477,7 @@ function WebinarDetailDialog({
   onEdit: (w: Webinar) => void;
 }) {
   const { data: registrations = [] } = useWebinarRegistrations(webinar?.id);
+  const markAttendance = useMarkAttendance();
 
   if (!webinar) return null;
 
@@ -541,11 +570,16 @@ function WebinarDetailDialog({
                       <p className="text-muted-foreground">{reg.email}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {reg.attended && (
-                        <Badge variant="secondary" className="bg-success/10 text-success">
-                          Attended
-                        </Badge>
-                      )}
+                      <Button
+                        variant={reg.attended ? 'secondary' : 'outline'}
+                        size="sm"
+                        className={reg.attended ? 'bg-success/10 text-success hover:bg-success/20' : ''}
+                        onClick={() => markAttendance.mutate({ registrationId: reg.id, attended: !reg.attended })}
+                        disabled={markAttendance.isPending}
+                      >
+                        <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                        {reg.attended ? 'Attended' : 'Mark attended'}
+                      </Button>
                       {reg.follow_up_sent && (
                         <Badge variant="outline">Follow-up sent</Badge>
                       )}
