@@ -127,7 +127,12 @@ export function useCreateQuote() {
         }
       }
 
-      const lineItems = seededItems || [{ description: '', qty: 1, unit_price_cents: 0 }];
+      const baseItems = seededItems || [{ description: '', qty: 1, unit_price_cents: 0 }];
+      const lineItems = await applyPricelistToLineItems(baseItems, {
+        lead_id: input.lead_id,
+        company_id: (lead as any)?.company_id ?? null,
+        currency,
+      });
       const totals = computeInvoiceTotals(lineItems, taxRate);
 
       const { count } = await supabase
