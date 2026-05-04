@@ -2,7 +2,7 @@ import { logger } from '@/lib/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { createLeadFromWebinar } from '@/lib/lead-utils';
+
 
 export type WebinarStatus = 'draft' | 'published' | 'live' | 'completed' | 'cancelled';
 export type WebinarPlatform = 'google_meet' | 'zoom' | 'teams' | 'custom';
