@@ -155,7 +155,7 @@ export function useCreateInvoice() {
           lead_id: input.lead_id,
           customer_email: '',
           customer_name: '',
-          line_items: input.line_items as any,
+          line_items: pricedLines as any,
           tax_rate: taxRate,
           ...totals,
           currency: input.currency || 'SEK',
