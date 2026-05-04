@@ -162,7 +162,7 @@ const INVOICING_SKILLS: SkillSeed[] = [
         },
       },
     },
-    instructions: 'Query invoices with status=sent and due_date < today. Report count and total amount. If auto_flag is true, update their status to overdue. Format output showing invoice number, customer, amount, and days overdue. Swedish: "förfallna fakturor", "påminnelse".',
+    instructions: 'Query invoices with status=sent and due_date < today. Report count and total amount. If auto_flag is true, update their status to overdue. Format output showing invoice number, customer, amount, and days overdue.',
   },
 ];
 
