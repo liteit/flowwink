@@ -9,6 +9,14 @@ export interface InvoiceLineItem {
   description: string;
   qty: number;
   unit_price_cents: number;
+  /** Optional product reference — enables automatic pricelist lookup */
+  product_id?: string | null;
+  /** When true, skip pricelist resolution (sales rep set price manually) */
+  unit_price_locked?: boolean;
+  /** Audit: which pricelist supplied this price (set by resolver) */
+  pricelist_id?: string | null;
+  /** Audit: 'pricelist' | 'product_base' | 'manual' */
+  price_source?: 'pricelist' | 'product_base' | 'manual' | null;
 }
 
 export interface InvoiceLead {
