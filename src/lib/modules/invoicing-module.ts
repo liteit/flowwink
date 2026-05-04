@@ -144,7 +144,7 @@ const INVOICING_SKILLS: SkillSeed[] = [
   },
   {
     name: 'invoice_overdue_check',
-    description: 'Check for overdue invoices and optionally send reminders. Use when: FlowPilot runs daily overdue check, admin asks "any overdue invoices?", "vilka fakturor är förfallna". NOT for: creating invoices (use manage_invoice).',
+    description: 'Check for overdue invoices and optionally send reminders. Use when: FlowPilot runs daily overdue check, admin asks "any overdue invoices?", "which invoices are overdue". NOT for: creating invoices (use manage_invoice).',
     category: 'commerce',
     handler: 'db:invoices',
     scope: 'internal',
