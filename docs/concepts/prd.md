@@ -476,7 +476,7 @@ The invoicing module (`src/lib/module-bootstraps/invoicing.ts`) closes the Quote
 - **PDF generation**: `generate-invoice-pdf` edge function renders invoice as downloadable PDF
 - **Status lifecycle**: draft → sent (sets sent_at) → paid (sets paid_at) | overdue (auto-flagged) | cancelled
 - **Accounting bridge**: When invoice is marked paid, FlowPilot can trigger `manage_journal_entry` to book revenue (via accounting reconciliation automation)
-- **FlowPilot chat**: "skapa faktura för projekt X" triggers `manage_invoice`, "fakturera timmarna från förra månaden" triggers `invoice_from_timesheets`
+- **FlowPilot chat**: "create invoice for project X" triggers `manage_invoice`, "invoice the hours from last month" triggers `invoice_from_timesheets`
 
 | Reference doc | Path |
 |---|---|
