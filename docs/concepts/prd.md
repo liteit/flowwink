@@ -461,8 +461,7 @@ The timesheets module (`src/lib/module-bootstraps/timesheets.ts`) provides full 
 - **Task-level time logging**: Time entries can optionally reference a specific task via `task_id`
 - **Auto-completion**: Database trigger automatically sets `completed_at` when task status changes to "done"
 - **Invoice integration**: "From Timesheets" dialog generates invoice drafts from billable hours — aggregates time entries by project and period
-- **FlowPilot chat**: Natural language — "skapa en uppgift för designa landningssidan" triggers `manage_tasks`, "jag jobbade 4 timmar på X" triggers `log_time`
-- **FlowPilot chat**: Natural language — "skapa en uppgift för designa landningssidan" triggers `manage_tasks`, "jag jobbade 4 timmar på X" triggers `log_time`
+- **FlowPilot chat**: Natural language — "create a task to design the landing page" triggers `manage_tasks`, "I worked 4 hours on X" triggers `log_time`
 - **RLS**: Authenticated users can CRUD tasks and time entries; invoiced entries cannot be deleted
 
 ### Invoicing Module (Quote-to-Cash)
