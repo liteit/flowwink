@@ -57,7 +57,7 @@ export function QuickCreateMenu() {
             </DropdownMenuItem>
           )}
           {dealsEnabled && (
-            <DropdownMenuItem onSelect={() => setActive('deal')}>
+            <DropdownMenuItem onSelect={() => navigate('/admin/deals')}>
               <Briefcase className="mr-2 h-4 w-4" /> Deal
             </DropdownMenuItem>
           )}
