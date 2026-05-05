@@ -86,6 +86,7 @@ export default function OrdersPage() {
   const navigate = useNavigate();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [activeViewId, setActiveViewId] = useState<string | null>(null);
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ['orders', statusFilter],
