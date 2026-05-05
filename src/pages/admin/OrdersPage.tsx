@@ -469,6 +469,11 @@ export default function OrdersPage() {
                   )}
                 </div>
               )}
+
+              <Separator />
+
+              {/* Universal activity timeline */}
+              <EntityActivityTimeline entityType="order" entityId={selectedOrder.id} title="Notes & Tasks" compact />
             </div>
           )}
         </DialogContent>
