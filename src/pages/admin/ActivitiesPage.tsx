@@ -9,19 +9,19 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CheckCircle2, Plus, Briefcase, User, Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, Plus, Briefcase, User, Calendar as CalendarIcon, AlertTriangle, Phone, Users as UsersIcon, ClipboardList } from 'lucide-react';
 import {
-  useAllPendingTasks,
-  useCompleteCrmTask,
-  type CrmTask,
-} from '@/hooks/useCrmTasks';
+  useUnifiedPendingActivities,
+  useCompleteUnifiedActivity,
+  type UnifiedActivity,
+} from '@/hooks/useUnifiedActivities';
 import { CreateTaskDialog } from '@/components/admin/CreateTaskDialog';
 import { format, isToday, isPast, isFuture, parseISO, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 type Bucket = 'overdue' | 'today' | 'upcoming' | 'no_date';
 
-function bucketize(task: CrmTask): Bucket {
+function bucketize(task: UnifiedActivity): Bucket {
   if (!task.due_date) return 'no_date';
   const d = parseISO(task.due_date);
   if (isToday(d)) return 'today';
@@ -36,14 +36,20 @@ const PRIORITY_VARIANT: Record<string, 'destructive' | 'default' | 'secondary'> 
   low: 'secondary',
 };
 
+const TYPE_ICON: Record<string, typeof ClipboardList> = {
+  todo: ClipboardList,
+  call: Phone,
+  meeting: UsersIcon,
+};
+
 export default function ActivitiesPage() {
-  const { data: tasks = [], isLoading } = useAllPendingTasks();
-  const complete = useCompleteCrmTask();
+  const { data: tasks = [], isLoading } = useUnifiedPendingActivities();
+  const complete = useCompleteUnifiedActivity();
   const [createOpen, setCreateOpen] = useState(false);
   const [tab, setTab] = useState<Bucket>('today');
 
   const grouped = useMemo(() => {
-    const out: Record<Bucket, CrmTask[]> = { overdue: [], today: [], upcoming: [], no_date: [] };
+    const out: Record<Bucket, UnifiedActivity[]> = { overdue: [], today: [], upcoming: [], no_date: [] };
     for (const t of tasks) out[bucketize(t)].push(t);
     return out;
   }, [tasks]);
