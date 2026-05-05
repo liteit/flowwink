@@ -334,9 +334,11 @@ interface LeadCardProps {
   };
   showStatus?: boolean;
   onClick?: () => void;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }
 
-function LeadCard({ lead, showStatus, onClick }: LeadCardProps) {
+function LeadCard({ lead, showStatus, onClick, selected, onToggleSelect }: LeadCardProps) {
   const statusInfo = getLeadStatusInfo(lead.status);
   // Display company name from linked company, fallback to text field for legacy data
   const companyName = lead.companies?.name || lead.company;
@@ -349,6 +351,7 @@ function LeadCard({ lead, showStatus, onClick }: LeadCardProps) {
       className={cn(
         "cursor-pointer hover:bg-muted/50 transition-colors group relative overflow-hidden",
         lead.needs_review && "border-amber-500/50",
+        selected && "ring-2 ring-primary",
         hasOverdue && "before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-destructive"
       )}
       onClick={onClick}
