@@ -101,7 +101,7 @@ export default function ActivitiesPage() {
                   b === 'upcoming' ? 'No upcoming activities scheduled.' :
                   'No undated tasks.'
                 }
-                onComplete={(id) => complete.mutate(id)}
+                onComplete={(id, source) => complete.mutate({ id, source })}
               />
             </TabsContent>
           ))}
