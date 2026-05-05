@@ -12,6 +12,7 @@ import { FlowPilotBriefingBell } from './FlowPilotBriefingBell';
 import { useIsModuleEnabled } from '@/hooks/useModules';
 import { usePinnedPages } from '@/hooks/usePinnedPages';
 import { useVersionCheck } from '@/hooks/useVersionCheck';
+import { QuickCreateMenu } from './QuickCreateMenu';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -131,7 +132,8 @@ export function AdminContentHeader() {
       {/* Spacer in copilot mode */}
       {isCopilotMode && <div className="flex-1" />}
 
-      {/* Briefing bell + Theme toggle */}
+      {/* Quick create + Briefing bell + Theme toggle */}
+      <QuickCreateMenu />
       <FlowPilotBriefingBell />
       <AdminThemeToggle />
 
