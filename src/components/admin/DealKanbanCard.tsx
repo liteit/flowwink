@@ -8,6 +8,7 @@ import { formatPrice } from '@/hooks/useProducts';
 import type { Deal } from '@/hooks/useDeals';
 import { cn } from '@/lib/utils';
 import { NextActivityBadge } from './deals/NextActivityBadge';
+import { useOverdueActivityIndex } from '@/hooks/useOverdueActivityIndex';
 
 interface DealKanbanCardProps {
   deal: Deal;
