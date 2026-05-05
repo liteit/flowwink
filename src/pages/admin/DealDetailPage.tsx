@@ -10,6 +10,7 @@ import { useLead } from '@/hooks/useLeads';
 import { useDealActivities, useAddDealActivity, useUpdateDealActivity, type ActivityType } from '@/hooks/useActivities';
 import { ActivityTimeline } from '@/components/admin/ActivityTimeline';
 import { EntityActivityTimeline } from '@/components/admin/EntityActivityTimeline';
+import { EntityTags } from '@/components/admin/EntityTags';
 import { DealQuotesCard } from '@/components/admin/deals/DealQuotesCard';
 import { ArrowLeft, Calendar, DollarSign, User, Package, Building } from 'lucide-react';
 import { format } from 'date-fns';
