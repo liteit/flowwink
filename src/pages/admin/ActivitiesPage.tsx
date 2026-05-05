@@ -170,12 +170,13 @@ function TaskRow({ task, onComplete }: { task: UnifiedActivity; onComplete: (id:
       <CardContent className="p-3 flex items-start gap-3">
         <Checkbox
           checked={false}
-          onCheckedChange={() => onComplete(task.id)}
+          onCheckedChange={() => onComplete(task.id, task.source)}
           className="mt-1"
           aria-label="Mark complete"
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
+            <TypeIcon className="h-3.5 w-3.5 text-muted-foreground" />
             <p className="font-medium text-sm">{task.title}</p>
             <Badge variant={PRIORITY_VARIANT[task.priority] ?? 'secondary'} className="text-xs">
               {task.priority}
