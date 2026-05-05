@@ -49,6 +49,38 @@ export interface CreateEntityActivityInput {
   assigned_to?: string | null;
 }
 
+function extractMentionTokens(text: string | null | undefined): string[] {
+  if (!text) return [];
+  const tokens = new Set<string>();
+  const re = /@([a-zA-Z0-9._-]{2,40})/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) tokens.add(m[1].toLowerCase());
+  return Array.from(tokens);
+}
+
+async function autoFollowMentions(entityType: string, entityId: string, tokens: string[]) {
+  if (tokens.length === 0) return;
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, full_name, email');
+  if (!profiles?.length) return;
+  const matches = profiles.filter((p) => {
+    const name = (p.full_name ?? '').toLowerCase().replace(/\s+/g, '');
+    const email = (p.email ?? '').toLowerCase().split('@')[0];
+    return tokens.some((t) => name.includes(t) || email === t);
+  });
+  if (matches.length === 0) return;
+  await supabase.from('entity_followers').upsert(
+    matches.map((p) => ({
+      entity_type: entityType,
+      entity_id: entityId,
+      user_id: p.id,
+      reason: 'mention',
+    })),
+    { onConflict: 'entity_type,entity_id,user_id', ignoreDuplicates: true },
+  );
+}
+
 export function useCreateEntityActivity() {
   const qc = useQueryClient();
   return useMutation({
@@ -60,10 +92,22 @@ export function useCreateEntityActivity() {
         .select()
         .single();
       if (error) throw error;
+      const tokens = [
+        ...extractMentionTokens(input.subject),
+        ...extractMentionTokens(input.body),
+      ];
+      if (tokens.length > 0) {
+        try {
+          await autoFollowMentions(input.entity_type, input.entity_id, Array.from(new Set(tokens)));
+        } catch (e) {
+          console.warn('auto-follow mentions failed', e);
+        }
+      }
       return data as EntityActivity;
     },
     onSuccess: (row) => {
       qc.invalidateQueries({ queryKey: entityActivitiesKey(row.entity_type, row.entity_id) });
+      qc.invalidateQueries({ queryKey: ['entity-followers', row.entity_type, row.entity_id] });
     },
   });
 }
