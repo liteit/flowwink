@@ -40,6 +40,7 @@ import { FulfillmentActions } from '@/components/admin/orders/FulfillmentActions
 import { EntityActivityTimeline } from '@/components/admin/EntityActivityTimeline';
 import { EntityTags } from '@/components/admin/EntityTags';
 import { EntityFollowers } from '@/components/admin/EntityFollowers';
+import { SavedViewsMenu } from '@/components/admin/SavedViewsMenu';
 
 type Order = Tables<'orders'>;
 type OrderItem = Tables<'order_items'>;
@@ -85,6 +86,7 @@ export default function OrdersPage() {
   const navigate = useNavigate();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [activeViewId, setActiveViewId] = useState<string | null>(null);
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ['orders', statusFilter],
@@ -245,6 +247,17 @@ export default function OrdersPage() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
+            <div className="ml-auto">
+              <SavedViewsMenu
+                scope="orders"
+                currentConfig={{ statusFilter }}
+                activeViewId={activeViewId}
+                onActiveViewChange={setActiveViewId}
+                onApply={(cfg) => {
+                  if (typeof cfg.statusFilter === 'string') setStatusFilter(cfg.statusFilter);
+                }}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
