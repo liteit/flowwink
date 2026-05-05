@@ -9,6 +9,7 @@ import { useDeal, useUpdateDeal, getDealStageInfo, type DealStage } from '@/hook
 import { useLead } from '@/hooks/useLeads';
 import { useDealActivities, useAddDealActivity, useUpdateDealActivity, type ActivityType } from '@/hooks/useActivities';
 import { ActivityTimeline } from '@/components/admin/ActivityTimeline';
+import { EntityActivityTimeline } from '@/components/admin/EntityActivityTimeline';
 import { DealQuotesCard } from '@/components/admin/deals/DealQuotesCard';
 import { ArrowLeft, Calendar, DollarSign, User, Package, Building } from 'lucide-react';
 import { format } from 'date-fns';
@@ -138,13 +139,16 @@ export default function DealDetailPage() {
           {/* Quotes attached to this deal */}
           <DealQuotesCard dealId={deal.id} leadId={deal.lead_id} />
 
-          {/* Activity Timeline */}
+          {/* Activity Timeline (legacy deal_activities) */}
           <ActivityTimeline
             activities={activities || []}
             onAddActivity={handleAddActivity}
             onMarkComplete={handleMarkComplete}
             isLoading={activitiesLoading}
           />
+
+          {/* Universal activity timeline (notes / todos / calls / meetings) */}
+          <EntityActivityTimeline entityType="deal" entityId={deal.id} title="Notes & Tasks" />
         </div>
 
         {/* Sidebar */}
