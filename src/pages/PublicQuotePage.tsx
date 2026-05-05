@@ -9,26 +9,28 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { usePublicQuote, useSignQuote, markQuoteViewed } from '@/hooks/useQuoteWorkflow';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 
 export default function PublicQuotePage() {
   const { token } = useParams<{ token: string }>();
   const { data: quote, isLoading, refetch } = usePublicQuote(token);
   const signQuote = useSignQuote();
+  const qc = useQueryClient();
 
   const [signerName, setSignerName] = useState('');
   const [signerEmail, setSignerEmail] = useState('');
   const [comment, setComment] = useState('');
   const [mode, setMode] = useState<'view' | 'accept' | 'reject'>('view');
 
-  // Items via separate query so RLS public-via-token kicks in
+  const itemsKey = ['public-quote-items', quote?.id];
   const { data: items = [] } = useQuery({
-    queryKey: ['public-quote-items', quote?.id],
+    queryKey: itemsKey,
     queryFn: async () => {
       if (!quote?.id) return [];
       const { data } = await supabase
@@ -40,6 +42,17 @@ export default function PublicQuotePage() {
     },
     enabled: !!quote?.id,
   });
+
+  const toggleOptional = async (itemId: string, selected: boolean) => {
+    if (!token) return;
+    const { error } = await supabase.rpc('set_quote_item_selection' as never, {
+      _accept_token: token, _item_id: itemId, _selected: selected,
+    } as never);
+    if (!error) {
+      qc.invalidateQueries({ queryKey: itemsKey });
+      refetch();
+    }
+  };
 
   // Mark viewed once
   useEffect(() => {
@@ -139,16 +152,27 @@ export default function PublicQuotePage() {
                       unit?: string;
                       unit_price_cents: number;
                       line_total_cents: number;
+                      is_optional?: boolean;
+                      selected_by_customer?: boolean;
                     };
+                    const isOptional = !!item.is_optional;
+                    const isSelected = item.selected_by_customer !== false;
+                    const dimmed = isOptional && !isSelected;
                     return (
-                      <div key={item.id} className="p-3 flex items-center justify-between gap-4">
+                      <div key={item.id} className={`p-3 flex items-center gap-3 ${dimmed ? 'opacity-50' : ''}`}>
+                        {isOptional && !isFinal && (
+                          <Checkbox checked={isSelected} onCheckedChange={(v) => toggleOptional(item.id, !!v)} />
+                        )}
                         <div className="flex-1">
-                          <p className="text-sm">{item.description}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm">{item.description}</p>
+                            {isOptional && <Badge variant="outline" className="text-xs">Optional</Badge>}
+                          </div>
                           <p className="text-xs text-muted-foreground">
                             {item.quantity} {item.unit || ''} × {fmt(item.unit_price_cents)}
                           </p>
                         </div>
-                        <p className="font-mono text-sm">{fmt(item.line_total_cents)}</p>
+                        <p className={`font-mono text-sm ${dimmed ? 'line-through' : ''}`}>{fmt(item.line_total_cents)}</p>
                       </div>
                     );
                   })
