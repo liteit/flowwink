@@ -37,6 +37,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Tables } from '@/integrations/supabase/types';
 import { FulfillmentStepper } from '@/components/admin/orders/FulfillmentStepper';
 import { FulfillmentActions } from '@/components/admin/orders/FulfillmentActions';
+import { EntityActivityTimeline } from '@/components/admin/EntityActivityTimeline';
 
 type Order = Tables<'orders'>;
 type OrderItem = Tables<'order_items'>;
