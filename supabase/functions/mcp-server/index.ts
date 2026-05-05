@@ -1099,6 +1099,8 @@ app.get("/rest/resources", (c) => {
     { key: "automations",  description: "All automations with triggers, schedules, and run history" },
     { key: "heartbeat",    description: "Last heartbeat run timing, state, and token usage" },
     { key: "briefing",     description: "Aggregated context: identity + health + objectives + activity + modules + automations + heartbeat in ONE call" },
+    { key: "accounting_chart",     description: "Chart of accounts (BAS 2024 / active locale pack). Read before booking journal entries." },
+    { key: "accounting_templates", description: "Reusable booking templates with keywords + usage_count for AI-driven journal selection." },
   ];
   return c.json({ resources }, 200, corsHeaders);
 });
