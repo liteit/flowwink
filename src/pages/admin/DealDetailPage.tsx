@@ -93,8 +93,9 @@ export default function DealDetailPage() {
         description={`Deal with ${lead?.name || lead?.email || 'Unknown'}`}
       />
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <EntityTags entityType="deal" entityId={deal.id} scope="deal" />
+        <EntityFollowers entityType="deal" entityId={deal.id} compact />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
