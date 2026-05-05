@@ -38,6 +38,7 @@ import type { Tables } from '@/integrations/supabase/types';
 import { FulfillmentStepper } from '@/components/admin/orders/FulfillmentStepper';
 import { FulfillmentActions } from '@/components/admin/orders/FulfillmentActions';
 import { EntityActivityTimeline } from '@/components/admin/EntityActivityTimeline';
+import { EntityTags } from '@/components/admin/EntityTags';
 
 type Order = Tables<'orders'>;
 type OrderItem = Tables<'order_items'>;
@@ -339,6 +340,7 @@ export default function OrdersPage() {
 
           {selectedOrder && (
             <div className="space-y-6">
+              <EntityTags entityType="order" entityId={selectedOrder.id} scope="order" />
               {/* Order Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>

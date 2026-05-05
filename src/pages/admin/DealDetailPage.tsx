@@ -10,6 +10,7 @@ import { useLead } from '@/hooks/useLeads';
 import { useDealActivities, useAddDealActivity, useUpdateDealActivity, type ActivityType } from '@/hooks/useActivities';
 import { ActivityTimeline } from '@/components/admin/ActivityTimeline';
 import { EntityActivityTimeline } from '@/components/admin/EntityActivityTimeline';
+import { EntityTags } from '@/components/admin/EntityTags';
 import { DealQuotesCard } from '@/components/admin/deals/DealQuotesCard';
 import { ArrowLeft, Calendar, DollarSign, User, Package, Building } from 'lucide-react';
 import { format } from 'date-fns';
@@ -90,6 +91,10 @@ export default function DealDetailPage() {
         title={deal.product?.name || 'Unnamed Deal'}
         description={`Deal with ${lead?.name || lead?.email || 'Unknown'}`}
       />
+
+      <div className="mb-4">
+        <EntityTags entityType="deal" entityId={deal.id} scope="deal" />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
