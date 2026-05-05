@@ -233,22 +233,60 @@ const COMPOSITE_GROUPS: Record<string, string[]> = {
   finance: ["commerce", "subscriptions", "analytics", "automation"],
 };
 
-/** Resolve a list of group/module tokens to their underlying skill categories. */
-function resolveGroupTokens(tokens: string[]): Set<string> {
-  const cats = new Set<string>();
+/**
+ * Resolve a list of group/module tokens.
+ *  - categoryTokens: include ALL skills in those categories
+ *  - moduleTokens:   include only skills mapped to those modules (sub-category filter)
+ * Composites expand to category tokens. This lets a Finance claw ask for
+ * `?groups=invoicing,accounting,expenses,contracts` and get ~20 tools instead
+ * of the full 67-tool commerce blob.
+ */
+function resolveGroupTokens(tokens: string[]): { categories: Set<string>; modules: Set<string> } {
+  const categories = new Set<string>();
+  const modules = new Set<string>();
   for (const raw of tokens) {
     const t = raw.toLowerCase().trim();
     if (!t) continue;
     if (COMPOSITE_GROUPS[t]) {
-      for (const child of COMPOSITE_GROUPS[t]) cats.add(child);
+      for (const child of COMPOSITE_GROUPS[t]) categories.add(child);
     } else if (SKILL_CATEGORY_MODULES[t]) {
-      cats.add(t); // already a category
+      categories.add(t); // whole category
     } else if (MODULE_TO_CATEGORY[t]) {
-      cats.add(MODULE_TO_CATEGORY[t]); // module name → its category
+      modules.add(t); // narrow within its parent category
     }
     // unknown tokens silently dropped
   }
-  return cats;
+  return { categories, modules };
+}
+
+/**
+ * Classify a skill by its likely owning module — used for sub-category filtering
+ * (e.g. `?groups=invoicing` returns only invoicing skills out of commerce's 67).
+ *
+ * Heuristic: handler hints first, then name keywords. Returns null if no module
+ * can be determined (skill will only match category-level filters).
+ */
+function classifySkillModule(name: string, handler: string | null | undefined): string | null {
+  const n = name.toLowerCase();
+  const h = (handler ?? "").toLowerCase();
+
+  // Handler hints
+  if (h.startsWith("module:orders")) return "ecommerce";
+  if (h.startsWith("module:products")) return n.includes("invent") ? "inventory" : "products";
+  if (h.includes("reconciliation/")) return "accounting";
+
+  // Name keywords (ordered most-specific first)
+  if (/(^|_)(contract|signature)/.test(n)) return "contracts";
+  if (/(^|_)(expense|receipt)/.test(n)) return "expenses";
+  if (/(^|_)(invoice|dunning)/.test(n) && !n.includes("vendor")) return "invoicing";
+  if (/(vendor|purchase_order|^send_purchase|match_po|reorder|procurement)/.test(n)) return "purchasing";
+  if (/(manufactur|^mo_|_mo$|^check_mo|^start_mo|^complete_mo|^cancel_mo|^confirm_mo|bom|trigger_procurement)/.test(n)) return "inventory";
+  if (/(timesheet)/.test(n)) return "timesheets";
+  if (/(accounting|journal|chart_of_accounts|opening_balance|analytic|bank_|stripe_payout|fiscal_period)/.test(n)) return "accounting";
+  if (/(subscription|mrr)/.test(n)) return "subscriptions";
+  if (/(^manage_quote|^browse_products|^manage_product|^manage_inventory|^manage_orders|order_status|send_invoice_for_order)/.test(n)) return "ecommerce";
+
+  return null;
 }
 
 /**
