@@ -7,19 +7,24 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLeads, useLeadStats } from '@/hooks/useLeads';
 import { useDealStats } from '@/hooks/useDeals';
 import { formatPrice } from '@/hooks/useProducts';
 import { getLeadStatusInfo, type LeadStatus } from '@/lib/lead-utils';
 import { useExportLeads, useImportLeads } from '@/hooks/useCsvImportExport';
 import { CsvImportDialog } from '@/components/admin/CsvImportDialog';
-import { Users, TrendingUp, UserCheck, AlertCircle, Sparkles, Plus, Briefcase, Target, Trophy, XCircle, Download, Upload, MoreVertical, UserSearch } from 'lucide-react';
+import { Users, TrendingUp, UserCheck, AlertCircle, Sparkles, Plus, Briefcase, Target, Trophy, XCircle, Download, Upload, MoreVertical, UserSearch, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { CreateLeadDialog } from '@/components/admin/CreateLeadDialog';
 import { SavedViewsMenu } from '@/components/admin/SavedViewsMenu';
 import { useOverdueActivityIndex } from '@/hooks/useOverdueActivityIndex';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function LeadsPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -33,6 +38,49 @@ export default function LeadsPage() {
   const navigate = useNavigate();
   const exportLeads = useExportLeads();
   const importLeads = useImportLeads();
+  const queryClient = useQueryClient();
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleId = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const bulkUpdateStatus = useMutation({
+    mutationFn: async (status: LeadStatus) => {
+      const ids = Array.from(selectedIds);
+      const { error } = await supabase.from('leads').update({ status }).in('id', ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (count, status) => {
+      toast.success(`Updated ${count} contact${count === 1 ? '' : 's'} to ${status}`);
+      clearSelection();
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['leadStats'] });
+    },
+    onError: (e: Error) => toast.error(`Bulk update failed: ${e.message}`),
+  });
+
+  const bulkDelete = useMutation({
+    mutationFn: async () => {
+      const ids = Array.from(selectedIds);
+      const { error } = await supabase.from('leads').delete().in('id', ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (count) => {
+      toast.success(`Deleted ${count} contact${count === 1 ? '' : 's'}`);
+      clearSelection();
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['leadStats'] });
+    },
+    onError: (e: Error) => toast.error(`Bulk delete failed: ${e.message}`),
+  });
 
   const handleExport = () => {
     if (leads && leads.length > 0) {
@@ -257,7 +305,45 @@ export default function LeadsPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="all" className="mt-6">
+        <TabsContent value="all" className="mt-6 space-y-3">
+          {selectedIds.size > 0 && (
+            <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/40 px-3 py-2">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium">{selectedIds.size} selected</span>
+                <Button variant="ghost" size="sm" onClick={clearSelection}>
+                  <X className="h-4 w-4 mr-1" /> Clear
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select
+                  onValueChange={(v) => bulkUpdateStatus.mutate(v as LeadStatus)}
+                  disabled={bulkUpdateStatus.isPending}
+                >
+                  <SelectTrigger className="w-[180px] h-8">
+                    <SelectValue placeholder="Set status…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lead">Lead</SelectItem>
+                    <SelectItem value="opportunity">Opportunity</SelectItem>
+                    <SelectItem value="customer">Customer</SelectItem>
+                    <SelectItem value="lost">Lost</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={bulkDelete.isPending}
+                  onClick={() => {
+                    if (confirm(`Delete ${selectedIds.size} contact(s)? This cannot be undone.`)) {
+                      bulkDelete.mutate();
+                    }
+                  }}
+                >
+                  Delete
+                </Button>
+              </div>
+            </div>
+          )}
           <Card>
             <CardHeader>
               <CardTitle>All Contacts</CardTitle>
@@ -275,6 +361,8 @@ export default function LeadsPage() {
                       key={lead.id}
                       lead={lead}
                       showStatus
+                      selected={selectedIds.has(lead.id)}
+                      onToggleSelect={() => toggleId(lead.id)}
                       onClick={() => navigate(`/admin/contacts/${lead.id}`)}
                     />
                   ))}
@@ -334,9 +422,11 @@ interface LeadCardProps {
   };
   showStatus?: boolean;
   onClick?: () => void;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }
 
-function LeadCard({ lead, showStatus, onClick }: LeadCardProps) {
+function LeadCard({ lead, showStatus, onClick, selected, onToggleSelect }: LeadCardProps) {
   const statusInfo = getLeadStatusInfo(lead.status);
   // Display company name from linked company, fallback to text field for legacy data
   const companyName = lead.companies?.name || lead.company;
@@ -349,12 +439,21 @@ function LeadCard({ lead, showStatus, onClick }: LeadCardProps) {
       className={cn(
         "cursor-pointer hover:bg-muted/50 transition-colors group relative overflow-hidden",
         lead.needs_review && "border-amber-500/50",
+        selected && "ring-2 ring-primary",
         hasOverdue && "before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-destructive"
       )}
       onClick={onClick}
     >
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
+          {onToggleSelect && (
+            <div
+              className="pt-1"
+              onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}
+            >
+              <Checkbox checked={selected} onCheckedChange={() => onToggleSelect()} />
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <p className="font-medium truncate">
