@@ -31,6 +31,15 @@ export default function TicketsPage() {
                   List
                 </TabsTrigger>
               </TabsList>
+              <SavedViewsMenu
+                scope="tickets"
+                currentConfig={{ view }}
+                activeViewId={activeViewId}
+                onActiveViewChange={setActiveViewId}
+                onApply={(cfg) => {
+                  if (cfg.view === 'kanban' || cfg.view === 'table') setView(cfg.view);
+                }}
+              />
               <CreateTicketDialog />
             </div>
           </div>
