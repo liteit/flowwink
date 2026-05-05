@@ -39,6 +39,7 @@ import { FulfillmentStepper } from '@/components/admin/orders/FulfillmentStepper
 import { FulfillmentActions } from '@/components/admin/orders/FulfillmentActions';
 import { EntityActivityTimeline } from '@/components/admin/EntityActivityTimeline';
 import { EntityTags } from '@/components/admin/EntityTags';
+import { EntityFollowers } from '@/components/admin/EntityFollowers';
 
 type Order = Tables<'orders'>;
 type OrderItem = Tables<'order_items'>;
