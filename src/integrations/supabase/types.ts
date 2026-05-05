@@ -11982,6 +11982,10 @@ export type Database = {
           total_cents: number
         }[]
       }
+      set_quote_item_selection: {
+        Args: { _accept_token: string; _item_id: string; _selected: boolean }
+        Returns: Json
+      }
       ship_picking: {
         Args: {
           p_carrier?: string
