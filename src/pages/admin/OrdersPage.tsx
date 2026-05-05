@@ -32,7 +32,8 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Package, Eye, RefreshCw, ShoppingBag, TrendingUp, Clock, CheckCircle, Mail, Loader2, UserSearch } from 'lucide-react';
+import { Package, Eye, RefreshCw, ShoppingBag, TrendingUp, Clock, CheckCircle, Mail, Loader2, UserSearch, X } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useNavigate } from 'react-router-dom';
 import type { Tables } from '@/integrations/supabase/types';
 import { FulfillmentStepper } from '@/components/admin/orders/FulfillmentStepper';
