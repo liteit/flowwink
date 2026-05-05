@@ -75,9 +75,6 @@ export function QuickCreateMenu() {
       {leadsEnabled && (
         <CreateLeadDialog open={active === 'lead'} onOpenChange={(o) => !o && setActive(null)} />
       )}
-      {dealsEnabled && (
-        <CreateDealDialog open={active === 'deal'} onOpenChange={(o) => !o && setActive(null)} />
-      )}
       <CreateTaskDialog open={active === 'task'} onOpenChange={(o) => !o && setActive(null)} />
       {ticketsEnabled && (
         <CreateTicketDialog hideTrigger open={active === 'ticket'} onOpenChange={(o) => !o && setActive(null)} />
