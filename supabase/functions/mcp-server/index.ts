@@ -220,18 +220,21 @@ const MODULE_TO_CATEGORY: Record<string, string> = (() => {
  * having to know FlowWink's internal category taxonomy.
  */
 const COMPOSITE_GROUPS: Record<string, string[]> = {
-  // Marketing department: paid ads + content + research + analytics
+  // Department shortcuts (broad — full toolkit)
   marketing: ["growth", "content", "search", "analytics", "automation"],
-  // Sales department: CRM + research + analytics + commerce (quotes, contracts)
   sales: ["crm", "search", "analytics", "automation", "commerce"],
-  // Operations: commerce ops + analytics
   operations: ["commerce", "analytics", "automation"],
-  // Support: tickets, SLA, KB lookup, customer comms
   support: ["communication", "crm", "content", "analytics", "automation"],
-  // Customer success: subscriptions retention + comms + insights
   success: ["subscriptions", "communication", "crm", "identity", "analytics", "automation"],
-  // Finance / record-to-report: accounting, expenses, invoicing, subscriptions
   finance: ["commerce", "subscriptions", "analytics", "automation"],
+};
+
+// Sub-department composites: narrow within commerce via module-level tokens.
+// Resolved later as module-tokens — see resolveGroupTokens + classifySkillModule.
+// Listed here for documentation/discovery in /rest/groups.
+const SUB_COMPOSITE_GROUPS: Record<string, string[]> = {
+  finance_core: ["invoicing", "accounting", "expenses", "contracts", "subscriptions"],
+  ops_core: ["ecommerce", "inventory", "purchasing"],
 };
 
 /**
