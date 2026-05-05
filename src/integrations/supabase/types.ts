@@ -295,6 +295,54 @@ export type Database = {
         }
         Relationships: []
       }
+      activities: {
+        Row: {
+          activity_type: string
+          assigned_to: string | null
+          body: string | null
+          created_at: string
+          created_by: string | null
+          done_at: string | null
+          due_at: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          metadata: Json
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          activity_type: string
+          assigned_to?: string | null
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          done_at?: string | null
+          due_at?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          metadata?: Json
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activity_type?: string
+          assigned_to?: string | null
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          done_at?: string | null
+          due_at?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          metadata?: Json
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ad_campaigns: {
         Row: {
           budget_cents: number
@@ -401,6 +449,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      addresses: {
+        Row: {
+          address_type: string
+          city: string | null
+          country: string | null
+          created_at: string
+          id: string
+          is_primary: boolean
+          label: string | null
+          notes: string | null
+          owner_id: string
+          owner_type: string
+          phone: string | null
+          postal_code: string | null
+          state: string | null
+          street: string | null
+          street2: string | null
+          updated_at: string
+        }
+        Insert: {
+          address_type?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          label?: string | null
+          notes?: string | null
+          owner_id: string
+          owner_type: string
+          phone?: string | null
+          postal_code?: string | null
+          state?: string | null
+          street?: string | null
+          street2?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address_type?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          label?: string | null
+          notes?: string | null
+          owner_id?: string
+          owner_type?: string
+          phone?: string | null
+          postal_code?: string | null
+          state?: string | null
+          street?: string | null
+          street2?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       agent_activity: {
         Row: {
@@ -7764,6 +7869,7 @@ export type Database = {
           description: string
           discount_pct: number
           id: string
+          is_optional: boolean
           line_subtotal_cents: number
           line_tax_cents: number
           line_total_cents: number
@@ -7771,6 +7877,7 @@ export type Database = {
           product_id: string | null
           quantity: number
           quote_id: string
+          selected_by_customer: boolean
           tax_rate_pct: number
           unit: string | null
           unit_price_cents: number
@@ -7781,6 +7888,7 @@ export type Database = {
           description: string
           discount_pct?: number
           id?: string
+          is_optional?: boolean
           line_subtotal_cents?: number
           line_tax_cents?: number
           line_total_cents?: number
@@ -7788,6 +7896,7 @@ export type Database = {
           product_id?: string | null
           quantity?: number
           quote_id: string
+          selected_by_customer?: boolean
           tax_rate_pct?: number
           unit?: string | null
           unit_price_cents?: number
@@ -7798,6 +7907,7 @@ export type Database = {
           description?: string
           discount_pct?: number
           id?: string
+          is_optional?: boolean
           line_subtotal_cents?: number
           line_tax_cents?: number
           line_total_cents?: number
@@ -7805,6 +7915,7 @@ export type Database = {
           product_id?: string | null
           quantity?: number
           quote_id?: string
+          selected_by_customer?: boolean
           tax_rate_pct?: number
           unit?: string | null
           unit_price_cents?: number
@@ -10149,6 +10260,7 @@ export type Database = {
           contact_name: string | null
           created_at: string
           created_by: string | null
+          csat_survey_sent_at: string | null
           description: string | null
           id: string
           lead_id: string | null
@@ -10160,6 +10272,7 @@ export type Database = {
           source_id: string | null
           status: Database["public"]["Enums"]["ticket_status"]
           subject: string
+          suggested_kb_article_ids: string[]
           updated_at: string
         }
         Insert: {
@@ -10171,6 +10284,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           created_by?: string | null
+          csat_survey_sent_at?: string | null
           description?: string | null
           id?: string
           lead_id?: string | null
@@ -10182,6 +10296,7 @@ export type Database = {
           source_id?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           subject: string
+          suggested_kb_article_ids?: string[]
           updated_at?: string
         }
         Update: {
@@ -10193,6 +10308,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           created_by?: string | null
+          csat_survey_sent_at?: string | null
           description?: string | null
           id?: string
           lead_id?: string | null
@@ -10204,6 +10320,7 @@ export type Database = {
           source_id?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           subject?: string
+          suggested_kb_article_ids?: string[]
           updated_at?: string
         }
         Relationships: [
