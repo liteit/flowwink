@@ -57,8 +57,18 @@ export default function DealsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [activeViewId, setActiveViewId] = useState<string | null>(null);
+  const [scheduleFor, setScheduleFor] = useState<{ deal: any; stage: DealStage } | null>(null);
+
+  const maybePromptScheduler = (dealId: string, newStage: DealStage) => {
+    if (newStage !== 'closed_won' && newStage !== 'closed_lost') return;
+    const deal = deals.find(d => d.id === dealId);
+    if (!deal) return;
+    if (deal.stage === newStage) return;
+    setScheduleFor({ deal, stage: newStage });
+  };
 
   const handleStageChange = (dealId: string, stage: DealStage) => {
+    maybePromptScheduler(dealId, stage);
     updateDeal.mutate({ id: dealId, stage });
   };
 
