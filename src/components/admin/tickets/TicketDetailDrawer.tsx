@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { TicketKbSuggestions } from "@/components/admin/tickets/TicketKbSuggestions";
+import { EntityActivityTimeline } from "@/components/admin/EntityActivityTimeline";
 import {
   Select,
   SelectContent,
@@ -143,6 +145,15 @@ export function TicketDetailDrawer({ ticket, open, onOpenChange }: TicketDetailD
               </div>
             </>
           )}
+
+          {/* KB suggestions */}
+          <Separator className="my-4" />
+          <TicketKbSuggestions ticket={ticket as never} />
+
+          {/* Activity timeline */}
+          <Separator className="my-4" />
+          <EntityActivityTimeline entityType="ticket" entityId={ticket.id} title="Activity" compact />
+
 
           {/* Comments */}
           <Separator className="my-4" />
