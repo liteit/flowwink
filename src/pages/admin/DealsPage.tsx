@@ -85,6 +85,15 @@ export default function DealsPage() {
                 <List className="h-4 w-4" />
               </ToggleGroupItem>
             </ToggleGroup>
+            <SavedViewsMenu
+              scope="deals"
+              currentConfig={{ viewMode }}
+              activeViewId={activeViewId}
+              onActiveViewChange={setActiveViewId}
+              onApply={(cfg) => {
+                if (cfg.viewMode === 'kanban' || cfg.viewMode === 'table') setViewMode(cfg.viewMode);
+              }}
+            />
             <Button onClick={() => setDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               New Deal
