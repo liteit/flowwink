@@ -115,6 +115,7 @@ serve(async (req: Request) => {
         name: `MCP key for peer ${body.invitee_name}`,
         key_hash: keyHash,
         key_prefix: keyPrefix,
+        key_raw: mcpKey,
         scopes: ["mcp:*"],
       })
       .select()
