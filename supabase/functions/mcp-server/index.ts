@@ -140,6 +140,7 @@ interface SkillRow {
   name: string;
   description: string | null;
   category: string;
+  handler?: string | null;
   tool_definition: {
     type: string;
     function: {
@@ -219,36 +220,79 @@ const MODULE_TO_CATEGORY: Record<string, string> = (() => {
  * having to know FlowWink's internal category taxonomy.
  */
 const COMPOSITE_GROUPS: Record<string, string[]> = {
-  // Marketing department: paid ads + content + research + analytics
+  // Department shortcuts (broad — full toolkit)
   marketing: ["growth", "content", "search", "analytics", "automation"],
-  // Sales department: CRM + research + analytics + commerce (quotes, contracts)
   sales: ["crm", "search", "analytics", "automation", "commerce"],
-  // Operations: commerce ops + analytics
   operations: ["commerce", "analytics", "automation"],
-  // Support: tickets, SLA, KB lookup, customer comms
   support: ["communication", "crm", "content", "analytics", "automation"],
-  // Customer success: subscriptions retention + comms + insights
   success: ["subscriptions", "communication", "crm", "identity", "analytics", "automation"],
-  // Finance / record-to-report: accounting, expenses, invoicing, subscriptions
   finance: ["commerce", "subscriptions", "analytics", "automation"],
 };
 
-/** Resolve a list of group/module tokens to their underlying skill categories. */
-function resolveGroupTokens(tokens: string[]): Set<string> {
-  const cats = new Set<string>();
+// Sub-department composites: narrow within commerce via module-level tokens.
+// Resolved later as module-tokens — see resolveGroupTokens + classifySkillModule.
+// Listed here for documentation/discovery in /rest/groups.
+const SUB_COMPOSITE_GROUPS: Record<string, string[]> = {
+  finance_core: ["invoicing", "accounting", "expenses", "contracts", "subscriptions"],
+  ops_core: ["ecommerce", "inventory", "purchasing"],
+};
+
+/**
+ * Resolve a list of group/module tokens.
+ *  - categoryTokens: include ALL skills in those categories
+ *  - moduleTokens:   include only skills mapped to those modules (sub-category filter)
+ * Composites expand to category tokens. This lets a Finance claw ask for
+ * `?groups=invoicing,accounting,expenses,contracts` and get ~20 tools instead
+ * of the full 67-tool commerce blob.
+ */
+function resolveGroupTokens(tokens: string[]): { categories: Set<string>; modules: Set<string> } {
+  const categories = new Set<string>();
+  const modules = new Set<string>();
   for (const raw of tokens) {
     const t = raw.toLowerCase().trim();
     if (!t) continue;
     if (COMPOSITE_GROUPS[t]) {
-      for (const child of COMPOSITE_GROUPS[t]) cats.add(child);
+      for (const child of COMPOSITE_GROUPS[t]) categories.add(child);
+    } else if (SUB_COMPOSITE_GROUPS[t]) {
+      for (const child of SUB_COMPOSITE_GROUPS[t]) modules.add(child);
     } else if (SKILL_CATEGORY_MODULES[t]) {
-      cats.add(t); // already a category
+      categories.add(t); // whole category
     } else if (MODULE_TO_CATEGORY[t]) {
-      cats.add(MODULE_TO_CATEGORY[t]); // module name → its category
+      modules.add(t); // narrow within its parent category
     }
     // unknown tokens silently dropped
   }
-  return cats;
+  return { categories, modules };
+}
+
+/**
+ * Classify a skill by its likely owning module — used for sub-category filtering
+ * (e.g. `?groups=invoicing` returns only invoicing skills out of commerce's 67).
+ *
+ * Heuristic: handler hints first, then name keywords. Returns null if no module
+ * can be determined (skill will only match category-level filters).
+ */
+function classifySkillModule(name: string, handler: string | null | undefined): string | null {
+  const n = name.toLowerCase();
+  const h = (handler ?? "").toLowerCase();
+
+  // Handler hints
+  if (h.startsWith("module:orders")) return "ecommerce";
+  if (h.startsWith("module:products")) return n.includes("invent") ? "inventory" : "products";
+  if (h.includes("reconciliation/")) return "accounting";
+
+  // Name keywords (ordered most-specific first)
+  if (/(^|_)(contract|signature)/.test(n)) return "contracts";
+  if (/(^|_)(expense|receipt)/.test(n)) return "expenses";
+  if (/(^|_)(invoice|dunning)/.test(n) && !n.includes("vendor")) return "invoicing";
+  if (/(vendor|purchase_order|^send_purchase|match_po|reorder|procurement)/.test(n)) return "purchasing";
+  if (/(manufactur|^mo_|_mo$|^check_mo|^start_mo|^complete_mo|^cancel_mo|^confirm_mo|bom|trigger_procurement)/.test(n)) return "inventory";
+  if (/(timesheet)/.test(n)) return "timesheets";
+  if (/(accounting|journal|chart_of_accounts|opening_balance|analytic|bank_|stripe_payout|fiscal_period)/.test(n)) return "accounting";
+  if (/(subscription|mrr)/.test(n)) return "subscriptions";
+  if (/(^manage_quote|^browse_products|^manage_product|^manage_inventory|^manage_orders|order_status|send_invoice_for_order)/.test(n)) return "ecommerce";
+
+  return null;
 }
 
 /**
@@ -335,7 +379,7 @@ async function loadExposedSkills(filterGroups?: string[]): Promise<SkillRow[]> {
   const [skillsResult, activeModules] = await Promise.all([
     sb
       .from("agent_skills")
-      .select("name, description, category, tool_definition")
+      .select("name, description, category, handler, tool_definition")
       .eq("enabled", true)
       .eq("mcp_exposed", true)
       .order("category"),
@@ -350,10 +394,16 @@ async function loadExposedSkills(filterGroups?: string[]): Promise<SkillRow[]> {
   const all = (skillsResult.data ?? []) as unknown as SkillRow[];
   let filtered = all.filter((s) => isCategoryActive(s.category, activeModules));
 
-  // Apply toolset group filter if requested — accepts both category ids and module ids
+  // Apply toolset group filter — supports category tokens, composite tokens,
+  // and module-level sub-filters (e.g. ?groups=invoicing narrows commerce).
   if (filterGroups && filterGroups.length > 0) {
-    const catSet = resolveGroupTokens(filterGroups);
-    filtered = filtered.filter((s) => catSet.has(s.category));
+    const { categories, modules } = resolveGroupTokens(filterGroups);
+    filtered = filtered.filter((s) => {
+      if (categories.has(s.category)) return true;
+      if (modules.size === 0) return false;
+      const mod = classifySkillModule(s.name, s.handler);
+      return mod ? modules.has(mod) : false;
+    });
   }
 
   console.log(
@@ -958,11 +1008,21 @@ app.get("/rest/groups", async (c) => {
     };
   });
 
+  // Sub-composites: module-level shortcuts (finance_core, ops_core)
+  // Tool counts approximated by classifying loaded skills.
+  const allSkills = (skillsResult.data ?? []) as Array<{ category: string; name?: string; handler?: string | null }>;
+  const sub_composites = Object.entries(SUB_COMPOSITE_GROUPS).map(([id, modules]) => {
+    const set = new Set(modules);
+    return { id, kind: "sub_composite" as const, expands_to: modules, tool_count: 0, is_active: set.size > 0 };
+  });
+
   return c.json(
     {
       groups,
       composite_groups: composites,
-      note: "groups = raw skill categories. composite_groups = department-level shortcuts (e.g. ?groups=marketing expands to growth+content+search+analytics+automation). tool_count = skills actually exposed right now.",
+      sub_composite_groups: sub_composites,
+      module_tokens: Object.keys(MODULE_TO_CATEGORY),
+      note: "Filter precision: ?groups=<category> = whole category. ?groups=<module> (e.g. invoicing,accounting) = narrow within parent category. ?groups=finance_core = invoicing+accounting+expenses+contracts+subscriptions. ?groups=ops_core = ecommerce+inventory+purchasing.",
     },
     200,
     corsHeaders,
