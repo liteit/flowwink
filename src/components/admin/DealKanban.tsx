@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 interface DealKanbanProps {
   deals: Deal[];
   isLoading?: boolean;
+  onStageChanged?: (deal: Deal, newStage: DealStage) => void;
 }
 
 const STAGES: DealStage[] = ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'];
@@ -92,7 +93,7 @@ function KanbanColumn({ stage, deals, totalValue }: KanbanColumnProps) {
   );
 }
 
-export function DealKanban({ deals, isLoading }: DealKanbanProps) {
+export function DealKanban({ deals, isLoading, onStageChanged }: DealKanbanProps) {
   const updateDeal = useUpdateDeal();
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -152,6 +153,7 @@ export function DealKanban({ deals, isLoading }: DealKanbanProps) {
     // Update if stage changed
     if (targetStage && targetStage !== deal.stage) {
       updateDeal.mutate({ id: dealId, stage: targetStage });
+      onStageChanged?.(deal, targetStage);
     }
   };
 

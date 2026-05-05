@@ -43,6 +43,7 @@ import { useLeads } from '@/hooks/useLeads';
 import { DealKanban } from '@/components/admin/DealKanban';
 import { StaleDealsCard } from '@/components/admin/deals/StaleDealsCard';
 import { PipelineSummary } from '@/components/admin/deals/PipelineSummary';
+import { ScheduleNextActivityDialog } from '@/components/admin/deals/ScheduleNextActivityDialog';
 import { SavedViewsMenu } from '@/components/admin/SavedViewsMenu';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
@@ -56,8 +57,18 @@ export default function DealsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [activeViewId, setActiveViewId] = useState<string | null>(null);
+  const [scheduleFor, setScheduleFor] = useState<{ deal: any; stage: DealStage } | null>(null);
+
+  const maybePromptScheduler = (dealId: string, newStage: DealStage) => {
+    if (newStage !== 'closed_won' && newStage !== 'closed_lost') return;
+    const deal = deals.find(d => d.id === dealId);
+    if (!deal) return;
+    if (deal.stage === newStage) return;
+    setScheduleFor({ deal, stage: newStage });
+  };
 
   const handleStageChange = (dealId: string, stage: DealStage) => {
+    maybePromptScheduler(dealId, stage);
     updateDeal.mutate({ id: dealId, stage });
   };
 
@@ -141,7 +152,11 @@ export default function DealsPage() {
         {viewMode === 'kanban' && (
           <>
             <PipelineSummary deals={deals} />
-            <DealKanban deals={deals} isLoading={isLoading} />
+            <DealKanban
+              deals={deals}
+              isLoading={isLoading}
+              onStageChanged={(d, s) => maybePromptScheduler(d.id, s)}
+            />
             <StaleDealsCard daysThreshold={14} />
           </>
         )}
@@ -293,6 +308,12 @@ export default function DealsPage() {
         <CreateDealDialogWithLeadPicker
           open={dialogOpen}
           onOpenChange={setDialogOpen}
+        />
+
+        <ScheduleNextActivityDialog
+          deal={scheduleFor?.deal ?? null}
+          closedAs={scheduleFor?.stage ?? null}
+          onOpenChange={(o) => { if (!o) setScheduleFor(null); }}
         />
       </AdminPageContainer>
     </AdminLayout>
