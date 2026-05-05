@@ -7,9 +7,11 @@ import { TicketsTable } from "@/components/admin/tickets/TicketsTable";
 import { CreateTicketDialog } from "@/components/admin/tickets/CreateTicketDialog";
 import { useTickets } from "@/hooks/useTickets";
 import { LayoutGrid, List } from "lucide-react";
+import { SavedViewsMenu } from "@/components/admin/SavedViewsMenu";
 
 export default function TicketsPage() {
   const [view, setView] = useState<"kanban" | "table">("kanban");
+  const [activeViewId, setActiveViewId] = useState<string | null>(null);
   const { data: tickets, isLoading } = useTickets();
 
   return (
