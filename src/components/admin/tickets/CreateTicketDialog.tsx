@@ -26,8 +26,19 @@ import {
   type TicketCategory,
 } from "@/hooks/useTickets";
 
-export function CreateTicketDialog() {
-  const [open, setOpen] = useState(false);
+interface CreateTicketDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+}
+
+export function CreateTicketDialog({ open: controlledOpen, onOpenChange, hideTrigger }: CreateTicketDialogProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (v: boolean) => {
+    if (onOpenChange) onOpenChange(v);
+    else setInternalOpen(v);
+  };
   const createTicket = useCreateTicket();
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
@@ -60,12 +71,14 @@ export function CreateTicketDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus className="h-4 w-4 mr-1" />
-          New Ticket
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button size="sm">
+            <Plus className="h-4 w-4 mr-1" />
+            New Ticket
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Create Ticket</DialogTitle>
