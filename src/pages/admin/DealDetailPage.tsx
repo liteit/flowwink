@@ -139,13 +139,16 @@ export default function DealDetailPage() {
           {/* Quotes attached to this deal */}
           <DealQuotesCard dealId={deal.id} leadId={deal.lead_id} />
 
-          {/* Activity Timeline */}
+          {/* Activity Timeline (legacy deal_activities) */}
           <ActivityTimeline
             activities={activities || []}
             onAddActivity={handleAddActivity}
             onMarkComplete={handleMarkComplete}
             isLoading={activitiesLoading}
           />
+
+          {/* Universal activity timeline (notes / todos / calls / meetings) */}
+          <EntityActivityTimeline entityType="deal" entityId={deal.id} title="Notes & Tasks" />
         </div>
 
         {/* Sidebar */}
