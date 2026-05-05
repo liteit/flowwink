@@ -38,6 +38,49 @@ export default function LeadsPage() {
   const navigate = useNavigate();
   const exportLeads = useExportLeads();
   const importLeads = useImportLeads();
+  const queryClient = useQueryClient();
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleId = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const bulkUpdateStatus = useMutation({
+    mutationFn: async (status: LeadStatus) => {
+      const ids = Array.from(selectedIds);
+      const { error } = await supabase.from('leads').update({ status }).in('id', ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (count, status) => {
+      toast.success(`Updated ${count} contact${count === 1 ? '' : 's'} to ${status}`);
+      clearSelection();
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['leadStats'] });
+    },
+    onError: (e: Error) => toast.error(`Bulk update failed: ${e.message}`),
+  });
+
+  const bulkDelete = useMutation({
+    mutationFn: async () => {
+      const ids = Array.from(selectedIds);
+      const { error } = await supabase.from('leads').delete().in('id', ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (count) => {
+      toast.success(`Deleted ${count} contact${count === 1 ? '' : 's'}`);
+      clearSelection();
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['leadStats'] });
+    },
+    onError: (e: Error) => toast.error(`Bulk delete failed: ${e.message}`),
+  });
 
   const handleExport = () => {
     if (leads && leads.length > 0) {
