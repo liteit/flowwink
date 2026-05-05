@@ -12,9 +12,10 @@ import { CreateTaskDialog } from '@/components/admin/CreateTaskDialog';
 import { CreateTicketDialog } from '@/components/admin/tickets/CreateTicketDialog';
 import { useIsModuleEnabled } from '@/hooks/useModules';
 
-type DialogKey = 'lead' | 'deal' | 'task' | 'ticket' | null;
+type DialogKey = 'lead' | 'task' | 'ticket' | null;
 
 export function QuickCreateMenu() {
+  const navigate = useNavigate();
   const [active, setActive] = useState<DialogKey>(null);
   const leadsEnabled = useIsModuleEnabled('leads');
   const dealsEnabled = useIsModuleEnabled('deals');
