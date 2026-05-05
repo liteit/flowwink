@@ -152,7 +152,11 @@ export default function DealsPage() {
         {viewMode === 'kanban' && (
           <>
             <PipelineSummary deals={deals} />
-            <DealKanban deals={deals} isLoading={isLoading} />
+            <DealKanban
+              deals={deals}
+              isLoading={isLoading}
+              onStageChanged={(d, s) => maybePromptScheduler(d.id, s)}
+            />
             <StaleDealsCard daysThreshold={14} />
           </>
         )}
