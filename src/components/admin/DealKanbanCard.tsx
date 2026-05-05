@@ -33,12 +33,17 @@ export function DealKanbanCard({ deal }: DealKanbanCardProps) {
   const companyName = deal.lead?.company?.name;
   const productName = deal.product?.name;
 
+  const { data: overdue } = useOverdueActivityIndex();
+  const hasOverdue = overdue?.dealIds.has(deal.id) ?? false;
+
   return (
     <Card
       ref={setNodeRef}
       style={style}
       className={cn(
-        isDragging && 'opacity-50 shadow-lg ring-2 ring-primary'
+        'relative overflow-hidden',
+        isDragging && 'opacity-50 shadow-lg ring-2 ring-primary',
+        hasOverdue && 'before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-destructive'
       )}
       {...attributes}
     >
