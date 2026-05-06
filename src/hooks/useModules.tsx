@@ -754,6 +754,7 @@ export const SIDEBAR_TO_MODULE: Record<string, keyof ModulesSettings> = {
   '/admin/pricelists': 'pricelists',
   '/admin/returns': 'returns',
   '/admin/shipping': 'shipping',
+  '/admin/currencies': 'multiCurrency',
 };
 
 export function useModules() {
