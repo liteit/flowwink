@@ -6094,6 +6094,18 @@ const GENERIC_CRUD_TABLES = new Set([
   'carriers', 'shipments', 'returns', 'return_items',
   // Quick-wins: polymorphic activities + multi-address contacts + universal tags + followers + saved views
   'activities', 'addresses', 'tags', 'entity_tags', 'entity_followers', 'saved_views',
+  // CRM tasks (next-action tracking on leads/deals)
+  'crm_tasks',
+  // Reconciliation / bank feeds
+  'bank_transactions',
+  // Chat (conversations + feedback used by support skills)
+  'chat_conversations', 'chat_feedback',
+  // Manufacturing
+  'manufacturing_orders',
+  // Analytics
+  'page_views',
+  // Products + profiles + site_settings (read-skills; writes guarded by RLS)
+  'products', 'profiles', 'site_settings',
 ]);
 
 /**
