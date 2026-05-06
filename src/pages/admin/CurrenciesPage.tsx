@@ -105,26 +105,26 @@ export default function CurrenciesPage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <AdminPageHeader
-          title="Currencies & FX"
-          description="Sell and bill in multiple currencies. Daily ECB rates and FX revaluation of open AR/AP."
-          actions={
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => fetchEcb.mutate()}
-                disabled={fetchEcb.isPending}
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Fetch ECB rates
-              </Button>
-              <Button onClick={() => revalue.mutate()} disabled={revalue.isPending}>
-                <Calculator className="mr-2 h-4 w-4" />
-                Revalue open balances
-              </Button>
-            </div>
-          }
-        />
+        <div className="flex items-start justify-between gap-4">
+          <AdminPageHeader
+            title="Currencies & FX"
+            description="Sell and bill in multiple currencies. Daily ECB rates and FX revaluation of open AR/AP."
+          />
+          <div className="flex gap-2 pt-1">
+            <Button
+              variant="outline"
+              onClick={() => fetchEcb.mutate()}
+              disabled={fetchEcb.isPending}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Fetch ECB rates
+            </Button>
+            <Button onClick={() => revalue.mutate()} disabled={revalue.isPending}>
+              <Calculator className="mr-2 h-4 w-4" />
+              Revalue open balances
+            </Button>
+          </div>
+        </div>
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
