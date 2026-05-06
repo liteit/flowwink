@@ -125,6 +125,7 @@ import PublicQuotePage from "./pages/PublicQuotePage";
 import PublicInvoicePage from "./pages/PublicInvoicePage";
 import AccountingPage from "./pages/admin/AccountingPage";
 import CurrenciesPage from "./pages/admin/CurrenciesPage";
+import FixedAssetsPage from "./pages/admin/FixedAssetsPage";
 import LocalePacksPage from "./pages/admin/LocalePacksPage";
 import ExpensesPage from "./pages/admin/ExpensesPage";
 import HandbookPage from "./pages/admin/HandbookPage";
