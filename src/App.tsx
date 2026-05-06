@@ -303,6 +303,7 @@ const router = createBrowserRouter([
       { path: "/s/:token", element: <PublicSurveyPage /> },
       { path: "/admin/accounting", element: <AccountingPage /> },
       { path: "/admin/accounting/locale-packs", element: <LocalePacksPage /> },
+      { path: "/admin/currencies", element: <CurrenciesPage /> },
       { path: "/admin/expenses", element: <ExpensesPage /> },
       { path: "/admin/handbook", element: <HandbookPage /> },
       { path: "/admin/docs", element: <DocsAdminPage /> },
