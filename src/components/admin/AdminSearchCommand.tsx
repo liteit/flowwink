@@ -1,6 +1,25 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import {
+  Search,
+  Building2,
+  UserPlus,
+  HandCoins,
+  ShoppingCart,
+  FileText,
+  FileSignature,
+  LifeBuoy,
+  ScrollText,
+  FolderOpen,
+  BookOpen,
+  Package,
+  FileCode,
+  Newspaper,
+  User,
+  Truck,
+  Briefcase,
+} from 'lucide-react';
 import {
   CommandDialog,
   CommandEmpty,
@@ -8,11 +27,50 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from '@/components/ui/command';
 import { useAuth } from '@/hooks/useAuth';
 import { useModules } from '@/hooks/useModules';
 import { useNavFeatureFlags, isFeatureFlagOn } from '@/hooks/useNavFeatureFlags';
 import { navigationGroups } from './adminNavigation';
+import { supabase } from '@/integrations/supabase/client';
+
+const ENTITY_META: Record<string, { label: string; icon: any; group: string }> = {
+  company:    { label: 'Company',    icon: Building2,     group: 'Companies' },
+  lead:       { label: 'Lead',       icon: UserPlus,      group: 'Leads' },
+  deal:       { label: 'Deal',       icon: HandCoins,     group: 'Deals' },
+  order:      { label: 'Order',      icon: ShoppingCart,  group: 'Orders' },
+  invoice:    { label: 'Invoice',    icon: FileText,      group: 'Invoices' },
+  quote:      { label: 'Quote',      icon: FileSignature, group: 'Quotes' },
+  ticket:     { label: 'Ticket',     icon: LifeBuoy,      group: 'Tickets' },
+  contract:   { label: 'Contract',   icon: ScrollText,    group: 'Contracts' },
+  document:   { label: 'Document',   icon: FolderOpen,    group: 'Documents' },
+  kb_article: { label: 'KB',         icon: BookOpen,      group: 'Knowledge' },
+  product:    { label: 'Product',    icon: Package,       group: 'Products' },
+  page:       { label: 'Page',       icon: FileCode,      group: 'Pages' },
+  blog_post:  { label: 'Blog post',  icon: Newspaper,     group: 'Blog' },
+  employee:   { label: 'Employee',   icon: User,          group: 'Employees' },
+  vendor:     { label: 'Vendor',     icon: Truck,         group: 'Vendors' },
+  project:    { label: 'Project',    icon: Briefcase,     group: 'Projects' },
+};
+
+interface SearchHit {
+  entity_type: string;
+  entity_id: string;
+  title: string;
+  subtitle: string | null;
+  url: string;
+  rank: number;
+}
+
+function useDebounced<T>(value: T, ms = 200): T {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setV(value), ms);
+    return () => clearTimeout(id);
+  }, [value, ms]);
+  return v;
+}
 
 export function useAdminSearch() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -41,6 +99,12 @@ export function AdminSearchCommand({ open, onOpenChange }: AdminSearchCommandPro
   const { isAdmin } = useAuth();
   const { data: modules } = useModules();
   const { data: featureFlags } = useNavFeatureFlags();
+  const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounced(query, 200);
+
+  useEffect(() => {
+    if (!open) setQuery('');
+  }, [open]);
 
   const roleFilteredGroups = navigationGroups.filter(
     (group) => !group.adminOnly || isAdmin
@@ -64,16 +128,79 @@ export function AdminSearchCommand({ open, onOpenChange }: AdminSearchCommandPro
     [roleFilteredGroups, modules, featureFlags]
   );
 
+  const { data: hits, isFetching } = useQuery({
+    queryKey: ['global-search', debouncedQuery],
+    enabled: isAdmin && open && debouncedQuery.trim().length >= 2,
+    queryFn: async (): Promise<SearchHit[]> => {
+      const { data, error } = await supabase.rpc('global_search' as any, {
+        search_query: debouncedQuery,
+        result_limit: 6,
+      });
+      if (error) throw error;
+      return (data ?? []) as SearchHit[];
+    },
+    staleTime: 10_000,
+  });
+
+  const hitsByGroup = useMemo(() => {
+    const map = new Map<string, SearchHit[]>();
+    for (const h of hits ?? []) {
+      const key = ENTITY_META[h.entity_type]?.group ?? h.entity_type;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(h);
+    }
+    return Array.from(map.entries());
+  }, [hits]);
+
   const handleSelect = (href: string) => {
     onOpenChange(false);
     navigate(href);
   };
 
+  const showingDataResults = debouncedQuery.trim().length >= 2;
+
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder="Search pages..." />
+      <CommandInput
+        placeholder="Search pages, leads, orders, invoices, contracts…"
+        value={query}
+        onValueChange={setQuery}
+      />
       <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
+        <CommandEmpty>
+          {isFetching ? 'Searching…' : 'No results found.'}
+        </CommandEmpty>
+
+        {showingDataResults &&
+          hitsByGroup.map(([group, items]) => (
+            <CommandGroup key={`hit-${group}`} heading={group}>
+              {items.map((hit) => {
+                const meta = ENTITY_META[hit.entity_type];
+                const Icon = meta?.icon ?? FileText;
+                return (
+                  <CommandItem
+                    key={`${hit.entity_type}-${hit.entity_id}`}
+                    value={`${hit.entity_type} ${hit.title} ${hit.subtitle ?? ''} ${hit.entity_id}`}
+                    onSelect={() => handleSelect(hit.url)}
+                    className="cursor-pointer"
+                  >
+                    <Icon className="mr-2 h-4 w-4 shrink-0" />
+                    <div className="flex flex-col min-w-0">
+                      <span className="truncate">{hit.title || '(untitled)'}</span>
+                      {hit.subtitle && (
+                        <span className="text-xs text-muted-foreground truncate">
+                          {hit.subtitle}
+                        </span>
+                      )}
+                    </div>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          ))}
+
+        {showingDataResults && hitsByGroup.length > 0 && <CommandSeparator />}
+
         {filteredGroups.map((group) => (
           <CommandGroup key={group.label} heading={group.label}>
             {group.items.map((item) => (

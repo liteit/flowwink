@@ -11523,6 +11523,17 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      global_search: {
+        Args: { result_limit?: number; search_query: string }
+        Returns: {
+          entity_id: string
+          entity_type: string
+          rank: number
+          subtitle: string
+          title: string
+          url: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -11705,6 +11716,17 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      mcp_global_search: {
+        Args: { p_result_limit?: number; p_search_query: string }
+        Returns: {
+          entity_id: string
+          entity_type: string
+          rank: number
+          subtitle: string
+          title: string
+          url: string
+        }[]
       }
       next_mo_number: { Args: never; Returns: string }
       open_pos_session: {
