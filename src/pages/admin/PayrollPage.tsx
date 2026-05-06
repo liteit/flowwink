@@ -804,6 +804,7 @@ function ReportsTab({ runs }: { runs: PayrollRun[] }) {
               <TableHead className="text-right">Social fee</TableHead>
               <TableHead className="text-right">Net</TableHead>
               <TableHead className="text-right">Employer cost</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -820,6 +821,7 @@ function ReportsTab({ runs }: { runs: PayrollRun[] }) {
                 <TableCell className="text-right font-mono">
                   {fmtSEK(r.total_gross_cents + r.total_social_fee_cents)}
                 </TableCell>
+                <TableCell className="text-right"><RunDetails run={r} /></TableCell>
               </TableRow>
             ))}
             {sorted.length === 0 && (
