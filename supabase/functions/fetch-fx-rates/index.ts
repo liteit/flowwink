@@ -22,11 +22,11 @@ interface RateRow {
 }
 
 function parseEcbXml(xml: string): { date: string; rates: RateRow[] } {
-  // <Cube time="2024-05-06"> ... <Cube currency="USD" rate="1.0775"/> ...
-  const dateMatch = xml.match(/<Cube time="(\d{4}-\d{2}-\d{2})"/);
+  // ECB uses single quotes in attributes; accept both.
+  const dateMatch = xml.match(/<Cube time=['"](\d{4}-\d{2}-\d{2})['"]/);
   const date = dateMatch?.[1] ?? new Date().toISOString().slice(0, 10);
   const rates: RateRow[] = [];
-  const regex = /<Cube currency="([A-Z]{3})" rate="([\d.]+)"\/>/g;
+  const regex = /<Cube\s+currency=['"]([A-Z]{3})['"]\s+rate=['"]([\d.]+)['"]\s*\/>/g;
   let m: RegExpExecArray | null;
   while ((m = regex.exec(xml)) !== null) {
     const r = parseFloat(m[2]);
