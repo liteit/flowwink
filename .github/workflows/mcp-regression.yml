@@ -56,6 +56,13 @@ jobs:
         if: steps.secret_check.outputs.has_key == 'true'
         run: npm ci
 
+      - name: Verify MCP exposure invariant (no orphan tools)
+        if: steps.secret_check.outputs.has_key == 'true'
+        run: npm run verify:mcp-invariant
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
       - name: Run MCP regression (handshake + tools/list)
         id: regression
         if: steps.secret_check.outputs.has_key == 'true'
