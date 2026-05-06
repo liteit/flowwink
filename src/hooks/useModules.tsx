@@ -100,6 +100,7 @@ export interface ModulesSettings {
   fixedAssets: ModuleConfig;
   shipping: ModuleConfig;
   multiCurrency: ModuleConfig;
+  payroll: ModuleConfig;
 }
 
 export const defaultModulesSettings: ModulesSettings = {
