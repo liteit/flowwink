@@ -683,6 +683,17 @@ export const defaultModulesSettings: ModulesSettings = {
     adminUI: true,
     optionalIntegrations: ['postnord', 'dhl', 'bring'],
   },
+  multiCurrency: {
+    enabled: false,
+    name: 'Multi-Currency',
+    description:
+      'Sell and bill in multiple currencies. Daily ECB exchange rates, currency selector on invoices/quotes/orders/POs/expenses, and FX revaluation of open AR/AP at period close (BAS 2024: 3960/7960).',
+    icon: 'Coins',
+    category: 'data',
+    autonomy: 'agent-capable',
+    adminUI: true,
+    enhancedByFlowPilot: true,
+  },
 };
 
 // Map sidebar items to module IDs
