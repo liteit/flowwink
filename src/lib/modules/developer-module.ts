@@ -1,6 +1,6 @@
 import { defineModule } from '@/lib/module-def';
 import { z } from 'zod';
-import type { SkillSeed } from '@/lib/module-def';
+import type { SkillSeed } from '@/lib/module-bootstrap';
 
 const inputSchema = z.object({
   action: z.enum(['test_api', 'test_webhook', 'generate_mock']),
