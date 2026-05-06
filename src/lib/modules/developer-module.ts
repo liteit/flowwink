@@ -29,7 +29,7 @@ const PLATFORM_SKILLS: SkillSeed[] = [
     handler: 'rpc:mcp_global_search',
     scope: 'internal',
     trust_level: 'auto',
-    mcp_exposed: true,
+
     tool_definition: {
       type: 'function',
       function: {
