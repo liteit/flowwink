@@ -11717,6 +11717,17 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      mcp_global_search: {
+        Args: { p_result_limit?: number; p_search_query: string }
+        Returns: {
+          entity_id: string
+          entity_type: string
+          rank: number
+          subtitle: string
+          title: string
+          url: string
+        }[]
+      }
       next_mo_number: { Args: never; Returns: string }
       open_pos_session: {
         Args: {
