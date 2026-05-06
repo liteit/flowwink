@@ -97,6 +97,7 @@ export interface ModulesSettings {
   pos: ModuleConfig;
   pricelists: ModuleConfig;
   returns: ModuleConfig;
+  fixedAssets: ModuleConfig;
   shipping: ModuleConfig;
   multiCurrency: ModuleConfig;
 }
