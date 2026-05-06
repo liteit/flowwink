@@ -99,6 +99,12 @@ export function AdminSearchCommand({ open, onOpenChange }: AdminSearchCommandPro
   const { isAdmin } = useAuth();
   const { data: modules } = useModules();
   const { data: featureFlags } = useNavFeatureFlags();
+  const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounced(query, 200);
+
+  useEffect(() => {
+    if (!open) setQuery('');
+  }, [open]);
 
   const roleFilteredGroups = navigationGroups.filter(
     (group) => !group.adminOnly || isAdmin
@@ -122,16 +128,79 @@ export function AdminSearchCommand({ open, onOpenChange }: AdminSearchCommandPro
     [roleFilteredGroups, modules, featureFlags]
   );
 
+  const { data: hits, isFetching } = useQuery({
+    queryKey: ['global-search', debouncedQuery],
+    enabled: isAdmin && open && debouncedQuery.trim().length >= 2,
+    queryFn: async (): Promise<SearchHit[]> => {
+      const { data, error } = await supabase.rpc('global_search' as any, {
+        search_query: debouncedQuery,
+        result_limit: 6,
+      });
+      if (error) throw error;
+      return (data ?? []) as SearchHit[];
+    },
+    staleTime: 10_000,
+  });
+
+  const hitsByGroup = useMemo(() => {
+    const map = new Map<string, SearchHit[]>();
+    for (const h of hits ?? []) {
+      const key = ENTITY_META[h.entity_type]?.group ?? h.entity_type;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(h);
+    }
+    return Array.from(map.entries());
+  }, [hits]);
+
   const handleSelect = (href: string) => {
     onOpenChange(false);
     navigate(href);
   };
 
+  const showingDataResults = debouncedQuery.trim().length >= 2;
+
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder="Search pages..." />
+      <CommandInput
+        placeholder="Search pages, leads, orders, invoices, contracts…"
+        value={query}
+        onValueChange={setQuery}
+      />
       <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
+        <CommandEmpty>
+          {isFetching ? 'Searching…' : 'No results found.'}
+        </CommandEmpty>
+
+        {showingDataResults &&
+          hitsByGroup.map(([group, items]) => (
+            <CommandGroup key={`hit-${group}`} heading={group}>
+              {items.map((hit) => {
+                const meta = ENTITY_META[hit.entity_type];
+                const Icon = meta?.icon ?? FileText;
+                return (
+                  <CommandItem
+                    key={`${hit.entity_type}-${hit.entity_id}`}
+                    value={`${hit.entity_type} ${hit.title} ${hit.subtitle ?? ''} ${hit.entity_id}`}
+                    onSelect={() => handleSelect(hit.url)}
+                    className="cursor-pointer"
+                  >
+                    <Icon className="mr-2 h-4 w-4 shrink-0" />
+                    <div className="flex flex-col min-w-0">
+                      <span className="truncate">{hit.title || '(untitled)'}</span>
+                      {hit.subtitle && (
+                        <span className="text-xs text-muted-foreground truncate">
+                          {hit.subtitle}
+                        </span>
+                      )}
+                    </div>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          ))}
+
+        {showingDataResults && hitsByGroup.length > 0 && <CommandSeparator />}
+
         {filteredGroups.map((group) => (
           <CommandGroup key={group.label} heading={group.label}>
             {group.items.map((item) => (
