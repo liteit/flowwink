@@ -112,10 +112,8 @@ const AUTOMATIONS: AutomationSeed[] = [
     description: 'Pull ECB daily reference rates each morning at 06:15 UTC.',
     trigger_type: 'cron',
     trigger_config: { cron: '15 6 * * *' },
-    executor: 'platform',
     skill_name: 'fetch_ecb_rates',
-    arguments: {},
-    enabled: true,
+    skill_arguments: {},
   },
 ];
 
