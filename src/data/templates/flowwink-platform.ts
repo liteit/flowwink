@@ -1819,7 +1819,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
   aeoSettings: {
     enabled: true,
     organizationName: 'FlowWink',
-    shortDescription: 'Open-source Business Operating System powered by FlowPilot — an autonomous agent with persistent memory, 40+ skills, and self-evolution.',
+    shortDescription: 'Open-source Business Operating System — CMS · CRM · ERP run by FlowPilot, an autonomous operator with persistent memory and 130+ skills. Or bring your own agent via MCP.',
     schemaOrgEnabled: true,
     schemaOrgType: 'Organization',
     faqSchemaEnabled: true,
