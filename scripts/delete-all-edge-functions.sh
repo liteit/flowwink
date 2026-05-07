@@ -1,15 +1,51 @@
 #!/usr/bin/env bash
 # Delete ALL deployed Supabase Edge Functions for a project.
-# Usage: ./scripts/delete-all-edge-functions.sh <project-ref>
+# Usage:
+#   ./scripts/delete-all-edge-functions.sh <project-ref>
+#   ./scripts/delete-all-edge-functions.sh --project-ref <project-ref>
+#   ./scripts/delete-all-edge-functions.sh -p <project-ref>
 #
 # Requires: supabase CLI (logged in). jq optional but recommended.
 # DANGER: Irreversible. You must type DELETE to confirm.
 
 set -euo pipefail
 
-PROJECT_REF="${1:-}"
+usage() {
+  echo "Usage: $0 <project-ref> | --project-ref <project-ref> | -p <project-ref>"
+}
+
+PROJECT_REF=""
+DEBUG=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --project-ref|-p)
+      PROJECT_REF="${2:-}"
+      shift 2
+      ;;
+    --debug)
+      DEBUG=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      if [[ -z "$PROJECT_REF" ]]; then
+        PROJECT_REF="$1"
+        shift
+      else
+        echo "Unexpected argument: $1"
+        usage
+        exit 1
+      fi
+      ;;
+  esac
+done
+
 if [[ -z "$PROJECT_REF" ]]; then
-  echo "Usage: $0 <project-ref>"
+  usage
   exit 1
 fi
 
@@ -18,40 +54,77 @@ if ! command -v supabase >/dev/null 2>&1; then
   exit 1
 fi
 
-# Strict validator: must match Supabase function-name rules.
 VALID_RE='^[A-Za-z][A-Za-z0-9_-]*$'
+LIST_STDERR=""
+LIST_OUTPUT=""
+LIST_STATUS=0
+
+run_functions_list() {
+  local output_mode="$1"
+  local tmp_err
+  tmp_err="$(mktemp)"
+
+  set +e
+  LIST_OUTPUT="$(supabase functions list --project-ref "$PROJECT_REF" --output "$output_mode" 2>"$tmp_err")"
+  LIST_STATUS=$?
+  set -e
+
+  LIST_STDERR="$(cat "$tmp_err")"
+  rm -f "$tmp_err"
+
+  return $LIST_STATUS
+}
 
 extract_names() {
-  # Try JSON first.
   if command -v jq >/dev/null 2>&1; then
-    local json
-    json="$(supabase functions list --project-ref "$PROJECT_REF" --output json 2>/dev/null || true)"
-    if [[ -n "$json" ]] && echo "$json" | jq empty 2>/dev/null; then
-      echo "$json" | jq -r '.[] | (.slug // .name // empty)'
-      return
+    if run_functions_list json && [[ -n "$LIST_OUTPUT" ]] && echo "$LIST_OUTPUT" | jq empty >/dev/null 2>&1; then
+      echo "$LIST_OUTPUT" | jq -r '.[] | (.slug // .name // empty)'
+      return 0
     fi
   fi
 
-  # Fallback: parse the table. Strip ALL non-ASCII (box chars) + pipes,
-  # then keep only tokens that look like valid function names.
-  supabase functions list --project-ref "$PROJECT_REF" 2>/dev/null \
-    | LC_ALL=C tr -d '\200-\377' \
-    | tr '|' ' ' \
-    | awk '{for(i=1;i<=NF;i++) print $i}' \
-    | grep -E "$VALID_RE" \
-    | grep -Ev '^(ID|NAME|SLUG|VERSION|STATUS|UPDATED|CREATED|ACTIVE|VERIFY_JWT|true|false)$'
+  if run_functions_list pretty; then
+    echo "$LIST_OUTPUT" \
+      | LC_ALL=C tr -d '\200-\377' \
+      | tr '|' ' ' \
+      | awk '{for(i=1;i<=NF;i++) print $i}' \
+      | grep -E "$VALID_RE" \
+      | grep -Ev '^(ID|NAME|SLUG|VERSION|STATUS|UPDATED|CREATED|ACTIVE|VERIFY_JWT|true|false)$'
+    return 0
+  fi
+
+  return 1
 }
 
 echo "Fetching deployed functions for project: $PROJECT_REF"
 RAW="$(extract_names || true)"
-
-# Final filter: dedupe + validate strictly.
 FUNCTIONS="$(echo "$RAW" | grep -E "$VALID_RE" | sort -u || true)"
 
 if [[ -z "$FUNCTIONS" ]]; then
-  echo "No deployed functions found (or could not parse output)."
-  echo ""
-  echo "Try manually: supabase functions list --project-ref $PROJECT_REF"
+  if [[ $LIST_STATUS -ne 0 ]]; then
+    echo "Could not list deployed functions for project '$PROJECT_REF'."
+    if [[ -n "$LIST_STDERR" ]]; then
+      echo ""
+      echo "CLI said:"
+      echo "$LIST_STDERR"
+    fi
+    echo ""
+    echo "Common causes:"
+    echo "  - wrong project ref"
+    echo "  - not logged in via 'supabase login'"
+    echo "  - missing access to that project"
+    echo "  - older Supabase CLI version"
+    echo ""
+    echo "Try manually: supabase functions list --project-ref $PROJECT_REF --output pretty"
+    exit 1
+  fi
+
+  echo "No deployed functions found for project '$PROJECT_REF'."
+  if [[ $DEBUG -eq 1 && -n "$LIST_OUTPUT" ]]; then
+    echo ""
+    echo "Raw CLI output:"
+    echo "$LIST_OUTPUT"
+  fi
   exit 0
 fi
 
