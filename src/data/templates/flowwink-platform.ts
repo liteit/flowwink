@@ -180,7 +180,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
           type: 'bento-grid',
           data: {
             title: 'The Autonomous Loop',
-            subtitle: 'Traditional ERPs digitize processes. FlowWink runs them. FlowPilot is a native agentic operator with memory, goals, and 130+ skills — replacing your CMS, CRM, ERP, and marketing stack with a single process engine that acts, not reacts.',
+            subtitle: 'Most stacks bolt CMS, CRM and ERP together with humans as glue. FlowWink unifies all three under one operator with memory, goals, and 130+ skills — a single process engine that acts, not reacts.',
             eyebrow: 'AGENTIC WEB',
             columns: 3,
             variant: 'glass',
