@@ -42,8 +42,8 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
       menu_order: 1,
       showInMenu: true,
       meta: {
-        seoTitle: 'FlowWink — Next-Gen ERP with Agentic Intelligence Built In',
-        description: 'FlowWink is the next-generation ERP with autonomous AI built in natively. A Business Operating System where the process engine acts on objectives — not waits for instructions.',
+        seoTitle: 'FlowWink — The Business Operating System (CMS · CRM · ERP)',
+        description: 'FlowWink is the Business Operating System: a self-hosted CMS, CRM and ERP run by an autonomous operator. Use the built-in FlowPilot, or plug in OpenClaw, Claude or Copilot via MCP.',
         showTitle: false,
         titleAlignment: 'center',
       },
