@@ -23,10 +23,10 @@ import { flowwinkKbCategories } from '../template-kb-articles';
 export const flowwinkPlatformTemplate: StarterTemplate = {
   id: 'flowwink-platform',
   name: 'FlowWink Platform',
-  description: 'The next-generation ERP with agentic intelligence built in. A process engine that acts — not reacts.',
+  description: 'The Business Operating System — CMS · CRM · ERP run by an autonomous operator. Built-in FlowPilot, or bring your own agent.',
   category: 'platform',
   icon: 'Bot',
-  tagline: 'Not an ERP you use. An ERP that operates.',
+  tagline: 'The Business Operating System. CMS · CRM · ERP — run by an operator.',
   aiChatPosition: 'Embedded autonomous agent for site operations',
   blogPosts: flowwinkBlogPosts,
   kbCategories: flowwinkKbCategories,
@@ -42,8 +42,8 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
       menu_order: 1,
       showInMenu: true,
       meta: {
-        seoTitle: 'FlowWink — Next-Gen ERP with Agentic Intelligence Built In',
-        description: 'FlowWink is the next-generation ERP with autonomous AI built in natively. A Business Operating System where the process engine acts on objectives — not waits for instructions.',
+        seoTitle: 'FlowWink — The Business Operating System (CMS · CRM · ERP)',
+        description: 'FlowWink is the Business Operating System: a self-hosted CMS, CRM and ERP run by an autonomous operator. Use the built-in FlowPilot, or plug in OpenClaw, Claude or Copilot via MCP.',
         showTitle: false,
         titleAlignment: 'center',
       },
@@ -53,7 +53,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
           id: 'announcement-flowpilot',
           type: 'announcement-bar',
           data: {
-            message: '🤖 The first agent-native ERP — every module exposed via MCP. Bring your own agent.',
+            message: '🤖 The Business Operating System — CMS · CRM · ERP, every module exposed via MCP. Bring your own agent.',
             linkText: 'See how',
             linkUrl: '#agent-prepared',
             variant: 'gradient',
@@ -66,8 +66,8 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
           id: 'hero-main',
           type: 'hero',
           data: {
-            title: 'The First Agent-Native ERP',
-            subtitle: 'A complete ERP for mid-sized businesses — Quote-to-Cash, HR & Payroll, Accounting, Procure-to-Pay, Projects. Every module exposed via MCP. Run it with our built-in FlowPilot, or plug in your own agent (Claude, GPT, OpenClaw) to operate FlowWink alongside your other SaaS.',
+            title: 'Your Business, Run by an Operator',
+            subtitle: 'FlowWink is the Business Operating System — a self-hosted CMS, CRM and ERP (Quote-to-Cash, HR & Payroll, Accounting, Procure-to-Pay, Projects) wired together and run by an autonomous operator. Use the built-in FlowPilot, or plug in your own agent (Claude, GPT, OpenClaw) via MCP.',
             backgroundType: 'video',
             videoUrl: 'https://videos.pexels.com/video-files/3209828/3209828-uhd_2560_1440_25fps.mp4',
             videoPosterUrl: 'https://images.pexels.com/videos/3209828/free-video-3209828.jpg?auto=compress&w=1920',
@@ -180,7 +180,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
           type: 'bento-grid',
           data: {
             title: 'The Autonomous Loop',
-            subtitle: 'Traditional ERPs digitize processes. FlowWink runs them. FlowPilot is a native agentic operator with memory, goals, and 130+ skills — replacing your CMS, CRM, ERP, and marketing stack with a single process engine that acts, not reacts.',
+            subtitle: 'Most stacks bolt CMS, CRM and ERP together with humans as glue. FlowWink unifies all three under one operator with memory, goals, and 130+ skills — a single process engine that acts, not reacts.',
             eyebrow: 'AGENTIC WEB',
             columns: 3,
             variant: 'glass',
@@ -1810,7 +1810,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
   seoSettings: {
     siteTitle: 'FlowWink',
     titleTemplate: '%s | FlowWink',
-    defaultDescription: 'The first autonomous Business Operating System. FlowPilot runs your content, leads, sales, and operations — and learns from every interaction.',
+    defaultDescription: 'The Business Operating System — a self-hosted CMS, CRM and ERP run by an autonomous operator. Built-in FlowPilot, or bring your own agent.',
     robotsIndex: true,
     robotsFollow: true,
     developmentMode: false,
@@ -1819,7 +1819,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
   aeoSettings: {
     enabled: true,
     organizationName: 'FlowWink',
-    shortDescription: 'Open-source Business Operating System powered by FlowPilot — an autonomous agent with persistent memory, 40+ skills, and self-evolution.',
+    shortDescription: 'Open-source Business Operating System — CMS · CRM · ERP run by FlowPilot, an autonomous operator with persistent memory and 130+ skills. Or bring your own agent via MCP.',
     schemaOrgEnabled: true,
     schemaOrgType: 'Organization',
     faqSchemaEnabled: true,
