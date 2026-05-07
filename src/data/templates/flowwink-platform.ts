@@ -53,7 +53,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
           id: 'announcement-flowpilot',
           type: 'announcement-bar',
           data: {
-            message: '🤖 The first agent-native ERP — every module exposed via MCP. Bring your own agent.',
+            message: '🤖 The Business Operating System — CMS · CRM · ERP, every module exposed via MCP. Bring your own agent.',
             linkText: 'See how',
             linkUrl: '#agent-prepared',
             variant: 'gradient',
