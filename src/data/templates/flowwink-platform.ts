@@ -1810,7 +1810,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
   seoSettings: {
     siteTitle: 'FlowWink',
     titleTemplate: '%s | FlowWink',
-    defaultDescription: 'The first autonomous Business Operating System. FlowPilot runs your content, leads, sales, and operations — and learns from every interaction.',
+    defaultDescription: 'The Business Operating System — a self-hosted CMS, CRM and ERP run by an autonomous operator. Built-in FlowPilot, or bring your own agent.',
     robotsIndex: true,
     robotsFollow: true,
     developmentMode: false,
