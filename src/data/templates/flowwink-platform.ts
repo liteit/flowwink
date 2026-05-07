@@ -23,10 +23,10 @@ import { flowwinkKbCategories } from '../template-kb-articles';
 export const flowwinkPlatformTemplate: StarterTemplate = {
   id: 'flowwink-platform',
   name: 'FlowWink Platform',
-  description: 'The next-generation ERP with agentic intelligence built in. A process engine that acts — not reacts.',
+  description: 'The Business Operating System — CMS · CRM · ERP run by an autonomous operator. Built-in FlowPilot, or bring your own agent.',
   category: 'platform',
   icon: 'Bot',
-  tagline: 'Not an ERP you use. An ERP that operates.',
+  tagline: 'The Business Operating System. CMS · CRM · ERP — run by an operator.',
   aiChatPosition: 'Embedded autonomous agent for site operations',
   blogPosts: flowwinkBlogPosts,
   kbCategories: flowwinkKbCategories,
