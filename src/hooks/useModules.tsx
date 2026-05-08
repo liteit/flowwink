@@ -101,6 +101,7 @@ export interface ModulesSettings {
   shipping: ModuleConfig;
   multiCurrency: ModuleConfig;
   payroll: ModuleConfig;
+  clawable: ModuleConfig;
 }
 
 export const defaultModulesSettings: ModulesSettings = {
