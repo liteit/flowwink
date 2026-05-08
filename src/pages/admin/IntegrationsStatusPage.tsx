@@ -703,9 +703,14 @@ export default function IntegrationsStatusPage() {
     return integrationSettings?.[key]?.config;
   };
 
-  // Group integrations by category
+  // Group integrations by category (apply search filter)
+  const sq = search.trim().toLowerCase();
   const groupedIntegrations = integrationKeys.reduce((acc, key) => {
     const integration = integrationSettings?.[key] || defaultIntegrationsSettings[key];
+    if (sq) {
+      const hay = `${key} ${integration.name ?? ''} ${integration.description ?? ''}`.toLowerCase();
+      if (!hay.includes(sq)) return acc;
+    }
     const category = integration.category;
     if (!acc[category]) acc[category] = [];
     acc[category].push({ key, ...integration });
@@ -716,6 +721,8 @@ export default function IntegrationsStatusPage() {
   Object.keys(groupedIntegrations).forEach((cat) => {
     groupedIntegrations[cat].sort((a, b) => a.name.localeCompare(b.name));
   });
+
+  const visibleIntegrationKeys = Object.values(groupedIntegrations).flat().map(i => i.key);
 
   // Sort categories by order
   const sortedCategories = Object.entries(INTEGRATION_CATEGORIES)
