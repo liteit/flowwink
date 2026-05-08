@@ -149,6 +149,7 @@ export default function ModulesPage() {
   const { data: stats } = useModuleStats();
   const updateModules = useUpdateModules();
   const [localModules, setLocalModules] = useState<ModulesSettings | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (modules) {
