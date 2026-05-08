@@ -199,8 +199,7 @@ function lintSingleSkill(skill: AgentSkillRow, ctx: LintCtx): SkillReport {
   // ─── Layer 2: Schema coverage (db:* only) ──────────────────────────
   if (handler.startsWith('db:')) {
     const table = handler.replace('db:', '');
-    const required = ctx.notNullByTable.get(table);
-    if (!required) {
+    if (!ctx.publicTables.has(table)) {
       findings.push({
         layer: 2,
         severity: 'error',
@@ -208,6 +207,7 @@ function lintSingleSkill(skill: AgentSkillRow, ctx: LintCtx): SkillReport {
         message: `Handler points to table "${table}" but it does not exist in public schema.`,
       });
     } else {
+      const required = ctx.notNullByTable.get(table) ?? new Set<string>();
       const exempt = new Set(ctx.autoFilled[skill.name] ?? []);
       const propSet = new Set(propNames);
       for (const col of required) {
