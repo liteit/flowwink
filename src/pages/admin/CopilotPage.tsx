@@ -458,7 +458,12 @@ export default function CopilotPage() {
                 </Alert>
 
                 {activeTab === 'objectives' && <ObjectivesPanel />}
-                {activeTab === 'evolution' && <EvolutionPanel />}
+                {activeTab === 'evolution' && (
+                  <div className="space-y-4">
+                    <DistilledProposalsPanel />
+                    <EvolutionPanel />
+                  </div>
+                )}
                 {activeTab === 'autonomy' && (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
