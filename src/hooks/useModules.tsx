@@ -725,7 +725,7 @@ export const defaultModulesSettings: ModulesSettings = {
     description:
       'Internal admin chat for external operator peers (OpenClaw /v1/responses). UI-only cockpit for testing & administering peers from FlowWink — no MCP, no skills.',
     icon: 'MessageSquare',
-    category: 'integration',
+    category: 'system',
     autonomy: 'view-required',
     adminUI: true,
   },
