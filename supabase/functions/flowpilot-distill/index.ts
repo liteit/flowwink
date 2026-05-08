@@ -53,6 +53,30 @@ function groupKey(row: any): string {
   return `day:${day}`;
 }
 
+/**
+ * Heuristic: did this row originate from an automation/cron/event vs a
+ * real user/agent reasoning turn? We use this to drop ping-pong patterns
+ * where two skills just trigger each other in the background.
+ */
+function isAutomationRow(row: any): boolean {
+  if (row.conversation_id) return false; // user/agent conversation
+  const inp = row?.input ?? {};
+  const src = String(inp.source ?? inp.trigger_source ?? inp.trigger_type ?? "").toLowerCase();
+  if (src.includes("automation") || src.includes("cron") || src.includes("event") || src.includes("schedule")) {
+    return true;
+  }
+  // No conversation + no trace → almost certainly background work
+  if (!inp.trace_id) return true;
+  const trace = String(inp.trace_id).toLowerCase();
+  return trace.startsWith("auto") || trace.startsWith("cron") || trace.startsWith("event") || trace.startsWith("sched");
+}
+
+/** Detects oscillation like A→B→A or A→B→A→B (only 2 distinct skills, length ≥ 3). */
+function isPingPong(seq: string[]): boolean {
+  if (seq.length < 3) return false;
+  return new Set(seq).size <= 2;
+}
+
 function suggestSkillName(seq: string[]): string {
   // pick the verb of the last skill + a domain hint from the first
   const last = seq[seq.length - 1].split("_").pop() || "do";
