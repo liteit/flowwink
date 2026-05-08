@@ -333,6 +333,22 @@ async function buildContext(
     }
   }
 
+  if (sources.includes('wiki')) {
+    const { data } = await supabase
+      .from('wiki_pages')
+      .select('slug, title, content_md, updated_at')
+      .order('updated_at', { ascending: false })
+      .limit(PER_SOURCE_LIMIT);
+    if (data?.length) {
+      const lines = data.map((w: any) => {
+        const r = push('wiki', w.slug, w.title || w.slug, `/admin/wiki/${w.slug}`);
+        const excerpt = String(w.content_md || '').slice(0, 1200);
+        return `[${r}] ${w.title || w.slug} (slug=${w.slug})\n${excerpt}${(w.content_md || '').length > 1200 ? '\n[…truncated]' : ''}`;
+      });
+      rawBlocks.push({ source: 'wiki', text: `### Wiki\n${lines.join('\n\n')}` });
+    }
+  }
+
   const { contextText, meta } = applyTokenBudget(rawBlocks);
   return { contextText, citations, meta };
 }
