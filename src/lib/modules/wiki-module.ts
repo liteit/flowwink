@@ -39,7 +39,7 @@ const WIKI_SKILLS: SkillSeed[] = [
     name: 'manage_wiki_page',
     description:
       'Manage internal wiki pages (intranet): list, get, create, update, delete. Use when: drafting onboarding notes, updating an internal SOP, capturing a process used by support staff, or seeding the intranet with a new topic. NOT for: public knowledge base articles (use manage_kb_article); public website pages (use manage_pages); blog posts (use manage_blog_posts).',
-    category: 'wiki',
+    category: 'content',
     handler: 'module:wiki',
     scope: 'internal',
     mcp_exposed: true,
@@ -108,7 +108,7 @@ in the UI auto-creates the page.
     name: 'search_wiki',
     description:
       'Search the internal wiki by query string against title and markdown body. Use when: finding existing intranet pages before creating duplicates; answering a support/HR question that may already be documented; building a list of related pages. NOT for: public knowledge base search.',
-    category: 'wiki',
+    category: 'content',
     handler: 'module:wiki',
     scope: 'internal',
     mcp_exposed: true,
