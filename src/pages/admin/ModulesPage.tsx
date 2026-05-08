@@ -345,6 +345,37 @@ export default function ModulesPage() {
           </div>
         </div>
 
+        {/* Search + bulk actions */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search modules by name, description…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleBulkToggle(true)}
+            disabled={updateModules.isPending || visibleToggleableIds.length === 0}
+          >
+            <Power className="h-3.5 w-3.5 mr-1.5" />
+            Enable {search ? 'matching' : 'all'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleBulkToggle(false)}
+            disabled={updateModules.isPending || visibleToggleableIds.length === 0}
+          >
+            <PowerOff className="h-3.5 w-3.5 mr-1.5" />
+            Disable {search ? 'matching' : 'all'}
+          </Button>
+        </div>
+
         {/* Module Groups */}
         {isLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
