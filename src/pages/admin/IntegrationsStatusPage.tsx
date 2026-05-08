@@ -646,6 +646,17 @@ export default function IntegrationsStatusPage() {
     });
   };
 
+  const [search, setSearch] = useState("");
+
+  const handleBulkToggle = (keys: (keyof IntegrationsSettings)[], enabled: boolean) => {
+    if (keys.length === 0) return;
+    const patch: Partial<IntegrationsSettings> = {};
+    for (const k of keys) {
+      patch[k] = { ...(integrationSettings?.[k] || defaultIntegrationsSettings[k]), enabled } as any;
+    }
+    updateIntegrations.mutate(patch);
+  };
+
   const openDrawer = (key: keyof IntegrationsSettings, currentConfig: IntegrationProviderConfig | undefined) => {
     setOpenDrawerKey(key);
     setDrawerConfig(currentConfig);
@@ -692,9 +703,14 @@ export default function IntegrationsStatusPage() {
     return integrationSettings?.[key]?.config;
   };
 
-  // Group integrations by category
+  // Group integrations by category (apply search filter)
+  const sq = search.trim().toLowerCase();
   const groupedIntegrations = integrationKeys.reduce((acc, key) => {
     const integration = integrationSettings?.[key] || defaultIntegrationsSettings[key];
+    if (sq) {
+      const hay = `${key} ${integration.name ?? ''} ${integration.description ?? ''}`.toLowerCase();
+      if (!hay.includes(sq)) return acc;
+    }
     const category = integration.category;
     if (!acc[category]) acc[category] = [];
     acc[category].push({ key, ...integration });
@@ -705,6 +721,8 @@ export default function IntegrationsStatusPage() {
   Object.keys(groupedIntegrations).forEach((cat) => {
     groupedIntegrations[cat].sort((a, b) => a.name.localeCompare(b.name));
   });
+
+  const visibleIntegrationKeys = Object.values(groupedIntegrations).flat().map(i => i.key);
 
   // Sort categories by order
   const sortedCategories = Object.entries(INTEGRATION_CATEGORIES)
@@ -777,6 +795,35 @@ export default function IntegrationsStatusPage() {
               {configuredCount > activeCount && ` (${configuredCount} configured)`}
             </p>
           </div>
+        </div>
+
+        {/* Search + bulk actions */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search integrations by name, description…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleBulkToggle(visibleIntegrationKeys, true)}
+            disabled={updateIntegrations.isPending || visibleIntegrationKeys.length === 0}
+          >
+            Enable {search ? 'matching' : 'all'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleBulkToggle(visibleIntegrationKeys, false)}
+            disabled={updateIntegrations.isPending || visibleIntegrationKeys.length === 0}
+          >
+            Disable {search ? 'matching' : 'all'}
+          </Button>
         </div>
 
         {/* Company Profile moved to Sales Intelligence module */}

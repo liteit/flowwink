@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search, Power, PowerOff } from "lucide-react";
 import { 
   FileText, 
   BookOpen, 
@@ -146,6 +149,7 @@ export default function ModulesPage() {
   const { data: stats } = useModuleStats();
   const updateModules = useUpdateModules();
   const [localModules, setLocalModules] = useState<ModulesSettings | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (modules) {
@@ -219,17 +223,52 @@ export default function ModulesPage() {
     await updateModules.mutateAsync(updated);
   };
 
-  // Group modules by category
+  // Group modules by category (with search filter)
+  const q = search.trim().toLowerCase();
   const groupedModules = localModules 
     ? CATEGORY_ORDER.map(category => ({
         category,
         label: CATEGORY_LABELS[category],
         modules: Object.entries(localModules)
           .filter(([id, config]) => config.category === category && id !== 'globalElements')
+          .filter(([id, config]) => {
+            if (!q) return true;
+            return (
+              config.name.toLowerCase().includes(q) ||
+              (config.description ?? '').toLowerCase().includes(q) ||
+              id.toLowerCase().includes(q)
+            );
+          })
           .map(([id, config]) => ({ id: id as keyof ModulesSettings, ...config }))
           .sort((a, b) => a.name.localeCompare(b.name)),
       })).filter(group => group.modules.length > 0)
     : [];
+
+  const visibleToggleableIds = groupedModules.flatMap(g =>
+    g.modules.filter(m => !m.core).map(m => m.id)
+  );
+
+  const handleBulkToggle = async (enabled: boolean) => {
+    if (!localModules || visibleToggleableIds.length === 0) return;
+    let updated = { ...localModules };
+    for (const id of visibleToggleableIds) {
+      updated = { ...updated, [id]: { ...updated[id], enabled } };
+    }
+    // Apply dependency cascade for disable
+    if (!enabled) {
+      for (const [depId, parentId] of Object.entries(MODULE_DEPENDENCIES)) {
+        if (visibleToggleableIds.includes(parentId as keyof ModulesSettings)) {
+          updated = { ...updated, [depId]: { ...updated[depId as keyof ModulesSettings], enabled: false } };
+        }
+      }
+    }
+    setLocalModules(updated);
+    await updateModules.mutateAsync(updated);
+    for (const id of visibleToggleableIds) {
+      if (enabled) bootstrapModule(id, updated).catch(() => {});
+      else teardownModule(id).catch(() => {});
+    }
+  };
 
   const enabledCount = localModules 
     ? Object.values(localModules).filter(m => m.enabled).length 
@@ -304,6 +343,37 @@ export default function ModulesPage() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Search + bulk actions */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search modules by name, description…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleBulkToggle(true)}
+            disabled={updateModules.isPending || visibleToggleableIds.length === 0}
+          >
+            <Power className="h-3.5 w-3.5 mr-1.5" />
+            Enable {search ? 'matching' : 'all'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleBulkToggle(false)}
+            disabled={updateModules.isPending || visibleToggleableIds.length === 0}
+          >
+            <PowerOff className="h-3.5 w-3.5 mr-1.5" />
+            Disable {search ? 'matching' : 'all'}
+          </Button>
         </div>
 
         {/* Module Groups */}
