@@ -223,17 +223,52 @@ export default function ModulesPage() {
     await updateModules.mutateAsync(updated);
   };
 
-  // Group modules by category
+  // Group modules by category (with search filter)
+  const q = search.trim().toLowerCase();
   const groupedModules = localModules 
     ? CATEGORY_ORDER.map(category => ({
         category,
         label: CATEGORY_LABELS[category],
         modules: Object.entries(localModules)
           .filter(([id, config]) => config.category === category && id !== 'globalElements')
+          .filter(([id, config]) => {
+            if (!q) return true;
+            return (
+              config.name.toLowerCase().includes(q) ||
+              (config.description ?? '').toLowerCase().includes(q) ||
+              id.toLowerCase().includes(q)
+            );
+          })
           .map(([id, config]) => ({ id: id as keyof ModulesSettings, ...config }))
           .sort((a, b) => a.name.localeCompare(b.name)),
       })).filter(group => group.modules.length > 0)
     : [];
+
+  const visibleToggleableIds = groupedModules.flatMap(g =>
+    g.modules.filter(m => !m.core).map(m => m.id)
+  );
+
+  const handleBulkToggle = async (enabled: boolean) => {
+    if (!localModules || visibleToggleableIds.length === 0) return;
+    let updated = { ...localModules };
+    for (const id of visibleToggleableIds) {
+      updated = { ...updated, [id]: { ...updated[id], enabled } };
+    }
+    // Apply dependency cascade for disable
+    if (!enabled) {
+      for (const [depId, parentId] of Object.entries(MODULE_DEPENDENCIES)) {
+        if (visibleToggleableIds.includes(parentId as keyof ModulesSettings)) {
+          updated = { ...updated, [depId]: { ...updated[depId as keyof ModulesSettings], enabled: false } };
+        }
+      }
+    }
+    setLocalModules(updated);
+    await updateModules.mutateAsync(updated);
+    for (const id of visibleToggleableIds) {
+      if (enabled) bootstrapModule(id, updated).catch(() => {});
+      else teardownModule(id).catch(() => {});
+    }
+  };
 
   const enabledCount = localModules 
     ? Object.values(localModules).filter(m => m.enabled).length 
