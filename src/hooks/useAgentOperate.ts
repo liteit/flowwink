@@ -139,6 +139,10 @@ export function useAgentOperate() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<FlowPilotConversation[]>([]);
   const abortRef = useRef<AbortController | null>(null);
+  // When true, the next getOrCreateConversation() will skip the "reuse today's
+  // session" shortcut and always insert a fresh chat_conversations row. Set by
+  // startNewConversation() so the user can keep multiple distinct sessions per day.
+  const forceNewConversationRef = useRef(false);
 
   // ─── Conversation persistence ───────────────────────────────────────
 
