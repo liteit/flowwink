@@ -105,10 +105,11 @@ function Composer({
       setBody('');
       setMedia([]);
       onPosted?.();
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
       toast({
         title: 'Could not post',
-        description: e?.message,
+        description: msg,
         variant: 'destructive',
       });
     }
@@ -122,10 +123,11 @@ function Composer({
         Array.from(files).slice(0, 4).map(uploadRiverMedia),
       );
       setMedia((m) => [...m, ...urls].slice(0, 4));
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
       toast({
         title: 'Upload failed',
-        description: e?.message,
+        description: msg,
         variant: 'destructive',
       });
     } finally {
@@ -570,7 +572,7 @@ export default function RiverPage() {
                     <div key={p.id} id={`river-post-${p.id}`}>
                       <PostCard
                         post={p}
-                        reactions={reactions as any}
+                        reactions={reactions}
                         isAdmin={isAdmin}
                       />
                     </div>
