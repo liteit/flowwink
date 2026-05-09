@@ -319,9 +319,9 @@ function IntegrationConfigPanel({
           <Label htmlFor="local-model" className="text-xs">Model Name</Label>
           <Input
             id="local-model"
-            value={config?.model || 'llama3'}
+            value={config?.model || ''}
             onChange={(e) => handleChange({ model: e.target.value })}
-            placeholder="llama3"
+            placeholder="e.g. llama3, mistral, qwen2.5"
             className="h-8 text-sm"
           />
         </div>
