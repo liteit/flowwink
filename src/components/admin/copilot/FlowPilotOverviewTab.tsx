@@ -306,7 +306,7 @@ export function FlowPilotOverviewTab() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="text-xs font-medium truncate">
-                              {(r.log_message || r.skill_name || 'Unknown').toString().replace(/_/g, ' ')}
+                              {(r.skill_name || 'Unknown').toString().replace(/_/g, ' ')}
                             </p>
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
