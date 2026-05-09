@@ -109,7 +109,7 @@ function Composer({
       const msg = e instanceof Error ? e.message : String(e);
       toast({
         title: 'Could not post',
-        description: e?.message,
+        description: msg,
         variant: 'destructive',
       });
     }
