@@ -57,6 +57,7 @@ export const navigationGroups: NavGroup[] = [
       { name: "Handbook", href: "/admin/handbook", icon: BookMarked, moduleId: "handbook" },
       { name: "Docs", href: "/admin/docs", icon: BookOpen, moduleId: "docs" },
       { name: "Wiki", href: "/admin/wiki", icon: BookMarked, moduleId: "wiki" },
+      { name: "River", href: "/admin/river", icon: MessageSquare, moduleId: "river" },
     ],
   },
   {
