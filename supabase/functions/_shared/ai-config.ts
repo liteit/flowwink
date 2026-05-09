@@ -78,7 +78,9 @@ export async function resolveAiConfig(
       return {
         apiKey: localApiKey || 'local',
         apiUrl,
-        model: localConfig.model || cfg.localModel || 'llama3',
+        model: localConfig.model || cfg.localModel || (() => {
+          throw new Error('Local LLM model not configured. Set it in Integrations → Local LLM.');
+        })(),
         provider: 'local',
         fallback: false,
       };
