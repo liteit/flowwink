@@ -36,6 +36,7 @@ export function ChatWidget() {
   const { data: settings, isLoading } = useChatSettings();
   const { branding } = useBranding();
   const chatModuleEnabled = useIsModuleEnabled('chat');
+  const cookieConsent = useCookieConsent();
 
   // Listen for external open-chat-widget events (from AiAssistantBlock, etc.)
   useEffect(() => {
