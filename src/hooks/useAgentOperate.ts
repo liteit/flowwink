@@ -147,19 +147,23 @@ export function useAgentOperate() {
   // ─── Conversation persistence ───────────────────────────────────────
 
   const getOrCreateConversation = useCallback(async (): Promise<string> => {
-    // If we already have an active conversation in state, use it
-    const existingId = localStorage.getItem(FLOWPILOT_CONVERSATION_KEY);
-    if (existingId && conversationId === existingId) return existingId;
+    const forceNew = forceNewConversationRef.current;
+    forceNewConversationRef.current = false;
 
-    if (existingId) {
-      const { data } = await supabase
-        .from('chat_conversations')
-        .select('id')
-        .eq('id', existingId)
-        .maybeSingle();
-      if (data) {
-        setConversationId(existingId);
-        return existingId;
+    if (!forceNew) {
+      const existingId = localStorage.getItem(FLOWPILOT_CONVERSATION_KEY);
+      if (existingId && conversationId === existingId) return existingId;
+
+      if (existingId) {
+        const { data } = await supabase
+          .from('chat_conversations')
+          .select('id')
+          .eq('id', existingId)
+          .maybeSingle();
+        if (data) {
+          setConversationId(existingId);
+          return existingId;
+        }
       }
     }
 
@@ -170,21 +174,23 @@ export function useAgentOperate() {
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    const { data: todaySession } = await supabase
-      .from('chat_conversations')
-      .select('id')
-      .eq('conversation_status', 'active')
-      .is('session_id', null)
-      .eq('user_id', user?.id ?? '')
-      .gte('created_at', todayStart.toISOString())
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    if (!forceNew) {
+      const { data: todaySession } = await supabase
+        .from('chat_conversations')
+        .select('id')
+        .eq('conversation_status', 'active')
+        .is('session_id', null)
+        .eq('user_id', user?.id ?? '')
+        .gte('created_at', todayStart.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    if (todaySession) {
-      localStorage.setItem(FLOWPILOT_CONVERSATION_KEY, todaySession.id);
-      setConversationId(todaySession.id);
-      return todaySession.id;
+      if (todaySession) {
+        localStorage.setItem(FLOWPILOT_CONVERSATION_KEY, todaySession.id);
+        setConversationId(todaySession.id);
+        return todaySession.id;
+      }
     }
 
     // Create a new daily session
