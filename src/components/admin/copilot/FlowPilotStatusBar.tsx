@@ -19,7 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
-import { useIsModuleEnabled } from '@/hooks/useIsModuleEnabled';
+import { useIsModuleEnabled } from '@/hooks/useModules';
 
 interface StatusData {
   lastHeartbeat: string | null;
