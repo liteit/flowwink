@@ -2803,6 +2803,97 @@ async function executeWikiAction(
   return { error: `Unknown wiki action: ${action}` };
 }
 
+// ─────────────────────────────────────────────────────────────
+// River — internal social feed
+// ─────────────────────────────────────────────────────────────
+async function executeRiverAction(
+  supabase: SupabaseClient,
+  skillName: string,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  if (skillName === 'search_river') {
+    const query = String((args as any).query || '').trim();
+    const limit = Math.min(Math.max(Number((args as any).limit) || 10, 1), 50);
+    if (!query) return { matches: [] };
+    const { data, error } = await supabase
+      .from('river_posts')
+      .select('id, body, author_id, created_at, parent_id, reaction_count, reply_count')
+      .ilike('body', `%${query}%`)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw new Error(`search_river failed: ${error.message}`);
+    return {
+      matches: (data || []).map((p: any) => ({
+        id: p.id,
+        author_id: p.author_id,
+        created_at: p.created_at,
+        parent_id: p.parent_id,
+        excerpt: String(p.body || '').slice(0, 240),
+        reactions: p.reaction_count,
+        replies: p.reply_count,
+      })),
+    };
+  }
+
+  const action = String((args as any).action || 'list');
+
+  if (action === 'list') {
+    const limit = Math.min(Math.max(Number((args as any).limit) || 20, 1), 100);
+    const { data, error } = await supabase
+      .from('river_posts')
+      .select('id, body, author_id, created_at, parent_id, pinned, reaction_count, reply_count, media_urls')
+      .is('parent_id', null)
+      .order('pinned', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw new Error(`list river failed: ${error.message}`);
+    return { posts: data || [] };
+  }
+
+  if (action === 'create' || action === 'reply') {
+    const body = String((args as any).body || '').trim();
+    if (!body) throw new Error('body is required');
+    const parent_id = action === 'reply' ? String((args as any).parent_id || '') : null;
+    if (action === 'reply' && !parent_id) throw new Error('parent_id is required for reply');
+    const mediaInput = (args as any).media_urls;
+    const media_urls = Array.isArray(mediaInput)
+      ? mediaInput.filter((u: unknown) => typeof u === 'string')
+      : [];
+    const insert: Record<string, unknown> = { body, media_urls };
+    if (parent_id) insert.parent_id = parent_id;
+    const { data, error } = await supabase
+      .from('river_posts')
+      .insert(insert)
+      .select('id, body, author_id, parent_id, created_at')
+      .single();
+    if (error) throw new Error(`create river post failed: ${error.message}`);
+    return { ...data, status: 'created' };
+  }
+
+  if (action === 'pin' || action === 'unpin') {
+    const id = String((args as any).id || '');
+    if (!id) throw new Error('id is required');
+    const { data, error } = await supabase
+      .from('river_posts')
+      .update({ pinned: action === 'pin' })
+      .eq('id', id)
+      .select('id, pinned')
+      .single();
+    if (error) throw new Error(`${action} failed: ${error.message}`);
+    return { ...data, status: action === 'pin' ? 'pinned' : 'unpinned' };
+  }
+
+  if (action === 'delete') {
+    const id = String((args as any).id || '');
+    if (!id) throw new Error('id is required');
+    const { error } = await supabase.from('river_posts').delete().eq('id', id);
+    if (error) throw new Error(`delete failed: ${error.message}`);
+    return { id, status: 'deleted' };
+  }
+
+  return { error: `Unknown river action: ${action}` };
+}
+
 // =============================================================================
 // Global Blocks module handlers
 // =============================================================================
