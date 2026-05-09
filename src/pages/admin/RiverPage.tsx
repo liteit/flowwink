@@ -123,10 +123,11 @@ function Composer({
         Array.from(files).slice(0, 4).map(uploadRiverMedia),
       );
       setMedia((m) => [...m, ...urls].slice(0, 4));
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
       toast({
         title: 'Upload failed',
-        description: e?.message,
+        description: msg,
         variant: 'destructive',
       });
     } finally {
