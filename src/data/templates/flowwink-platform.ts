@@ -1808,9 +1808,9 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
   },
 
   seoSettings: {
-    siteTitle: 'FlowWink',
+    siteTitle: 'FlowWink — The Business Operating System',
     titleTemplate: '%s | FlowWink',
-    defaultDescription: 'The Business Operating System — a self-hosted CMS, CRM and ERP run by an autonomous operator. Built-in FlowPilot, or bring your own agent.',
+    defaultDescription: 'FlowWink is the first autonomous Business Operating System — self-hosted, open source, AI-native from line one. 200+ MCP skills across CRM, finance, ERP, and content.',
     robotsIndex: true,
     robotsFollow: true,
     developmentMode: false,
