@@ -299,6 +299,7 @@ export const defaultChatSettings: ChatSettings = {
   n8nTriggerKeywords: [],
   systemPrompt: 'You are a helpful AI assistant. Always respond in the same language the user writes in.',
   toolCallingEnabled: false,
+  allowedSkillNames: [],
   firecrawlSearchEnabled: false,
   humanHandoffEnabled: false,
   sentimentDetectionEnabled: true,
