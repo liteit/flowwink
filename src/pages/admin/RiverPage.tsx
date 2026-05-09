@@ -490,48 +490,95 @@ export default function RiverPage() {
     );
   }
 
+  const pinnedPosts = posts.filter((p) => p.pinned);
+
   return (
     <AdminLayout>
       <AdminPageContainer>
-        <div className="max-w-2xl mx-auto space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Waves className="h-5 w-5 text-primary" />
+        <div className="grid grid-cols-12 gap-6">
+          {/* Left panel — pinned */}
+          <aside className="col-span-12 lg:col-span-3 space-y-3">
+            <div className="flex items-center gap-2">
+              <Pin className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold tracking-tight">Pinned</h2>
+              <Badge variant="secondary" className="ml-auto h-5 px-1.5 text-[10px]">
+                {pinnedPosts.length}
+              </Badge>
             </div>
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">River</h1>
-              <p className="text-sm text-muted-foreground">
-                The team's social stream — short messages, images, threads.
+            {pinnedPosts.length === 0 ? (
+              <p className="text-xs text-muted-foreground px-1">
+                Nothing pinned yet. Admins can pin posts from the feed.
               </p>
-            </div>
-          </div>
+            ) : (
+              <ul className="space-y-1.5">
+                {pinnedPosts.map((p) => (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        document
+                          .getElementById(`river-post-${p.id}`)
+                          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }}
+                      className="w-full text-left rounded-md border bg-primary/5 hover:bg-primary/10 px-2.5 py-2 transition"
+                    >
+                      <div className="text-xs font-medium line-clamp-2">
+                        {p.body || '(no text)'}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        {formatDistanceToNow(new Date(p.created_at), { addSuffix: true })}
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </aside>
 
-          <Composer />
+          {/* Main feed */}
+          <main className="col-span-12 lg:col-span-9">
+            <div className="max-w-2xl mx-auto space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Waves className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-semibold tracking-tight">River</h1>
+                  <p className="text-sm text-muted-foreground">
+                    The team's social stream — short messages, images, threads.
+                  </p>
+                </div>
+              </div>
 
-          <Separator className="my-2" />
+              <Composer />
 
-          {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <Separator className="my-2" />
+
+              {isLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : posts.length === 0 ? (
+                <Card>
+                  <CardContent className="py-12 text-center text-muted-foreground">
+                    Nothing yet. Be the first to post something to the team 🌊
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {posts.map((p) => (
+                    <div key={p.id} id={`river-post-${p.id}`}>
+                      <PostCard
+                        post={p}
+                        reactions={reactions as any}
+                        isAdmin={isAdmin}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          ) : posts.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                Nothing yet. Be the first to post something to the team 🌊
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {posts.map((p) => (
-                <PostCard
-                  key={p.id}
-                  post={p}
-                  reactions={reactions as any}
-                  isAdmin={isAdmin}
-                />
-              ))}
-            </div>
-          )}
+          </main>
         </div>
       </AdminPageContainer>
     </AdminLayout>
