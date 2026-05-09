@@ -106,7 +106,13 @@ serve(async (req) => {
     } else if (provider === 'local_llm') {
       // Test local LLM connection using config from request
       const endpoint = config?.endpoint;
-      const model = config?.model || 'llama3';
+      const model = config?.model;
+      if (!model) {
+        return new Response(
+          JSON.stringify({ success: false, provider: 'local_llm', error: 'Model name is required (e.g. llama3, mistral, qwen2.5)' }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       const apiKey = config?.apiKey;
 
       if (!endpoint) {

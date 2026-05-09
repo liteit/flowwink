@@ -514,7 +514,11 @@ function tryResolveProvider(provider: string, settings: ChatSettings | undefined
     const localApiKey = Deno.env.get('LOCAL_LLM_API_KEY') || localConfig?.apiKey || settings?.localApiKey;
     const baseEndpoint = endpoint.replace(/\/+$/, '');
     const apiPath = baseEndpoint.endsWith('/v1') ? '/chat/completions' : '/v1/chat/completions';
-    const model = settings?.localModel || localConfig?.model || 'llama3';
+    const model = settings?.localModel || localConfig?.model;
+    if (!model) {
+      console.error('[chat-completion] Local LLM model not configured. Set it in Integrations → Local LLM or Chat settings.');
+      return null;
+    }
 
     return {
       apiKey: localApiKey || '',

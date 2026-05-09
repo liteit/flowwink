@@ -214,7 +214,7 @@ export const defaultIntegrationsSettings: IntegrationsSettings = {
     docsLabel: 'Setup guide',
     config: {
       endpoint: '',
-      model: 'llama3',
+      model: '',
     },
   },
   n8n: {
