@@ -141,10 +141,8 @@ function useActivityFeed(filter: ExecutorKind | 'all') {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(20);
-      if (filter !== 'all') {
-        if (filter === 'mcp') q = q.like('agent', 'mcp%');
-        else q = q.eq('agent', filter);
-      }
+      if (filter === 'mcp') q = q.like('agent', 'mcp%');
+      else if (filter === 'flowpilot' || filter === 'chat') q = q.eq('agent', filter);
       const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as unknown as AgentActivity[];
