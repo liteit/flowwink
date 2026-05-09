@@ -55,9 +55,6 @@ export function ChatEmptyState({
         {welcomeMessage}
       </p>
 
-      {/* Context indicator */}
-      <ChatContextIndicator variant="compact" className="mb-6" />
-      
       {visiblePrompts.length > 0 && (
         <div className={cn(
           'flex flex-col gap-2 w-full max-w-sm',
