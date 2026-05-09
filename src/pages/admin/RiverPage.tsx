@@ -467,8 +467,7 @@ function PostCard({
 
 export default function RiverPage() {
   const enabled = useIsModuleEnabled('river');
-  const { profile } = useAuth();
-  const isAdmin = profile?.role === 'admin';
+  const { isAdmin } = useAuth();
   const { data: posts = [], isLoading } = useRiverFeed(50);
   const ids = posts.map((p) => p.id);
   const { data: reactions = [] } = useRiverReactions(ids);
