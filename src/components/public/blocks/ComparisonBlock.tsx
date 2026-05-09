@@ -46,9 +46,9 @@ export function ComparisonBlock({ data }: ComparisonBlockProps) {
           </div>
         )}
 
-        <div className="overflow-x-auto">
+        <div className="w-full max-w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           <table className={cn(
-            'w-full border-collapse',
+            'w-full min-w-[640px] border-collapse',
             variant === 'bordered' && 'border border-border rounded-lg overflow-hidden'
           )}>
             {/* Header */}
