@@ -131,15 +131,30 @@ export function CookieBanner() {
   );
 }
 
-// Hook to check cookie consent status
+// Hook to check cookie consent status (reactive across the app)
 export function useCookieConsent() {
   const [consent, setConsent] = useState<CookieConsent>('pending');
 
   useEffect(() => {
-    const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
-    if (stored === 'accepted' || stored === 'rejected') {
-      setConsent(stored);
-    }
+    const read = () => {
+      const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
+      setConsent(stored === 'accepted' || stored === 'rejected' ? stored : 'pending');
+    };
+    read();
+    const onCustom = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail === 'accepted' || detail === 'rejected') setConsent(detail);
+      else read();
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === COOKIE_CONSENT_KEY) read();
+    };
+    window.addEventListener('cookie-consent-changed', onCustom);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('cookie-consent-changed', onCustom);
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
 
   return consent;
