@@ -572,7 +572,7 @@ export default function RiverPage() {
                     <div key={p.id} id={`river-post-${p.id}`}>
                       <PostCard
                         post={p}
-                        reactions={reactions as any}
+                        reactions={reactions}
                         isAdmin={isAdmin}
                       />
                     </div>
