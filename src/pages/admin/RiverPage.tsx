@@ -105,7 +105,8 @@ function Composer({
       setBody('');
       setMedia([]);
       onPosted?.();
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
       toast({
         title: 'Could not post',
         description: e?.message,
