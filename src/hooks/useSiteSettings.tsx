@@ -211,6 +211,8 @@ export interface ChatSettings {
   
   // Tool Calling (Agentic AI)
   toolCallingEnabled: boolean;
+  /** Optional allow-list of skill names (FlowPilot action skills). Empty = all external skills. */
+  allowedSkillNames: string[];
   firecrawlSearchEnabled: boolean;
   humanHandoffEnabled: boolean;
   sentimentDetectionEnabled: boolean;
@@ -297,6 +299,7 @@ export const defaultChatSettings: ChatSettings = {
   n8nTriggerKeywords: [],
   systemPrompt: 'You are a helpful AI assistant. Always respond in the same language the user writes in.',
   toolCallingEnabled: false,
+  allowedSkillNames: [],
   firecrawlSearchEnabled: false,
   humanHandoffEnabled: false,
   sentimentDetectionEnabled: true,

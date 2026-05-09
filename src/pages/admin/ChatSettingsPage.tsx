@@ -22,6 +22,9 @@ import { useUnsavedChanges, UnsavedChangesDialog } from '@/hooks/useUnsavedChang
 import { Link, useSearchParams } from 'react-router-dom';
 import { useIsOpenAIConfigured, useIsGeminiConfigured } from '@/hooks/useIntegrationStatus';
 import { useIntegrations } from '@/hooks/useIntegrations';
+import { useModuleReadiness } from '@/hooks/useModuleReadiness';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { IntegrationWarning } from '@/components/admin/IntegrationWarning';
 import { toast } from 'sonner';
 import { IntegrationsSettings } from '@/hooks/useIntegrations';
@@ -134,6 +137,22 @@ export default function ChatSettingsPage() {
   const isOpenAIConfigured = useIsOpenAIConfigured();
   const isGeminiConfigured = useIsGeminiConfigured();
   const { data: integrationSettings } = useIntegrations();
+  const flowpilotReadiness = useModuleReadiness('chat');
+  const flowpilotMissing = flowpilotReadiness.flowPilotEnhancedButMissing || flowpilotReadiness.missingFlowPilot;
+  // Available external skills for the allow-list
+  const { data: availableSkills = [] } = useQuery({
+    queryKey: ['agent-skills', 'external-for-chat'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('agent_skills')
+        .select('name, description, category')
+        .eq('enabled', true)
+        .in('scope', ['external', 'both'])
+        .order('category', { ascending: true })
+        .order('name', { ascending: true });
+      return data ?? [];
+    },
+  });
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'general';
 
@@ -1048,8 +1067,137 @@ export default function ChatSettingsPage() {
                   </CardHeader>
                 </Card>
 
-                {/* Tool Calling Master Toggle */}
+                {/* Firecrawl Web Search — independent of FlowPilot */}
                 <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                          <Globe className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base">Firecrawl Web Search</CardTitle>
+                          <CardDescription>
+                            AI can search the web for current information. Works independently of FlowPilot.
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={formData.firecrawlSearchEnabled ?? false}
+                        onCheckedChange={(firecrawlSearchEnabled) =>
+                          setFormData({ ...formData, firecrawlSearchEnabled })
+                        }
+                      />
+                    </div>
+                  </CardHeader>
+                  {formData.firecrawlSearchEnabled && (
+                    <CardContent className="pt-0">
+                      <Alert>
+                        <Globe className="h-4 w-4" />
+                        <AlertDescription>
+                          Requires Firecrawl API key configured in{' '}
+                          <Link to="/admin/integrations" className="text-primary underline">
+                            Integrations
+                          </Link>
+                        </AlertDescription>
+                      </Alert>
+                    </CardContent>
+                  )}
+                </Card>
+
+                {/* Human Handoff — independent of FlowPilot */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                          <Headphones className="h-5 w-5 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base">Human Handoff</CardTitle>
+                          <CardDescription>
+                            AI can transfer conversations to live support agents. Works independently of FlowPilot.
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={formData.humanHandoffEnabled ?? false}
+                        onCheckedChange={(humanHandoffEnabled) =>
+                          setFormData({ ...formData, humanHandoffEnabled })
+                        }
+                      />
+                    </div>
+                  </CardHeader>
+                  {formData.humanHandoffEnabled && (
+                    <CardContent className="pt-0">
+                      <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-900">
+                        <Headphones className="h-4 w-4 text-green-600" />
+                        <AlertDescription className="text-green-700 dark:text-green-300">
+                          When enabled, AI will route conversations to available agents when users need human support.
+                          If no agents are online, an escalation ticket will be created.
+                        </AlertDescription>
+                      </Alert>
+                    </CardContent>
+                  )}
+                </Card>
+
+                {/* Sentiment Detection — independent of FlowPilot */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                          <Brain className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base">Sentiment Detection</CardTitle>
+                          <CardDescription>
+                            AI analyzes user sentiment to detect frustration. Pairs with Human Handoff.
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={formData.sentimentDetectionEnabled ?? false}
+                        onCheckedChange={(sentimentDetectionEnabled) =>
+                          setFormData({ ...formData, sentimentDetectionEnabled })
+                        }
+                      />
+                    </div>
+                  </CardHeader>
+                  {formData.sentimentDetectionEnabled && (
+                    <CardContent className="pt-0 space-y-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="sentimentThreshold">Handoff Threshold</Label>
+                          <span className="text-sm text-muted-foreground">
+                            {formData.sentimentThreshold ?? 7}/10 frustration
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <Gauge className="h-4 w-4 text-muted-foreground" />
+                          <input
+                            type="range"
+                            id="sentimentThreshold"
+                            min={1}
+                            max={10}
+                            value={formData.sentimentThreshold ?? 7}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              sentimentThreshold: parseInt(e.target.value),
+                            })}
+                            className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          When user frustration exceeds this level, AI will automatically suggest human support
+                        </p>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                {/* FlowPilot Action Skills — gated on FlowPilot module */}
+                <Card className={flowpilotMissing ? 'opacity-60' : undefined}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -1057,157 +1205,95 @@ export default function ChatSettingsPage() {
                           <Wrench className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <CardTitle>Tool Calling</CardTitle>
+                          <CardTitle>FlowPilot Action Skills</CardTitle>
                           <CardDescription>
-                            Enable AI to use external tools and take actions
+                            Let the chat agent perform actions: bookings, leads, orders, etc.
                           </CardDescription>
                         </div>
                       </div>
                       <Switch
-                        checked={formData.toolCallingEnabled ?? false}
-                        onCheckedChange={(toolCallingEnabled) => 
+                        disabled={flowpilotMissing}
+                        checked={!flowpilotMissing && (formData.toolCallingEnabled ?? false)}
+                        onCheckedChange={(toolCallingEnabled) =>
                           setFormData({ ...formData, toolCallingEnabled })
                         }
+                        title={flowpilotMissing ? 'Enable the FlowPilot module to use action skills' : undefined}
                       />
                     </div>
                   </CardHeader>
+                  {flowpilotMissing && (
+                    <CardContent className="pt-0">
+                      <Alert>
+                        <Bot className="h-4 w-4" />
+                        <AlertTitle>FlowPilot module is disabled</AlertTitle>
+                        <AlertDescription>
+                          Action skills require FlowPilot reasoning. Enable the FlowPilot module in{' '}
+                          <Link to="/admin/modules" className="text-primary underline">Modules</Link> to use this.
+                          Web search, handoff and sentiment above work fine without FlowPilot.
+                        </AlertDescription>
+                      </Alert>
+                    </CardContent>
+                  )}
+                  {!flowpilotMissing && formData.toolCallingEnabled && (
+                    <CardContent className="pt-0 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm">Skill allow-list</Label>
+                        <span className="text-xs text-muted-foreground">
+                          {(formData.allowedSkillNames?.length ?? 0) === 0
+                            ? `All ${availableSkills.length} skills available`
+                            : `${formData.allowedSkillNames?.length} of ${availableSkills.length} selected`}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Leave empty to expose every external skill (faster setup, larger context).
+                        Pick specific skills to keep prompts small and predictable.
+                      </p>
+                      <div className="max-h-64 overflow-y-auto rounded-md border p-2 space-y-1">
+                        {availableSkills.length === 0 && (
+                          <p className="text-xs text-muted-foreground p-2">No external skills registered.</p>
+                        )}
+                        {availableSkills.map((s) => {
+                          const allow = formData.allowedSkillNames ?? [];
+                          const checked = allow.includes(s.name);
+                          return (
+                            <label key={s.name} className="flex items-start gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer">
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={(v) => {
+                                  const next = v
+                                    ? Array.from(new Set([...allow, s.name]))
+                                    : allow.filter((n) => n !== s.name);
+                                  setFormData({ ...formData, allowedSkillNames: next });
+                                }}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <code className="text-xs font-mono">{s.name}</code>
+                                  {s.category && <Badge variant="outline" className="text-[10px]">{s.category}</Badge>}
+                                </div>
+                                {s.description && (
+                                  <p className="text-xs text-muted-foreground line-clamp-2">{s.description}</p>
+                                )}
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                      {(formData.allowedSkillNames?.length ?? 0) > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setFormData({ ...formData, allowedSkillNames: [] })}
+                        >
+                          Clear selection (use all)
+                        </Button>
+                      )}
+                    </CardContent>
+                  )}
                 </Card>
 
-                {formData.toolCallingEnabled && (
-                  <>
-                    {/* Firecrawl Web Search */}
-                    <Card>
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                              <Globe className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div>
-                              <CardTitle className="text-base">Firecrawl Web Search</CardTitle>
-                              <CardDescription>
-                                AI can search the web for current information
-                              </CardDescription>
-                            </div>
-                          </div>
-                          <Switch
-                            checked={formData.firecrawlSearchEnabled ?? false}
-                            onCheckedChange={(firecrawlSearchEnabled) => 
-                              setFormData({ ...formData, firecrawlSearchEnabled })
-                            }
-                          />
-                        </div>
-                      </CardHeader>
-                      {formData.firecrawlSearchEnabled && (
-                        <CardContent className="pt-0">
-                          <Alert>
-                            <Globe className="h-4 w-4" />
-                            <AlertDescription>
-                              Requires Firecrawl API key configured in{' '}
-                              <Link to="/admin/integrations" className="text-primary underline">
-                                Integrations
-                              </Link>
-                            </AlertDescription>
-                          </Alert>
-                        </CardContent>
-                      )}
-                    </Card>
-
-                    {/* Human Handoff */}
-                    <Card>
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                              <Headphones className="h-5 w-5 text-green-600 dark:text-green-400" />
-                            </div>
-                            <div>
-                              <CardTitle className="text-base">Human Handoff</CardTitle>
-                              <CardDescription>
-                                AI can transfer conversations to live support agents
-                              </CardDescription>
-                            </div>
-                          </div>
-                          <Switch
-                            checked={formData.humanHandoffEnabled ?? false}
-                            onCheckedChange={(humanHandoffEnabled) => 
-                              setFormData({ ...formData, humanHandoffEnabled })
-                            }
-                          />
-                        </div>
-                      </CardHeader>
-                      {formData.humanHandoffEnabled && (
-                        <CardContent className="pt-0">
-                          <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-900">
-                            <Headphones className="h-4 w-4 text-green-600" />
-                            <AlertDescription className="text-green-700 dark:text-green-300">
-                              When enabled, AI will route conversations to available agents when users need human support.
-                              If no agents are online, an escalation ticket will be created.
-                            </AlertDescription>
-                          </Alert>
-                        </CardContent>
-                      )}
-                    </Card>
-
-                    {/* Sentiment Detection */}
-                    <Card>
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                              <Brain className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                            </div>
-                            <div>
-                              <CardTitle className="text-base">Sentiment Detection</CardTitle>
-                              <CardDescription>
-                                AI analyzes user sentiment to detect frustration
-                              </CardDescription>
-                            </div>
-                          </div>
-                          <Switch
-                            checked={formData.sentimentDetectionEnabled ?? false}
-                            onCheckedChange={(sentimentDetectionEnabled) => 
-                              setFormData({ ...formData, sentimentDetectionEnabled })
-                            }
-                          />
-                        </div>
-                      </CardHeader>
-                      {formData.sentimentDetectionEnabled && (
-                        <CardContent className="pt-0 space-y-4">
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <Label htmlFor="sentimentThreshold">Handoff Threshold</Label>
-                              <span className="text-sm text-muted-foreground">
-                                {formData.sentimentThreshold ?? 7}/10 frustration
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <Gauge className="h-4 w-4 text-muted-foreground" />
-                              <input
-                                type="range"
-                                id="sentimentThreshold"
-                                min={1}
-                                max={10}
-                                value={formData.sentimentThreshold ?? 7}
-                                onChange={(e) => setFormData({ 
-                                  ...formData, 
-                                  sentimentThreshold: parseInt(e.target.value) 
-                                })}
-                                className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-                              />
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              When user frustration exceeds this level, AI will automatically suggest human support
-                            </p>
-                          </div>
-                        </CardContent>
-                      )}
-                    </Card>
-                  </>
-                )}
-
                 {/* Local AI Tool Calling Support Toggle */}
-                {formData.toolCallingEnabled && formData.aiProvider === 'local' && (
+                {formData.toolCallingEnabled && formData.aiProvider === 'local' && !flowpilotMissing && (
                   <Card>
                     <CardHeader>
                       <div className="flex items-center justify-between">
@@ -1224,7 +1310,7 @@ export default function ChatSettingsPage() {
                         </div>
                         <Switch
                           checked={formData.localSupportsToolCalling ?? false}
-                          onCheckedChange={(localSupportsToolCalling) => 
+                          onCheckedChange={(localSupportsToolCalling) =>
                             setFormData({ ...formData, localSupportsToolCalling })
                           }
                         />
@@ -1240,16 +1326,6 @@ export default function ChatSettingsPage() {
                       </Alert>
                     </CardContent>
                   </Card>
-                )}
-
-                {!formData.toolCallingEnabled && (
-                  <Alert>
-                    <Wrench className="h-4 w-4" />
-                    <AlertTitle>Tool Calling Disabled</AlertTitle>
-                    <AlertDescription>
-                      Enable tool calling above to configure web search, human handoff, and sentiment detection features.
-                    </AlertDescription>
-                  </Alert>
                 )}
 
                 {/* FlowPilot Escalation Feed */}
