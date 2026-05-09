@@ -1,6 +1,5 @@
 import { MessageSquare, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ChatContextIndicator } from './ChatContextIndicator';
 import { cn } from '@/lib/utils';
 
 interface ChatEmptyStateProps {
@@ -56,9 +55,6 @@ export function ChatEmptyState({
         {welcomeMessage}
       </p>
 
-      {/* Context indicator */}
-      <ChatContextIndicator variant="compact" className="mb-6" />
-      
       {visiblePrompts.length > 0 && (
         <div className={cn(
           'flex flex-col gap-2 w-full max-w-sm',
