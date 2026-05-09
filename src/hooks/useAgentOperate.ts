@@ -197,7 +197,9 @@ export function useAgentOperate() {
     const { data, error } = await supabase
       .from('chat_conversations')
       .insert({
-        title: `Session — ${todayLabel}`,
+        title: forceNew
+          ? `Session — ${todayLabel} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+          : `Session — ${todayLabel}`,
         conversation_status: 'active',
         priority: 'normal',
         user_id: user?.id,
