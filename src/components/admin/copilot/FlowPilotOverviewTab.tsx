@@ -211,10 +211,9 @@ export function FlowPilotOverviewTab() {
           <CardContent>
             {briefing.data ? (
               <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                {briefing.data.log_message ||
-                  (typeof briefing.data.output === 'object' && briefing.data.output
-                    ? (briefing.data.output as Record<string, unknown>).summary?.toString() ?? 'Briefing generated.'
-                    : 'Briefing generated.')}
+                {(typeof briefing.data.output === 'object' && briefing.data.output
+                  ? (briefing.data.output as Record<string, unknown>).summary?.toString() ?? 'Briefing generated.'
+                  : 'Briefing generated.')}
               </p>
             ) : (
               <div className="text-sm text-muted-foreground">
