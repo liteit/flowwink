@@ -73,7 +73,14 @@ export function ChatWidget() {
   const isPill = style === 'pill';
 
   return (
-    <div className={cn('fixed bottom-4 sm:bottom-6 z-50', positionClasses)}>
+    <div className={cn(
+      'fixed z-50 transition-[bottom] duration-300',
+      positionClasses,
+      // Lift above the cookie banner on mobile while consent is pending
+      cookieConsent === 'pending'
+        ? 'bottom-[260px] sm:bottom-[140px] md:bottom-6'
+        : 'bottom-4 sm:bottom-6'
+    )}>
       {/* Chat window */}
       {isOpen && (
         <div className={cn(
