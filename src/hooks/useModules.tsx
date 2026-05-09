@@ -103,6 +103,7 @@ export interface ModulesSettings {
   payroll: ModuleConfig;
   clawable: ModuleConfig;
   wiki: ModuleConfig;
+  river: ModuleConfig;
 }
 
 export const defaultModulesSettings: ModulesSettings = {
@@ -741,6 +742,17 @@ export const defaultModulesSettings: ModulesSettings = {
     adminUI: true,
     enhancedByFlowPilot: true,
   },
+  river: {
+    enabled: false,
+    name: 'River',
+    description:
+      'Internal social feed (X / Instagram / Slack-inspired). Team members post short messages with images, reply in threads, and react with emoji — realtime.',
+    icon: 'MessageSquare',
+    category: 'communication',
+    autonomy: 'view-required',
+    adminUI: true,
+    enhancedByFlowPilot: true,
+  },
 };
 
 // Map sidebar items to module IDs
@@ -805,6 +817,7 @@ export const SIDEBAR_TO_MODULE: Record<string, keyof ModulesSettings> = {
   '/admin/fixed-assets': 'fixedAssets',
   '/admin/payroll': 'payroll',
   '/admin/wiki': 'wiki',
+  '/admin/river': 'river',
 };
 
 export function useModules() {

@@ -9105,6 +9105,85 @@ export type Database = {
           },
         ]
       }
+      river_posts: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          media_urls: Json
+          parent_id: string | null
+          pinned: boolean
+          reaction_count: number
+          reply_count: number
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          media_urls?: Json
+          parent_id?: string | null
+          pinned?: boolean
+          reaction_count?: number
+          reply_count?: number
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          media_urls?: Json
+          parent_id?: string | null
+          pinned?: boolean
+          reaction_count?: number
+          reply_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "river_posts_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "river_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      river_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          post_id: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "river_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "river_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_module_access: {
         Row: {
           created_at: string

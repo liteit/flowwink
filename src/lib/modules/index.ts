@@ -17,6 +17,7 @@ export { handbookModule } from './handbook-module';
 export { docsModule } from './docs-module';
 export { templatesModule } from './templates-module';
 export { wikiModule } from './wiki-module';
+export { riverModule } from './river-module';
 
 // ── CRM / Data ──
 export { crmModule } from './crm-module';
