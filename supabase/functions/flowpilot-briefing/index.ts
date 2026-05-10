@@ -699,7 +699,7 @@ function buildBriefingEmail(data: {
 
         <!-- Footer -->
         <tr><td style="padding:16px 24px;text-align:center;background:#f9fafb;border-top:1px solid #f3f4f6;">
-          <div style="font-size:11px;color:#9ca3af;">Sent by FlowPilot · Your autonomous business co-pilot</div>
+          <div style="font-size:11px;color:#9ca3af;">${footerLine}</div>
         </td></tr>
 
       </table>
