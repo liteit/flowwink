@@ -199,13 +199,6 @@ async function loadActiveModules(): Promise<Set<string>> {
 }
 
 function isCategoryActive(category: string, activeModules: Set<string>): boolean {
-  if (activeModules.has("__all__")) return true;
-  const requiredModules = SKILL_CATEGORY_MODULES[category];
-  if (!requiredModules || requiredModules.length === 0) return true; // system = always
-  return requiredModules.some((m) => activeModules.has(m));
-}
-
-function isCategoryActive(category: string, activeModules: Set<string>): boolean {
   return isCategoryActiveShared(category, activeModules, SKILL_CATEGORY_MODULES);
 }
 
