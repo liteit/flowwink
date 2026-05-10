@@ -46,6 +46,9 @@ serve(async (req) => {
   const startTime = Date.now();
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  // NOTE: kept inline createClient here because downstream handler plugins
+  // capture `supabase` and `serviceKey` from this scope. When we extract
+  // handlers/* in phase 2b, swap to getServiceClient() from _shared/supabase-clients.
   const supabase = createClient(supabaseUrl, serviceKey);
 
   try {
