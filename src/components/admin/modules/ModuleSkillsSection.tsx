@@ -39,6 +39,7 @@ export function ModuleSkillsSection({
   defaultOpen = false,
 }: ModuleSkillsSectionProps) {
   const { data: allSkills = [], isLoading } = useSkills();
+  const moduleEnabled = useIsModuleEnabled(moduleId as keyof ModulesSettings);
 
   const moduleSkills = useMemo(() => {
     const declaredNames = getUnifiedSkillNames(moduleId as keyof ModulesSettings);
@@ -67,7 +68,7 @@ export function ModuleSkillsSection({
   const list = (
     <div className="space-y-1.5">
       {moduleSkills.map(skill => (
-        <SkillRow key={skill.id} skill={skill} />
+        <SkillRow key={skill.id} skill={skill} moduleEnabled={moduleEnabled} />
       ))}
     </div>
   );
@@ -130,11 +131,12 @@ export function ModuleSkillsSection({
 
 // ─── Single skill row ─────────────────────────────────────────────────────────
 
-function SkillRow({ skill }: { skill: AgentSkill }) {
+function SkillRow({ skill, moduleEnabled = true }: { skill: AgentSkill; moduleEnabled?: boolean }) {
   const flowpilotEnabled = useIsModuleEnabled('flowpilot');
   const [testerOpen, setTesterOpen] = useState(false);
   const tryPrompt = encodeURIComponent(`Use the ${skill.name} skill`);
   const isAiTask = skill.handler?.startsWith('ai-task:') ?? false;
+  const mcpHiddenByModule = skill.mcp_exposed && !moduleEnabled;
   return (
     <div
       className={cn(
@@ -151,8 +153,20 @@ function SkillRow({ skill }: { skill: AgentSkill }) {
             </Badge>
           )}
           {skill.mcp_exposed && (
-            <Badge variant="secondary" className="text-[9px] h-4 gap-0.5">
+            <Badge
+              variant="secondary"
+              className={cn(
+                'text-[9px] h-4 gap-0.5',
+                mcpHiddenByModule && 'opacity-50 line-through'
+              )}
+              title={mcpHiddenByModule ? 'Hidden from MCP — module is disabled' : 'Exposed via MCP'}
+            >
               <Cpu className="h-2 w-2" /> MCP
+            </Badge>
+          )}
+          {mcpHiddenByModule && (
+            <Badge variant="outline" className="text-[9px] h-4 text-amber-600 border-amber-300">
+              Module off
             </Badge>
           )}
           {isAiTask && (
