@@ -198,6 +198,8 @@ export default function PlatformTestsPage() {
               suite={suite}
               state={runState[suite.id]}
               onRun={() => runSuite(suite)}
+              onReseed={suite.scope === 'module' ? () => reseedModule(suite) : undefined}
+              reseeding={reseeding === suite.id}
             />
           ))}
         </div>
