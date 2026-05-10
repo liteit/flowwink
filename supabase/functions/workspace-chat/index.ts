@@ -19,6 +19,7 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { getServiceClient, resolveCaller } from '../_shared/supabase-clients.ts';
 import { resolveAiConfig, isAnthropicProvider } from '../_shared/ai-config.ts';
 import { logAiUsage } from '../_shared/ai-usage-logger.ts';
 
