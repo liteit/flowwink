@@ -151,11 +151,32 @@ serve(async (req) => {
     const bookingsCount = bookingsWeek.count ?? 0;
     const chatCount = chatConversations.count ?? 0;
 
-    // FlowPilot actions summary
+    // ─── Check whether FlowPilot module is enabled ─────────────────
+    // When disabled, the briefing must be presented as FlowWink (no
+    // FlowPilot mentions, no autonomous-actions wording).
+    const { data: modulesRow } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "modules")
+      .maybeSingle();
+    const fpEnabled = (modulesRow?.value as any)?.flowpilot?.enabled === true;
+    const productName = fpEnabled ? "FlowPilot" : "FlowWink";
+
+    // Activity summary — split per shell so we don't conflate human
+    // FlowChat / external MCP / cron with FlowPilot's autonomous loop.
     const actions = agentActivity.data || [];
     const successActions = actions.filter((a: any) => a.status === "success").length;
     const failedActions = actions.filter((a: any) => a.status === "failed").length;
     const skillsUsed = [...new Set(actions.map((a: any) => a.skill_name).filter(Boolean))];
+
+    // Per-shell counts (defensive: rows missing `agent` are treated as 'flowpilot'
+    // for backward compatibility with older rows).
+    const countByShell = (shell: string) =>
+      actions.filter((a: any) => (a.agent ?? "flowpilot") === shell).length;
+    const fpAutonomousActions = countByShell("flowpilot");
+    const mcpActions = countByShell("mcp");
+    const cronActions = countByShell("cron");
+    const humanActions = countByShell("chat") + countByShell("user");
 
     // Active objectives progress
     const objectives = (objectivesActive.data || []).map((o: any) => {
@@ -185,17 +206,32 @@ serve(async (req) => {
       ],
     });
 
-    // 2. FlowPilot Activity
-    sections.push({
-      title: "🤖 FlowPilot Activity (24h)",
-      type: "activity",
-      items: [
-        { label: "Actions executed", value: actions.length },
-        { label: "Successful", value: successActions },
-        { label: "Failed", value: failedActions },
-        { label: "Skills used", value: skillsUsed.join(", ") || "none" },
-      ],
-    });
+    // 2. Activity — only mention FlowPilot when the module is enabled.
+    if (fpEnabled) {
+      sections.push({
+        title: "🤖 FlowPilot Activity (24h)",
+        type: "activity",
+        items: [
+          { label: "Autonomous actions", value: fpAutonomousActions },
+          { label: "Successful", value: actions.filter((a: any) => (a.agent ?? "flowpilot") === "flowpilot" && a.status === "success").length },
+          { label: "Failed", value: actions.filter((a: any) => (a.agent ?? "flowpilot") === "flowpilot" && a.status === "failed").length },
+          { label: "Skills used", value: skillsUsed.join(", ") || "none" },
+        ],
+      });
+    } else if (actions.length > 0) {
+      // FlowPilot off — show a neutral shell breakdown so admins still
+      // see who/what is touching the system.
+      sections.push({
+        title: "⚙️ Skill Activity (24h)",
+        type: "activity",
+        items: [
+          { label: "You (FlowChat)", value: humanActions },
+          { label: "External agents (MCP)", value: mcpActions },
+          { label: "Platform (cron)", value: cronActions },
+          { label: "Failed", value: failedActions },
+        ],
+      });
+    }
 
     // 3. Objective Progress
     if (objectives.length > 0) {
