@@ -593,8 +593,13 @@ function buildBriefingEmail(data: {
   sections: any[];
   actionItems: any[];
   metrics: any;
+  productName?: string;
 }) {
   const { title, summary, healthScore, healthEmoji, sections, actionItems, metrics } = data;
+  const productName = data.productName ?? "FlowPilot";
+  const footerLine = productName === "FlowPilot"
+    ? "Sent by FlowPilot · Your autonomous business co-pilot"
+    : "Sent by FlowWink · Your business operating system";
 
   const priorityColors: Record<string, string> = {
     high: "#ef4444",
