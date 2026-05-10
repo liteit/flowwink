@@ -19,6 +19,7 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { getServiceClient, resolveCaller } from '../_shared/supabase-clients.ts';
 import { resolveAiConfig, isAnthropicProvider } from '../_shared/ai-config.ts';
 import { logAiUsage } from '../_shared/ai-usage-logger.ts';
 
@@ -436,16 +437,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseUser = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: userData, error: userErr } = await supabaseUser.auth.getUser();
-    if (userErr || !userData?.user) {
+    const auth = await resolveCaller(authHeader);
+    if (auth.error) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    const user = userData.user;
+    const user = auth.user;
+    const supabaseUser = auth.client;
 
     const body = await req.json().catch(() => ({}));
     const messages: Array<{ role: string; content: string }> = body.messages || [];
@@ -455,7 +454,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const supabaseAdmin = getServiceClient();
 
     // Role gate
     const { data: roleRows } = await supabaseAdmin
