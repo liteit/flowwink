@@ -1,6 +1,6 @@
 // @ts-nocheck
 (globalThis as any).localStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
-(globalThis as any).window = { addEventListener: () => {}, removeEventListener: () => {} };
+(globalThis as any).window = { addEventListener: () => {}, removeEventListener: () => {}, localStorage: (globalThis as any).localStorage };
 const { getAllUnifiedModules, getUnifiedSkillNames } = await import('../src/lib/module-def');
 await import('../src/lib/modules');
 const { createClient } = await import('@supabase/supabase-js');
