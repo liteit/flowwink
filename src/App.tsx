@@ -345,6 +345,7 @@ const router = createBrowserRouter([
       { path: "/admin/shipping", element: <ShippingPage /> },
       { path: "/admin/api-keys", element: <Navigate to="/admin/developer?tab=mcp-keys" replace /> },
       { path: "/admin/autonomy-tests", element: <AutonomyTestSuitePage /> },
+      { path: "/admin/platform-tests", element: <PlatformTestsPage /> },
       { path: "/preview/:id", element: <PreviewPage /> },
       { path: "/:slug", element: <PublicPage /> },
     ],
