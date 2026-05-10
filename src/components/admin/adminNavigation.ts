@@ -4,7 +4,7 @@ import {
   CalendarDays, Plug, Bot, Zap, MessageSquare, Headphones, Megaphone, Code2, FileText as FileQuote,
   Video, Target, Inbox, UserCircle, FileUser, Receipt, Timer, Wallet, Shield, ShieldCheck,
   Network, UserRound, BookMarked, Truck, FileSignature, FolderOpen, FolderKanban,
-  RefreshCw, AlertTriangle, CheckSquare, Sparkles, Factory, UserSearch, Plus,
+  RefreshCw, AlertTriangle, CheckSquare, Sparkles, Factory, UserSearch, Plus, FlaskConical,
 } from 'lucide-react';
 
 import type { AppRole } from '@/types/cms';
