@@ -44,9 +44,7 @@ export const ticketsModule = defineModule<TicketModuleInput, TicketModuleOutput>
   inputSchema: ticketModuleInputSchema,
   outputSchema: ticketModuleOutputSchema,
 
-  skills: [
-    'ticket_triage',
-  ],
+  skills: [],
   skillSeeds: TICKETS_SKILLS,
 
   async publish(input: TicketModuleInput): Promise<TicketModuleOutput> {
