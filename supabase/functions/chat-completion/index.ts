@@ -7,6 +7,19 @@ import {
   loadSkillTools,
 } from "../_shared/agent-reason.ts";
 import { logAiUsage } from "../_shared/ai-usage-logger.ts";
+import {
+  type ProviderConfig,
+  tryResolveProvider,
+  resolveProviderWithFallback,
+  handleN8nWebhook,
+  handleAiError,
+} from "../_shared/ai-providers.ts";
+import {
+  extractTextFromTiptap,
+  extractTextFromBlock,
+  buildKnowledgeBase,
+  loadVisitorContext,
+} from "../_shared/chat-context.ts";
 
 /**
  * Chat Completion — Visitor-facing AI chat
@@ -145,198 +158,8 @@ const CHAT_TOOLS: Record<string, any> = {
   },
 };
 
-// ─── Content extraction helpers ───────────────────────────────────────────────
-
-function extractTextFromTiptap(content: any): string {
-  if (!content) return '';
-  if (typeof content === 'string') return content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-  if (typeof content === 'object') {
-    const texts: string[] = [];
-    if (content.text) texts.push(content.text);
-    if (content.content && Array.isArray(content.content)) {
-      for (const node of content.content) {
-        const t = extractTextFromTiptap(node);
-        if (t) texts.push(t);
-      }
-    }
-    return texts.join(' ').replace(/\s+/g, ' ').trim();
-  }
-  return '';
-}
-
-function extractTextFromBlock(block: any): string {
-  if (!block) return '';
-  const texts: string[] = [];
-  const type = block.type;
-  const data = block.data || block;
-
-  switch (type) {
-    case 'text': if (data.content) texts.push(extractTextFromTiptap(data.content)); break;
-    case 'hero':
-      if (data.title) texts.push(data.title);
-      if (data.subtitle) texts.push(data.subtitle);
-      break;
-    case 'cta':
-      if (data.title) texts.push(data.title);
-      if (data.subtitle) texts.push(data.subtitle);
-      break;
-    case 'accordion':
-      if (data.items && Array.isArray(data.items)) {
-        data.items.forEach((item: any) => {
-          if (item.question) texts.push(item.question);
-          if (item.answer) texts.push(extractTextFromTiptap(item.answer));
-        });
-      }
-      break;
-    case 'contact':
-      if (data.phone) texts.push(`Phone: ${data.phone}`);
-      if (data.email) texts.push(`Email: ${data.email}`);
-      if (data.address) texts.push(`Address: ${data.address}`);
-      break;
-    case 'quote':
-      if (data.quote) texts.push(data.quote);
-      if (data.author) texts.push(`- ${data.author}`);
-      break;
-    case 'info-box': case 'infoBox':
-      if (data.title) texts.push(data.title);
-      if (data.content) texts.push(extractTextFromTiptap(data.content));
-      break;
-    case 'two-column': case 'twoColumn':
-      if (data.leftContent) texts.push(extractTextFromTiptap(data.leftContent));
-      if (data.rightContent) texts.push(extractTextFromTiptap(data.rightContent));
-      break;
-    case 'stats':
-      if (data.items && Array.isArray(data.items)) {
-        data.items.forEach((item: any) => { if (item.value && item.label) texts.push(`${item.value} ${item.label}`); });
-      }
-      break;
-    case 'article-grid': case 'articleGrid':
-      if (data.items && Array.isArray(data.items)) {
-        data.items.forEach((item: any) => { if (item.title) texts.push(item.title); if (item.excerpt) texts.push(item.excerpt); });
-      }
-      break;
-    case 'link-grid': case 'linkGrid':
-      if (data.items && Array.isArray(data.items)) {
-        data.items.forEach((item: any) => { if (item.title) texts.push(item.title); if (item.description) texts.push(item.description); });
-      }
-      break;
-  }
-  return texts.join(' ');
-}
-
-// ─── Knowledge base builder ──────────────────────────────────────────────────
-
-async function buildKnowledgeBase(
-  supabase: any, maxTokens: number, includedSlugs: string[], includeKbArticles: boolean,
-): Promise<string> {
-  const sections: string[] = [];
-  let estimatedTokens = 0;
-
-  // Pages
-  let query = supabase.from('pages').select('title, slug, content_json').eq('status', 'published');
-  if (includedSlugs.length > 0) query = query.in('slug', includedSlugs);
-  const { data: pages } = await query;
-
-  if (pages) {
-    for (const page of pages) {
-      const pageTexts: string[] = [];
-      if (page.content_json && Array.isArray(page.content_json)) {
-        for (const block of page.content_json) {
-          const text = extractTextFromBlock(block);
-          if (text) pageTexts.push(text);
-        }
-      }
-      if (pageTexts.length > 0) {
-        const pageContent = `### ${page.title} (/${page.slug})\n${pageTexts.join('\n')}`;
-        const contentTokens = Math.ceil(pageContent.length / 4);
-        if (estimatedTokens + contentTokens > maxTokens) break;
-        sections.push(pageContent);
-        estimatedTokens += contentTokens;
-      }
-    }
-  }
-
-  // KB Articles
-  if (includeKbArticles) {
-    const { data: kbArticles } = await supabase
-      .from('kb_articles')
-      .select('title, question, answer_json, answer_text')
-      .eq('include_in_chat', true).eq('is_published', true);
-
-    if (kbArticles?.length) {
-      const faqSection: string[] = [];
-      for (const article of kbArticles) {
-        let answerText = article.answer_text || '';
-        if (!answerText && article.answer_json) answerText = extractTextFromTiptap(article.answer_json);
-        if (answerText) {
-          const entry = `Q: ${article.question}\nA: ${answerText}`;
-          const entryTokens = Math.ceil(entry.length / 4);
-          if (estimatedTokens + entryTokens > maxTokens) break;
-          faqSection.push(entry);
-          estimatedTokens += entryTokens;
-        }
-      }
-      if (faqSection.length > 0) sections.push(`\n## FAQ\n${faqSection.join('\n\n')}`);
-    }
-  }
-
-  if (sections.length === 0) return '';
-  return `\n\n## Website Content (Knowledge Base)\n${sections.join('\n\n')}`;
-}
-
-// ─── Visitor Context (USER.md equivalent) ────────────────────────────────────
-
-/**
- * Load returning visitor context from previous conversations.
- * Builds a compact profile from past conversation metadata and visitor_profile.
- */
-async function loadVisitorContext(
-  supabase: any, identifier: string, currentConversationId?: string,
-): Promise<string> {
-  // Find past conversations by email or session
-  const { data: pastConversations } = await supabase
-    .from('chat_conversations')
-    .select('id, title, created_at, visitor_profile, customer_name, customer_email')
-    .or(`customer_email.eq.${identifier},session_id.eq.${identifier}`)
-    .order('created_at', { ascending: false })
-    .limit(5);
-
-  if (!pastConversations?.length) return '';
-
-  // Filter out current conversation
-  const previous = currentConversationId
-    ? pastConversations.filter((c: any) => c.id !== currentConversationId)
-    : pastConversations;
-
-  if (previous.length === 0) return '';
-
-  // Build visitor context
-  const parts: string[] = ['\n\n## Returning Visitor Context'];
-
-  // Use latest visitor_profile if available
-  const latestProfile = previous.find((c: any) => c.visitor_profile && Object.keys(c.visitor_profile).length > 0);
-  if (latestProfile?.visitor_profile) {
-    const profile = latestProfile.visitor_profile;
-    if (profile.name) parts.push(`Name: ${profile.name}`);
-    if (profile.preferences) parts.push(`Preferences: ${profile.preferences}`);
-    if (profile.interests) parts.push(`Interests: ${profile.interests}`);
-    if (profile.notes) parts.push(`Notes: ${profile.notes}`);
-  }
-
-  // Summarize past conversations
-  const convSummaries = previous.slice(0, 3).map((c: any) => {
-    const date = new Date(c.created_at).toLocaleDateString();
-    return `- ${date}: ${c.title || 'Untitled conversation'}`;
-  });
-
-  if (convSummaries.length > 0) {
-    parts.push(`\nPrevious conversations (${previous.length} total):`);
-    parts.push(convSummaries.join('\n'));
-    parts.push('\nUse this context to provide personalized, continuity-aware responses. Reference past interactions naturally when relevant.');
-  }
-
-  return parts.join('\n');
-}
+// extractTextFromTiptap, extractTextFromBlock, buildKnowledgeBase,
+// loadVisitorContext are imported from ../_shared/chat-context.ts
 
 // ─── Chat tool execution ─────────────────────────────────────────────────────
 
@@ -442,176 +265,10 @@ async function executeChatTool(
   }
 }
 
-// ─── Provider resolution ─────────────────────────────────────────────────────
-
-const OPENAI_MIGRATE: Record<string, string> = {
-  'gpt-4o': 'gpt-4.1', 'gpt-4o-mini': 'gpt-4.1-mini', 'gpt-3.5-turbo': 'gpt-4.1-nano',
-  'gpt-4-turbo': 'gpt-4.1', 'gpt-4': 'gpt-4.1',
-};
-const GEMINI_MIGRATE: Record<string, string> = {
-  'gemini-1.5-pro': 'gemini-2.5-pro', 'gemini-1.5-flash': 'gemini-2.5-flash',
-  'gemini-2.0-flash-exp': 'gemini-2.5-flash', 'gemini-pro': 'gemini-2.5-pro',
-};
-
-interface ProviderConfig {
-  apiKey: string;
-  apiUrl: string;
-  model: string;
-  supportsToolCalling: boolean;
-  isN8n: boolean;
-  n8nConfig?: { webhookUrl: string; webhookType: string; apiKey?: string };
-  resolvedProvider: string; // Which provider was actually resolved
-}
-
-/**
- * Try to resolve a specific provider. Returns null if not available (no API key).
- */
-function tryResolveProvider(provider: string, settings: ChatSettings | undefined, integrations: any): ProviderConfig | null {
-  if (provider === 'n8n') {
-    const n8nConfig = integrations?.n8n?.config || {};
-    const webhookUrl = settings?.n8nWebhookUrl || n8nConfig?.webhookUrl;
-    if (!webhookUrl) return null;
-    const n8nApiKey = Deno.env.get('N8N_API_KEY') || n8nConfig?.apiKey;
-    return {
-      apiKey: '', apiUrl: '', model: '',
-      supportsToolCalling: false, isN8n: true, resolvedProvider: 'n8n',
-      n8nConfig: { webhookUrl, webhookType: settings?.n8nWebhookType || n8nConfig?.webhookType || 'chat', apiKey: n8nApiKey },
-    };
-  }
-
-  if (provider === 'openai') {
-    const apiKey = settings?.openaiApiKey || Deno.env.get('OPENAI_API_KEY');
-    if (!apiKey) return null;
-    const baseUrl = settings?.openaiBaseUrl || 'https://api.openai.com/v1';
-    const rawModel = settings?.openaiModel || 'gpt-4.1-mini';
-    return {
-      apiKey,
-      apiUrl: `${baseUrl}/chat/completions`,
-      model: OPENAI_MIGRATE[rawModel] || rawModel,
-      supportsToolCalling: true, isN8n: false, resolvedProvider: 'openai',
-    };
-  }
-
-  if (provider === 'gemini') {
-    const apiKey = settings?.geminiApiKey || Deno.env.get('GEMINI_API_KEY');
-    if (!apiKey) return null;
-    const rawModel = settings?.geminiModel || 'gemini-2.5-flash';
-    return {
-      apiKey,
-      apiUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-      model: GEMINI_MIGRATE[rawModel] || rawModel,
-      supportsToolCalling: true, isN8n: false, resolvedProvider: 'gemini',
-    };
-  }
-
-  if (provider === 'local') {
-    const localConfig = integrations?.local_llm?.config || {};
-    const integrationEndpoint = localConfig?.endpoint;
-    const chatEndpoint = settings?.localEndpoint;
-    const isPlaceholder = !chatEndpoint || chatEndpoint.includes('your-local-llm') || chatEndpoint.includes('placeholder');
-    const endpoint = integrationEndpoint || (isPlaceholder ? undefined : chatEndpoint);
-    if (!endpoint) return null;
-
-    const localApiKey = Deno.env.get('LOCAL_LLM_API_KEY') || localConfig?.apiKey || settings?.localApiKey;
-    const baseEndpoint = endpoint.replace(/\/+$/, '');
-    const apiPath = baseEndpoint.endsWith('/v1') ? '/chat/completions' : '/v1/chat/completions';
-    const model = localConfig?.model || settings?.localModel;
-    if (!model) {
-      console.error('[chat-completion] Local LLM model not configured. Set it in Integrations → Local LLM or Chat settings.');
-      return null;
-    }
-
-    return {
-      apiKey: localApiKey || '',
-      apiUrl: `${baseEndpoint}${apiPath}`,
-      model,
-      supportsToolCalling: settings?.localSupportsToolCalling || false,
-      isN8n: false, resolvedProvider: 'local',
-    };
-  }
-
-  return null;
-}
-
-/**
- * Resolve provider with automatic fallback chain.
- * 
- * Strategy:
- * 1. Try the preferred provider (from settings)
- * 2. If it fails (no API key), try fallback chain: OpenAI → Gemini → Local
- * 3. Only throw if NO provider is available at all
- */
-function resolveProviderWithFallback(settings: ChatSettings | undefined, integrations: any): ProviderConfig {
-  const preferred = settings?.aiProvider || 'openai';
-  
-  // Try preferred provider first
-  const preferredResult = tryResolveProvider(preferred, settings, integrations);
-  if (preferredResult) return preferredResult;
-
-  console.log(`[chat] Preferred provider '${preferred}' not available, trying fallback chain...`);
-
-  // Fallback chain: OpenAI → Gemini → Local → N8N
-  const fallbackOrder = ['openai', 'gemini', 'local', 'n8n'].filter(p => p !== preferred);
-  
-  for (const fallback of fallbackOrder) {
-    const result = tryResolveProvider(fallback, settings, integrations);
-    if (result) {
-      console.log(`[chat] Fallback resolved to '${fallback}'`);
-      return result;
-    }
-  }
-
-  throw new Error(
-    'No AI provider available. Please configure at least one AI provider (OpenAI, Gemini, or Local LLM) in Settings → System AI, or set API keys via the CLI (npm run cli → /set-keys).'
-  );
-}
-
-// ─── N8N webhook handler ─────────────────────────────────────────────────────
-
-async function handleN8nWebhook(
-  settings: ChatSettings | undefined, n8nConfig: NonNullable<ProviderConfig['n8nConfig']>,
-  fullMessages: ChatMessage[], conversationId?: string, sessionId?: string, systemPrompt?: string,
-): Promise<Response> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (n8nConfig.apiKey) {
-    headers['Authorization'] = n8nConfig.apiKey.startsWith('Bearer ') ? n8nConfig.apiKey : `Bearer ${n8nConfig.apiKey}`;
-  }
-
-  const lastUserMessage = fullMessages.filter(m => m.role === 'user').pop();
-  const payload = n8nConfig.webhookType === 'chat'
-    ? { chatInput: lastUserMessage?.content || '', sessionId: sessionId || conversationId, systemPrompt }
-    : { messages: fullMessages, model: 'gpt-4', conversationId, sessionId };
-
-  const resp = await fetch(n8nConfig.webhookUrl, {
-    method: 'POST', headers, body: JSON.stringify(payload),
-  });
-
-  if (!resp.ok) {
-    const errorText = await resp.text();
-    console.error('N8N webhook error:', resp.status, errorText);
-    throw new Error('N8N webhook failed');
-  }
-
-  const data = await resp.json();
-  let responseContent = 'I could not process your request.';
-  if (Array.isArray(data) && data.length > 0) {
-    responseContent = data[0].output || data[0].message || data[0].response || responseContent;
-  } else if (typeof data === 'object' && data !== null) {
-    responseContent = data.output || data.message || data.response || responseContent;
-  }
-
-  const encoder = new TextEncoder();
-  const stream = new ReadableStream({
-    start(controller) {
-      const sseData = JSON.stringify({ choices: [{ delta: { content: responseContent }, finish_reason: 'stop' }] });
-      controller.enqueue(encoder.encode(`data: ${sseData}\n\n`));
-      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-      controller.close();
-    },
-  });
-
-  return new Response(stream, { headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' } });
-}
+// Provider resolution + N8N webhook moved to ../_shared/ai-providers.ts:
+//   - ProviderConfig (type)
+//   - tryResolveProvider, resolveProviderWithFallback
+//   - handleN8nWebhook (now requires corsHeaders param)
 
 // ─── Sentiment prompt builder ────────────────────────────────────────────────
 
@@ -802,7 +459,7 @@ serve(async (req) => {
     // N8N: webhook passthrough (no tool loop)
     if (provider.isN8n) {
       const fullMsgs: ChatMessage[] = [{ role: 'system', content: finalSystemPrompt }, ...messages];
-      return handleN8nWebhook(settings, provider.n8nConfig!, fullMsgs, conversationId, sessionId, finalSystemPrompt);
+      return handleN8nWebhook(provider.n8nConfig!, fullMsgs, conversationId, sessionId, finalSystemPrompt, corsHeaders);
     }
 
     // ─── Unified OpenAI-compatible tool loop ─────────────────────────────────
@@ -849,7 +506,7 @@ serve(async (req) => {
           conversationId: conversationId || null,
           metadata: { iteration, http_status: upstream.status, has_tools: tools.length > 0 },
         });
-        return handleAiError(upstream);
+        return handleAiError(upstream, corsHeaders);
       }
 
       // Wrap upstream stream so we can sniff the final usage chunk without changing client behaviour
@@ -1010,22 +667,4 @@ serve(async (req) => {
   }
 });
 
-// ─── Error handling ──────────────────────────────────────────────────────────
-
-async function handleAiError(response: Response): Promise<Response> {
-  if (response.status === 429) {
-    return new Response(JSON.stringify({ error: 'Too many requests. Please wait and try again.' }), {
-      status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-  if (response.status === 402) {
-    return new Response(JSON.stringify({ error: 'Credits exhausted. Contact administrator.' }), {
-      status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-  const errorText = await response.text();
-  console.error('AI provider error:', response.status, errorText);
-  return new Response(JSON.stringify({ error: 'AI service error.' }), {
-    status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
-}
+// handleAiError moved to ../_shared/ai-providers.ts (now takes corsHeaders param)
