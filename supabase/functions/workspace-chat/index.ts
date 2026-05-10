@@ -453,7 +453,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const supabaseAdmin = getServiceClient();
 
     // Role gate
     const { data: roleRows } = await supabaseAdmin
