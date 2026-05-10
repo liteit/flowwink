@@ -4,7 +4,7 @@ import {
   CalendarDays, Plug, Bot, Zap, MessageSquare, Headphones, Megaphone, Code2, FileText as FileQuote,
   Video, Target, Inbox, UserCircle, FileUser, Receipt, Timer, Wallet, Shield, ShieldCheck,
   Network, UserRound, BookMarked, Truck, FileSignature, FolderOpen, FolderKanban,
-  RefreshCw, AlertTriangle, CheckSquare, Sparkles, Factory, UserSearch, Plus,
+  RefreshCw, AlertTriangle, CheckSquare, Sparkles, Factory, UserSearch, Plus, FlaskConical,
 } from 'lucide-react';
 
 import type { AppRole } from '@/types/cms';
@@ -153,6 +153,7 @@ export const navigationGroups: NavGroup[] = [
       { name: "Branding", href: "/admin/branding", icon: Image },
       { name: "Developer", href: "/admin/developer", icon: Code2, moduleId: "developer" },
       { name: "Skills", href: "/admin/skills", icon: Sparkles },
+      { name: "Platform Tests", href: "/admin/platform-tests", icon: FlaskConical },
       { name: "AI Usage", href: "/admin/ai-usage", icon: BarChart3 },
 
       { name: "Users", href: "/admin/users", icon: Users },
