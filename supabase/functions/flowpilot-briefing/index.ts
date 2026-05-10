@@ -297,8 +297,8 @@ serve(async (req) => {
     if (failedActions > 0) {
       actionItems.push({
         priority: "high",
-        text: `${failedActions} FlowPilot action${failedActions > 1 ? "s" : ""} failed — check Engine Room`,
-        link: "/admin/skills",
+        text: `${failedActions} skill execution${failedActions > 1 ? "s" : ""} failed — check Activities`,
+        link: "/admin/activities",
       });
     }
 
