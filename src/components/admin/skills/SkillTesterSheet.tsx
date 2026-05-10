@@ -12,8 +12,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Play, Cpu, Lock, ExternalLink, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Loader2, Play, Cpu, Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
