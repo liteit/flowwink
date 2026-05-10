@@ -110,6 +110,42 @@ export default function PlatformTestsPage() {
     }
   };
 
+  const { data: modules } = useModules();
+  const [reseeding, setReseeding] = useState<string | null>(null);
+
+  const reseedModule = async (suite: TestSuite) => {
+    if (!suite.module || !modules) return;
+    setReseeding(suite.id);
+    try {
+      const result = await bootstrapModule(suite.module as never, modules);
+      if (result.errors.length > 0) {
+        toast.error(`Re-seed ${suite.module}: ${result.errors[0]}`);
+      } else {
+        toast.success(`Re-seeded ${result.seededSkills} skill(s) for ${suite.module}. Re-running test…`);
+        await runSuite(suite);
+      }
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setReseeding(null);
+    }
+  };
+
+  const reseedAllFailing = async () => {
+    if (!modules) return;
+    const failing = Object.entries(runState)
+      .filter(([, st]) => st.summary && st.summary.failed > 0)
+      .map(([id]) => allSuites.find((s) => s.id === id))
+      .filter((s): s is TestSuite => !!s && s.scope === 'module' && !!s.module);
+    if (failing.length === 0) {
+      toast.info('No failing module suites to re-seed. Run module tests first.');
+      return;
+    }
+    for (const s of failing) {
+      await reseedModule(s);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
