@@ -27,7 +27,7 @@ import { useModules } from '@/hooks/useModules';
 import { ModuleSkillsSection } from '@/components/admin/modules/ModuleSkillsSection';
 import type { ModulesSettings } from '@/hooks/useModules';
 
-type StatusFilter = 'all' | 'enabled' | 'disabled' | 'mcp';
+type StatusFilter = 'all' | 'enabled' | 'disabled' | 'mcp' | 'ai-task';
 
 export default function SkillsCatalogPage() {
   const [search, setSearch] = useState('');
@@ -63,6 +63,7 @@ export default function SkillsCatalogPage() {
           if (statusFilter === 'enabled' && !s.enabled) return false;
           if (statusFilter === 'disabled' && s.enabled) return false;
           if (statusFilter === 'mcp' && !s.mcp_exposed) return false;
+          if (statusFilter === 'ai-task' && !s.handler?.startsWith('ai-task:')) return false;
           // Search filter (name, description, module name)
           if (q) {
             const hay = `${s.name} ${s.description ?? ''} ${mod.name}`.toLowerCase();
@@ -129,6 +130,7 @@ export default function SkillsCatalogPage() {
                 <Cpu className="h-3 w-3" />
                 MCP
               </TabsTrigger>
+              <TabsTrigger value="ai-task" className="text-xs">ai-task</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
