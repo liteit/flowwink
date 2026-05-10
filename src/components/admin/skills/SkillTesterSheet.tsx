@@ -41,22 +41,38 @@ interface RunResult {
   raw?: unknown;
 }
 
+function placeholderForString(key: string, schema: any): string {
+  if (schema?.example) return String(schema.example);
+  if (schema?.format === 'uuid' || /_id$|^id$/i.test(key)) return '<uuid>';
+  if (schema?.format === 'uri' || schema?.format === 'url' || /url$/i.test(key)) return 'https://example.com/path';
+  if (schema?.format === 'email' || /email/i.test(key)) return 'user@example.com';
+  if (schema?.format === 'date') return new Date().toISOString().slice(0, 10);
+  if (schema?.format === 'date-time') return new Date().toISOString();
+  if (Array.isArray(schema?.enum) && schema.enum.length) return String(schema.enum[0]);
+  return `<${key}>`;
+}
+
 function buildExampleInput(skill: AgentSkill): string {
-  // Parse tool_definition.parameters and emit a stub object with empty values
   try {
     const params: any = (skill.tool_definition as any)?.parameters;
     const props = params?.properties ?? {};
+    const required: string[] = Array.isArray(params?.required) ? params.required : [];
     const example: Record<string, unknown> = {};
-    for (const [key, schema] of Object.entries<any>(props)) {
-      // Skip 'action' selector unless required (most skills)
+    // Required first, then optional
+    const orderedKeys = [
+      ...required.filter((k) => k in props),
+      ...Object.keys(props).filter((k) => !required.includes(k)),
+    ];
+    for (const key of orderedKeys) {
+      const schema = props[key];
       if (key === 'action' && Array.isArray(schema?.enum) && schema.enum.length === 1) {
         example[key] = schema.enum[0];
         continue;
       }
       const t = schema?.type;
-      if (t === 'string') example[key] = schema?.format === 'uuid' ? '' : (schema?.example ?? '');
-      else if (t === 'number' || t === 'integer') example[key] = 0;
-      else if (t === 'boolean') example[key] = false;
+      if (t === 'string') example[key] = placeholderForString(key, schema);
+      else if (t === 'number' || t === 'integer') example[key] = schema?.example ?? 0;
+      else if (t === 'boolean') example[key] = schema?.example ?? false;
       else if (t === 'array') example[key] = [];
       else if (t === 'object') example[key] = {};
       else example[key] = null;
