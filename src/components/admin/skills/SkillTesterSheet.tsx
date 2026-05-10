@@ -204,59 +204,47 @@ export function SkillTesterSheet({ skill, open, onOpenChange }: Props) {
             <Meta label="Trust" value={skill.trust_level ?? 'auto'} />
           </div>
 
-          {!isAiTask ? (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Not an ai-task skill</AlertTitle>
-              <AlertDescription className="text-xs space-y-2">
-                <p>
-                  Handler <code>{skill.handler}</code> is not a Klass 2a AI task. This tester
-                  only runs <code>ai-task:</code> handlers. Run other skills via FlowChat or
-                  the MCP endpoint.
-                </p>
-                <Button asChild size="sm" variant="outline">
-                  <Link to="/admin/flowchat">
-                    Open FlowChat <ExternalLink className="h-3 w-3 ml-1" />
-                  </Link>
-                </Button>
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <>
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-medium">
-                    Input JSON
-                    {requiredKeys.length > 0 && (
-                      <span className="text-muted-foreground font-normal ml-1.5">
-                        (required: {requiredKeys.join(', ')})
-                      </span>
-                    )}
-                  </Label>
-                  <code className="text-[10px] text-muted-foreground">
-                    POST /ai-task → task={taskName}
-                  </code>
-                </div>
-                <Textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  rows={8}
-                  className="font-mono text-xs"
-                  spellCheck={false}
-                />
-                {parseError && (
-                  <p className="text-xs text-destructive">{parseError}</p>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium">
+                Input JSON
+                {requiredKeys.length > 0 && (
+                  <span className="text-muted-foreground font-normal ml-1.5">
+                    (required: {requiredKeys.join(', ')})
+                  </span>
                 )}
-              </div>
+              </Label>
+              <code className="text-[10px] text-muted-foreground">
+                {isAiTask
+                  ? `POST /ai-task → task=${taskName}`
+                  : `POST /agent-execute → ${skill.name}`}
+              </code>
+            </div>
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              rows={8}
+              className="font-mono text-xs"
+              spellCheck={false}
+            />
+            {parseError && (
+              <p className="text-xs text-destructive">{parseError}</p>
+            )}
+          </div>
 
-              <Button onClick={runTest} disabled={running || !skill.enabled} className="w-full gap-2">
-                {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                {running ? 'Running…' : 'Run test'}
-              </Button>
+          <Button onClick={runTest} disabled={running || !skill.enabled} className="w-full gap-2">
+            {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+            {running ? 'Running…' : `Run ${isAiTask ? 'ai-task' : 'skill'}`}
+          </Button>
 
-              {result && <ResultPanel result={result} elapsedMs={elapsedMs} />}
-            </>
+          {!isAiTask && (
+            <p className="text-[10px] text-muted-foreground -mt-2">
+              Routed via <code>agent-execute</code> as <code>admin-tester</code>. Trust gating
+              applies — skills with <code>trust_level=approve</code> may pause for HITL.
+            </p>
           )}
+
+          {result && <ResultPanel result={result} elapsedMs={elapsedMs} />}
         </div>
       </SheetContent>
     </Sheet>
