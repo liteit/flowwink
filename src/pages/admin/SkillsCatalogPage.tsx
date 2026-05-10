@@ -63,6 +63,7 @@ export default function SkillsCatalogPage() {
           if (statusFilter === 'enabled' && !s.enabled) return false;
           if (statusFilter === 'disabled' && s.enabled) return false;
           if (statusFilter === 'mcp' && !s.mcp_exposed) return false;
+          if (statusFilter === 'ai-task' && !s.handler?.startsWith('ai-task:')) return false;
           // Search filter (name, description, module name)
           if (q) {
             const hay = `${s.name} ${s.description ?? ''} ${mod.name}`.toLowerCase();
