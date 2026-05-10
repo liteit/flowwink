@@ -157,6 +157,9 @@ export default function PlatformTestsPage() {
           <Button onClick={runAllPlatform} variant="default" size="sm" className="shrink-0 mt-1">
             <Play className="h-4 w-4 mr-2" /> Run all platform suites
           </Button>
+          <Button onClick={reseedAllFailing} variant="outline" size="sm" className="shrink-0 mt-1">
+            <RefreshCw className="h-4 w-4 mr-2" /> Re-seed failing modules
+          </Button>
         </div>
 
         <div className="flex flex-col md:flex-row gap-3 md:items-center">
