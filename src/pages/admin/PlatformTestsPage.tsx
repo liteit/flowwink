@@ -14,6 +14,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { getAllSuites, type TestSuite, type TestScope } from '@/lib/platform-tests/registry';
+import { useModules } from '@/hooks/useModules';
+import { bootstrapModule } from '@/lib/module-bootstrap';
+import { RefreshCw } from 'lucide-react';
 
 interface CheckResult {
   suite: string;
@@ -107,6 +110,42 @@ export default function PlatformTestsPage() {
     }
   };
 
+  const { data: modules } = useModules();
+  const [reseeding, setReseeding] = useState<string | null>(null);
+
+  const reseedModule = async (suite: TestSuite) => {
+    if (!suite.module || !modules) return;
+    setReseeding(suite.id);
+    try {
+      const result = await bootstrapModule(suite.module as never, modules);
+      if (result.errors.length > 0) {
+        toast.error(`Re-seed ${suite.module}: ${result.errors[0]}`);
+      } else {
+        toast.success(`Re-seeded ${result.seededSkills} skill(s) for ${suite.module}. Re-running test…`);
+        await runSuite(suite);
+      }
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setReseeding(null);
+    }
+  };
+
+  const reseedAllFailing = async () => {
+    if (!modules) return;
+    const failing = Object.entries(runState)
+      .filter(([, st]) => st.summary && st.summary.failed > 0)
+      .map(([id]) => allSuites.find((s) => s.id === id))
+      .filter((s): s is TestSuite => !!s && s.scope === 'module' && !!s.module);
+    if (failing.length === 0) {
+      toast.info('No failing module suites to re-seed. Run module tests first.');
+      return;
+    }
+    for (const s of failing) {
+      await reseedModule(s);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -117,6 +156,9 @@ export default function PlatformTestsPage() {
           />
           <Button onClick={runAllPlatform} variant="default" size="sm" className="shrink-0 mt-1">
             <Play className="h-4 w-4 mr-2" /> Run all platform suites
+          </Button>
+          <Button onClick={reseedAllFailing} variant="outline" size="sm" className="shrink-0 mt-1">
+            <RefreshCw className="h-4 w-4 mr-2" /> Re-seed failing modules
           </Button>
         </div>
 
@@ -156,6 +198,8 @@ export default function PlatformTestsPage() {
               suite={suite}
               state={runState[suite.id]}
               onRun={() => runSuite(suite)}
+              onReseed={suite.scope === 'module' ? () => reseedModule(suite) : undefined}
+              reseeding={reseeding === suite.id}
             />
           ))}
         </div>
@@ -168,10 +212,14 @@ function SuiteCard({
   suite,
   state,
   onRun,
+  onReseed,
+  reseeding,
 }: {
   suite: TestSuite;
   state?: SuiteRunState;
   onRun: () => void;
+  onReseed?: () => void;
+  reseeding?: boolean;
 }) {
   const meta = SCOPE_META[suite.scope];
   const Icon = meta.icon;
@@ -228,6 +276,15 @@ function SuiteCard({
                   <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Running…</>
                 ) : (
                   <><Play className="h-4 w-4 mr-1" /> Run</>
+                )}
+              </Button>
+            )}
+            {onReseed && state?.summary && state.summary.failed > 0 && (
+              <Button onClick={onReseed} disabled={!!reseeding} variant="outline" size="sm">
+                {reseeding ? (
+                  <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Re-seeding…</>
+                ) : (
+                  <><RefreshCw className="h-4 w-4 mr-1" /> Re-seed</>
                 )}
               </Button>
             )}
