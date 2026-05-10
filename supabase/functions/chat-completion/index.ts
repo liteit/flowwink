@@ -7,6 +7,19 @@ import {
   loadSkillTools,
 } from "../_shared/agent-reason.ts";
 import { logAiUsage } from "../_shared/ai-usage-logger.ts";
+import {
+  type ProviderConfig,
+  tryResolveProvider,
+  resolveProviderWithFallback,
+  handleN8nWebhook,
+  handleAiError,
+} from "../_shared/ai-providers.ts";
+import {
+  extractTextFromTiptap,
+  extractTextFromBlock,
+  buildKnowledgeBase,
+  loadVisitorContext,
+} from "../_shared/chat-context.ts";
 
 /**
  * Chat Completion — Visitor-facing AI chat
