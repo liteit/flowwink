@@ -173,13 +173,13 @@ function SkillRow({ skill }: { skill: AgentSkill }) {
         )}
       </div>
       <div className="flex items-center gap-0.5 shrink-0">
-        {isAiTask && skill.enabled && (
+        {skill.enabled && (
           <Button
             variant="ghost"
             size="icon"
             className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={() => setTesterOpen(true)}
-            title="Test ai-task skill"
+            title={isAiTask ? 'Test ai-task skill' : 'Test skill (via agent-execute)'}
           >
             <FlaskConical className="h-3 w-3" />
           </Button>

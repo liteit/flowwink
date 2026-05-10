@@ -12,8 +12,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Play, Cpu, Lock, ExternalLink, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Loader2, Play, Cpu, Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -84,8 +83,9 @@ function buildExampleInput(skill: AgentSkill): string {
 }
 
 export function SkillTesterSheet({ skill, open, onOpenChange }: Props) {
-  const isAiTask = skill?.handler?.startsWith('ai-task:') ?? false;
-  const taskName = isAiTask ? skill!.handler.slice('ai-task:'.length) : '';
+  const handler = skill?.handler ?? '';
+  const isAiTask = handler.startsWith('ai-task:');
+  const taskName = isAiTask ? handler.slice('ai-task:'.length) : '';
 
   const [input, setInput] = useState('{}');
   const [running, setRunning] = useState(false);
@@ -112,11 +112,11 @@ export function SkillTesterSheet({ skill, open, onOpenChange }: Props) {
   }, [skill]);
 
   async function runTest() {
-    if (!skill || !isAiTask) return;
+    if (!skill) return;
     setParseError(null);
     setResult(null);
 
-    let parsed: unknown;
+    let parsed: any;
     try {
       parsed = JSON.parse(input || '{}');
     } catch (err: any) {
@@ -127,25 +127,38 @@ export function SkillTesterSheet({ skill, open, onOpenChange }: Props) {
     setRunning(true);
     const t0 = performance.now();
     try {
-      // Use raw fetch so we always get the JSON body even on non-2xx (supabase.functions.invoke
-      // hides the body inside FunctionsHttpError.context as a Response).
       const session = (await supabase.auth.getSession()).data.session;
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-task`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({ task: taskName, input: parsed }),
-        },
-      );
+      const headers = {
+        'Content-Type': 'application/json',
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      };
+
+      // Klass 2a (ai-task:) → ai-task endpoint returns { result, apply, provider_used }.
+      // All other handlers (edge:, rpc:, db:, module:, internal:, composio:, ...) →
+      // agent-execute is the universal skill runner.
+      const url = isAiTask
+        ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-task`
+        : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-execute`;
+      const body = isAiTask
+        ? { task: taskName, input: parsed }
+        : { skill_name: skill.name, arguments: parsed, agent_type: 'admin-tester' };
+
+      const resp = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
       const dt = performance.now() - t0;
       setElapsedMs(Math.round(dt));
       const data = await resp.json().catch(() => ({ error: `HTTP ${resp.status}` }));
-      setResult(data as RunResult);
+      if (!isAiTask && data && typeof data === 'object') {
+        const ok = data.status === 'ok' || data.success === true;
+        setResult({
+          success: ok,
+          result: data.output ?? data.result ?? data,
+          error: ok ? undefined : (data.error || data.message),
+          details: data,
+        } as RunResult);
+      } else {
+        setResult(data as RunResult);
+      }
     } catch (err: any) {
       setElapsedMs(Math.round(performance.now() - t0));
       setResult({ error: err?.message ?? 'Unknown error' });
@@ -190,59 +203,47 @@ export function SkillTesterSheet({ skill, open, onOpenChange }: Props) {
             <Meta label="Trust" value={skill.trust_level ?? 'auto'} />
           </div>
 
-          {!isAiTask ? (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Not an ai-task skill</AlertTitle>
-              <AlertDescription className="text-xs space-y-2">
-                <p>
-                  Handler <code>{skill.handler}</code> is not a Klass 2a AI task. This tester
-                  only runs <code>ai-task:</code> handlers. Run other skills via FlowChat or
-                  the MCP endpoint.
-                </p>
-                <Button asChild size="sm" variant="outline">
-                  <Link to="/admin/flowchat">
-                    Open FlowChat <ExternalLink className="h-3 w-3 ml-1" />
-                  </Link>
-                </Button>
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <>
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-medium">
-                    Input JSON
-                    {requiredKeys.length > 0 && (
-                      <span className="text-muted-foreground font-normal ml-1.5">
-                        (required: {requiredKeys.join(', ')})
-                      </span>
-                    )}
-                  </Label>
-                  <code className="text-[10px] text-muted-foreground">
-                    POST /ai-task → task={taskName}
-                  </code>
-                </div>
-                <Textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  rows={8}
-                  className="font-mono text-xs"
-                  spellCheck={false}
-                />
-                {parseError && (
-                  <p className="text-xs text-destructive">{parseError}</p>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium">
+                Input JSON
+                {requiredKeys.length > 0 && (
+                  <span className="text-muted-foreground font-normal ml-1.5">
+                    (required: {requiredKeys.join(', ')})
+                  </span>
                 )}
-              </div>
+              </Label>
+              <code className="text-[10px] text-muted-foreground">
+                {isAiTask
+                  ? `POST /ai-task → task=${taskName}`
+                  : `POST /agent-execute → ${skill.name}`}
+              </code>
+            </div>
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              rows={8}
+              className="font-mono text-xs"
+              spellCheck={false}
+            />
+            {parseError && (
+              <p className="text-xs text-destructive">{parseError}</p>
+            )}
+          </div>
 
-              <Button onClick={runTest} disabled={running || !skill.enabled} className="w-full gap-2">
-                {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                {running ? 'Running…' : 'Run test'}
-              </Button>
+          <Button onClick={runTest} disabled={running || !skill.enabled} className="w-full gap-2">
+            {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+            {running ? 'Running…' : `Run ${isAiTask ? 'ai-task' : 'skill'}`}
+          </Button>
 
-              {result && <ResultPanel result={result} elapsedMs={elapsedMs} />}
-            </>
+          {!isAiTask && (
+            <p className="text-[10px] text-muted-foreground -mt-2">
+              Routed via <code>agent-execute</code> as <code>admin-tester</code>. Trust gating
+              applies — skills with <code>trust_level=approve</code> may pause for HITL.
+            </p>
           )}
+
+          {result && <ResultPanel result={result} elapsedMs={elapsedMs} />}
         </div>
       </SheetContent>
     </Sheet>
