@@ -459,7 +459,7 @@ serve(async (req) => {
     // N8N: webhook passthrough (no tool loop)
     if (provider.isN8n) {
       const fullMsgs: ChatMessage[] = [{ role: 'system', content: finalSystemPrompt }, ...messages];
-      return handleN8nWebhook(settings, provider.n8nConfig!, fullMsgs, conversationId, sessionId, finalSystemPrompt);
+      return handleN8nWebhook(provider.n8nConfig!, fullMsgs, conversationId, sessionId, finalSystemPrompt, corsHeaders);
     }
 
     // ─── Unified OpenAI-compatible tool loop ─────────────────────────────────
