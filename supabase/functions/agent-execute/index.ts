@@ -2,6 +2,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { normalizeBlockData, normalizeBlocks, validateBlockData } from '../_shared/normalize-blocks.ts';
+import { normalizeSkillArgs } from '../_shared/skill-aliases.ts';
+import { markdownToTiptap, inlineClean, parseInline } from '../_shared/markdown-to-tiptap.ts';
+import {
+  type AuditContext,
+  ACCOUNTING_AUDIT_TABLES,
+  sha256Hex,
+  diffSnapshots,
+  writeAuditTrail,
+} from '../_shared/agent-audit.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,50 +36,7 @@ interface ExecuteRequest {
   };
 }
 
-/**
- * Normalize skill arguments from external callers (MCP, Claude, etc.):
- *  - Unwrap `{action, data: {...}}` → flat `{action, ...data}`
- *  - Map common aliases to canonical column names
- *    (amount→amount_cents, value→value_cents, vat_rate→derive vat_cents)
- * Top-level fields take precedence over `data` fields when both exist.
- */
-function normalizeSkillArgs(raw: Record<string, unknown>): Record<string, unknown> {
-  if (!raw || typeof raw !== 'object') return {};
-  let merged: Record<string, unknown> = { ...raw };
-  const inner = (raw as any).data;
-  if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
-    merged = { ...inner, ...merged };
-    delete merged.data;
-  }
-
-  // Friendly aliases — only set canonical key if not already provided
-  const aliasMap: Record<string, string> = {
-    amount: 'amount_cents',
-    value: 'value_cents',
-    price: 'price_cents',
-    budget: 'budget_cents',
-    total: 'total_cents',
-  };
-  for (const [from, to] of Object.entries(aliasMap)) {
-    if (merged[from] !== undefined && merged[to] === undefined) {
-      const v = merged[from];
-      // If looks like whole units (small int), upscale to cents
-      merged[to] = typeof v === 'number' && Number.isInteger(v) && v < 1_000_000 ? v * 100 : v;
-      delete merged[from];
-    }
-  }
-
-  // vat_rate (percent) → vat_cents derived from amount_cents
-  if (merged.vat_rate !== undefined && merged.vat_cents === undefined && typeof merged.amount_cents === 'number') {
-    const rate = Number(merged.vat_rate);
-    if (!Number.isNaN(rate)) {
-      merged.vat_cents = Math.round((merged.amount_cents as number) * (rate / 100));
-    }
-    delete merged.vat_rate;
-  }
-
-  return merged;
-}
+// normalizeSkillArgs is now imported from ../_shared/skill-aliases.ts
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -346,110 +312,7 @@ serve(async (req) => {
   }
 });
 
-// =============================================================================
-// Markdown → Tiptap JSON converter
-// =============================================================================
-
-function markdownToTiptap(md: string): any {
-  const lines = md.split('\n');
-  const nodes: any[] = [];
-  let i = 0;
-
-  while (i < lines.length) {
-    const line = lines[i];
-
-    // Headings
-    const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
-    if (headingMatch) {
-      const level = headingMatch[1].length;
-      nodes.push({
-        type: 'heading',
-        attrs: { level },
-        content: [{ type: 'text', text: inlineClean(headingMatch[2]) }],
-      });
-      i++;
-      continue;
-    }
-
-    // Bullet list items
-    if (/^[-*]\s+/.test(line)) {
-      const items: any[] = [];
-      while (i < lines.length && /^[-*]\s+/.test(lines[i])) {
-        const itemText = lines[i].replace(/^[-*]\s+/, '');
-        items.push({
-          type: 'listItem',
-          content: [{ type: 'paragraph', content: parseInline(itemText) }],
-        });
-        i++;
-      }
-      nodes.push({ type: 'bulletList', content: items });
-      continue;
-    }
-
-    // Numbered list
-    if (/^\d+\.\s+/.test(line)) {
-      const items: any[] = [];
-      while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
-        const itemText = lines[i].replace(/^\d+\.\s+/, '');
-        items.push({
-          type: 'listItem',
-          content: [{ type: 'paragraph', content: parseInline(itemText) }],
-        });
-        i++;
-      }
-      nodes.push({ type: 'orderedList', content: items });
-      continue;
-    }
-
-    // Empty line
-    if (!line.trim()) {
-      i++;
-      continue;
-    }
-
-    // Regular paragraph
-    nodes.push({
-      type: 'paragraph',
-      content: parseInline(line),
-    });
-    i++;
-  }
-
-  if (nodes.length === 0) {
-    nodes.push({ type: 'paragraph' });
-  }
-
-  return { type: 'doc', content: nodes };
-}
-
-function inlineClean(text: string): string {
-  return text.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').replace(/_(.+?)_/g, '$1').trim();
-}
-
-function parseInline(text: string): any[] {
-  const result: any[] = [];
-  // Simple bold/italic parsing
-  const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|_(.+?)_|([^*_]+))/g;
-  let match;
-  while ((match = regex.exec(text)) !== null) {
-    if (match[2]) {
-      // Bold
-      result.push({ type: 'text', marks: [{ type: 'bold' }], text: match[2] });
-    } else if (match[3]) {
-      // Italic
-      result.push({ type: 'text', marks: [{ type: 'italic' }], text: match[3] });
-    } else if (match[4]) {
-      // Italic (underscore)
-      result.push({ type: 'text', marks: [{ type: 'italic' }], text: match[4] });
-    } else if (match[5] && match[5].trim()) {
-      result.push({ type: 'text', text: match[5] });
-    }
-  }
-  if (result.length === 0) {
-    result.push({ type: 'text', text: text.trim() || ' ' });
-  }
-  return result;
-}
+// markdownToTiptap / inlineClean / parseInline imported from ../_shared/markdown-to-tiptap.ts
 
 // =============================================================================
 // Auto-activate module when FlowPilot uses it
@@ -6279,106 +6142,8 @@ async function executeDbAction(
 // Generic CRUD engine — universal handler for any db:tablename skill
 // =============================================================================
 
-// =============================================================================
-// Audit trail for autonomous agent actions on accounting/ERP tables
-// =============================================================================
-
-interface AuditContext {
-  agent_type?: string;
-  caller_user_id?: string;
-  caller_api_key_id?: string;
-  conversation_id?: string;
-  trace_id?: string;
-  skill_id?: string;
-  skill_name?: string;
-}
-
-/** Tables whose every CRUD write is recorded in agent_audit_trail (7-year retention). */
-const ACCOUNTING_AUDIT_TABLES = new Set([
-  'chart_of_accounts', 'journal_entries', 'journal_entry_lines',
-  'accounting_templates', 'opening_balances',
-  'accounting_periods', 'analytic_accounts', 'analytic_lines',
-  'invoices', 'invoice_lines',
-  'vendors', 'purchase_orders', 'purchase_order_lines',
-  'goods_receipts', 'goods_receipt_lines', 'vendor_invoices', 'vendor_products',
-  'rfqs', 'rfq_lines', 'rfq_bids',
-  'expenses',
-  'accounting_corrections',
-]);
-
-async function sha256Hex(input: string): Promise<string> {
-  const buf = new TextEncoder().encode(input);
-  const digest = await crypto.subtle.digest('SHA-256', buf);
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-function diffSnapshots(before: any, after: any): Record<string, { before: unknown; after: unknown }> {
-  const out: Record<string, { before: unknown; after: unknown }> = {};
-  if (!before && after) {
-    for (const k of Object.keys(after)) out[k] = { before: null, after: after[k] };
-    return out;
-  }
-  if (before && !after) {
-    for (const k of Object.keys(before)) out[k] = { before: before[k], after: null };
-    return out;
-  }
-  if (!before || !after) return out;
-  const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
-  for (const k of keys) {
-    const a = before[k], b = after[k];
-    if (JSON.stringify(a) !== JSON.stringify(b)) out[k] = { before: a, after: b };
-  }
-  return out;
-}
-
-async function writeAuditTrail(
-  supabase: any,
-  params: {
-    ctx: AuditContext;
-    table: string;
-    crud_action: string;
-    entity_id?: string | null;
-    request_payload: Record<string, unknown>;
-    before?: any;
-    after?: any;
-    success: boolean;
-    error_message?: string;
-  },
-) {
-  try {
-    const payloadJson = JSON.stringify(params.request_payload ?? {});
-    const hash = await sha256Hex(payloadJson);
-    // Default 7-year retention for accounting per Swedish bookkeeping act
-    const retentionDate = new Date();
-    retentionDate.setFullYear(retentionDate.getFullYear() + 7);
-    const diff = (params.crud_action === 'update' || params.crud_action === 'create' || params.crud_action === 'delete')
-      ? diffSnapshots(params.before, params.after)
-      : null;
-    await supabase.from('agent_audit_trail').insert({
-      agent_type: params.ctx.agent_type,
-      caller_user_id: params.ctx.caller_user_id,
-      caller_api_key_id: params.ctx.caller_api_key_id,
-      conversation_id: params.ctx.conversation_id,
-      trace_id: params.ctx.trace_id,
-      skill_id: params.ctx.skill_id,
-      skill_name: params.ctx.skill_name,
-      table_name: params.table,
-      crud_action: params.crud_action,
-      entity_id: params.entity_id ?? null,
-      request_payload: params.request_payload ?? {},
-      request_payload_sha256: hash,
-      before_snapshot: params.before ?? null,
-      after_snapshot: params.after ?? null,
-      diff,
-      success: params.success,
-      error_message: params.error_message?.slice(0, 1000) ?? null,
-      retention_until: retentionDate.toISOString().slice(0, 10),
-    });
-  } catch (err) {
-    console.error('[audit-trail] failed to write:', (err as Error).message);
-  }
-}
+// AuditContext, ACCOUNTING_AUDIT_TABLES, sha256Hex, diffSnapshots, writeAuditTrail
+// imported from ../_shared/agent-audit.ts (top of file)
 
 const GENERIC_CRUD_TABLES = new Set([
   'employees', 'leave_requests', 'projects', 'project_tasks',
