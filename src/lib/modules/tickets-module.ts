@@ -31,9 +31,9 @@ const TICKETS_SKILLS: SkillSeed[] = [
     name: 'ticket_triage',
     description:
       'Auto-classify a helpdesk ticket: set priority + category, attach up to 3 relevant KB article suggestions, write a 1-sentence internal summary. Use when: a new ticket needs triage, an existing ticket changed and needs re-classification, or a human asks "what is this ticket about?". NOT for: drafting a customer-facing reply (that is a separate ai-task), or bulk re-triaging the queue (loop calls per ticket).',
-    category: 'tickets',
+    category: 'crm',
     handler: 'ai-task:ticket_triage',
-    scope: 'agent',
+    scope: 'both',
     trust_level: 'auto',
     tool_definition: {
       type: 'function',
