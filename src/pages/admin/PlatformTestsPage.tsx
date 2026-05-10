@@ -212,10 +212,14 @@ function SuiteCard({
   suite,
   state,
   onRun,
+  onReseed,
+  reseeding,
 }: {
   suite: TestSuite;
   state?: SuiteRunState;
   onRun: () => void;
+  onReseed?: () => void;
+  reseeding?: boolean;
 }) {
   const meta = SCOPE_META[suite.scope];
   const Icon = meta.icon;
