@@ -168,14 +168,16 @@ serve(async (req) => {
   const traceId = generateTraceId('hb');
 
   try {
-    // Module gate — skip heartbeat if FlowPilot module is disabled (Scenario B)
+    // Module gate — skip heartbeat if FlowPilot module is disabled.
+    // FlowPilot is an OPTIONAL operator layer; FlowWink SaaS works without it.
+    // Source of truth: site_settings.modules.flowpilot.enabled (default: false).
     const { data: moduleSettings } = await supabase
-      .from('agent_memory')
+      .from('site_settings')
       .select('value')
-      .eq('key', 'modules_settings')
+      .eq('key', 'modules')
       .maybeSingle();
-    
-    const flowpilotEnabled = moduleSettings?.value?.flowpilot?.enabled ?? true;
+
+    const flowpilotEnabled = (moduleSettings?.value as any)?.flowpilot?.enabled === true;
     if (!flowpilotEnabled) {
       console.log(`[heartbeat] trace=${traceId} FlowPilot module disabled — skipping`);
       return new Response(

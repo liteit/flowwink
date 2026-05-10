@@ -354,12 +354,123 @@ Never invent statistics, names, or product features that are not in the source.`
   options: { temperature: 0.5, max_tokens: 2000 },
 };
 
+// ─── ticket_triage ──────────────────────────────────────────────────────────
+// Loads the ticket, classifies priority/category, suggests KB articles to
+// recommend in the response, and writes the triage result back to the row.
+// Pure SaaS-layer reasoning — usable from /admin/tickets button, automations
+// (executor=platform), MCP clients, and FlowPilot alike. Does NOT auto-reply
+// (drafting customer-facing replies is a separate, opt-in step).
+const ticketTriageInput = z.object({
+  ticket_id: z.string().uuid(),
+});
+
+const ticketTriageTask: TaskSpec<z.infer<typeof ticketTriageInput>, any> = {
+  name: "ticket_triage",
+  description:
+    "Triage a single helpdesk ticket: classify priority + category, suggest up to 3 relevant KB articles, write a 1-sentence internal summary. Loads ticket; writes back priority, category and suggested_kb_article_ids.",
+  tier: "fast",
+  inputSchema: ticketTriageInput,
+  load: async (input, supabase) => {
+    const { data: ticket, error } = await supabase
+      .from("tickets")
+      .select(
+        "id, subject, description, priority, category, status, contact_email, contact_name, source",
+      )
+      .eq("id", input.ticket_id)
+      .maybeSingle();
+    if (error || !ticket) throw new Error("Ticket not found");
+
+    // Pull a small KB index (title + slug + id) so the model can pick from
+    // real article IDs instead of inventing them. Keep cheap: 50 published.
+    const { data: kb } = await supabase
+      .from("kb_articles")
+      .select("id, title, slug, summary")
+      .eq("status", "published")
+      .order("updated_at", { ascending: false })
+      .limit(50);
+
+    return {
+      ticket,
+      kb_index: (kb ?? []).map((a: any) => ({
+        id: a.id,
+        title: a.title,
+        slug: a.slug,
+        summary: a.summary ?? null,
+      })),
+    };
+  },
+  system: () =>
+    `You are a support-desk triage assistant. Given a ticket and a small index of published KB articles, return a structured triage.
+
+Rules:
+- priority: urgent (production down / data loss / security), high (blocking workflow), medium (normal request), low (cosmetic / question).
+- category: bug | feature | question | billing | other. Pick "billing" for invoice/payment/subscription issues; "bug" only when the user reports broken behavior; "feature" for explicit requests; "question" for how-to / clarification; otherwise "other".
+- suggested_kb_article_ids: pick 0–3 ids from kb_index whose title/summary clearly matches the ticket. NEVER invent ids.
+- internal_summary: 1 sentence for the assignee, plain language, no fluff.
+- confidence: high if both priority and category are obvious from the text; medium if one is inferred; low if the description is vague.`,
+  user: (input) =>
+    `## Ticket\n${JSON.stringify((input as any).ticket, null, 2)}\n\n## KB index (id, title, slug, summary)\n${JSON.stringify((input as any).kb_index, null, 2)}`,
+  tool: {
+    name: "submit_ticket_triage",
+    description: "Return structured triage for the ticket",
+    parameters: {
+      type: "object",
+      properties: {
+        priority: { type: "string", enum: ["low", "medium", "high", "urgent"] },
+        category: {
+          type: "string",
+          enum: ["bug", "feature", "question", "billing", "other"],
+        },
+        suggested_kb_article_ids: {
+          type: "array",
+          items: { type: "string" },
+          maxItems: 3,
+        },
+        internal_summary: { type: "string" },
+        confidence: { type: "string", enum: ["high", "medium", "low"] },
+      },
+      required: [
+        "priority",
+        "category",
+        "suggested_kb_article_ids",
+        "internal_summary",
+        "confidence",
+      ],
+    },
+  },
+  apply: async (input, result: any, supabase) => {
+    // Filter suggested ids to ones that actually exist in kb_index
+    // (defense-in-depth even though the prompt forbids invention).
+    const validIds: string[] = (((input as any).kb_index ?? []) as Array<{ id: string }>)
+      .map((a) => a.id);
+    const filtered = (result.suggested_kb_article_ids ?? []).filter((id: string) =>
+      validIds.includes(id),
+    );
+    const { error } = await supabase
+      .from("tickets")
+      .update({
+        priority: result.priority,
+        category: result.category,
+        suggested_kb_article_ids: filtered,
+      })
+      .eq("id", (input as any).ticket_id);
+    if (error) throw new Error(`Failed to update ticket: ${error.message}`);
+    return {
+      ticket_id: (input as any).ticket_id,
+      updated: true,
+      kb_articles_set: filtered.length,
+    };
+  },
+  options: { temperature: 0.2, max_tokens: 600 },
+};
+
 // ─── Registry ───────────────────────────────────────────────────────────────
 export const TASKS: Record<string, TaskSpec<any, any>> = {
   score_candidate: scoreCandidateTask,
   analyze_receipt: analyzeReceiptTask,
   qualify_lead_summary: qualifyLeadSummaryTask,
   generate_blog_from_webinar: generateBlogFromWebinarTask,
+  ticket_triage: ticketTriageTask,
 };
 
 export function listTasks() {

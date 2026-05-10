@@ -96,12 +96,13 @@ serve(async (req) => {
 
   try {
     // Module gate — Distill is part of the FlowPilot operator surface.
+    // Source of truth: site_settings.modules.flowpilot.enabled (default: false).
     const { data: modSettings } = await supabase
-      .from("agent_memory")
+      .from("site_settings")
       .select("value")
-      .eq("key", "modules_settings")
+      .eq("key", "modules")
       .maybeSingle();
-    const fpEnabled = (modSettings?.value as any)?.flowpilot?.enabled ?? true;
+    const fpEnabled = (modSettings?.value as any)?.flowpilot?.enabled === true;
     if (!fpEnabled) {
       return new Response(
         JSON.stringify({ skipped: true, reason: "flowpilot_disabled" }),

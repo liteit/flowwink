@@ -26,14 +26,33 @@ type TicketModuleInput = z.infer<typeof ticketModuleInputSchema>;
 type TicketModuleOutput = z.infer<typeof ticketModuleOutputSchema>;
 
 // ── Bundled skill definitions ──
-// NOTE: `ticket_triage` was removed in 2026-05 — the seed pointed at a non-existent
-// handler (`ticket_triage` with no prefix), so calls failed silently. Triage is a
-// reasoning-skill that requires composition (categorize → KB search → comment →
-// status update); when re-introduced, model it as `ai-task:ticket_triage` or as a
-// composite workflow, NOT as a single deterministic skill. Until then, FlowPilot /
-// external operators should compose `manage_ticket` + `kb_search` + `add_comment`
-// directly.
-const TICKETS_SKILLS: SkillSeed[] = [];
+const TICKETS_SKILLS: SkillSeed[] = [
+  {
+    name: 'ticket_triage',
+    description:
+      'Auto-classify a helpdesk ticket: set priority + category, attach up to 3 relevant KB article suggestions, write a 1-sentence internal summary. Use when: a new ticket needs triage, an existing ticket changed and needs re-classification, or a human asks "what is this ticket about?". NOT for: drafting a customer-facing reply (that is a separate ai-task), or bulk re-triaging the queue (loop calls per ticket).',
+    category: 'crm',
+    handler: 'ai-task:ticket_triage',
+    scope: 'both',
+    trust_level: 'auto',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'ticket_triage',
+        description:
+          'Triage a single ticket. Loads the ticket + a small KB index, then writes back priority, category and suggested_kb_article_ids on the tickets row.',
+        parameters: {
+          type: 'object',
+          properties: {
+            ticket_id: { type: 'string', description: 'UUID of the ticket to triage' },
+          },
+          required: ['ticket_id'],
+          additionalProperties: false,
+        },
+      },
+    },
+  },
+];
 
 export const ticketsModule = defineModule<TicketModuleInput, TicketModuleOutput>({
   id: 'tickets',
