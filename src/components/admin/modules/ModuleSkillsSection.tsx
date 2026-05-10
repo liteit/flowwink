@@ -68,7 +68,7 @@ export function ModuleSkillsSection({
   const list = (
     <div className="space-y-1.5">
       {moduleSkills.map(skill => (
-        <SkillRow key={skill.id} skill={skill} />
+        <SkillRow key={skill.id} skill={skill} moduleEnabled={moduleEnabled} />
       ))}
     </div>
   );
