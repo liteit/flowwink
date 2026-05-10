@@ -84,8 +84,9 @@ function buildExampleInput(skill: AgentSkill): string {
 }
 
 export function SkillTesterSheet({ skill, open, onOpenChange }: Props) {
-  const isAiTask = skill?.handler?.startsWith('ai-task:') ?? false;
-  const taskName = isAiTask ? skill!.handler.slice('ai-task:'.length) : '';
+  const handler = skill?.handler ?? '';
+  const isAiTask = handler.startsWith('ai-task:');
+  const taskName = isAiTask ? handler.slice('ai-task:'.length) : '';
 
   const [input, setInput] = useState('{}');
   const [running, setRunning] = useState(false);
@@ -112,11 +113,11 @@ export function SkillTesterSheet({ skill, open, onOpenChange }: Props) {
   }, [skill]);
 
   async function runTest() {
-    if (!skill || !isAiTask) return;
+    if (!skill) return;
     setParseError(null);
     setResult(null);
 
-    let parsed: unknown;
+    let parsed: any;
     try {
       parsed = JSON.parse(input || '{}');
     } catch (err: any) {
@@ -127,25 +128,38 @@ export function SkillTesterSheet({ skill, open, onOpenChange }: Props) {
     setRunning(true);
     const t0 = performance.now();
     try {
-      // Use raw fetch so we always get the JSON body even on non-2xx (supabase.functions.invoke
-      // hides the body inside FunctionsHttpError.context as a Response).
       const session = (await supabase.auth.getSession()).data.session;
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-task`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({ task: taskName, input: parsed }),
-        },
-      );
+      const headers = {
+        'Content-Type': 'application/json',
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      };
+
+      // Klass 2a (ai-task:) → ai-task endpoint returns { result, apply, provider_used }.
+      // All other handlers (edge:, rpc:, db:, module:, internal:, composio:, ...) →
+      // agent-execute is the universal skill runner.
+      const url = isAiTask
+        ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-task`
+        : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-execute`;
+      const body = isAiTask
+        ? { task: taskName, input: parsed }
+        : { skill_name: skill.name, arguments: parsed, agent_type: 'admin-tester' };
+
+      const resp = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
       const dt = performance.now() - t0;
       setElapsedMs(Math.round(dt));
       const data = await resp.json().catch(() => ({ error: `HTTP ${resp.status}` }));
-      setResult(data as RunResult);
+      if (!isAiTask && data && typeof data === 'object') {
+        const ok = data.status === 'ok' || data.success === true;
+        setResult({
+          success: ok,
+          result: data.output ?? data.result ?? data,
+          error: ok ? undefined : (data.error || data.message),
+          details: data,
+        } as RunResult);
+      } else {
+        setResult(data as RunResult);
+      }
     } catch (err: any) {
       setElapsedMs(Math.round(performance.now() - t0));
       setResult({ error: err?.message ?? 'Unknown error' });
