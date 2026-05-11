@@ -93,7 +93,7 @@ cmd_help() {
     echo -e "  ${CYAN}/update-funcs${NC}    Re-deploy all edge functions (picks up code changes)"
     echo -e "  ${CYAN}/set-keys${NC}        Add or rotate API keys & Supabase secrets"
     echo -e "  ${CYAN}/create-admin${NC}    Create a new admin user account"
-    echo -e "  ${CYAN}/patch-flowpilot${NC} Patch FlowPilot: sync missing skills/soul or renew heartbeat cron"
+    echo -e "  ${CYAN}/patch-flowpilot${NC} (deprecated) FlowPilot is now seeded via /admin/modules"
     echo ""
     echo -e "  ${BOLD}── Info ──────────────────────────────────────────────${NC}"
     echo -e "  ${CYAN}/env${NC}             Print environment variables needed for hosting (Vercel/Easypanel)"
