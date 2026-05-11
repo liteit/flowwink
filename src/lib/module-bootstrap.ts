@@ -55,17 +55,70 @@ export function registerBootstrap(moduleId: keyof ModulesSettings, bootstrap: Mo
   bootstrapRegistry[moduleId] = bootstrap;
 }
 
+/** Compute a stable hash of a module's bootstrap config — used to detect drift between runs. */
+async function computeConfigHash(moduleId: keyof ModulesSettings): Promise<string | null> {
+  try {
+    const unified = getUnifiedModule(moduleId);
+    const bootstrap = bootstrapRegistry[moduleId];
+    const skills = unified?.skillSeeds ?? bootstrap?.skills ?? [];
+    const automations = unified?.automations ?? bootstrap?.automations ?? [];
+    const payload = JSON.stringify({
+      skills: skills.map(s => s.name).sort(),
+      automations: automations.map(a => a.name).sort(),
+    });
+    const buf = new TextEncoder().encode(payload);
+    const digest = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
+  } catch {
+    return null;
+  }
+}
+
+/** Check if a module is in degraded state (3+ consecutive failures). */
+export async function getBootstrapHealth(moduleId: keyof ModulesSettings): Promise<{
+  is_degraded: boolean;
+  failure_streak: number;
+  last_status: string | null;
+  last_run_at: string | null;
+  last_hash: string | null;
+}> {
+  const { data, error } = await supabase.rpc('get_bootstrap_health', { _module_id: String(moduleId) });
+  if (error || !data || !Array.isArray(data) || data.length === 0) {
+    return { is_degraded: false, failure_streak: 0, last_status: null, last_run_at: null, last_hash: null };
+  }
+  const row = data[0] as { is_degraded: boolean; failure_streak: number; last_status: string | null; last_run_at: string | null; last_hash: string | null };
+  return row;
+}
+
 /**
  * Run bootstrap for a module being enabled.
  * Idempotent — safe to run multiple times.
+ *
+ * Circuit breaker: refuses to run if module has 3+ consecutive failures unless `force=true`.
+ * Every run is recorded in `bootstrap_runs` for observability.
  */
 export async function bootstrapModule(
   moduleId: keyof ModulesSettings,
-  allModules: ModulesSettings
-): Promise<{ seededSkills: number; seededAutomations: number; errors: string[] }> {
+  allModules: ModulesSettings,
+  options: { force?: boolean; triggeredBy?: string } = {}
+): Promise<{ seededSkills: number; seededAutomations: number; errors: string[]; degraded?: boolean }> {
   const bootstrap = bootstrapRegistry[moduleId];
   const unified = getUnifiedModule(moduleId);
-  const result = { seededSkills: 0, seededAutomations: 0, errors: [] as string[] };
+  const result = { seededSkills: 0, seededAutomations: 0, errors: [] as string[], degraded: false };
+
+  // Circuit breaker check
+  if (!options.force) {
+    const health = await getBootstrapHealth(moduleId);
+    if (health.is_degraded) {
+      logger.warn(`[module-bootstrap] ${moduleId} is DEGRADED (${health.failure_streak} consecutive failures). Pass force=true to retry.`);
+      result.degraded = true;
+      result.errors.push(`Module is degraded after ${health.failure_streak} consecutive failures. Re-bootstrap with "force" to retry.`);
+      return result;
+    }
+  }
+
+  const startedAt = Date.now();
+  const configHash = await computeConfigHash(moduleId);
 
   // 1. Always seed reference data (unified seedData takes precedence over legacy bootstrap.seedData)
   const seedFn = unified?.seedData ?? bootstrap?.seedData;
@@ -209,6 +262,22 @@ export async function bootstrapModule(
     } catch (hashErr) {
       logger.warn(`[module-bootstrap] Hash recompute failed (non-fatal):`, hashErr);
     }
+  }
+
+  // 7. Record the run for circuit breaker + observability
+  try {
+    await supabase.from('bootstrap_runs').insert({
+      module_id: String(moduleId),
+      status: result.errors.length > 0 ? 'failed' : 'success',
+      seeded_skills: result.seededSkills,
+      seeded_automations: result.seededAutomations,
+      errors: result.errors as unknown as Json,
+      config_hash: configHash,
+      duration_ms: Date.now() - startedAt,
+      triggered_by: options.triggeredBy ?? 'manual',
+    });
+  } catch (recErr) {
+    logger.warn(`[module-bootstrap] Failed to record run (non-fatal):`, recErr);
   }
 
   return result;

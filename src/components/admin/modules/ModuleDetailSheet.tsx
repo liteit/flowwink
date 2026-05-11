@@ -48,6 +48,7 @@ import { ModuleSkillsSection } from "./ModuleSkillsSection";
 import { SubscriptionsDunningToggle } from "./SubscriptionsDunningToggle";
 import { ComposioPanel } from "./ComposioPanel";
 import { ReBootstrapButton } from "./ReBootstrapButton";
+import { BootstrapHealthCard } from "./BootstrapHealthCard";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -890,10 +891,11 @@ export function ModuleDetailSheet({
               </>
             )}
 
-            {/* Generic per-module re-bootstrap (idempotent) */}
+            {/* Generic per-module re-bootstrap (idempotent) + history */}
             {isEnabled && (
               <>
                 <Separator />
+                <BootstrapHealthCard moduleId={moduleId} />
                 <div className="space-y-2">
                   <ReBootstrapButton moduleId={moduleId} />
                   <p className="text-[10px] text-muted-foreground text-center">

@@ -2,6 +2,7 @@
 
 ## Core
 - Stack: React+Vite SPA, Tiptap, Supabase. React Query, React Router.
+- Module bootstrap har circuit breaker: `bootstrap_runs`-tabell + `get_bootstrap_health()`. 3+ consecutive failures → degraded → kräver `force=true`. Se mem://architecture/bootstrap-circuit-breaker.
 - Coding Agent alters code. FlowPilot alters DB/content via skills. FlowPilot cannot create React components.
 - Tool Calls: Always use explicit `tool_calls`. Never simulate actions in text.
 - Unified Reasoning: FlowPilot is the sole reasoning engine. No shadow brains in edge functions.
