@@ -199,6 +199,10 @@ async function extractPdfTextCore(params: {
 
     const result = await response.json();
     extractedText = result.content?.[0]?.text || '';
+    const u = result?.usage || {};
+    _pTok = Number(u.input_tokens || 0);
+    _cTok = Number(u.output_tokens || 0);
+    _tTok = _pTok + _cTok;
   } else {
     throw new Error(`Provider "${ai.provider}" does not support PDF extraction`);
   }
@@ -206,6 +210,13 @@ async function extractPdfTextCore(params: {
   if (!extractedText || extractedText.length < 10) {
     throw new Error('Could not extract text from PDF');
   }
+
+  void logAiUsage({
+    supabase, source: 'extract-pdf-text', provider: ai.provider, model: ai.model,
+    promptTokens: _pTok, completionTokens: _cTok, totalTokens: _tTok,
+    latencyMs: Date.now() - _aiStart, status: 'success',
+    metadata: { char_count: extractedText.length, fallback: ai.fallback },
+  });
 
   return {
     success: true,
