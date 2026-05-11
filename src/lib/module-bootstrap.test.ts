@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock supabase before importing the module under test
-const insertMock = vi.fn(() => Promise.resolve({ error: null }));
+const insertMock = vi.fn((..._args: unknown[]) => Promise.resolve({ error: null })) as ReturnType<typeof vi.fn>;
 const rpcMock = vi.fn();
 const updateInMock = vi.fn(() => Promise.resolve({ error: null }));
 const fromMock = vi.fn((table: string) => {
