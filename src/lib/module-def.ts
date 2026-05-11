@@ -25,6 +25,45 @@ import type { WebhookEventInfo } from '@/lib/module-webhook-events';
 // Unified Module Definition
 // =============================================================================
 
+/**
+ * Namespaced sub-shapes — group fields by who owns them.
+ *
+ *   agent: what the AI/MCP layer sees   (skills, automations, webhook events)
+ *   ui:    what the human sees           (reserved — navItems, routes)
+ *   data:  what the DB owns              (reserved — tables, RLS, seedData)
+ *
+ * Only `agent` is populated today. `ui` and `data` are forward-looking
+ * placeholders — modules can start filling them in as concerns get pulled
+ * out of Sidebar / migrations into the manifest.
+ *
+ * For backwards compatibility, all `agent.*` fields can also be declared at
+ * the top level (flat). `defineModule` normalises to the namespaced shape.
+ */
+export interface AgentNamespace {
+  /** Skill names this module owns — enabled/disabled with the module */
+  skills?: string[];
+  /** Full skill definitions for INSERT-if-not-exists bootstrap */
+  skillSeeds?: SkillSeed[];
+  /** Automations to register when module is enabled */
+  automations?: AutomationSeed[];
+  /** Canonical events this module emits or listens to (see docs/architecture/event-bus.md) */
+  webhookEvents?: WebhookEventInfo[];
+}
+
+export interface UiNamespace {
+  /** Reserved — sidebar entries owned by this module */
+  navItems?: unknown[];
+  /** Reserved — react-router route descriptors owned by this module */
+  routes?: unknown[];
+}
+
+export interface DataNamespace {
+  /** Reserved — table names this module owns (for doc-drift / ownership audits) */
+  tables?: string[];
+  /** Reference data seeding function — runs on enable */
+  seedData?: () => Promise<void>;
+}
+
 export interface UnifiedModuleDef<TInput = unknown, TOutput = unknown> {
   /** Must match the key in ModulesSettings */
   id: keyof ModulesSettings;
@@ -38,18 +77,22 @@ export interface UnifiedModuleDef<TInput = unknown, TOutput = unknown> {
   outputSchema: z.ZodSchema<TOutput>;
   publish: (input: TInput) => Promise<TOutput>;
 
-  // ── FlowPilot Integration (optional) ──
-  /** Skill names this module owns — enabled/disabled with the module */
-  skills?: string[];
-  /** Full skill definitions for INSERT-if-not-exists bootstrap */
-  skillSeeds?: SkillSeed[];
-  /** Automations to register when module is enabled */
-  automations?: AutomationSeed[];
-  /** Reference data seeding function — runs on enable */
-  seedData?: () => Promise<void>;
+  // ── Namespaced shape (preferred) ──
+  agent?: AgentNamespace;
+  ui?: UiNamespace;
+  data?: DataNamespace;
 
-  // ── Webhook Events (optional) ──
+  // ── Flat shape (legacy / shorthand — auto-merged into `agent` / `data`) ──
+  /** @deprecated prefer `agent.skills` */
+  skills?: string[];
+  /** @deprecated prefer `agent.skillSeeds` */
+  skillSeeds?: SkillSeed[];
+  /** @deprecated prefer `agent.automations` */
+  automations?: AutomationSeed[];
+  /** @deprecated prefer `agent.webhookEvents` */
   webhookEvents?: WebhookEventInfo[];
+  /** @deprecated prefer `data.seedData` */
+  seedData?: () => Promise<void>;
 }
 
 // =============================================================================
@@ -61,27 +104,61 @@ const unifiedModules = new Map<string, UnifiedModuleDef>();
 
 /**
  * Define and register a module in a single call.
- * This is the ONLY way to register a module in the unified system.
- * 
- * Usage:
+ *
+ * Accepts either the **namespaced** shape (preferred) or the **flat** shape
+ * (legacy). Flat fields are merged into the matching namespace so downstream
+ * code can rely on either form.
+ *
+ * Namespaced (preferred):
  * ```ts
- * export const documentsModule = defineModule({
- *   id: 'documents',
- *   name: 'Documents',
- *   version: '1.0.0',
- *   skills: ['manage_document'],
- *   skillSeeds: [{ ... }],
- *   inputSchema: ...,
- *   outputSchema: ...,
- *   publish: async (input) => { ... },
+ * defineModule({
+ *   id: 'expenses', name: 'Expenses', version: '1.0.0', capabilities: [...],
+ *   inputSchema, outputSchema, publish,
+ *   agent: { skills: ['manage_expense'], skillSeeds: [...], automations: [...] },
+ *   data:  { seedData: async () => {...} },
+ * });
+ * ```
+ *
+ * Flat (legacy — still works):
+ * ```ts
+ * defineModule({
+ *   id: 'expenses', ..., skills: ['manage_expense'], skillSeeds: [...],
  * });
  * ```
  */
 export function defineModule<TInput, TOutput>(
   def: UnifiedModuleDef<TInput, TOutput>
 ): UnifiedModuleDef<TInput, TOutput> {
-  unifiedModules.set(def.id, def as UnifiedModuleDef);
-  return def;
+  const normalised = normaliseModule(def);
+  unifiedModules.set(normalised.id, normalised as UnifiedModuleDef);
+  return normalised;
+}
+
+function normaliseModule<TInput, TOutput>(
+  def: UnifiedModuleDef<TInput, TOutput>
+): UnifiedModuleDef<TInput, TOutput> {
+  const agent: AgentNamespace = {
+    skills: def.agent?.skills ?? def.skills,
+    skillSeeds: def.agent?.skillSeeds ?? def.skillSeeds,
+    automations: def.agent?.automations ?? def.automations,
+    webhookEvents: def.agent?.webhookEvents ?? def.webhookEvents,
+  };
+  const data: DataNamespace = {
+    tables: def.data?.tables,
+    seedData: def.data?.seedData ?? def.seedData,
+  };
+  return {
+    ...def,
+    agent,
+    ui: def.ui ?? {},
+    data,
+    // Mirror back to flat fields so existing readers keep working unchanged.
+    skills: agent.skills,
+    skillSeeds: agent.skillSeeds,
+    automations: agent.automations,
+    webhookEvents: agent.webhookEvents,
+    seedData: data.seedData,
+  };
 }
 
 // =============================================================================
