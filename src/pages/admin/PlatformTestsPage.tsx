@@ -44,9 +44,21 @@ const SCOPE_META: Record<TestScope, { label: string; icon: typeof Layers; color:
 
 export default function PlatformTestsPage() {
   const allSuites = useMemo(() => getAllSuites(), []);
-  const [scopeFilter, setScopeFilter] = useState<'all' | TestScope>('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialScope = (searchParams.get('scope') as TestScope | null) ?? 'all';
+  const [scopeFilter, setScopeFilter] = useState<'all' | TestScope>(
+    ['all', 'platform', 'module', 'operator', 'guardrail'].includes(initialScope) ? initialScope as 'all' | TestScope : 'all',
+  );
   const [search, setSearch] = useState('');
   const [runState, setRunState] = useState<Record<string, SuiteRunState>>({});
+
+  // Keep URL in sync so deep links from the FlowPilot panel land on the right tab.
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    if (scopeFilter === 'all') next.delete('scope'); else next.set('scope', scopeFilter);
+    if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scopeFilter]);
 
   const filtered = useMemo(() => {
     return allSuites.filter((s) => {
