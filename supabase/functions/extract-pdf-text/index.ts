@@ -79,6 +79,8 @@ async function extractPdfTextCore(params: {
 - Return ONLY the extracted text. No commentary.`;
 
   let extractedText = '';
+  const _aiStart = Date.now();
+  let _pTok = 0, _cTok = 0, _tTok = 0;
 
   if (ai.provider === 'gemini') {
     const response = await fetch(
