@@ -161,6 +161,10 @@ async function extractPdfTextCore(params: {
 
     const result = await response.json();
     extractedText = result.choices?.[0]?.message?.content || '';
+    const u = result?.usage || {};
+    _pTok = Number(u.prompt_tokens || 0);
+    _cTok = Number(u.completion_tokens || 0);
+    _tTok = Number(u.total_tokens || _pTok + _cTok);
 
     fetch(`https://api.openai.com/v1/files/${fileId}`, {
       method: 'DELETE',
