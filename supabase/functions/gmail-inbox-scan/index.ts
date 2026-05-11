@@ -16,10 +16,7 @@ const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GMAIL_API = 'https://gmail.googleapis.com/gmail/v1/users/me';
 
 function getSupabase() {
-  return createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
+  return getServiceClient();
 }
 
 interface GmailConfig {

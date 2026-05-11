@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { getServiceClient } from '../_shared/supabase-clients.ts';
+import { getServiceClient, getUserClient } from '../_shared/supabase-clients.ts';
 
 /**
  * a2a — Unified router for all A2A federation traffic.
@@ -306,9 +306,7 @@ async function handleDiscover(req: Request): Promise<Response> {
   if (!token) return json({ error: 'Unauthorized' }, 401);
 
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY') || '';
-  const authClient = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
+  const authClient = getUserClient(`Bearer ${token}`)!;
   const { data: { user } } = await authClient.auth.getUser();
   if (!user) return json({ error: 'Unauthorized' }, 401);
 
@@ -726,10 +724,10 @@ async function handleOutbound(req: Request): Promise<Response> {
 
   if (!isAuthorized && token) {
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY') || '';
-    const authClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
+    const authClient = getUserClient(`Bearer ${token}`)!;
     const { data: { user } } = await authClient.auth.getUser();
     if (user) {
-      const { data: roles } = await createClient(supabaseUrl, serviceKey)
+      const { data: roles } = await getServiceClient()
         .from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin');
       isAuthorized = !!(roles && roles.length > 0);
     }
