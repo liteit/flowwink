@@ -729,7 +729,7 @@ async function handleOutbound(req: Request): Promise<Response> {
     const authClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
     const { data: { user } } = await authClient.auth.getUser();
     if (user) {
-      const { data: roles } = await createClient(supabaseUrl, serviceKey)
+      const { data: roles } = await getServiceClient()
         .from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin');
       isAuthorized = !!(roles && roles.length > 0);
     }

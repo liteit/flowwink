@@ -38,7 +38,7 @@ serve(async (req: Request) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const supabase = getServiceClient();
 
     const body = (await req.json()) as InvitePayload;
     if (!body.invitee_name || body.invitee_name.length < 2) {
