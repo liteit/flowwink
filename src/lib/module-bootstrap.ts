@@ -264,6 +264,22 @@ export async function bootstrapModule(
     }
   }
 
+  // 7. Record the run for circuit breaker + observability
+  try {
+    await supabase.from('bootstrap_runs').insert({
+      module_id: String(moduleId),
+      status: result.errors.length > 0 ? 'failed' : 'success',
+      seeded_skills: result.seededSkills,
+      seeded_automations: result.seededAutomations,
+      errors: result.errors as unknown as Json,
+      config_hash: configHash,
+      duration_ms: Date.now() - startedAt,
+      triggered_by: options.triggeredBy ?? 'manual',
+    });
+  } catch (recErr) {
+    logger.warn(`[module-bootstrap] Failed to record run (non-fatal):`, recErr);
+  }
+
   return result;
 }
 
