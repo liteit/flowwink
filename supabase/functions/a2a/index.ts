@@ -306,9 +306,7 @@ async function handleDiscover(req: Request): Promise<Response> {
   if (!token) return json({ error: 'Unauthorized' }, 401);
 
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY') || '';
-  const authClient = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
+  const authClient = getUserClient(`Bearer ${token}`)!;
   const { data: { user } } = await authClient.auth.getUser();
   if (!user) return json({ error: 'Unauthorized' }, 401);
 
