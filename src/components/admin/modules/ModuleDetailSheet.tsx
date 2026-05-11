@@ -889,6 +889,19 @@ export function ModuleDetailSheet({
                 </div>
               </>
             )}
+
+            {/* Generic per-module re-bootstrap (idempotent) */}
+            {isEnabled && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                  <ReBootstrapButton moduleId={moduleId} />
+                  <p className="text-[10px] text-muted-foreground text-center">
+                    Re-runs seed data + skill registration. Safe to repeat.
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </ScrollArea>
       </SheetContent>
