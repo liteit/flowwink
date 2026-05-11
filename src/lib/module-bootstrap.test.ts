@@ -59,7 +59,7 @@ describe('Bootstrap circuit breaker', () => {
     const result = await bootstrapModule('blog' as keyof ModulesSettings, fakeModules);
     expect(result.degraded).toBe(false);
     expect(insertMock).toHaveBeenCalledTimes(1);
-    const inserted = insertMock.mock.calls[0][0];
+    const inserted = insertMock.mock.calls[0]?.[0] as { module_id: string; status: string; config_hash: string };
     expect(inserted.module_id).toBe('blog');
     expect(inserted.status).toBe('success');
     expect(inserted.config_hash).toBeTruthy();
