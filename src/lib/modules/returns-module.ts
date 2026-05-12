@@ -156,6 +156,7 @@ export const returnsModule = defineModule<Input, Output>({
   version: '1.0.0',
   description:
     'Return-merchandise-authorization flow with line-item tracking, approval, restock-on-receive, and refund processing. Customers see their own returns; staff manages all.',
+  requires: ['ecommerce'],
   capabilities: ['data:read', 'data:write'],
   inputSchema,
   outputSchema,

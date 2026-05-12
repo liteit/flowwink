@@ -125,6 +125,7 @@ export const fixedAssetsModule = defineModule<Input, Output>({
   version: '1.0.0',
   description:
     'Capitalize equipment, run monthly depreciation, and post disposals — all to BAS 2024 accounts (1210/1219/7832 + 3970/7970).',
+  requires: ['accounting'],
   capabilities: ['data:read', 'data:write'],
   inputSchema,
   outputSchema,

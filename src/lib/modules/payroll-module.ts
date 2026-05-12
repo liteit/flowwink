@@ -128,6 +128,7 @@ export const payrollModule = defineModule<Input, Output>({
   version: '1.0.0',
   description:
     'Monthly payroll runs (SE-locale): snapshots employees + recurring components, posts wage journals (BAS 7210/7510/2710/2731/2890), and tracks net wage payment. 31.42% employer social fee default, per-employee tax rate override.',
+  requires: ['hr'],
   capabilities: ['data:read', 'data:write'],
   inputSchema,
   outputSchema,
