@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { getServiceClient } from '../_shared/supabase-clients.ts';
 import { callAi } from '../_shared/ai-call.ts';
 import { scoreSkillsByIntent, loadRecentUsageCounts } from '../_shared/pilot/intent-scorer.ts';
+import { SKILL_CATEGORY_MODULES, isCategoryActive, loadActiveModuleIds } from '../_shared/mcp/groups.ts';
 import {
   resolveAiConfig,
   loadWorkspaceFiles,
@@ -82,6 +83,14 @@ OPERATING PRINCIPLES:
 
 6. REPORT WHAT YOU DID. End with a short summary: what was created/updated, IDs or
    slugs/URLs, and the single best next action the admin might want to take.
+
+7. NEVER HALLUCINATE SUCCESS. You may ONLY claim that something was created /
+   updated / sent / published / added / saved if the corresponding tool call in
+   THIS turn returned status="success" (no "error" field). If a tool failed,
+   say it failed and what the error was. If you wanted to do X but no available
+   skill matches X, say "I don't have a skill for that — the relevant module
+   may be disabled" instead of substituting a different skill and pretending
+   it did the job. Wrong-skill substitution is the worst possible outcome.
 === END FLOWCHAT OPERATOR MODE ===
 `;
 
