@@ -577,6 +577,32 @@ serve(async (req) => {
       const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
       const writer = writable.getWriter();
 
+      // Track token usage from upstream SSE so this branch also logs to ai_usage_logs.
+      let pTok = 0, cTok = 0, tTok = 0;
+      const captureUsage = (obj: any) => {
+        const u = obj?.usage;
+        if (u && typeof u === 'object') {
+          const p = Number(u.prompt_tokens ?? u.input_tokens ?? 0);
+          const c = Number(u.completion_tokens ?? u.output_tokens ?? 0);
+          const t = Number(u.total_tokens ?? p + c);
+          if (p || c || t) { pTok += p; cTok += c; tTok += t; }
+        }
+      };
+      let usageLogged = false;
+      const logOnce = (status: string, extra: Record<string, unknown> = {}) => {
+        if (usageLogged) return;
+        usageLogged = true;
+        scheduleAiUsageLog({
+          supabase, source: 'chat-completion',
+          provider: provider.resolvedProvider,
+          model: provider.model,
+          promptTokens: pTok, completionTokens: cTok, totalTokens: tTok,
+          latencyMs: Date.now() - tIter, status,
+          conversationId: conversationId || null,
+          metadata: { iteration, has_tools: tools.length > 0, ...extra },
+        });
+      };
+
       // Process stream in background without blocking the Response
       (async () => {
         const reader = upstream.body!.getReader();
@@ -609,6 +635,7 @@ serve(async (req) => {
 
               let parsed: any;
               try { parsed = JSON.parse(data); } catch { continue; }
+              captureUsage(parsed);
 
               const delta = parsed.choices?.[0]?.delta;
               const finishReason = parsed.choices?.[0]?.finish_reason;
@@ -633,6 +660,9 @@ serve(async (req) => {
 
                 if (finishReason === 'tool_calls') {
                   console.log(`[chat] Tool iteration ${iteration + 1}:`, Object.values(tcMap).map(t => t.name));
+
+                  // Log this iteration's usage before recursing into the next one
+                  logOnce('success', { phase: 'tool_calls' });
 
                   msgs.push({
                     role: 'assistant', content: null,
@@ -666,8 +696,11 @@ serve(async (req) => {
               }
             }
           }
+          // Stream ended without a tool_calls handoff — log content-path usage
+          logOnce('success', { phase: 'content' });
         } catch (e) {
           console.error('[chat] Stream error:', e);
+          logOnce('error', { phase: 'stream_error', error: (e as any)?.message || String(e) });
           try { await writer.abort(e); } catch { /* ignore */ }
         }
       })();
