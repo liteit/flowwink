@@ -51,6 +51,7 @@ interface StreamCallbacks {
   onSkillResults: (results: any[]) => Promise<void> | void;
   onError: (message: string) => void;
   onDone: () => void;
+  onMeta?: (meta: { exposed_skill_count: number; disabled_skill_count: number; modules_off_count: number }) => void;
 }
 
 async function parseOperateStream(response: Response, callbacks: StreamCallbacks, signal?: AbortSignal) {
