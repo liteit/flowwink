@@ -92,8 +92,7 @@ export async function callAiCompletion(args: CallAiCompletionArgs): Promise<any>
     throw err;
   } finally {
     const latencyMs = Date.now() - start;
-    // Fire and forget — never block the request
-    void logAiUsage({
+    scheduleAiUsageLog({
       supabase: args.supabase,
       source: args.source,
       provider: args.provider,
@@ -113,6 +112,25 @@ export async function callAiCompletion(args: CallAiCompletionArgs): Promise<any>
       },
     });
   }
+}
+
+export function scheduleAiUsageLog(p: LogParams): void {
+  const promise = logAiUsage(p).catch((e) => {
+    console.error('[ai-usage-logger] scheduled log failed:', (e as any)?.message || e);
+  });
+
+  try {
+    // @ts-ignore - available in Supabase Edge Runtime
+    if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime?.waitUntil) {
+      // @ts-ignore - available in Supabase Edge Runtime
+      EdgeRuntime.waitUntil(promise);
+      return;
+    }
+  } catch {
+    // Ignore runtime detection failures and fall back to an unawaited promise.
+  }
+
+  void promise;
 }
 
 interface LogParams {
