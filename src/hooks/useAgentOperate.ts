@@ -51,6 +51,7 @@ interface StreamCallbacks {
   onSkillResults: (results: any[]) => Promise<void> | void;
   onError: (message: string) => void;
   onDone: () => void;
+  onMeta?: (meta: { exposed_skill_count: number; disabled_skill_count: number; modules_off_count: number }) => void;
 }
 
 async function parseOperateStream(response: Response, callbacks: StreamCallbacks, signal?: AbortSignal) {
@@ -103,6 +104,9 @@ async function parseOperateStream(response: Response, callbacks: StreamCallbacks
                 case 'skill_results':
                   await callbacks.onSkillResults(data);
                   break;
+                case 'flowchat_meta':
+                  callbacks.onMeta?.(data);
+                  break;
                 case 'error':
                   callbacks.onError(data.message || 'Unknown error');
                   break;
@@ -138,6 +142,7 @@ export function useAgentOperate() {
   const [activities, setActivities] = useState<AgentActivity[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<FlowPilotConversation[]>([]);
+  const [skillStats, setSkillStats] = useState<{ exposed: number; disabled: number; modulesOff: number } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   // When true, the next getOrCreateConversation() will skip the "reuse today's
   // session" shortcut and always insert a fresh chat_conversations row. Set by
@@ -493,6 +498,13 @@ export function useAgentOperate() {
               : m
           ));
         },
+        onMeta: (meta) => {
+          setSkillStats({
+            exposed: meta.exposed_skill_count ?? 0,
+            disabled: meta.disabled_skill_count ?? 0,
+            modulesOff: meta.modules_off_count ?? 0,
+          });
+        },
       }, controller.signal);
 
       // Persist final assistant message
@@ -758,6 +770,7 @@ export function useAgentOperate() {
     messages,
     isLoading,
     skills,
+    skillStats,
     activities,
     conversationId,
     conversations,

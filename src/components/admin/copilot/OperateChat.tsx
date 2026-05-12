@@ -224,6 +224,15 @@ export function OperateChat({ messages, skills, isLoading, onSendMessage, onRese
               const isStreaming = msg.role === 'assistant' && msg.toolStatus && msg.toolStatus.phase !== 'done';
               const showCursor = isStreaming && msg.toolStatus?.phase === 'streaming';
 
+              // Hallucination guard: assistant claims success but every tool call failed.
+              const successWords = /\b(added|created|sent|published|saved|updated|posted|scheduled|done|completed)\b/i;
+              const claimsSuccess = msg.role === 'assistant' && !isStreaming && successWords.test(msg.content || '');
+              const allFailed = results.length > 0 && results.every(r => {
+                const s = String((r as any).status || '');
+                return s === 'error' || s === 'failed' || Boolean((r as any).result?.error);
+              });
+              const showHallucinationWarning = claimsSuccess && allFailed;
+
               return (
                 <div key={msg.id} className={cn(
                   'flex gap-3',
@@ -249,6 +258,15 @@ export function OperateChat({ messages, skills, isLoading, onSendMessage, onRese
                         {msg.content && isStreaming && msg.toolStatus?.phase !== 'streaming' && (
                           <div className="mt-2 pt-2 border-t border-border/30">
                             <ToolStatusIndicator toolStatus={msg.toolStatus} />
+                          </div>
+                        )}
+
+                        {showHallucinationWarning && (
+                          <div className="mt-2 pt-2 border-t border-destructive/30 text-xs text-destructive flex items-start gap-1.5">
+                            <span>⚠️</span>
+                            <span>
+                              <strong>Hallucination risk:</strong> the response claims success, but every tool call in this turn failed. Verify the result before trusting it.
+                            </span>
                           </div>
                         )}
                       </>
