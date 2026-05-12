@@ -104,55 +104,50 @@ export default function ChatPage() {
       )}
 
       <main className="flex-1 flex min-h-0">
-        {/* Sidebar */}
-        <aside className={cn(
-          'w-72 border-r bg-muted/30 flex flex-col transition-all flex-shrink-0',
-          !sidebarOpen && 'w-0 overflow-hidden'
-        )}>
-          <div className="p-4 border-b">
-            <Button 
-              onClick={handleNewConversation}
-              className="w-full gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              New conversation
-            </Button>
-          </div>
-          
-          <ScrollArea className="flex-1">
-            <div className="p-2 space-y-1">
-              {conversations.map((conv) => (
-                <button
-                  key={conv.id}
-                  onClick={() => setActiveConversationId(conv.id)}
-                  className={cn(
-                    'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm',
-                    'hover:bg-muted group transition-colors',
-                    activeConversationId === conv.id && 'bg-muted'
-                  )}
-                >
-                  <MessageSquare className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                  <span className="flex-1 truncate">{conv.title}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 opacity-0 group-hover:opacity-100"
-                    onClick={(e) => handleDeleteConversation(conv.id, e)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </button>
-              ))}
-              
-              {conversations.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-8 px-4">
-                  No previous conversations
-                </p>
-              )}
+        {/* Sidebar — only shown once visitor has at least one prior conversation */}
+        {conversations.length > 0 && (
+          <aside className={cn(
+            'w-72 border-r bg-muted/30 flex flex-col transition-all flex-shrink-0',
+            !sidebarOpen && 'w-0 overflow-hidden'
+          )}>
+            <div className="p-4 border-b">
+              <Button
+                onClick={handleNewConversation}
+                className="w-full gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                New conversation
+              </Button>
             </div>
-          </ScrollArea>
-        </aside>
 
+            <ScrollArea className="flex-1">
+              <div className="p-2 space-y-1">
+                {conversations.map((conv) => (
+                  <button
+                    key={conv.id}
+                    onClick={() => setActiveConversationId(conv.id)}
+                    className={cn(
+                      'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm',
+                      'hover:bg-muted group transition-colors',
+                      activeConversationId === conv.id && 'bg-muted'
+                    )}
+                  >
+                    <MessageSquare className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                    <span className="flex-1 truncate">{conv.title}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                      onClick={(e) => handleDeleteConversation(conv.id, e)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </button>
+                ))}
+              </div>
+            </ScrollArea>
+          </aside>
+        )}
         {/* Main chat area */}
         <div className="flex-1 flex flex-col min-h-0 min-w-0">
           <ChatConversation

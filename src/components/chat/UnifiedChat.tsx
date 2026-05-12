@@ -213,6 +213,7 @@ interface UnifiedChatProps {
     placeholder?: string;
     enabled?: boolean;
     feedbackEnabled?: boolean;
+    showIcons?: boolean;
   };
   conversationId?: string;
   compact?: boolean;
@@ -361,6 +362,7 @@ export function UnifiedChat({
                   previousUserMessage={previousUserMessage}
                   showFeedback={visitorSettings?.feedbackEnabled !== false && message.role === 'assistant' && !!message.content}
                   isFromAgent={message.isFromAgent}
+                  showIcons={visitorSettings?.showIcons ?? true}
                 />
               );
             })}
