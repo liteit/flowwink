@@ -189,7 +189,7 @@ export const siteMigrationMeta = {
   requiredIntegrations: ['firecrawl'],
   optionalIntegrations: ['jina'],
   aiProvider: 'auto' as const,
-  skills: ['page_migration', 'generate_site_from_identity'],
+  skills: ['migrate_url'],
   features: [
     'Sitemap discovery & URL mapping',
     'Single page import',
