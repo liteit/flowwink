@@ -190,6 +190,104 @@ serve(async (req) => {
     
     const allTools = [...builtInTools, ...filteredSkills];
 
+    // ─── Module-disabled intent detection ──────────────────────────────────
+    // Same scoring algorithm, but run against skills that WERE filtered out
+    // by `loadActiveModuleIds` (modules turned off in /admin/modules). If the
+    // user's intent matches a disabled skill more strongly than any exposed
+    // skill, we tell them honestly instead of letting the LLM substitute the
+    // wrong skill from an active module. See plan: FlowChat module-aware
+    // honesty.
+    let disabledMatch: { module: string; skills: string[]; topScore: number } | null = null;
+    let exposedSkillCount = filteredSkills.length;
+    let disabledSkillCount = 0;
+    let modulesOffCount = 0;
+    try {
+      const activeModules = await loadActiveModuleIds(supabase);
+      if (!activeModules.has('__all__')) {
+        const { data: allEnabled } = await supabase
+          .from('agent_skills')
+          .select('name, tool_definition, category')
+          .eq('enabled', true)
+          .in('scope', ['internal', 'both']);
+
+        const exposedNames = new Set(filteredSkills.map((t: any) => t.function?.name));
+        const disabled = (allEnabled || []).filter((s: any) =>
+          s.tool_definition?.function &&
+          !exposedNames.has(s.tool_definition.function.name) &&
+          !isCategoryActive(s.category, activeModules, SKILL_CATEGORY_MODULES)
+        );
+        disabledSkillCount = disabled.length;
+
+        // Module-off count for honesty badge
+        const { data: settingsRow } = await supabase
+          .from('site_settings').select('value').eq('key', 'modules').maybeSingle();
+        if (settingsRow?.value && typeof settingsRow.value === 'object') {
+          modulesOffCount = Object.values(settingsRow.value as Record<string, any>)
+            .filter((m: any) => !(m && m.enabled === true)).length;
+        }
+
+        if (disabled.length > 0 && lastUserMsg.trim().length > 0) {
+          // Score disabled skills with the same scorer
+          const disabledTools = disabled
+            .map((s: any) => s.tool_definition)
+            .filter((td: any) => td?.function);
+          // Force scoring (>maxSkills) by using a small cap
+          const scored = scoreSkillsByIntent(disabledTools, lastUserMsg, { maxSkills: 1 });
+
+          // Manually re-score top exposed for comparison (use same function with cap=1)
+          const exposedTopArr = filteredSkills.length > 1
+            ? scoreSkillsByIntent(filteredSkills, lastUserMsg, { maxSkills: 1 })
+            : filteredSkills;
+
+          // Compute raw scores via direct expansion check (re-derive by name match — quick approximation)
+          const computeMatchScore = (td: any) => {
+            const fn = (td?.function?.name || '').toLowerCase();
+            const desc = (td?.function?.description || '').toLowerCase();
+            const msg = lastUserMsg.toLowerCase();
+            let score = 0;
+            for (const part of fn.split('_').filter((w: string) => w.length > 2)) {
+              if (msg.includes(part)) score += 8;
+            }
+            const useWhen = desc.match(/use when:\s*([^.]*?)(?:\.|not for:|$)/i);
+            if (useWhen) {
+              for (const w of useWhen[1].toLowerCase().split(/[\s,]+/).filter((w: string) => w.length > 3)) {
+                if (msg.includes(w)) score += 7;
+              }
+            }
+            return score;
+          };
+
+          const topDisabledScore = scored[0] ? computeMatchScore(scored[0]) : 0;
+          const topExposedScore = exposedTopArr[0] ? computeMatchScore(exposedTopArr[0]) : 0;
+
+          // Trigger early-return if disabled skill clearly wins
+          if (topDisabledScore >= 14 && topDisabledScore > topExposedScore + 4) {
+            // Group top-3 matched disabled skills by their owning module
+            const matchedSkills = scored
+              .map((td: any) => disabled.find((d: any) => d.tool_definition?.function?.name === td.function?.name))
+              .filter(Boolean)
+              .slice(0, 3);
+
+            // Find which module(s) need to be turned on for the top match
+            const topCat = matchedSkills[0]?.category;
+            const owningModules = SKILL_CATEGORY_MODULES[topCat] || [];
+            const offModule = owningModules.find((m: string) => !activeModules.has(m)) || topCat || 'unknown';
+
+            disabledMatch = {
+              module: offModule,
+              skills: matchedSkills.map((s: any) => s.name),
+              topScore: topDisabledScore,
+            };
+            console.log(`[operate] Module-disabled intent detected: top disabled "${disabledMatch.skills[0]}" (score ${topDisabledScore}) > top exposed (score ${topExposedScore}). Suggesting module "${offModule}".`);
+          }
+        }
+      } else {
+        exposedSkillCount = filteredSkills.length;
+      }
+    } catch (e) {
+      console.warn('[operate] Module-disabled detection failed (non-fatal):', (e as any)?.message);
+    }
+
     // Set up SSE stream
     const { readable, writable } = new TransformStream();
     const writer = writable.getWriter();
