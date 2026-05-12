@@ -301,20 +301,19 @@ export default function AdminSmokeTestPage() {
       <AdminPageHeader
         title="Admin Smoke Test"
         description="Runs the most common admin actions (leads, blog, KB) through agent-execute and reports any failures directly here."
-        actions={
-          <Button onClick={runSuite} disabled={running}>
-            {running ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Running…
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4 mr-2" /> Run smoke test
-              </>
-            )}
-          </Button>
-        }
-      />
+      >
+        <Button onClick={runSuite} disabled={running}>
+          {running ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Running…
+            </>
+          ) : (
+            <>
+              <Play className="h-4 w-4 mr-2" /> Run smoke test
+            </>
+          )}
+        </Button>
+      </AdminPageHeader>
 
       {finishedAt && (
         <Alert className="mb-4" variant={failed > 0 ? 'destructive' : 'default'}>
