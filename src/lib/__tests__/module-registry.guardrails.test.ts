@@ -97,7 +97,9 @@ describe('module registry guardrails', () => {
       expect(mod.source, `${mod.id} is missing capabilities in its module manifest`).toMatch(/capabilities:\s*\[/);
       expect(mod.source, `${mod.id} is missing inputSchema in its module manifest`).toMatch(/inputSchema[, :]/);
       expect(mod.source, `${mod.id} is missing outputSchema in its module manifest`).toMatch(/outputSchema[, :]/);
-      expect(mod.source, `${mod.id} is missing publish() in its module manifest`).toMatch(/async publish\(/);
+      // publish() is intentionally optional — most modules expose behaviour through skills
+      // (agent-execute → RPC). The registry returns a clear "no_publish_handler" error when
+      // a caller tries publish() on a skill-only module. See src/lib/module-def.ts.
     }
   });
 });
