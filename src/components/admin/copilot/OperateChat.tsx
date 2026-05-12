@@ -177,13 +177,16 @@ export function OperateChat({ messages, skills, isLoading, onSendMessage, onRese
               <Terminal className="h-8 w-8 text-primary" />
             </div>
             <div className="space-y-2 max-w-md">
-              <h2 className="text-lg font-semibold">Operate Mode</h2>
+              <h2 className="text-lg font-semibold">FlowChat — your reactive operator</h2>
               <p className="text-sm text-muted-foreground">
-                Tell me what you need — I can write blog posts, add leads, analyze traffic, 
-                send newsletters, and more. I have access to <strong>{skills.length}</strong> skills.
+                Tell me what to do and I'll do it now. I draft content, run skills,
+                chain actions and report back. I have access to <strong>{skills.length}</strong> skills.
               </p>
               <p className="text-xs text-muted-foreground">
-                📎 Attach PDF resumes or documents — I'll extract and process the content automatically.
+                Reactive only — for autonomous loops, briefings and overnight work, enable FlowPilot.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                📎 Attach PDFs, CSVs or notes — I'll read and act on them.
               </p>
             </div>
 
