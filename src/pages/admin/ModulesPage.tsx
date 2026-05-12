@@ -159,15 +159,15 @@ export default function ModulesPage() {
 
   const handleToggle = async (moduleId: keyof ModulesSettings, enabled: boolean) => {
     if (!localModules) return;
-    
+
     const module = localModules[moduleId];
     if (module.core) return; // Cannot toggle core modules
-    
+
     let updated = {
       ...localModules,
       [moduleId]: { ...module, enabled },
     };
-    
+
     // Handle cascading disables (when parent is disabled, disable dependents)
     if (!enabled) {
       for (const [depId, parentId] of Object.entries(MODULE_DEPENDENCIES)) {
@@ -179,7 +179,7 @@ export default function ModulesPage() {
         }
       }
     }
-    
+
     // Handle cascading enables (when dependent is enabled, enable parent)
     if (enabled) {
       const parentId = MODULE_DEPENDENCIES[moduleId];
@@ -190,24 +190,67 @@ export default function ModulesPage() {
         };
       }
     }
-    
+
     setLocalModules(updated);
     await updateModules.mutateAsync(updated);
 
     // Bootstrap or teardown module skills/data
     if (enabled) {
-      bootstrapModule(moduleId, updated).catch(() => {});
-      
-      // When FlowPilot is turned ON, seed skills for all already-enabled modules
-      if (moduleId === 'flowpilot') {
-        Object.entries(updated).forEach(([id, config]) => {
-          if (id !== 'flowpilot' && config.enabled) {
-            bootstrapModule(id as keyof ModulesSettings, updated).catch(() => {});
-          }
+      try {
+        const result = await bootstrapModule(moduleId, updated);
+        if (result.errors.length > 0) {
+          toast({
+            title: `Bootstrap completed with ${result.errors.length} error(s)`,
+            description: result.errors.slice(0, 3).join(' · '),
+            variant: 'destructive',
+          });
+        }
+      } catch (err) {
+        toast({
+          title: `Failed to bootstrap ${String(moduleId)}`,
+          description: err instanceof Error ? err.message : 'Unknown error',
+          variant: 'destructive',
         });
       }
+
+      // When FlowPilot is turned ON, reseed every already-enabled module so
+      // their automations register. Run with concurrency limit (5) to avoid
+      // hammering Supabase with 40+ simultaneous upserts and to surface
+      // failures instead of silently swallowing them.
+      if (moduleId === 'flowpilot') {
+        const targets = Object.entries(updated)
+          .filter(([id, config]) => id !== 'flowpilot' && config.enabled)
+          .map(([id]) => id as keyof ModulesSettings);
+
+        const results = await runWithConcurrency(targets, 5, (id) =>
+          bootstrapModule(id, updated)
+        );
+        const failed = results.filter((r) => !r.ok || (r.ok && r.value.errors.length > 0));
+        if (failed.length > 0) {
+          toast({
+            title: `FlowPilot reseed: ${failed.length}/${targets.length} module(s) had issues`,
+            description: failed
+              .slice(0, 3)
+              .map((r) =>
+                r.ok
+                  ? `${String(r.item)}: ${r.value.errors[0] ?? 'errors'}`
+                  : `${String(r.item)}: ${r.error instanceof Error ? r.error.message : 'failed'}`
+              )
+              .join(' · '),
+            variant: 'destructive',
+          });
+        }
+      }
     } else {
-      teardownModule(moduleId).catch(() => {});
+      try {
+        await teardownModule(moduleId);
+      } catch (err) {
+        toast({
+          title: `Failed to teardown ${String(moduleId)}`,
+          description: err instanceof Error ? err.message : 'Unknown error',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
