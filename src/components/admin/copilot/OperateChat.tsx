@@ -260,6 +260,15 @@ export function OperateChat({ messages, skills, isLoading, onSendMessage, onRese
                             <ToolStatusIndicator toolStatus={msg.toolStatus} />
                           </div>
                         )}
+
+                        {showHallucinationWarning && (
+                          <div className="mt-2 pt-2 border-t border-destructive/30 text-xs text-destructive flex items-start gap-1.5">
+                            <span>⚠️</span>
+                            <span>
+                              <strong>Hallucination risk:</strong> the response claims success, but every tool call in this turn failed. Verify the result before trusting it.
+                            </span>
+                          </div>
+                        )}
                       </>
                     ) : (
                       <p className="whitespace-pre-wrap">{msg.content}</p>
