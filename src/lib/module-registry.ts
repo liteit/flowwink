@@ -57,6 +57,13 @@ class ModuleRegistry {
         this.register(mod as ModuleDefinition<unknown, unknown>);
       }
     }
+
+    // Force-reference modules whose only job is self-registration via defineModule().
+    // Without this, TS/Vite tree-shaking can drop the import bindings before the
+    // side-effectful module body runs.
+    void [
+      fixedAssetsModule, payrollModule, wikiModule, riverModule, multiCurrencyModule,
+    ];
   }
 
   register<TInput, TOutput>(module: ModuleDefinition<TInput, TOutput>): void {
