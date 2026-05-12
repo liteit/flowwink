@@ -342,6 +342,7 @@ export function useChat(options?: UseChatOptions) {
       return null;
     }
 
+    locallyCreatedConvIdsRef.current.add(data.id);
     setConversationId(data.id);
     // Persist conversation ID to localStorage
     localStorage.setItem(CONVERSATION_STORAGE_KEY, data.id);
