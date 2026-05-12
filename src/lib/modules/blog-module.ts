@@ -84,8 +84,7 @@ Creates a draft blog post in the CMS with title, topic, tone, and content.
 ### Edge cases
 - If no content provided, handler generates via AI — but quality is lower than agent-written content.
 - Title must be unique; duplicates get a numeric suffix.
-- **status**: Optional. 'draft' (default) or 'published'. Pass 'published' to make the post live in one call — required when the user asks to "draft and publish".
-- Title must be unique; duplicates get a numeric suffix.
+- **status**: Optional. 'draft' (default) or 'published'. Pass 'published' to make the post live in one call — required when the user asks to "draft and publish".`,
   },
   {
     name: 'research_content',
