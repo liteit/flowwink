@@ -128,12 +128,13 @@ export const payrollModule = defineModule<Input, Output>({
   version: '1.0.0',
   description:
     'Monthly payroll runs (SE-locale): snapshots employees + recurring components, posts wage journals (BAS 7210/7510/2710/2731/2890), and tracks net wage payment. 31.42% employer social fee default, per-employee tax rate override.',
+  requires: ['hr'],
   capabilities: ['data:read', 'data:write'],
   inputSchema,
   outputSchema,
   skills: ['create_payroll_run', 'approve_payroll_run', 'mark_payroll_paid', 'list_payroll_runs', 'list_payroll_lines'],
   skillSeeds: SKILLS,
-  async publish(input: Input): Promise<Output> {
-    return { success: true, result: { action: input.action } };
-  },
+  // No publish() — Payroll exposes its behaviour exclusively through MCP skills
+  // (mcp_create_payroll_run, mcp_approve_payroll_run, mcp_mark_payroll_paid).
+  // The registry returns a clear "no_publish_handler" error for direct calls.
 });

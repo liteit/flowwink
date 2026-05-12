@@ -631,7 +631,7 @@ export const crmModule = defineModule<CRMLeadInput, CRMLeadOutput>({
     'add_lead',
     'manage_leads',
     'lead_pipeline_review',
-    'lead_nurture_sequence',
+    // 'lead_nurture_sequence' is owned by newsletter-module — declared there only.
     'crm_task_list',
     'crm_task_create',
     'crm_task_update',

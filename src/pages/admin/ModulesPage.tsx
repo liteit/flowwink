@@ -96,6 +96,8 @@ import { useModuleStats } from "@/hooks/useModuleStats";
 import { ModuleCard } from "@/components/admin/modules/ModuleCard";
 import { moduleRegistry } from "@/lib/module-registry";
 import { bootstrapModule, teardownModule } from "@/lib/module-bootstrap";
+import { runWithConcurrency } from "@/lib/run-with-concurrency";
+import { useToast } from "@/hooks/use-toast";
 import '@/lib/module-bootstraps'; // Register all module bootstraps
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -138,16 +140,36 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 const CATEGORY_ORDER = ["content", "communication", "data", "insights", "system"];
 
-// Module dependencies - key depends on value
-const MODULE_DEPENDENCIES: Partial<Record<keyof ModulesSettings, keyof ModulesSettings>> = {
+// Module dependencies - key depends on value.
+// Most edges are derived from each module's `requires` field on its
+// defineModule manifest (see src/lib/module-def.ts). The two entries below
+// are kept for legacy modules that don't yet self-describe their dependencies.
+const LEGACY_MODULE_DEPENDENCIES: Partial<Record<keyof ModulesSettings, keyof ModulesSettings>> = {
   deals: 'leads',
   liveSupport: 'chat',
 };
+
+function buildModuleDependencies(): Partial<Record<keyof ModulesSettings, keyof ModulesSettings>> {
+  const map: Partial<Record<keyof ModulesSettings, keyof ModulesSettings>> = { ...LEGACY_MODULE_DEPENDENCIES };
+  for (const mod of moduleRegistry.list()) {
+    const def = moduleRegistry.get(mod.id) as { requires?: (keyof ModulesSettings)[] } | undefined;
+    const requires = def?.requires;
+    if (requires && requires.length > 0) {
+      // Today the toggle UI tracks one parent per child — pick the first.
+      // Multi-parent support arrives when we move to a real graph view.
+      map[mod.id as keyof ModulesSettings] = requires[0];
+    }
+  }
+  return map;
+}
+
+const MODULE_DEPENDENCIES = buildModuleDependencies();
 
 export default function ModulesPage() {
   const { data: modules, isLoading } = useModules();
   const { data: stats } = useModuleStats();
   const updateModules = useUpdateModules();
+  const { toast } = useToast();
   const [localModules, setLocalModules] = useState<ModulesSettings | null>(null);
   const [search, setSearch] = useState("");
 
@@ -159,15 +181,15 @@ export default function ModulesPage() {
 
   const handleToggle = async (moduleId: keyof ModulesSettings, enabled: boolean) => {
     if (!localModules) return;
-    
+
     const module = localModules[moduleId];
     if (module.core) return; // Cannot toggle core modules
-    
+
     let updated = {
       ...localModules,
       [moduleId]: { ...module, enabled },
     };
-    
+
     // Handle cascading disables (when parent is disabled, disable dependents)
     if (!enabled) {
       for (const [depId, parentId] of Object.entries(MODULE_DEPENDENCIES)) {
@@ -179,7 +201,7 @@ export default function ModulesPage() {
         }
       }
     }
-    
+
     // Handle cascading enables (when dependent is enabled, enable parent)
     if (enabled) {
       const parentId = MODULE_DEPENDENCIES[moduleId];
@@ -190,24 +212,70 @@ export default function ModulesPage() {
         };
       }
     }
-    
+
     setLocalModules(updated);
     await updateModules.mutateAsync(updated);
 
     // Bootstrap or teardown module skills/data
     if (enabled) {
-      bootstrapModule(moduleId, updated).catch(() => {});
-      
-      // When FlowPilot is turned ON, seed skills for all already-enabled modules
-      if (moduleId === 'flowpilot') {
-        Object.entries(updated).forEach(([id, config]) => {
-          if (id !== 'flowpilot' && config.enabled) {
-            bootstrapModule(id as keyof ModulesSettings, updated).catch(() => {});
-          }
+      try {
+        const result = await bootstrapModule(moduleId, updated);
+        if (result.errors.length > 0) {
+          toast({
+            title: `Bootstrap completed with ${result.errors.length} error(s)`,
+            description: result.errors.slice(0, 3).join(' · '),
+            variant: 'destructive',
+          });
+        }
+      } catch (err) {
+        toast({
+          title: `Failed to bootstrap ${String(moduleId)}`,
+          description: err instanceof Error ? err.message : 'Unknown error',
+          variant: 'destructive',
         });
       }
+
+      // When FlowPilot is turned ON, reseed every already-enabled module so
+      // their automations register. Run with concurrency limit (5) to avoid
+      // hammering Supabase with 40+ simultaneous upserts and to surface
+      // failures instead of silently swallowing them.
+      if (moduleId === 'flowpilot') {
+        const targets = Object.entries(updated)
+          .filter(([id, config]) => id !== 'flowpilot' && config.enabled)
+          .map(([id]) => id as keyof ModulesSettings);
+
+        const results = await runWithConcurrency(targets, 5, (id) =>
+          bootstrapModule(id, updated)
+        );
+        const failed = results.filter((r) => !r.ok || r.value.errors.length > 0);
+        if (failed.length > 0) {
+          const description = failed
+            .slice(0, 3)
+            .map((r) => {
+              if (r.ok === false) {
+                const msg = r.error instanceof Error ? r.error.message : 'failed';
+                return `${String(r.item)}: ${msg}`;
+              }
+              return `${String(r.item)}: ${r.value.errors[0] ?? 'errors'}`;
+            })
+            .join(' · ');
+          toast({
+            title: `FlowPilot reseed: ${failed.length}/${targets.length} module(s) had issues`,
+            description,
+            variant: 'destructive',
+          });
+        }
+      }
     } else {
-      teardownModule(moduleId).catch(() => {});
+      try {
+        await teardownModule(moduleId);
+      } catch (err) {
+        toast({
+          title: `Failed to teardown ${String(moduleId)}`,
+          description: err instanceof Error ? err.message : 'Unknown error',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
