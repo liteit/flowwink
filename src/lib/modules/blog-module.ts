@@ -208,7 +208,7 @@ Generates multi-channel content (blog, newsletter, LinkedIn, X) from a topic wit
     name: 'publish_scheduled_content',
     description: 'Check and publish pages and blog posts that are due for scheduled publishing. Use when: automated publish cycle runs; checking if any content is ready to go live; processing scheduled content queue. NOT for: manually publishing a specific page (manage_page); writing new blog posts (write_blog_post).',
     category: 'content',
-    handler: 'edge:publish-scheduled-pages',
+    handler: 'rpc:publish_scheduled_pages',
     scope: 'internal',
     tool_definition: {
       type: 'function',
