@@ -5,3 +5,34 @@ verify_jwt = false
 
 [functions.docs-chat]
 verify_jwt = false
+
+# Internally-invoked functions (server-to-server with service role).
+# verify_jwt=false avoids 401s when SERVICE_ROLE_KEY env doesn't match
+# the project's JWT secret (common on multi-project / forked deployments
+# like autoversio.ai). Auth is enforced inside each handler.
+[functions.agent-execute]
+verify_jwt = false
+
+[functions.agent-operate]
+verify_jwt = false
+
+[functions.agent-reason]
+verify_jwt = false
+
+[functions.chat-completion]
+verify_jwt = false
+
+[functions.consultant-checkin]
+verify_jwt = false
+
+[functions.event-dispatcher]
+verify_jwt = false
+
+[functions.automation-dispatcher]
+verify_jwt = false
+
+[functions.signal-dispatcher]
+verify_jwt = false
+
+[functions.send-webhook]
+verify_jwt = false
