@@ -141,9 +141,18 @@ class ModuleRegistry {
       } as TOutput;
     }
 
+    if (typeof module.publish !== 'function') {
+      logger.warn(`[ModuleRegistry] ${moduleId} has no publish() handler — most modules expose behaviour via skills (agent-execute → RPC).`);
+      return {
+        success: false,
+        error: `Module '${module.name}' does not expose a direct publish() handler. Use the corresponding skill (via FlowPilot or /admin/automations) instead.`,
+        no_publish_handler: true,
+      } as TOutput;
+    }
+
     logger.log(`[ModuleRegistry] Publishing to ${moduleId}...`);
     const result = await module.publish(validationResult.data);
-    
+
     const outputValidation = module.outputSchema.safeParse(result);
     if (!outputValidation.success) {
       logger.warn(`[ModuleRegistry] Output validation failed for ${moduleId}:`, outputValidation.error);
