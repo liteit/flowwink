@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { logger } from '@/lib/logger';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Lock, Wrench } from 'lucide-react';
 import { BlockRenderer } from '@/components/public/BlockRenderer';
