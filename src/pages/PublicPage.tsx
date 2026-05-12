@@ -72,7 +72,8 @@ export default function PublicPage() {
 
   // Check if any published pages exist (to detect fresh installs).
   // Only fires when the requested page wasn't found, so it stays off the critical path.
-  const { data: hasAnyPages, isLoading: checkingPages } = useQuery({
+  const queryClient = useQueryClient();
+  const { data: hasAnyPages, isLoading: checkingPages, refetch: refetchHasAnyPages } = useQuery({
     queryKey: ['has-published-pages'],
     queryFn: async (): Promise<boolean> => {
       try {
