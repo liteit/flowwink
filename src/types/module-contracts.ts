@@ -709,5 +709,6 @@ export interface ModuleDefinition<TInput, TOutput> {
   capabilities: ModuleCapability[];
   inputSchema: z.ZodSchema<TInput>;
   outputSchema: z.ZodSchema<TOutput>;
-  publish: (input: TInput) => Promise<TOutput>;
+  /** Optional — see `UnifiedModuleDef.publish`. Most modules expose behaviour via skills. */
+  publish?: (input: TInput) => Promise<TOutput>;
 }
