@@ -28,6 +28,7 @@ export default function FlowChatPage() {
     messages,
     isLoading,
     skills,
+    skillStats,
     conversationId,
     conversations,
     sendMessage,
@@ -96,8 +97,17 @@ export default function FlowChatPage() {
             />
           </div>
           <div className="flex items-center gap-1.5">
-            <Badge variant="secondary" className="text-[10px]">
-              Operator · {skills.length} skills
+            <Badge
+              variant="secondary"
+              className="text-[10px]"
+              title={
+                skillStats
+                  ? `${skillStats.exposed} skills exposed to FlowChat. ${skillStats.disabled} more skills exist but are hidden because their module is off (${skillStats.modulesOff} modules disabled). Enable modules in /admin/modules to expand FlowChat's reach.`
+                  : `${skills.length} skills total in catalog`
+              }
+            >
+              Operator · {skillStats ? `${skillStats.exposed} active` : `${skills.length} skills`}
+              {skillStats && skillStats.disabled > 0 ? ` · ${skillStats.disabled} hidden` : ''}
             </Badge>
           </div>
         </div>
