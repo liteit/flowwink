@@ -233,7 +233,7 @@ export default function ModulesPage() {
           const description = failed
             .slice(0, 3)
             .map((r) => {
-              if (!r.ok) {
+              if (r.ok === false) {
                 const msg = r.error instanceof Error ? r.error.message : 'failed';
                 return `${String(r.item)}: ${msg}`;
               }
