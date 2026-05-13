@@ -750,7 +750,7 @@ export async function executeBuiltInTool(
     if (traceId) body.trace_id = traceId;
     const response = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}`, 'apikey': serviceKey },
       body: JSON.stringify(body),
     });
     if (!response.ok) {
