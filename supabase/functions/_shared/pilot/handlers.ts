@@ -321,7 +321,7 @@ export async function handleAdvancePlan(supabase: any, supabaseUrl: string, serv
           };
           const resp = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}`, 'apikey': serviceKey },
             body: JSON.stringify({
               skill_name: nextStep.skill_name,
               arguments: nextStep.skill_args || {},
@@ -460,7 +460,7 @@ export async function handleExecuteAutomation(supabase: any, supabaseUrl: string
   try {
     const resp = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}`, 'apikey': serviceKey },
       body: JSON.stringify({
         skill_name: auto.skill_name,
         arguments: auto.skill_arguments || {},
@@ -623,7 +623,7 @@ export async function handleWorkflowExecute(
     try {
       const resp = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}`, 'apikey': serviceKey },
         body: JSON.stringify({ skill_name: step.skill_name, arguments: resolvedArgs, agent_type: 'flowpilot' }),
       });
       result = await resp.json();
@@ -1189,7 +1189,7 @@ export async function handleChainSkills(
     try {
       const resp = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}`, 'apikey': serviceKey },
         body: JSON.stringify({ skill_name: step.skill_name, arguments: resolvedArgs, agent_type: 'flowpilot' }),
       });
       result = await resp.json();
