@@ -457,12 +457,14 @@ cmd_create_admin() {
         local user_id
         user_id=$(echo "$response" | jq -r '.id' 2>/dev/null || echo "")
         if [ -n "$user_id" ] && [ "$user_id" != "null" ]; then
-            curl -s -X PATCH "${SUPABASE_URL}/rest/v1/user_roles?user_id=eq.${user_id}" \
+            # Use POST (insert) — PATCH would silently no-op when no row exists yet.
+            # merge-duplicates makes it idempotent if (user_id, role) already exists.
+            curl -s -X POST "${SUPABASE_URL}/rest/v1/user_roles" \
                 -H "Authorization: Bearer ${SERVICE_ROLE_KEY}" \
                 -H "apikey: ${SERVICE_ROLE_KEY}" \
                 -H "Content-Type: application/json" \
-                -H "Prefer: return=minimal" \
-                -d '{"role":"admin"}' >/dev/null 2>&1
+                -H "Prefer: return=minimal,resolution=merge-duplicates" \
+                -d "{\"user_id\":\"${user_id}\",\"role\":\"admin\"}" >/dev/null 2>&1
         fi
         echo -e "  ${GREEN}✓ Admin created:${NC} ${email}"
     elif echo "$response" | grep -q "already been registered"; then
