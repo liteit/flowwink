@@ -174,7 +174,7 @@ async function executeChatTool(
       try {
         const resp = await fetch(`${supabaseUrl}/functions/v1/firecrawl-search`, {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
+          headers: { 'Authorization': `Bearer ${serviceKey}`, 'apikey': serviceKey, 'Content-Type': 'application/json' },
           body: JSON.stringify({ query: args.query, limit: 3 }),
         });
         const data = await resp.json();
@@ -193,7 +193,7 @@ async function executeChatTool(
       try {
         const resp = await fetch(`${supabaseUrl}/functions/v1/support-router`, {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
+          headers: { 'Authorization': `Bearer ${serviceKey}`, 'apikey': serviceKey, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             conversationId,
             sentiment: {
@@ -247,7 +247,7 @@ async function executeChatTool(
       try {
         const resp = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
+          headers: { 'Authorization': `Bearer ${serviceKey}`, 'apikey': serviceKey, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             skill_name: toolName,
             arguments: args,
@@ -295,7 +295,7 @@ serve(async (req) => {
       const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
       const resp = await fetch(`${supabaseUrl}/functions/v1/consultant-checkin`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
+        headers: { 'Authorization': `Bearer ${serviceKey}`, 'apikey': serviceKey, 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages, checkinId }),
       });
       return new Response(resp.body, {
