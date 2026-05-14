@@ -240,6 +240,7 @@ export const salesIntelligenceModule = defineModule<SalesIntelligenceInput, Sale
     'enrich_company',
     'contact_finder',
     'sales_profile_setup',
+    'competitor_watch',
   ],
   skillSeeds: SALESINTELLIGENCE_SKILLS,
 

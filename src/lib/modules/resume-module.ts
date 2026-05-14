@@ -155,6 +155,7 @@ export const resumeModule = defineModule<ResumeMatchInput, ResumeMatchOutput>({
   skills: [
     'manage_consultant_profile',
     'match_consultant',
+    'consultant_checkin_update',
   ],
   skillSeeds: RESUME_SKILLS,
 
