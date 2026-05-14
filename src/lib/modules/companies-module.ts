@@ -99,6 +99,8 @@ export const companiesModule = defineModule<CompanyModuleInput, CompanyModuleOut
     'manage_company',
     // Seeded via migration; declared here for ownership in /admin/approvals → Gated Skills.
     'update_company_profile',
+    // Polymorphic multi-address skill — primary owner is companies.
+    'manage_addresses',
   ],
   skillSeeds: COMPANIES_SKILLS,
 
