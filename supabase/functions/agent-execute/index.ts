@@ -4849,7 +4849,7 @@ async function executeDbAction(
       }
 
       if (skillName === 'accounting_reports') {
-        const { report_type, period = 'all', account_code } = args as any;
+        const { report_type = 'profit_loss', period = 'all', account_code } = args as any;
 
         // Determine date filter
         let sinceDate: string | null = null;
