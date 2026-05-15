@@ -343,6 +343,7 @@ const MODULE_HANDLER_TO_SETTING: Record<string, string> = {
   purchasing: 'purchasing',
   wiki: 'wiki',
   river: 'river',
+  docs: 'docs',
 };
 
 async function autoActivateModule(
