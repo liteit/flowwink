@@ -640,6 +640,67 @@ async function executeModuleAction(
       return await executeTemplatesAction(supabase, skillName, args);
     }
 
+    case 'docs': {
+      const a = args as { query?: string; category?: string; slug?: string; limit?: number };
+      const limit = Math.min(Math.max(a.limit ?? 5, 1), 25);
+
+      // Direct fetch by category+slug
+      if (a.slug && a.category) {
+        const { data, error } = await supabase
+          .from('docs_pages')
+          .select('category, slug, title, content, frontmatter, synced_at')
+          .eq('category', a.category)
+          .eq('slug', a.slug)
+          .maybeSingle();
+        if (error) return { error: `docs fetch failed: ${error.message}`, status: 'failed' };
+        if (!data) return { results: [], count: 0, message: 'Page not found' };
+        return {
+          page: { ...data, url: `/docs/${data.category}/${data.slug}` },
+        };
+      }
+
+      let q = supabase
+        .from('docs_pages')
+        .select('category, slug, title, content, synced_at')
+        .order('category', { ascending: true })
+        .order('sort_order', { ascending: true })
+        .limit(limit);
+
+      if (a.category) q = q.eq('category', a.category);
+      if (a.query && a.query.trim()) {
+        const term = a.query.trim().replace(/[%_]/g, '\\$&');
+        q = q.or(`title.ilike.%${term}%,content.ilike.%${term}%`);
+      }
+
+      const { data, error } = await q;
+      if (error) return { error: `docs search failed: ${error.message}`, status: 'failed' };
+
+      const results = (data ?? []).map((r: any) => {
+        let excerpt = '';
+        if (a.query && r.content) {
+          const idx = r.content.toLowerCase().indexOf(a.query.toLowerCase());
+          if (idx >= 0) {
+            const start = Math.max(0, idx - 80);
+            excerpt = (start > 0 ? '…' : '') + r.content.slice(start, idx + 200) + '…';
+          } else {
+            excerpt = r.content.slice(0, 200) + '…';
+          }
+        } else if (r.content) {
+          excerpt = r.content.slice(0, 200) + '…';
+        }
+        return {
+          category: r.category,
+          slug: r.slug,
+          title: r.title,
+          url: `/docs/${r.category}/${r.slug}`,
+          excerpt,
+          synced_at: r.synced_at,
+        };
+      });
+
+      return { results, count: results.length };
+    }
+
     default:
       return { error: `Unknown module: ${moduleName}` };
   }
