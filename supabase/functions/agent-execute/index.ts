@@ -6534,6 +6534,25 @@ async function executeDbAction(
           updated_at: new Date().toISOString(),
         }).eq('id', invoice_id).select('id, invoice_number, status, paid_amount_cents, paid_at').single();
         if (error) throw new Error(`Mark paid failed: ${error.message}`);
+
+        // Emit platform event so accounting / automations can react
+        // (journal posting Dt 1930 / Cr 1510 is the listener's job, not this skill's)
+        try {
+          await supabase.rpc('emit_platform_event', {
+            _event_name: 'invoice.paid',
+            _payload: {
+              invoice_id: data.id,
+              invoice_number: data.invoice_number,
+              paid_amount_cents: data.paid_amount_cents,
+              paid_at: data.paid_at,
+              source: 'manual_mark_paid',
+            },
+            _source: 'agent-execute:invoices.mark_paid',
+          });
+        } catch (evErr) {
+          console.error('[invoices.mark_paid] emit_platform_event failed', evErr);
+        }
+
         return {
           marked_paid: true,
           invoice_id: data.id,
@@ -6541,7 +6560,8 @@ async function executeDbAction(
           status: data.status,
           paid_amount_cents: data.paid_amount_cents,
           paid_at: data.paid_at,
-          note: 'Status updated. Journal entry posting (Dt 1930 / Cr 1510) is handled separately by the accounting reconciliation flow.',
+          event_emitted: 'invoice.paid',
+          note: 'invoice.paid emitted on event bus — accounting listener will post Dt 1930 / Cr 1510.',
         };
       }
 
