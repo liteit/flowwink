@@ -343,6 +343,7 @@ const MODULE_HANDLER_TO_SETTING: Record<string, string> = {
   purchasing: 'purchasing',
   wiki: 'wiki',
   river: 'river',
+  docs: 'docs',
 };
 
 async function autoActivateModule(
@@ -637,6 +638,67 @@ async function executeModuleAction(
 
     case 'templates': {
       return await executeTemplatesAction(supabase, skillName, args);
+    }
+
+    case 'docs': {
+      const a = args as { query?: string; category?: string; slug?: string; limit?: number };
+      const limit = Math.min(Math.max(a.limit ?? 5, 1), 25);
+
+      // Direct fetch by category+slug
+      if (a.slug && a.category) {
+        const { data, error } = await supabase
+          .from('docs_pages')
+          .select('category, slug, title, content, frontmatter, synced_at')
+          .eq('category', a.category)
+          .eq('slug', a.slug)
+          .maybeSingle();
+        if (error) return { error: `docs fetch failed: ${error.message}`, status: 'failed' };
+        if (!data) return { results: [], count: 0, message: 'Page not found' };
+        return {
+          page: { ...data, url: `/docs/${data.category}/${data.slug}` },
+        };
+      }
+
+      let q = supabase
+        .from('docs_pages')
+        .select('category, slug, title, content, synced_at')
+        .order('category', { ascending: true })
+        .order('sort_order', { ascending: true })
+        .limit(limit);
+
+      if (a.category) q = q.eq('category', a.category);
+      if (a.query && a.query.trim()) {
+        const term = a.query.trim().replace(/[%_]/g, '\\$&');
+        q = q.or(`title.ilike.%${term}%,content.ilike.%${term}%`);
+      }
+
+      const { data, error } = await q;
+      if (error) return { error: `docs search failed: ${error.message}`, status: 'failed' };
+
+      const results = (data ?? []).map((r: any) => {
+        let excerpt = '';
+        if (a.query && r.content) {
+          const idx = r.content.toLowerCase().indexOf(a.query.toLowerCase());
+          if (idx >= 0) {
+            const start = Math.max(0, idx - 80);
+            excerpt = (start > 0 ? '…' : '') + r.content.slice(start, idx + 200) + '…';
+          } else {
+            excerpt = r.content.slice(0, 200) + '…';
+          }
+        } else if (r.content) {
+          excerpt = r.content.slice(0, 200) + '…';
+        }
+        return {
+          category: r.category,
+          slug: r.slug,
+          title: r.title,
+          url: `/docs/${r.category}/${r.slug}`,
+          excerpt,
+          synced_at: r.synced_at,
+        };
+      });
+
+      return { results, count: results.length };
     }
 
     default:
@@ -4699,11 +4761,31 @@ async function executeDbAction(
       const { action = 'list', limit = 50 } = args as any;
       if (action === 'list') {
         const { data, error } = await supabase.from('profiles')
-          .select('id, email, full_name, role, created_at')
+          .select('id, email, full_name, created_at')
           .order('created_at', { ascending: false })
           .limit(limit);
         if (error) throw new Error(`List users failed: ${error.message}`);
-        return { users: data || [], count: (data || []).length };
+        const users = data || [];
+        // Roles live in user_roles (multi-role). Join in a second query.
+        const ids = users.map((u: any) => u.id);
+        let rolesByUser: Record<string, string[]> = {};
+        if (ids.length) {
+          const { data: roleRows } = await supabase
+            .from('user_roles')
+            .select('user_id, role')
+            .in('user_id', ids);
+          for (const r of (roleRows ?? []) as Array<{ user_id: string; role: string }>) {
+            (rolesByUser[r.user_id] ||= []).push(r.role);
+          }
+        }
+        return {
+          users: users.map((u: any) => ({
+            ...u,
+            roles: rolesByUser[u.id] ?? [],
+            role: (rolesByUser[u.id] ?? [])[0] ?? null,
+          })),
+          count: users.length,
+        };
       }
       return { error: `Unknown profiles action: ${action}` };
     }
