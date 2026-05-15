@@ -225,24 +225,20 @@ export function useChat(options?: UseChatOptions) {
           
           // Fetch agent info when agent is assigned
           if (isWithAgent && updated.assigned_agent_id) {
-            const { data: agentData } = await supabase
-              .from('support_agents')
-              .select(`
-                user_id,
-                profiles!support_agents_user_id_fkey (
-                  full_name,
-                  avatar_url
-                )
-              `)
-              .eq('id', updated.assigned_agent_id)
-              .single();
-            
-            if (agentData?.profiles) {
-              const profiles = agentData.profiles as { full_name: string | null; avatar_url: string | null };
+            const { data: agentUserId } = await supabase
+              .rpc('get_support_agent_user_id', { p_agent_id: updated.assigned_agent_id });
+
+            if (agentUserId) {
+              const { data: profileData } = await supabase
+                .from('profiles_public')
+                .select('full_name, avatar_url')
+                .eq('id', agentUserId as string)
+                .single();
+
               setAgentInfo({
-                id: agentData.user_id,
-                fullName: profiles.full_name || null,
-                avatarUrl: profiles.avatar_url || null,
+                id: agentUserId as string,
+                fullName: profileData?.full_name || null,
+                avatarUrl: profileData?.avatar_url || null,
               });
             }
           } else {
