@@ -25,12 +25,9 @@ export default function PublicInvoicePage() {
     queryFn: async () => {
       if (!token) return null;
       const { data, error } = await supabase
-        .from('invoices')
-        .select('*')
-        .eq('public_token', token)
-        .maybeSingle();
+        .rpc('get_invoice_by_token', { p_token: token });
       if (error) throw error;
-      return data;
+      return Array.isArray(data) ? data[0] ?? null : data;
     },
     enabled: !!token,
     refetchInterval: justPaid ? 3000 : false,
@@ -38,10 +35,10 @@ export default function PublicInvoicePage() {
 
   // Mark viewed once
   useEffect(() => {
-    if (invoice?.id && !invoice.viewed_at) {
-      supabase.from('invoices').update({ viewed_at: new Date().toISOString() }).eq('id', invoice.id).then(() => {});
+    if (invoice?.id && !invoice.viewed_at && token) {
+      supabase.rpc('mark_invoice_viewed_by_token', { p_token: token }).then(() => {});
     }
-  }, [invoice?.id, invoice?.viewed_at]);
+  }, [invoice?.id, invoice?.viewed_at, token]);
 
   const handlePay = async () => {
     if (!token) return;
