@@ -243,7 +243,7 @@ function lintSingleSkill(skill: AgentSkillRow, ctx: LintCtx): SkillReport {
   // Skills whose name signals a query/report/check never INSERT — treat
   // missing NOT NULL columns as informational rather than a blocking error.
   const READ_ONLY_NAME_RE =
-    /^(list_|search_|get_|find_|fetch_|read_|summarize_|analyze_|users_list$|crm_task_list$|accounting_reports$|site_branding_get$)|(_check|_reports|_list|_get|_status|_summary)$/;
+    /^(list_|search_|get_|find_|fetch_|read_|summarize_|analyze_|suggest_|users_list$|crm_task_list$|accounting_reports$|site_branding_get$)|(_check|_reports|_list|_get|_status|_summary)$/;
   const READ_ONLY_NAME_HIT = READ_ONLY_NAME_RE.test(skill.name);
   const canWrite =
     actionEnum.length === 0
