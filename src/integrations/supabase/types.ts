@@ -10352,7 +10352,9 @@ export type Database = {
         Row: {
           at_risk: boolean
           at_risk_reason: string | null
+          billing_contact_email: string | null
           billing_interval: string | null
+          billing_interval_count: number
           cancel_at: string | null
           cancel_at_period_end: boolean
           canceled_at: string | null
@@ -10365,7 +10367,11 @@ export type Database = {
           ended_at: string | null
           health_score: number | null
           id: string
+          last_invoice_id: string | null
           metadata: Json
+          next_invoice_date: string | null
+          payment_terms: string
+          po_number: string | null
           product_id: string | null
           product_name: string | null
           provider: string
@@ -10384,7 +10390,9 @@ export type Database = {
         Insert: {
           at_risk?: boolean
           at_risk_reason?: string | null
+          billing_contact_email?: string | null
           billing_interval?: string | null
+          billing_interval_count?: number
           cancel_at?: string | null
           cancel_at_period_end?: boolean
           canceled_at?: string | null
@@ -10397,7 +10405,11 @@ export type Database = {
           ended_at?: string | null
           health_score?: number | null
           id?: string
+          last_invoice_id?: string | null
           metadata?: Json
+          next_invoice_date?: string | null
+          payment_terms?: string
+          po_number?: string | null
           product_id?: string | null
           product_name?: string | null
           provider?: string
@@ -10416,7 +10428,9 @@ export type Database = {
         Update: {
           at_risk?: boolean
           at_risk_reason?: string | null
+          billing_contact_email?: string | null
           billing_interval?: string | null
+          billing_interval_count?: number
           cancel_at?: string | null
           cancel_at_period_end?: boolean
           canceled_at?: string | null
@@ -10429,7 +10443,11 @@ export type Database = {
           ended_at?: string | null
           health_score?: number | null
           id?: string
+          last_invoice_id?: string | null
           metadata?: Json
+          next_invoice_date?: string | null
+          payment_terms?: string
+          po_number?: string | null
           product_id?: string | null
           product_name?: string | null
           provider?: string
@@ -10446,6 +10464,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "subscriptions_last_invoice_id_fkey"
+            columns: ["last_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "subscriptions_product_id_fkey"
             columns: ["product_id"]
@@ -11884,6 +11909,10 @@ export type Database = {
         }
         Returns: string
       }
+      advance_billing_date: {
+        Args: { _count: number; _from: string; _interval: string }
+        Returns: string
+      }
       allocate_picking: {
         Args: { p_order_id: string; p_source_location_id?: string }
         Returns: Json
@@ -11988,6 +12017,14 @@ export type Database = {
           grid_code: string
           grid_name: string
         }[]
+      }
+      cancel_manual_subscription: {
+        Args: {
+          _effective_date?: string
+          _reason?: string
+          _subscription_id: string
+        }
+        Returns: Json
       }
       cancel_mo: { Args: { p_mo_id: string; p_reason?: string }; Returns: Json }
       cancel_picking: {
@@ -12207,6 +12244,24 @@ export type Database = {
         }
         Returns: string
       }
+      create_manual_subscription: {
+        Args: {
+          _billing_contact_email?: string
+          _billing_interval?: string
+          _billing_interval_count?: number
+          _currency?: string
+          _customer_email: string
+          _customer_name: string
+          _payment_terms?: string
+          _po_number?: string
+          _product_id?: string
+          _product_name: string
+          _quantity?: number
+          _start_date?: string
+          _unit_amount_cents: number
+        }
+        Returns: Json
+      }
       create_payroll_run: { Args: { p_period_date: string }; Returns: Json }
       current_employee_id: { Args: never; Returns: string }
       dispatch_automation_event: {
@@ -12257,6 +12312,14 @@ export type Database = {
       }
       generate_pos_receipt_number: { Args: never; Returns: string }
       generate_rma_number: { Args: never; Returns: string }
+      generate_subscription_invoice: {
+        Args: {
+          _due_in_days?: number
+          _subscription_id: string
+          _tax_rate?: number
+        }
+        Returns: Json
+      }
       get_bootstrap_health: {
         Args: { _module_id: string }
         Returns: {
