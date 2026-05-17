@@ -95,6 +95,7 @@ const SLA_SKILLS: SkillSeed[] = [
             enabled: { type: 'boolean' },
           },
           required: ['action'],
+          'x-action-required': { create: ['entity_type', 'metric', 'name', 'threshold_minutes'] },
         },
       },
     },

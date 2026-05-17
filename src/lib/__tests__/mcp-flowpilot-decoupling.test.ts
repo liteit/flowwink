@@ -49,6 +49,7 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (table: string) => makeQuery(table),
     functions: { invoke: vi.fn().mockResolvedValue({ data: null, error: null }) },
+    rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
   },
 }));
 
@@ -111,10 +112,10 @@ describe('MCP–FlowPilot decoupling', () => {
   });
 
   it('mcp-server SKILL_CATEGORY_MODULES no longer ties `automation` or `search` to flowpilot', () => {
-    const src = fs.readFileSync(
-      path.join(process.cwd(), 'supabase/functions/mcp-server/index.ts'),
-      'utf8',
-    );
+    const src =
+      fs.readFileSync(path.join(process.cwd(), 'supabase/functions/mcp-server/index.ts'), 'utf8') +
+      '\n' +
+      fs.readFileSync(path.join(process.cwd(), 'supabase/functions/_shared/mcp/groups.ts'), 'utf8');
 
     const automationLine = src.match(/automation:\s*\[([^\]]*)\]/);
     expect(automationLine, 'automation category must exist').toBeTruthy();
