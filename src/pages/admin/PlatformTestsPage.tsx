@@ -82,6 +82,10 @@ export default function PlatformTestsPage() {
     return c;
   }, [allSuites]);
 
+  const queryClient = useQueryClient();
+  const { data: latestRuns } = useLatestTestRuns();
+  const [historySuite, setHistorySuite] = useState<TestSuite | null>(null);
+
   const runSuite = async (suite: TestSuite) => {
     if (suite.run.mode !== 'edge') return;
     setRunState((prev) => ({ ...prev, [suite.id]: { status: 'running' } }));
@@ -95,7 +99,20 @@ export default function PlatformTestsPage() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify(suite.run.payload ?? {}),
+          body: JSON.stringify({
+            ...(suite.run.payload ?? {}),
+            // Tell the edge function HOW to log this run — so per-module suites
+            // are grouped by their unique suite_id, not by the underlying
+            // 'module_skills' generic implementation.
+            loggedAs: {
+              suite_id: suite.id,
+              suite_title: suite.title,
+              scope: suite.scope,
+              category: suite.category,
+              module: suite.module ? String(suite.module) : undefined,
+            },
+            triggered_by: 'ui',
+          }),
         },
       );
       if (!response.ok) {
@@ -107,6 +124,8 @@ export default function PlatformTestsPage() {
         ...prev,
         [suite.id]: { status: 'done', results: data.results, summary: data.summary },
       }));
+      // Refresh "Last run" badges so the new run appears without a page reload.
+      queryClient.invalidateQueries({ queryKey: ['platform-test-runs-latest'] });
       if (data.summary?.failed === 0) {
         toast.success(`${suite.title}: ${data.summary.passed} checks passed`);
       } else {
