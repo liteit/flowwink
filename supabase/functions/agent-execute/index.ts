@@ -6451,6 +6451,22 @@ async function executeDbAction(
         return { contract_id, count: (data || []).length, documents: data || [] };
       }
 
+      // list_contract_templates — discover available templates before create
+      if (skillName === 'list_contract_templates') {
+        const { contract_type, language } = args as any;
+        let q = supabase.from('contract_templates')
+          .select('id, name, description, contract_type, language, default_currency, default_renewal_type, default_renewal_notice_days, is_default')
+          .eq('is_active', true)
+          .order('is_default', { ascending: false })
+          .order('contract_type', { ascending: true })
+          .order('name', { ascending: true });
+        if (contract_type) q = q.eq('contract_type', contract_type);
+        if (language) q = q.eq('language', language);
+        const { data, error } = await q;
+        if (error) throw new Error(`List contract templates failed: ${error.message}`);
+        return { count: (data || []).length, templates: data || [] };
+      }
+
       // manage_contract — CRUD (default skill on table='contracts')
       const { action = 'list' } = args as any;
 
