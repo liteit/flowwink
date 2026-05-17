@@ -329,7 +329,12 @@ function SuiteCard({
   const isDocsOnly = suite.run.mode === 'docs-only';
 
   return (
-    <Card>
+    <Card className={isRunning ? 'border-primary/40 shadow-sm' : undefined}>
+      {isRunning && (
+        <div className="h-0.5 w-full overflow-hidden bg-primary/10 rounded-t-lg">
+          <div className="h-full w-1/3 bg-primary animate-[pulse_1.2s_ease-in-out_infinite]" />
+        </div>
+      )}
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -341,7 +346,11 @@ function SuiteCard({
                 <Badge variant="outline" className="text-xs">{String(suite.module)}</Badge>
               )}
               <Badge variant="outline" className="text-xs capitalize">{suite.category}</Badge>
-              {state?.summary ? (
+              {isRunning ? (
+                <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30 gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Running…
+                </Badge>
+              ) : state?.summary ? (
                 <Badge
                   variant="outline"
                   className={state.summary.failed === 0
@@ -374,11 +383,6 @@ function SuiteCard({
             <Button onClick={onShowHistory} variant="ghost" size="sm" title="View run history">
               <History className="h-3.5 w-3.5" />
             </Button>
-            <CardTitle className="text-base">{suite.title}</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">{suite.description}</p>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
             {suite.docs && (
               suite.docs.startsWith('/') ? (
                 <Button variant="outline" size="sm" asChild>
