@@ -140,11 +140,15 @@ export default function PlatformTestsPage() {
     }
   };
 
+  const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number; label: string } | null>(null);
   const runAllPlatform = async () => {
     const platformSuites = filtered.filter((s) => s.scope === 'platform' && s.run.mode === 'edge');
-    for (const s of platformSuites) {
-      await runSuite(s);
+    if (platformSuites.length === 0) return;
+    for (let i = 0; i < platformSuites.length; i++) {
+      setBulkProgress({ current: i + 1, total: platformSuites.length, label: platformSuites[i].title });
+      await runSuite(platformSuites[i]);
     }
+    setBulkProgress(null);
   };
 
   const { data: modules } = useModules();
