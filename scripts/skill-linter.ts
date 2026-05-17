@@ -196,7 +196,11 @@ interface LintCtx {
 function lintSingleSkill(skill: AgentSkillRow, ctx: LintCtx): SkillReport {
   const findings: Finding[] = [];
   const handler = skill.handler ?? '';
-  const props = skill.tool_definition?.function?.parameters?.properties ?? {};
+  // Support both shapes: { function: { parameters: { properties } } } (OpenAI tool format)
+  // AND the flat { parameters: { properties } } shape some legacy seeds use.
+  const td = skill.tool_definition ?? {};
+  const params = td?.function?.parameters ?? td?.parameters ?? {};
+  const props = params?.properties ?? {};
   const propNames = Object.keys(props);
   const description = skill.description ?? '';
 
@@ -237,11 +241,17 @@ function lintSingleSkill(skill: AgentSkillRow, ctx: LintCtx): SkillReport {
   // Read-only / list / check / summary skills never write, so missing NOT
   // NULL columns are not bugs there — downgrade to INFO so the linter
   // tells the truth and we can act on real issues only.
-  const WRITE_ACTIONS = ['create', 'insert', 'add', 'upsert', 'save'];
+  const WRITE_ACTIONS = ['create', 'insert', 'add', 'upsert', 'save', 'update', 'edit', 'patch'];
   const actionEnum: string[] = Array.isArray(props?.action?.enum) ? props.action.enum : [];
+  // Name-based read-only inference when no action enum is declared.
+  // Skills whose name signals a query/report/check never INSERT — treat
+  // missing NOT NULL columns as informational rather than a blocking error.
+  const READ_ONLY_NAME_RE =
+    /^(list_|search_|get_|find_|fetch_|read_|summarize_|analyze_|suggest_|users_list$|crm_task_list$|accounting_reports$|site_branding_get$)|(_check|_reports|_list|_get|_status|_summary)$/;
+  const READ_ONLY_NAME_HIT = READ_ONLY_NAME_RE.test(skill.name);
   const canWrite =
-    actionEnum.length === 0 // no action enum → raw insert handler assumed
-      ? true
+    actionEnum.length === 0
+      ? !READ_ONLY_NAME_HIT
       : actionEnum.some((a) => WRITE_ACTIONS.includes(a));
 
   if (handler.startsWith('db:')) {
@@ -272,7 +282,7 @@ function lintSingleSkill(skill: AgentSkillRow, ctx: LintCtx): SkillReport {
 
       // Per-action required check — only meaningful for write-capable skills
       if (canWrite) {
-        const params = skill.tool_definition?.function?.parameters;
+        const params = td?.function?.parameters ?? td?.parameters;
         const allOf = params?.allOf ?? [];
         const hasWriteAction = actionEnum.some((a) => WRITE_ACTIONS.includes(a));
         if (hasWriteAction) {
@@ -307,12 +317,16 @@ function lintSingleSkill(skill: AgentSkillRow, ctx: LintCtx): SkillReport {
   // can't be reliably inferred via static regex — skipped here.)
   if (handler.startsWith('edge:') || handler.startsWith('function:')) {
     const fn = handler.replace(/^(edge|function):/, '');
-    if (!ctx.edgeFunctions.has(fn)) {
+    // Supabase routes sub-paths inside an edge function via internal routing
+    // (e.g. `edge:reconciliation/auto-match` → function `reconciliation`).
+    // Only check the first path segment for existence on disk.
+    const topLevel = fn.split('/')[0];
+    if (!ctx.edgeFunctions.has(topLevel)) {
       findings.push({
         layer: 5,
         severity: 'error',
         rule: 'edge-function-missing',
-        message: `Handler is "${handler}" but supabase/functions/${fn}/ does not exist.`,
+        message: `Handler is "${handler}" but supabase/functions/${topLevel}/ does not exist.`,
         fix: `Create the edge function, repoint the handler, or disable the skill.`,
       });
     }
