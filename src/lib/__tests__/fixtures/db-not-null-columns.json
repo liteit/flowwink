@@ -46,3 +46,6 @@
     "competitor_monitor": ["key"],
     "site_branding_update": ["key"],
     "move_application_stage": ["job_posting_id", "candidate_name", "candidate_email"]
+  }
+}
+
