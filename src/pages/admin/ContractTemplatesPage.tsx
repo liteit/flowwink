@@ -334,3 +334,101 @@ function TemplateDialog({
     </Dialog>
   );
 }
+
+// ----------------------------------------------------------------------
+// Translate Preview — pure utility (per AI-Utility-vs-Skill).
+// Calls chat-completion via useAITextGeneration. Read-only preview;
+// the user can copy the translation but it never overwrites the source.
+// This way the library stays English-only and any language is one click away.
+// ----------------------------------------------------------------------
+function TranslatePreviewButton({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  const [language, setLanguage] = useState('Swedish');
+  const [translated, setTranslated] = useState('');
+  const { generate, isLoading } = useAITextGeneration();
+
+  const run = async () => {
+    if (!text || text.trim().length < 20) {
+      toast.error('Add some body text first');
+      return;
+    }
+    setTranslated('');
+    const result = await generate({ text, action: 'translate', targetLanguage: language });
+    if (result) setTranslated(result);
+  };
+
+  const copy = async () => {
+    if (!translated) return;
+    await navigator.clipboard.writeText(translated);
+    toast.success('Copied translation');
+  };
+
+  return (
+    <>
+      <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <Languages className="h-3.5 w-3.5 mr-1.5" />
+        Translate preview
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Translate template preview</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Templates are stored in English. Use this to preview the same body in any language —
+              the translation is generated on the fly and never overwrites the source.
+            </p>
+            <div className="flex gap-2 items-end">
+              <div className="flex-1 space-y-1">
+                <Label className="text-xs">Target language</Label>
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Swedish">Swedish</SelectItem>
+                    <SelectItem value="Norwegian">Norwegian</SelectItem>
+                    <SelectItem value="Danish">Danish</SelectItem>
+                    <SelectItem value="Finnish">Finnish</SelectItem>
+                    <SelectItem value="German">German</SelectItem>
+                    <SelectItem value="French">French</SelectItem>
+                    <SelectItem value="Spanish">Spanish</SelectItem>
+                    <SelectItem value="Italian">Italian</SelectItem>
+                    <SelectItem value="Dutch">Dutch</SelectItem>
+                    <SelectItem value="Portuguese">Portuguese</SelectItem>
+                    <SelectItem value="Polish">Polish</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={run} disabled={isLoading}>
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Languages className="h-4 w-4 mr-2" />}
+                Translate
+              </Button>
+            </div>
+            {translated && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Translated preview ({language})</Label>
+                  <Button variant="ghost" size="sm" onClick={copy}>
+                    <Copy className="h-3.5 w-3.5 mr-1.5" /> Copy
+                  </Button>
+                </div>
+                <Textarea
+                  rows={20}
+                  value={translated}
+                  readOnly
+                  className="font-mono text-xs"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Tokens like <code>{'{{counterparty.name}}'}</code> are preserved and still rendered at contract creation.
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
