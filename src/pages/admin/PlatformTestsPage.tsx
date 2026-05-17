@@ -210,13 +210,35 @@ export default function PlatformTestsPage() {
             title="Platform Tests"
             description="The single source of truth for every test in FlowWink — what we test, how to run it, and when it was last green."
           />
-          <Button onClick={runAllPlatform} variant="default" size="sm" className="shrink-0 mt-1">
-            <Play className="h-4 w-4 mr-2" /> Run all platform suites
+          <Button onClick={runAllPlatform} variant="default" size="sm" className="shrink-0 mt-1" disabled={!!bulkProgress}>
+            {bulkProgress ? (
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {bulkProgress.current}/{bulkProgress.total}…</>
+            ) : (
+              <><Play className="h-4 w-4 mr-2" /> Run all platform suites</>
+            )}
           </Button>
-          <Button onClick={reseedAllFailing} variant="outline" size="sm" className="shrink-0 mt-1">
+          <Button onClick={reseedAllFailing} variant="outline" size="sm" className="shrink-0 mt-1" disabled={!!bulkProgress}>
             <RefreshCw className="h-4 w-4 mr-2" /> Re-seed failing modules
           </Button>
         </div>
+
+        {bulkProgress && (
+          <Alert className="border-primary/40 bg-primary/5">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <AlertDescription className="text-sm flex items-center justify-between gap-3">
+              <span>
+                Running suite <strong>{bulkProgress.current}</strong> of <strong>{bulkProgress.total}</strong>:{' '}
+                <span className="font-mono">{bulkProgress.label}</span>
+              </span>
+              <div className="w-40 h-1.5 bg-primary/15 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all duration-300"
+                  style={{ width: `${(bulkProgress.current / bulkProgress.total) * 100}%` }}
+                />
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Alert>
           <Info className="h-4 w-4" />
