@@ -146,6 +146,86 @@ const SUBSCRIPTIONS_SKILLS: SkillSeed[] = [
       },
     },
   },
+  // ── Manual / invoice-driven subscriptions (B2B) ──
+  {
+    name: 'create_manual_subscription',
+    description: 'Create a recurring subscription billed by invoice (not via Stripe card). Use when: B2B customer signs a service plan paid by invoice (telecom plans, retainers, hosted services). NOT for: online card checkout (use Stripe checkout flow instead).',
+    category: 'commerce',
+    handler: 'rpc:create_manual_subscription',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'create_manual_subscription',
+        description: 'Register a recurring subscription billed by invoice. Generates first invoice on start_date via daily cron.',
+        parameters: {
+          type: 'object',
+          properties: {
+            customer_email: { type: 'string', description: 'Billing email (required)' },
+            customer_name: { type: 'string' },
+            product_name: { type: 'string', description: 'Plan label, e.g. "Business Mobile 100GB"' },
+            unit_amount_cents: { type: 'integer', description: 'Price per period in minor units (e.g. 19900 = 199.00)' },
+            currency: { type: 'string', description: 'ISO 4217, default EUR' },
+            billing_interval: { type: 'string', enum: ['day','week','month','year'], description: 'Default month' },
+            billing_interval_count: { type: 'integer', description: 'Default 1; e.g. 3 for quarterly when interval=month' },
+            quantity: { type: 'integer', description: 'Default 1' },
+            payment_terms: { type: 'string', enum: ['invoice_30','invoice_14','invoice_7','direct_debit','manual','prepaid_card'], description: 'Default invoice_30' },
+            start_date: { type: 'string', description: 'YYYY-MM-DD, default today' },
+            billing_contact_email: { type: 'string', description: 'B2B AP/AR contact, optional' },
+            po_number: { type: 'string', description: 'Customer PO reference, optional' },
+            product_id: { type: 'string', description: 'Existing products.id, optional' },
+          },
+          required: ['customer_email','product_name','unit_amount_cents'],
+        },
+      },
+    },
+  },
+  {
+    name: 'generate_subscription_invoice',
+    description: 'Force-generate the next invoice for a manual subscription. Use when: ad-hoc billing run, customer requested immediate invoice, testing. NOT for: stripe-billed subscriptions (Stripe handles those). Normally the daily cron handles this automatically.',
+    category: 'commerce',
+    handler: 'rpc:generate_subscription_invoice',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'generate_subscription_invoice',
+        description: 'Create a draft invoice from a manual subscription and advance next_invoice_date.',
+        parameters: {
+          type: 'object',
+          properties: {
+            subscription_id: { type: 'string', description: 'UUID of the subscription' },
+            tax_rate: { type: 'number', description: 'Override default tax rate (e.g. 0.25 = 25%)' },
+            due_in_days: { type: 'integer', description: 'Override payment terms (days until due)' },
+          },
+          required: ['subscription_id'],
+        },
+      },
+    },
+  },
+  {
+    name: 'cancel_manual_subscription',
+    description: 'Cancel a manual (invoice-billed) subscription. Use when: customer terminates B2B plan, account closed. NOT for: Stripe subscriptions (use Stripe customer portal or cancel_subscription).',
+    category: 'commerce',
+    handler: 'rpc:cancel_manual_subscription',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'cancel_manual_subscription',
+        description: 'Cancel an invoice-driven subscription. Stops further invoicing.',
+        parameters: {
+          type: 'object',
+          properties: {
+            subscription_id: { type: 'string' },
+            reason: { type: 'string', description: 'Free-text cancel reason for records' },
+            effective_date: { type: 'string', description: 'YYYY-MM-DD, default today' },
+          },
+          required: ['subscription_id'],
+        },
+      },
+    },
+  },
 ];
 
 export const subscriptionsModule = defineModule<Input, Output>({
