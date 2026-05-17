@@ -17,7 +17,7 @@ import path from 'node:path';
 type Severity = 'error' | 'warn' | 'info';
 
 interface Finding {
-  layer: 1 | 2 | 3 | 4;
+  layer: 1 | 2 | 3 | 4 | 5;
   severity: Severity;
   rule: string;
   message: string;
