@@ -151,10 +151,10 @@ describe('recruitment module — end-to-end autonomy contract', () => {
   });
 
   it('MCP server maps `recruitment` into a group so ClawWink can discover the skills', () => {
-    const mcpSrc = fs.readFileSync(
-      path.join(process.cwd(), 'supabase/functions/mcp-server/index.ts'),
-      'utf8',
-    );
+    const mcpSrc =
+      fs.readFileSync(path.join(process.cwd(), 'supabase/functions/mcp-server/index.ts'), 'utf8') +
+      '\n' +
+      fs.readFileSync(path.join(process.cwd(), 'supabase/functions/_shared/mcp/groups.ts'), 'utf8');
     // Group registration — required for ?groups=recruitment routing
     expect(mcpSrc).toMatch(/"recruitment"/);
     // And it must live in a category bucket (crm) that the MCP server iterates
