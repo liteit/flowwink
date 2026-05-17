@@ -6468,6 +6468,32 @@ async function executeDbAction(
       if (action === 'create') {
         const a = args as any;
         if (!a.counterparty_name) throw new Error('counterparty_name is required (NOT NULL in DB)');
+
+        // Preferred path: render from template via RPC (handles tokens + guard)
+        if (a.template_id) {
+          const overrides: Record<string, unknown> = {};
+          for (const k of ['title', 'start_date', 'end_date', 'value_cents', 'currency']) {
+            if (a[k] !== undefined) overrides[k] = a[k];
+          }
+          const { data, error } = await supabase.rpc('create_contract_from_template', {
+            p_template_id: a.template_id,
+            p_counterparty_name: a.counterparty_name,
+            p_counterparty_email: a.counterparty_email || null,
+            p_overrides: overrides,
+          });
+          if (error) throw new Error(`Create contract from template failed: ${error.message}`);
+          const row = Array.isArray(data) ? data[0] : data;
+          return { created: true, from_template: a.template_id, contract_id: row?.contract_id, title: row?.title, status: row?.status };
+        }
+
+        // Direct create path: requires either a real body_markdown (>=200 chars) or a file_url.
+        // The DB trigger `guard_contracts_require_body` enforces this — we give a friendlier message up-front.
+        const hasFile = a.file_url && String(a.file_url).length > 0;
+        const hasBody = a.body_markdown && String(a.body_markdown).length >= 200;
+        if (!hasFile && !hasBody) {
+          throw new Error('Cannot create empty contract. Either pass template_id (run list_contract_templates first), attach a file_url, or write body_markdown with at least 200 characters of real agreement text.');
+        }
+
         const insertData: Record<string, unknown> = {
           title: a.title || `Contract — ${a.counterparty_name}`,
           counterparty_name: a.counterparty_name,
