@@ -463,4 +463,48 @@ function SuiteCard({
   );
 }
 
+function HistoryDialog({ suite, onClose }: { suite: TestSuite | null; onClose: () => void }) {
+  const { data: history, isLoading } = useSuiteRunHistory(suite?.id ?? null, 10);
+  return (
+    <Dialog open={!!suite} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <History className="h-4 w-4" /> Run history: {suite?.title}
+          </DialogTitle>
+        </DialogHeader>
+        {isLoading && <p className="text-sm text-muted-foreground py-6 text-center">Loading…</p>}
+        {!isLoading && history && history.length === 0 && (
+          <p className="text-sm text-muted-foreground py-6 text-center">No runs recorded yet for this suite.</p>
+        )}
+        {history && history.length > 0 && (
+          <ScrollArea className="max-h-96">
+            <div className="space-y-1.5">
+              {history.map((run, i) => (
+                <div key={i} className="flex items-center gap-3 py-2 px-3 rounded border text-xs">
+                  {run.failed === 0 ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                  ) : (
+                    <XCircle className="h-4 w-4 text-destructive shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-mono">
+                      {run.passed}/{run.total} passed
+                      {run.failed > 0 && <span className="text-destructive"> · {run.failed} failed</span>}
+                    </p>
+                    <p className="text-muted-foreground mt-0.5">
+                      {new Date(run.started_at).toLocaleString()} · via {run.triggered_by} · {run.duration_ms}ms
+                    </p>
+                    {run.error && <p className="text-destructive font-mono mt-1 break-all">{run.error}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 void FlaskConical;
