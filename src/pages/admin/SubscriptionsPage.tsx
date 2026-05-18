@@ -87,6 +87,8 @@ export default function SubscriptionsPage() {
         />
       </div>
 
+      <BillingCronBanner />
+
       <Tabs defaultValue="list" className="space-y-4">
         <TabsList>
           <TabsTrigger value="list">Subscriptions</TabsTrigger>
