@@ -502,7 +502,7 @@ async function executeModuleAction(
       if (action === 'list') {
         const lim = Math.min(Math.max(Number(a.limit) || 50, 1), 200);
         const { data, error } = await supabase.from('agent_automations')
-          .select('id, name, description, trigger_type, trigger_config, skill_name, enabled, executor, last_run_at, last_run_status, created_at')
+          .select('id, name, description, trigger_type, trigger_config, skill_name, enabled, executor, created_at')
           .order('created_at', { ascending: false }).limit(lim);
         if (error) throw new Error(`List automations failed: ${error.message}`);
         return { automations: data || [], count: (data || []).length };
