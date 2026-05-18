@@ -77,8 +77,9 @@ On `subscriptions`:
 `supabase/functions/subscription-billing-cron` runs at **06:00 UTC** (`subscription-billing-daily` pg_cron job). It selects every active `provider='manual'` subscription with `next_invoice_date <= today` and calls `generate_subscription_invoice` per row. Idempotent (the RPC advances the date so reruns the same day do nothing).
 
 ### Events emitted (platform event bus)
-- `subscription.created` — on manual sub creation
-- `subscription.invoiced` — every time a draft invoice is generated
+- `subscription.created` — on manual sub creation (includes `auto_finalize` flag)
+- `subscription.invoiced` — every time an invoice is generated (includes `auto_finalized` + `status`)
+- `invoice.finalized` — additionally fired when `auto_finalize=true` (source: `subscription_auto_finalize`)
 - `subscription.canceled` — on manual cancel
 
 ### UI
