@@ -103,7 +103,7 @@ Manages webinars and registrations.
   },
   {
     name: 'start_webinar',
-    description: 'Manually flip a webinar to live status. Normally automatic via cron when date passes.',
+    description: 'Manually flip a webinar to live status. Normally automatic via cron when date passes. Use when: host wants to start broadcast early / "start webinar now" / "kör igång webinariet". NOT for: publishing draft (use publish_webinar) or closing after run (use complete_webinar).',
     category: 'communication',
     handler: 'rpc:start_webinar',
     scope: 'internal',
