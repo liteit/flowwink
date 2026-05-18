@@ -397,6 +397,20 @@ function NewManualSubscriptionButton() {
             <Label>PO number (optional)</Label>
             <Input value={f.po_number} onChange={(e) => set('po_number', e.target.value)} placeholder="PO-2026-0042" />
           </div>
+          <div className="md:col-span-2 flex items-start gap-3 rounded-lg border p-3 bg-muted/30">
+            <Switch
+              id="auto-finalize"
+              checked={f.auto_finalize}
+              onCheckedChange={(v) => set('auto_finalize', v)}
+            />
+            <div className="flex-1 space-y-0.5">
+              <Label htmlFor="auto-finalize" className="cursor-pointer">Auto-finalize invoices</Label>
+              <p className="text-xs text-muted-foreground">
+                When on, the daily billing cron issues invoices as <strong>sent</strong> immediately. When off,
+                invoices land as <strong>draft</strong> for manual review before sending.
+              </p>
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
