@@ -49,7 +49,7 @@ export default function DocsCategoryPage() {
         <link rel="canonical" href={`https://flowwink.com/docs/${category}`} />
       </Helmet>
 
-      <PublicNavigation />
+      {!embed && <PublicNavigation />}
 
       <main className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 lg:py-12 max-w-7xl">
