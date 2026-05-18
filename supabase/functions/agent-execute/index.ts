@@ -1417,9 +1417,9 @@ async function executeOpenClawAction(
         .from('beta_test_exchanges')
         .insert({
           direction: 'flowpilot_to_openclaw',
-          message_type: 'test_request',
+          message_type: 'action_request', // must match beta_test_exchanges_message_type_check
           content: scenario,
-          payload: { instructions, priority, acknowledged_at: null },
+          payload: { instructions, priority, scenario_kind: 'test_request', acknowledged_at: null },
         })
         .select('id, created_at')
         .single();
