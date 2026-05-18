@@ -87,7 +87,7 @@ Manages webinars and registrations.
   // ── Lifecycle skills (SECURITY DEFINER RPCs) ──
   {
     name: 'publish_webinar',
-    description: 'Publish a draft webinar so it becomes visible and registrable. Emits webinar.published event.',
+    description: 'Publish a draft webinar so it becomes visible and registrable. Emits webinar.published event. Use when: a draft webinar is ready to go live for registration / "publish webinar" / "publicera webinar". NOT for: starting the broadcast (use start_webinar) or creating the webinar (use manage_webinar).',
     category: 'communication',
     handler: 'rpc:publish_webinar',
     scope: 'internal',
