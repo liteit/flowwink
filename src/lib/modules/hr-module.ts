@@ -36,6 +36,7 @@ const HR_SKILLS: SkillSeed[] = [
         name: 'manage_employee',
         description: 'CRUD operations on employee records',
         parameters: {
+          'x-action-required': { create: ['name'] },
           type: 'object',
           properties: {
             action: { type: 'string', enum: ['create', 'update', 'search', 'deactivate'] },
@@ -70,6 +71,7 @@ const HR_SKILLS: SkillSeed[] = [
         name: 'manage_leave',
         description: 'Leave request operations',
         parameters: {
+          'x-action-required': { create: ['employee_id', 'start_date', 'end_date'] },
           type: 'object',
           properties: {
             action: { type: 'string', enum: ['create', 'approve', 'reject', 'list_pending', 'list_by_employee'] },
@@ -102,6 +104,7 @@ const HR_SKILLS: SkillSeed[] = [
         name: 'onboarding_checklist',
         description: 'Manage onboarding checklists',
         parameters: {
+          'x-action-required': { create: ['employee_id'] },
           type: 'object',
           properties: {
             action: { type: 'string', enum: ['create', 'update_item', 'get_status', 'list_incomplete'] },

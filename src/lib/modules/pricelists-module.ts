@@ -42,6 +42,7 @@ const SKILLS: SkillSeed[] = [
         name: 'manage_pricelist',
         description: 'Create, list, update, or delete versioned pricelists',
         parameters: {
+          'x-action-required': { create: ['name'] },
           type: 'object',
           properties: {
             action: { type: 'string', enum: ['create', 'list', 'get', 'update', 'delete'] },
@@ -78,6 +79,7 @@ const SKILLS: SkillSeed[] = [
         name: 'manage_pricelist_item',
         description: 'CRUD for pricelist line items',
         parameters: {
+          'x-action-required': { create: ['pricelist_id'] },
           type: 'object',
           properties: {
             action: { type: 'string', enum: ['create', 'list', 'update', 'delete'] },

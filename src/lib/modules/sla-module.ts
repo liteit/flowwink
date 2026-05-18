@@ -70,6 +70,7 @@ const SLA_SKILLS: SkillSeed[] = [
         name: 'manage_sla_policy',
         description: 'Create, update, list, or delete SLA policies',
         parameters: {
+          'x-action-required': { create: ['name', 'entity_type', 'metric', 'threshold_minutes'] },
           type: 'object',
           properties: {
             action: { type: 'string', enum: ['create', 'list', 'update', 'delete'] },
