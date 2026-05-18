@@ -199,8 +199,8 @@ export default function DocsArticlePage() {
         </div>
       </main>
 
-      <PublicFooter />
-      <DocsChat />
+      {!embed && <PublicFooter />}
+      {!embed && <DocsChat />}
     </>
   );
 }
