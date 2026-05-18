@@ -28,6 +28,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 export default function DocsCategoryPage() {
   const { category } = useParams<{ category: string }>();
   const { data: pages = [], isLoading } = useDocsPages();
+  const embed = useIsEmbed();
 
   const filtered = useMemo(
     () => pages.filter((p) => p.category === category),
