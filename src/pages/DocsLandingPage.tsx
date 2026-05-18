@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useDocsPages } from '@/hooks/useDocs';
 import { DocsSidebar } from '@/components/docs/DocsSidebar';
 import { DocsChat } from '@/components/docs/DocsChat';
+import { useIsEmbed } from '@/hooks/useIsEmbed';
 
 const HIGHLIGHTS = [
   {
