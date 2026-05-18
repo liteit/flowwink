@@ -2945,6 +2945,14 @@ async function executeDealsAction(
     };
   }
 
+  // Argument-name tolerance (Agent Contract Integrity layer 1): MCP peers commonly send
+  // `id`, `deal_stage`, or `pipeline_stage` — map them to the canonical names so the
+  // handler doesn't silently ignore them.
+  const a = args as any;
+  if (a.id !== undefined && a.deal_id === undefined) a.deal_id = a.id;
+  if (a.deal_stage !== undefined && a.stage === undefined) a.stage = a.deal_stage;
+  if (a.pipeline_stage !== undefined && a.stage === undefined) a.stage = a.pipeline_stage;
+
   const { action = 'list' } = args as any;
 
   // Normalize friendly stage aliases to canonical deal_stage enum values.
