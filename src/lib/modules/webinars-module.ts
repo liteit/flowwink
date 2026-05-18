@@ -162,7 +162,7 @@ Manages webinars and registrations.
   },
   {
     name: 'mark_webinar_attendance',
-    description: 'Flag a registration as attended (or not). Boosts lead score +10 on attended=true. Emits webinar.attended event.',
+    description: 'Flag a registration as attended (or not). Boosts lead score +10 on attended=true. Emits webinar.attended event. Use when: post-webinar bookkeeping of who showed up / "mark attendance" / "registrera närvaro". NOT for: registering new attendees (use webinar registration flow).',
     category: 'communication',
     handler: 'rpc:mark_webinar_attendance',
     scope: 'internal',
