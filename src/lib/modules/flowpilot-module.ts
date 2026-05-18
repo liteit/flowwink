@@ -501,38 +501,36 @@ Reads and updates site settings including module configuration, site name, theme
         parameters: {
           type: 'object',
           properties: {
-            name: {
+            action: {
               type: 'string',
+              enum: ['list', 'create', 'update', 'enable', 'disable', 'delete'],
+              description: 'Operation to perform. Default: create (backwards-compatible).',
             },
-            description: {
-              type: 'string',
-            },
+            automation_id: { type: 'string', description: 'Required for update/enable/disable/delete' },
+            name: { type: 'string', description: 'Required for create' },
+            description: { type: 'string' },
             trigger_type: {
               type: 'string',
-              enum: [
-                'cron',
-                'event',
-                'signal',
-                'manual',
-              ],
+              enum: ['cron', 'event', 'signal', 'manual'],
+              description: 'Required for create. NOT silently coerced to cron.',
             },
-            trigger_config: {
-              type: 'object',
-            },
-            skill_name: {
+            trigger_config: { type: 'object' },
+            skill_name: { type: 'string', description: 'Required for create. Must reference an enabled agent_skill.' },
+            skill_arguments: { type: 'object' },
+            enabled: { type: 'boolean' },
+            executor: {
               type: 'string',
-              description: 'Skill to execute',
+              enum: ['platform', 'flowpilot', 'openclaw', 'external'],
+              description: 'Who runs this automation. Default platform.',
             },
-            skill_arguments: {
-              type: 'object',
-            },
-            enabled: {
-              type: 'boolean',
-            },
+            limit: { type: 'number', description: 'For action=list. Default 50.' },
           },
-          required: [
-            'name',
-            'skill_name',
+          allOf: [
+            { if: { properties: { action: { const: 'create' } } }, then: { required: ['action', 'name', 'skill_name', 'trigger_type'] } },
+            { if: { properties: { action: { const: 'update' } } }, then: { required: ['action', 'automation_id'] } },
+            { if: { properties: { action: { const: 'enable' } } }, then: { required: ['action', 'automation_id'] } },
+            { if: { properties: { action: { const: 'disable' } } }, then: { required: ['action', 'automation_id'] } },
+            { if: { properties: { action: { const: 'delete' } } }, then: { required: ['action', 'automation_id'] } },
           ],
         },
       },
