@@ -420,6 +420,7 @@ function NewManualSubscriptionButton() {
           <div className="space-y-1">
             <Label>Start date</Label>
             <Input type="date" value={f.start_date} onChange={(e) => set('start_date', e.target.value)} />
+            <p className="text-xs text-muted-foreground">First invoice is generated automatically by the daily 06:00 UTC billing job once this date is reached.</p>
           </div>
           <div className="space-y-1">
             <Label>Billing contact (optional)</Label>
