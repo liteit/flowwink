@@ -271,7 +271,7 @@ function NewManualSubscriptionButton() {
     po_number: '',
     auto_finalize: false,
   });
-  const set = (k: keyof typeof f, v: string) => setF((x) => ({ ...x, [k]: v }));
+  const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }));
 
   const submit = async () => {
     if (!f.customer_email || !f.product_name || !f.unit_amount) {
