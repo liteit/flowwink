@@ -496,22 +496,66 @@ async function executeModuleAction(
     }
 
     case 'automations': {
-      const { name, description, trigger_type = 'cron', trigger_config = {}, skill_name: targetSkill, skill_arguments = {}, enabled = false } = args as any;
-      if (!name || !targetSkill) throw new Error('name and skill_name are required');
+      const a = args as any;
+      const action = a.action ?? 'create'; // backwards compat: pre-action callers always created
+
+      if (action === 'list') {
+        const lim = Math.min(Math.max(Number(a.limit) || 50, 1), 200);
+        const { data, error } = await supabase.from('agent_automations')
+          .select('id, name, description, trigger_type, trigger_config, skill_name, enabled, executor, created_at')
+          .order('created_at', { ascending: false }).limit(lim);
+        if (error) throw new Error(`List automations failed: ${error.message}`);
+        return { automations: data || [], count: (data || []).length };
+      }
+
+      if (action === 'enable' || action === 'disable') {
+        if (!a.automation_id) throw new Error('automation_id is required');
+        const { data, error } = await supabase.from('agent_automations')
+          .update({ enabled: action === 'enable', updated_at: new Date().toISOString() })
+          .eq('id', a.automation_id).select('id, name, enabled').single();
+        if (error) throw new Error(`Toggle automation failed: ${error.message}`);
+        return { automation_id: data.id, name: data.name, enabled: data.enabled };
+      }
+
+      if (action === 'delete') {
+        if (!a.automation_id) throw new Error('automation_id is required');
+        const { error } = await supabase.from('agent_automations').delete().eq('id', a.automation_id);
+        if (error) throw new Error(`Delete automation failed: ${error.message}`);
+        return { deleted: true, automation_id: a.automation_id };
+      }
+
+      if (action === 'update') {
+        if (!a.automation_id) throw new Error('automation_id is required');
+        const allowed = ['name', 'description', 'trigger_type', 'trigger_config', 'skill_name', 'skill_arguments', 'enabled', 'executor'];
+        const upd: Record<string, unknown> = {};
+        for (const k of allowed) if (a[k] !== undefined) upd[k] = a[k];
+        if (!Object.keys(upd).length) throw new Error('No updatable fields provided');
+        upd.updated_at = new Date().toISOString();
+        const { data, error } = await supabase.from('agent_automations')
+          .update(upd).eq('id', a.automation_id)
+          .select('id, name, trigger_type, enabled').single();
+        if (error) throw new Error(`Update automation failed: ${error.message}`);
+        return { automation_id: data.id, name: data.name, trigger_type: data.trigger_type, enabled: data.enabled };
+      }
+
+      // action === 'create' (default for backwards compat)
+      const { name, description, trigger_type = 'cron', trigger_config = {}, skill_name: targetSkill, skill_arguments = {}, enabled = false, executor = 'platform' } = a;
+      if (!name || !targetSkill) throw new Error('name and skill_name are required for action=create');
 
       // Look up skill_id from skill_name
       const { data: skillRef } = await supabase.from('agent_skills')
-        .select('id').eq('name', targetSkill).eq('enabled', true).limit(1).single();
+        .select('id').eq('name', targetSkill).eq('enabled', true).limit(1).maybeSingle();
 
       const { data, error } = await supabase.from('agent_automations').insert({
         name,
         description: description || null,
-        trigger_type,
+        trigger_type, // honor the actual trigger_type, no longer silently forced to cron
         trigger_config,
         skill_id: skillRef?.id || null,
         skill_name: targetSkill,
         skill_arguments,
         enabled,
+        executor,
       }).select('id, name, trigger_type, enabled').single();
       if (error) throw new Error(`Automation insert failed: ${error.message}`);
       return { automation_id: data.id, name: data.name, trigger_type: data.trigger_type, enabled: data.enabled };
@@ -1417,9 +1461,9 @@ async function executeOpenClawAction(
         .from('beta_test_exchanges')
         .insert({
           direction: 'flowpilot_to_openclaw',
-          message_type: 'test_request',
+          message_type: 'action_request', // must match beta_test_exchanges_message_type_check
           content: scenario,
-          payload: { instructions, priority, acknowledged_at: null },
+          payload: { instructions, priority, scenario_kind: 'test_request', acknowledged_at: null },
         })
         .select('id, created_at')
         .single();
@@ -2945,6 +2989,14 @@ async function executeDealsAction(
     };
   }
 
+  // Argument-name tolerance (Agent Contract Integrity layer 1): MCP peers commonly send
+  // `id`, `deal_stage`, or `pipeline_stage` — map them to the canonical names so the
+  // handler doesn't silently ignore them.
+  const a = args as any;
+  if (a.id !== undefined && a.deal_id === undefined) a.deal_id = a.id;
+  if (a.deal_stage !== undefined && a.stage === undefined) a.stage = a.deal_stage;
+  if (a.pipeline_stage !== undefined && a.stage === undefined) a.stage = a.pipeline_stage;
+
   const { action = 'list' } = args as any;
 
   // Normalize friendly stage aliases to canonical deal_stage enum values.
@@ -3071,7 +3123,13 @@ async function executeDealsAction(
     return { deal_id: data.id, new_stage: data.stage };
   }
 
-  return { error: `Unknown deals action: ${action}` };
+  if (action === 'delete') {
+    return {
+      error: `Deals are never deleted (audit trail). Use action='move_stage' with stage='closed_lost' to drop the opportunity, or action='update' to amend it.`,
+    };
+  }
+
+  return { error: `Unknown deals action: ${action}. Supported: list, create, update, move_stage. To "delete" a deal use move_stage → closed_lost (audit-preserving).` };
 }
 
 // =============================================================================
@@ -6564,6 +6622,9 @@ async function executeDbAction(
     case 'invoices': {
       // ─── Invoicing module — full lifecycle ──────────────────────────────
       const VALID_INVOICE_STATUS = new Set(['draft', 'sent', 'paid', 'cancelled', 'overdue']);
+      // Argument-name tolerance: MCP peers commonly send `id` — map to `invoice_id`.
+      const inv = args as any;
+      if (inv.id !== undefined && inv.invoice_id === undefined) inv.invoice_id = inv.id;
       const { action = 'list' } = args as any;
 
       // ── helpers ──
@@ -6742,7 +6803,13 @@ async function executeDbAction(
         return { cancelled: true, invoice_id: data.id, invoice_number: data.invoice_number, status: data.status };
       }
 
-      throw new Error(`Unknown invoices action: ${action}. Supported: list, get, create, update, send, mark_paid, cancel.`);
+      if (action === 'delete') {
+        return {
+          error: `Invoices are never deleted (audit/accounting trail). Use action='cancel' with a reason — it preserves the invoice number for reconciliation.`,
+        };
+      }
+
+      throw new Error(`Unknown invoices action: ${action}. Supported: list, get, create, update, send, mark_paid, cancel. To "delete" an invoice use cancel (audit-preserving).`);
     }
 
     default:
