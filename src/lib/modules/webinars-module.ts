@@ -119,7 +119,7 @@ Manages webinars and registrations.
   },
   {
     name: 'complete_webinar',
-    description: 'Close a webinar after it has run. Optionally attach the recording URL. Emits webinar.completed event.',
+    description: 'Close a webinar after it has run. Optionally attach the recording URL. Emits webinar.completed event. Use when: live session ended and we want to mark it done + share recording / "complete webinar" / "avsluta webinariet". NOT for: cancelling before run (use cancel_webinar).',
     category: 'communication',
     handler: 'rpc:complete_webinar',
     scope: 'internal',
