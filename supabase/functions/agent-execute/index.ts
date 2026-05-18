@@ -496,22 +496,66 @@ async function executeModuleAction(
     }
 
     case 'automations': {
-      const { name, description, trigger_type = 'cron', trigger_config = {}, skill_name: targetSkill, skill_arguments = {}, enabled = false } = args as any;
-      if (!name || !targetSkill) throw new Error('name and skill_name are required');
+      const a = args as any;
+      const action = a.action ?? 'create'; // backwards compat: pre-action callers always created
+
+      if (action === 'list') {
+        const lim = Math.min(Math.max(Number(a.limit) || 50, 1), 200);
+        const { data, error } = await supabase.from('agent_automations')
+          .select('id, name, description, trigger_type, trigger_config, skill_name, enabled, executor, last_run_at, last_run_status, created_at')
+          .order('created_at', { ascending: false }).limit(lim);
+        if (error) throw new Error(`List automations failed: ${error.message}`);
+        return { automations: data || [], count: (data || []).length };
+      }
+
+      if (action === 'enable' || action === 'disable') {
+        if (!a.automation_id) throw new Error('automation_id is required');
+        const { data, error } = await supabase.from('agent_automations')
+          .update({ enabled: action === 'enable', updated_at: new Date().toISOString() })
+          .eq('id', a.automation_id).select('id, name, enabled').single();
+        if (error) throw new Error(`Toggle automation failed: ${error.message}`);
+        return { automation_id: data.id, name: data.name, enabled: data.enabled };
+      }
+
+      if (action === 'delete') {
+        if (!a.automation_id) throw new Error('automation_id is required');
+        const { error } = await supabase.from('agent_automations').delete().eq('id', a.automation_id);
+        if (error) throw new Error(`Delete automation failed: ${error.message}`);
+        return { deleted: true, automation_id: a.automation_id };
+      }
+
+      if (action === 'update') {
+        if (!a.automation_id) throw new Error('automation_id is required');
+        const allowed = ['name', 'description', 'trigger_type', 'trigger_config', 'skill_name', 'skill_arguments', 'enabled', 'executor'];
+        const upd: Record<string, unknown> = {};
+        for (const k of allowed) if (a[k] !== undefined) upd[k] = a[k];
+        if (!Object.keys(upd).length) throw new Error('No updatable fields provided');
+        upd.updated_at = new Date().toISOString();
+        const { data, error } = await supabase.from('agent_automations')
+          .update(upd).eq('id', a.automation_id)
+          .select('id, name, trigger_type, enabled').single();
+        if (error) throw new Error(`Update automation failed: ${error.message}`);
+        return { automation_id: data.id, name: data.name, trigger_type: data.trigger_type, enabled: data.enabled };
+      }
+
+      // action === 'create' (default for backwards compat)
+      const { name, description, trigger_type = 'cron', trigger_config = {}, skill_name: targetSkill, skill_arguments = {}, enabled = false, executor = 'platform' } = a;
+      if (!name || !targetSkill) throw new Error('name and skill_name are required for action=create');
 
       // Look up skill_id from skill_name
       const { data: skillRef } = await supabase.from('agent_skills')
-        .select('id').eq('name', targetSkill).eq('enabled', true).limit(1).single();
+        .select('id').eq('name', targetSkill).eq('enabled', true).limit(1).maybeSingle();
 
       const { data, error } = await supabase.from('agent_automations').insert({
         name,
         description: description || null,
-        trigger_type,
+        trigger_type, // honor the actual trigger_type, no longer silently forced to cron
         trigger_config,
         skill_id: skillRef?.id || null,
         skill_name: targetSkill,
         skill_arguments,
         enabled,
+        executor,
       }).select('id, name, trigger_type, enabled').single();
       if (error) throw new Error(`Automation insert failed: ${error.message}`);
       return { automation_id: data.id, name: data.name, trigger_type: data.trigger_type, enabled: data.enabled };
