@@ -97,4 +97,41 @@ export const sePack: AccountingLocalePack = {
     purchasing:
       'Default tax_rate is 25% for Swedish vendors. Calculate totals: subtotal = sum(qty * unit_price), tax = sum(qty * unit_price * tax_rate/100).',
   },
+
+  /**
+   * SE-specific year-end dispositions. Stub returns the catalogue of
+   * available proposals with zero amounts; the real computation (reading
+   * taxable profit, applying 25% periodiseringsfond cap, comparing
+   * planmässig vs skattemässig avskrivning) lands in a follow-up PR once
+   * the underlying tax-result RPC exists. Core stages whatever we return
+   * so the operator can edit before approval.
+   */
+  year_end_proposals: async (_year: number): Promise<AccrualProposal[]> => {
+    return [
+      {
+        id: 'se-periodiseringsfond',
+        label: 'Periodiseringsfond (max 25% av skattemässigt resultat)',
+        rationale:
+          'Aktiebolag får sätta av upp till 25% av skattemässigt resultat till periodiseringsfond. Återförs senast år 6. Stub — fyll i belopp innan approve.',
+        lines: [
+          { account_code: '8811', debit_cents: 0, credit_cents: 0, description: 'Avsättning till periodiseringsfond' },
+          { account_code: '2125', debit_cents: 0, credit_cents: 0, description: 'Periodiseringsfond år ' + _year },
+        ],
+        confidence: 0.2,
+        meta: { kind: 'tax-disposition', cap_pct: 25 },
+      },
+      {
+        id: 'se-overavskrivningar',
+        label: 'Överavskrivningar (skattemässig vs planmässig)',
+        rationale:
+          'Skillnad mellan skattemässig (30/20-regeln) och planmässig avskrivning bokförs som obeskattad reserv. Stub — kräver fixed_assets-körning.',
+        lines: [
+          { account_code: '8850', debit_cents: 0, credit_cents: 0, description: 'Förändring av överavskrivningar' },
+          { account_code: '2150', debit_cents: 0, credit_cents: 0, description: 'Ackumulerade överavskrivningar' },
+        ],
+        confidence: 0.2,
+        meta: { kind: 'tax-disposition' },
+      },
+    ];
+  },
 };
