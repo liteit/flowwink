@@ -28,6 +28,7 @@ import ChatSettingsPage from "./pages/admin/ChatSettingsPage";
 import WorkspaceChatPage from "./pages/admin/WorkspaceChatPage";
 import ContentApiPage from "./pages/admin/ContentApiPage";
 import DeveloperPage from "./pages/admin/DeveloperPage";
+import ProcessCoveragePage from "./pages/admin/ProcessCoveragePage";
 import AiUsagePage from "./pages/admin/AiUsagePage";
 import ContentCampaignsPage from "./pages/admin/ContentCampaignsPage";
 
@@ -251,6 +252,7 @@ const router = createBrowserRouter([
       { path: "/admin/workspace", element: <Navigate to="/admin/cowork" replace /> },
       { path: "/admin/content-api", element: <Navigate to="/admin/developer" replace /> },
       { path: "/admin/developer", element: <DeveloperPage /> },
+      { path: "/admin/process-coverage", element: <ProcessCoveragePage /> },
       { path: "/admin/ai-usage", element: <AiUsagePage /> },
       { path: "/admin/campaigns", element: <ContentCampaignsPage /> },
       { path: "/admin/quick-start", element: <Navigate to="/admin" replace /> },
