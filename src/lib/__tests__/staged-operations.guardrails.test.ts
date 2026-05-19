@@ -37,7 +37,7 @@ const STAGING_HELPERS = ['approve_pending_operation', 'reject_pending_operation'
 
 describeIfDb('Accounting staged-operation envelope', () => {
   it('every high-risk ledger skill is requires_staging=true and MCP-exposed', async () => {
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_KEY!);
+    const supabase = createClient(SUPABASE_URL!, SERVICE_KEY!);
     const { data, error } = await supabase
       .from('agent_skills')
       .select('name, requires_staging, mcp_exposed, enabled')
@@ -61,7 +61,7 @@ describeIfDb('Accounting staged-operation envelope', () => {
   });
 
   it('approve/reject helpers exist and are MCP-exposed', async () => {
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_KEY!);
+    const supabase = createClient(SUPABASE_URL!, SERVICE_KEY!);
     const { data, error } = await supabase
       .from('agent_skills')
       .select('name, mcp_exposed, enabled, requires_staging')
@@ -79,7 +79,7 @@ describeIfDb('Accounting staged-operation envelope', () => {
   });
 
   it('pending_operations table exists with the expected status enum', async () => {
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_KEY!);
+    const supabase = createClient(SUPABASE_URL!, SERVICE_KEY!);
     const { error } = await supabase
       .from('pending_operations')
       .select('id, status, skill_name')
