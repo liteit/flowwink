@@ -174,6 +174,34 @@ export interface AccountingExportAdapter {
   generate(payload: AccountingExportPayload, options?: AccountingExportOptions): string;
 }
 
+/**
+ * Year-end proposal returned by pack-specific callbacks.
+ * Core orchestration (`run_year_end` / `propose_accruals`) calls
+ * `pack.year_end_proposals?.(year)` to let the locale pack contribute
+ * country-specific bookings (SE: periodiseringsfond / överavskrivningar,
+ * DE: Rückstellungen, US: deferred tax adjustments, ...). The core stays
+ * neutral; the pack owns the rules.
+ */
+export interface AccrualProposal {
+  /** Stable id within the pack, e.g. 'se-periodiseringsfond' */
+  id: string;
+  /** Human label shown to the operator */
+  label: string;
+  /** Why the proposal exists — auditor-facing rationale */
+  rationale: string;
+  /** Suggested journal lines (canonical shape) */
+  lines: Array<{
+    account_code: string;
+    debit_cents: number;
+    credit_cents: number;
+    description?: string;
+  }>;
+  /** Optional confidence 0-1 so the UI can flag low-confidence proposals */
+  confidence?: number;
+  /** Optional metadata blob carried through to the staged operation */
+  meta?: Record<string, unknown>;
+}
+
 export interface AccountingLocalePack {
   /** Stable id, e.g. 'se-bas2024' */
   id: string;
