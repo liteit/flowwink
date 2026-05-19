@@ -12805,6 +12805,8 @@ export type Database = {
           suggestions_created: number
         }[]
       }
+      propose_accruals: { Args: { p_year: number }; Returns: Json }
+      propose_annual_depreciation: { Args: { p_year: number }; Returns: Json }
       publish_scheduled_pages: { Args: never; Returns: Json }
       publish_webinar: { Args: { p_webinar_id: string }; Returns: Json }
       purge_audit_logs_past_retention: { Args: never; Returns: Json }
@@ -13119,6 +13121,10 @@ export type Database = {
           passed: boolean
           test_name: string
         }[]
+      }
+      run_year_end: {
+        Args: { p_confirm?: boolean; p_year: number }
+        Returns: Json
       }
       schedule_cron_job: {
         Args: {
