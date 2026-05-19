@@ -97,3 +97,34 @@ Smaller companies that want internal visibility into their finances, complementi
 ## Not for
 
 Companies looking to fully replace Fortnox/Visma — we are not a complete accounting system yet. Position us as "operational finance" rather than "filings".
+
+---
+
+## Neutral-core safety primitives (locale-agnostic)
+
+Three universal primitives sit above the per-pack bookkeeping logic and apply equally to SE/IFRS/DE/UK/US:
+
+### 1. Staged-Operation Envelope
+
+Every high-risk ledger-mutating skill (`manage_journal_entry`, `book_expense_report`, `mark_expense_report_paid`, `record_pos_sale_v2`, `close_pos_session_v2`, `close_accounting_period`, `reopen_accounting_period`) is flagged `requires_staging=true`. MCP callers receive a **preview envelope** with `risk_level`, `period_status`, and the payload that *would* be written, plus a pointer to `approve_pending_operation` / `reject_pending_operation`. Nothing reaches the ledger until an operator (human or peer) approves.
+
+Flow:
+```
+peer → manage_journal_entry(args)
+  ← 202 { staged:true, pending_id, preview, next:{approve,reject} }
+operator → approve_pending_operation(pending_id)
+peer → manage_journal_entry(args, _approved_operation_id=pending_id)
+  ← 200 { entry_id, voucher_number, ... }
+```
+
+See `mem://accounting/staged-operations-envelope`.
+
+### 2. Voucher integrity
+
+`assign_voucher_number` trigger guarantees sequential `(series, year)` numbering on every `journal_entries` insert. `list_voucher_gaps` + `explain_voucher_gap` (both MCP skills) let auditors and FlowPilot detect and explain any break — universal requirement across BAS, HGB/SKR, IFRS, US GAAP.
+
+### 3. Year-end orchestration
+
+`year_end_readiness(year)` runs a 6-point checklist before any close. `propose_accruals(year)` and `propose_annual_depreciation(year)` produce stagable proposals. `run_year_end(year, confirm)` is the orchestrator. Country-specific extras (SE periodiseringsfond, DE Rückstellungen, US deferred tax) plug in via `pack.year_end_proposals?(year)` — core stays neutral.
+
+See `mem://accounting/year-end-readiness`.
