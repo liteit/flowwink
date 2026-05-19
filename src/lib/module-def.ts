@@ -95,6 +95,25 @@ export interface UnifiedModuleDef<TInput = unknown, TOutput = unknown> {
    */
   requires?: (keyof ModulesSettings)[];
 
+  /**
+   * Business processes this module participates in. Drives `/admin/process-coverage`
+   * and the sales-facing process map in `docs/processes/README.md`. Empty array
+   * is valid for pure platform/integration modules (e.g. `email`, `developer`).
+   *
+   * @see src/lib/processes.ts — canonical process list
+   */
+  processes?: ProcessId[];
+
+  /**
+   * Maturity level for the **module's contribution** to its processes.
+   * If a module supports multiple processes at different maturities, declare
+   * the lowest (most conservative) level — process-level overrides live in
+   * `docs/processes/<process>.md`.
+   *
+   *  L1 stub · L2 manual · L3 operational · L4 agent-augmented · L5 production-grade
+   */
+  maturity?: MaturityLevel;
+
   // ── API Contract ──
   inputSchema: z.ZodSchema<TInput>;
   outputSchema: z.ZodSchema<TOutput>;
