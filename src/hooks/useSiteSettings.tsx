@@ -707,6 +707,35 @@ export function useUpdateAutonomyScheduleSettings() {
   return useUpdateSiteSettings<AutonomyScheduleSettings>('autonomy_schedule', 'Autonomy schedule has been updated.');
 }
 
+// Customer Portal settings — controls self-signup for end-customers (e-commerce,
+// bookings, webinars, etc.). Separate from staff signup, which is governed by
+// the global `auth.disable_signup` Supabase flag.
+export interface CustomerPortalSettings {
+  /** Customer-facing account features are enabled (login page, account section). */
+  enabled: boolean;
+  /** Visitors can self-register from the public site / checkout. */
+  allowSelfSignup: boolean;
+  /** Require email verification before customers can sign in. */
+  requireEmailVerification: boolean;
+  /** Allow placing an order without creating an account (e-commerce only). */
+  guestCheckout: boolean;
+}
+
+export const defaultCustomerPortalSettings: CustomerPortalSettings = {
+  enabled: true,
+  allowSelfSignup: true,
+  requireEmailVerification: true,
+  guestCheckout: true,
+};
+
+export function useCustomerPortalSettings() {
+  return useSiteSettings<CustomerPortalSettings>('customer_portal', defaultCustomerPortalSettings);
+}
+
+export function useUpdateCustomerPortalSettings() {
+  return useUpdateSiteSettings<CustomerPortalSettings>('customer_portal', 'Customer portal settings have been updated.');
+}
+
 // Re-export modules hooks for convenience
 export { useModules, useUpdateModules, useIsModuleEnabled, useEnabledModules } from './useModules';
 export type { ModulesSettings, ModuleConfig } from './useModules';
