@@ -98,9 +98,9 @@ export default function CustomerAuthPage() {
             </CardHeader>
             <CardContent>
               <Tabs defaultValue={defaultTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsList className={`grid w-full mb-6 ${signupAllowed ? 'grid-cols-2' : 'grid-cols-1'}`}>
                   <TabsTrigger value="login">Sign In</TabsTrigger>
-                  <TabsTrigger value="signup">Create Account</TabsTrigger>
+                  {signupAllowed && <TabsTrigger value="signup">Create Account</TabsTrigger>}
                 </TabsList>
 
                 <TabsContent value="login">
