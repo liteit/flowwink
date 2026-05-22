@@ -3,7 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Customer-specific auth hook.
- * Wraps useAuth with customer signup (sets signup_type metadata).
+ *
+ * Customer signup goes through the public `customer-signup` edge function
+ * (service-role) so it keeps working even when staff signup is globally
+ * disabled (`auth.disable_signup`). The edge function enforces the
+ * `site_settings.customer_portal` policy.
  */
 export function useCustomerAuth() {
   const auth = useAuth();
@@ -12,18 +16,26 @@ export function useCustomerAuth() {
   const isLoggedIn = !!auth.user;
 
   const customerSignUp = async (email: string, password: string, fullName: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/account`,
-        data: {
-          full_name: fullName,
-          signup_type: 'customer',
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/customer-signup`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ email, password, fullName }),
         },
-      },
-    });
-    return { error: error as Error | null };
+      );
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { error: new Error(body?.error || 'Signup failed') };
+      }
+      return { error: null as Error | null, requiresVerification: !!body?.requires_verification };
+    } catch (err) {
+      return { error: err instanceof Error ? err : new Error('Signup failed') };
+    }
   };
 
   const customerSignIn = async (email: string, password: string) => {

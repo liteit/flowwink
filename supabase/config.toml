@@ -36,3 +36,7 @@ verify_jwt = false
 
 [functions.send-webhook]
 verify_jwt = false
+
+# Public endpoint — visitors create customer accounts without being logged in.
+[functions.customer-signup]
+verify_jwt = false

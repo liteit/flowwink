@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { useCustomerPortalSettings } from '@/hooks/useSiteSettings';
 import { PublicNavigation } from '@/components/public/PublicNavigation';
 import { PublicFooter } from '@/components/public/PublicFooter';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,10 @@ const signupSchema = z.object({
 
 export default function CustomerAuthPage() {
   const [searchParams] = useSearchParams();
-  const defaultTab = searchParams.get('tab') === 'signup' ? 'signup' : 'login';
+  const { data: portal } = useCustomerPortalSettings();
+  const signupAllowed = portal ? portal.enabled && portal.allowSelfSignup : true;
+  const requestedTab = searchParams.get('tab') === 'signup' ? 'signup' : 'login';
+  const defaultTab = signupAllowed ? requestedTab : 'login';
   const redirectTo = searchParams.get('redirect') || '/account';
 
   const [isLoading, setIsLoading] = useState(false);
@@ -94,9 +98,9 @@ export default function CustomerAuthPage() {
             </CardHeader>
             <CardContent>
               <Tabs defaultValue={defaultTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsList className={`grid w-full mb-6 ${signupAllowed ? 'grid-cols-2' : 'grid-cols-1'}`}>
                   <TabsTrigger value="login">Sign In</TabsTrigger>
-                  <TabsTrigger value="signup">Create Account</TabsTrigger>
+                  {signupAllowed && <TabsTrigger value="signup">Create Account</TabsTrigger>}
                 </TabsList>
 
                 <TabsContent value="login">
@@ -140,7 +144,7 @@ export default function CustomerAuthPage() {
                   </form>
                 </TabsContent>
 
-                <TabsContent value="signup">
+                {signupAllowed && <TabsContent value="signup">
                   <form onSubmit={handleSignup} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="signup-name">Full Name</Label>
@@ -194,7 +198,7 @@ export default function CustomerAuthPage() {
                       Create Account
                     </Button>
                   </form>
-                </TabsContent>
+                </TabsContent>}
               </Tabs>
             </CardContent>
           </Card>
