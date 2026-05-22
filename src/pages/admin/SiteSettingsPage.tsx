@@ -440,6 +440,8 @@ export default function SiteSettingsPage() {
                 </div>
               </CardContent>
             </Card>
+            {/* Customer Portal — self-signup policy for end-customers */}
+            <CustomerPortalCard />
 
             {/* Environment Info */}
             <EnvironmentInfoCard />
