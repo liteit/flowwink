@@ -26,6 +26,8 @@ import {
   useUpdateAeoSettings,
   useSystemAiSettings,
   useUpdateSystemAiSettings,
+  useCustomerPortalSettings,
+  useUpdateCustomerPortalSettings,
   SeoSettings,
   PerformanceSettings,
   CustomScriptsSettings,
