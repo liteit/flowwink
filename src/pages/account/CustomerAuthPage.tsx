@@ -27,7 +27,10 @@ const signupSchema = z.object({
 
 export default function CustomerAuthPage() {
   const [searchParams] = useSearchParams();
-  const defaultTab = searchParams.get('tab') === 'signup' ? 'signup' : 'login';
+  const { data: portal } = useCustomerPortalSettings();
+  const signupAllowed = portal ? portal.enabled && portal.allowSelfSignup : true;
+  const requestedTab = searchParams.get('tab') === 'signup' ? 'signup' : 'login';
+  const defaultTab = signupAllowed ? requestedTab : 'login';
   const redirectTo = searchParams.get('redirect') || '/account';
 
   const [isLoading, setIsLoading] = useState(false);
