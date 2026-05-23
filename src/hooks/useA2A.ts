@@ -91,12 +91,12 @@ export function useCreateA2APeer() {
       if (input.outbound_token) {
         insertData.outbound_token = input.outbound_token;
       }
-      // Gateway token (Bearer for /v1/responses-style peers like Clawwink/OpenClaw)
+      // Gateway token (Bearer for /v1/responses-style peers like OpenClaw)
       if (input.gateway_token) {
         insertData.gateway_token = input.gateway_token;
-        // Auto-tag transport so Clawable picks it up
         insertData.transport = 'openresponses';
       }
+
 
       const { data, error } = await supabase
         .from('a2a_peers' as any)
@@ -124,10 +124,11 @@ export function useUpdateA2APeer() {
   return useMutation({
     mutationFn: async (input: { id: string; status?: string; name?: string; url?: string; gateway_token?: string; outbound_token?: string }) => {
       const { id, ...updates } = input;
-      // If gateway_token is being set, also tag transport so Clawable picks it up
+      // If gateway_token is being set, tag transport as openresponses
       if (updates.gateway_token) {
         (updates as Record<string, unknown>).transport = 'openresponses';
       }
+
       if (updates.url) {
         updates.url = updates.url.replace(/\/$/, '');
       }
