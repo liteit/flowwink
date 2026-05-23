@@ -436,17 +436,7 @@ Content-Type: application/json
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Operator (Scenario B)</div>
-                {availableMissions.filter(t => t.category === 'operator').map(t => (
-                  <SelectItem key={t.id} value={t.id}>
-                    <span className="flex items-center gap-2">
-                      {t.icon}
-                      {t.name}
-                    </span>
-                  </SelectItem>
-                ))}
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-1.5">Audit / Review</div>
-                {availableMissions.filter(t => t.category === 'audit').map(t => (
+                {availableMissions.map(t => (
                   <SelectItem key={t.id} value={t.id}>
                     <span className="flex items-center gap-2">
                       {t.icon}
@@ -455,6 +445,7 @@ Content-Type: application/json
                   </SelectItem>
                 ))}
               </SelectContent>
+
             </Select>
             <p className="text-xs text-muted-foreground">{mission.description}</p>
           </div>
