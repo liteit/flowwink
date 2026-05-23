@@ -187,7 +187,7 @@ level — modules and MCP work without FlowPilot, and we test that
 ## 8. Related Documents
 
 - [`../architecture/mcp-as-platform.md`](../architecture/mcp-as-platform.md) — the rule that enforces operator independence
-- [`../concepts/flowpilot.md`](./flowpilot.md) — what the local agent does today
+- [`../modules/flowpilot.md`](../modules/flowpilot.md) — what the local agent does today
 - [`../concepts/integrations-strategy.md`](./integrations-strategy.md) — go-to-market positioning
 - `mem://philosophy/swappable-agent-engine-shell-strategy` — internal memory rule
 - `mem://constraints/feature-dependencies-on-flowpilot` — what gracefully degrades when FlowPilot is off

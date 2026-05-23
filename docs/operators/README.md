@@ -21,6 +21,8 @@ You're an operator if you want to **use** FlowWink for a business — not modify
 
 After install: log in, complete `/admin/onboarding`, pick a template, run the docs sync from `/admin/docs`, then walk through [`system-settings.md`](./system-settings.md) tab by tab.
 
+> Weighing alternatives? See [`comparison.md`](./comparison.md) — FlowWink vs Odoo / HubSpot / NetSuite.
+
 ---
 
 ## 2. Decide your operator
