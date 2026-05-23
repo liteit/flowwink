@@ -4,6 +4,8 @@
 
 Structure inspired by [OpenClaw](https://github.com/openclaw/openclaw).
 
+> **New here?** Read [`start-here.md`](./start-here.md) — 5-minute orientation.
+
 ---
 
 ## Two audiences, two paths
@@ -12,6 +14,7 @@ Structure inspired by [OpenClaw](https://github.com/openclaw/openclaw).
 |---|---|
 | **Operator** — running FlowWink for a business | [`operators/`](./operators/README.md) → install, configure modules, drive day-to-day work |
 | **Builder** — extending or contributing to FlowWink | [`builders/`](./builders/README.md) → add modules, blocks, skills, templates |
+| **Agent developer** — connecting an MCP client | [`mcp/getting-started.md`](./mcp/getting-started.md) → 5-min setup for Claude / OpenClaw / custom |
 
 Both paths share the **concepts** below. Everything else (guides, modules, reference, processes) is referenced from the two landing pages.
 
