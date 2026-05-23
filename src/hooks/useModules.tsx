@@ -101,7 +101,7 @@ export interface ModulesSettings {
   shipping: ModuleConfig;
   multiCurrency: ModuleConfig;
   payroll: ModuleConfig;
-  clawable: ModuleConfig;
+  
   wiki: ModuleConfig;
   river: ModuleConfig;
 }
