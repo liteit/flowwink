@@ -21,7 +21,7 @@ const MAP: Record<string, Entry> = {
   'browser-control': { processes: ['lead-to-customer', 'content-to-conversion'], maturity: 'L3' },
   calendar: { processes: ['hire-to-retire', 'lead-to-customer'], maturity: 'L3' },
   chat: { processes: ['support-to-resolution', 'lead-to-customer'], maturity: 'L3' },
-  clawable: { processes: [], maturity: 'L3' },
+  
   companies: { processes: ['lead-to-customer'], maturity: 'L4' },
   'company-insights': { processes: ['lead-to-customer'], maturity: 'L3' },
   composio: { processes: [], maturity: 'L3' },
