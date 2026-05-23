@@ -56,7 +56,7 @@ generated: true
 | Module | Status | Skills | Description |
 |---|---|---:|---|
 | [Accounting](./accounting.md) | — | 11 | Double-entry accounting with autonomous reconciliation, multi-locale chart of accounts, and pluggable export adapters (S |
-| [clawable.md](./clawable.md) | — | — | — |
+
 | [CRM](./crm.md) | — | 15 | Unified Sales Intelligence + Lead Loop. Lead → Opportunity → Customer with autonomous scoring, Firecrawl enrichment, and |
 | [Customer 360](./customer-360.md) | — | — | Unified view of every signal, deal, order, invoice, ticket, booking, subscription, chat and webinar tied to a person — w |
 | [Federation](./federation.md) | — | 6 | Multi-agent federation — connect FlowPilot to external Architects (Claude, OpenClaw peers) via MCP, A2A, and /v1/respons |
