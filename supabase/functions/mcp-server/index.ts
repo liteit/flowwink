@@ -667,9 +667,10 @@ async function createMcpServer(filterGroups?: string[], openaiSafe = false): Pro
       flattenedCount++;
     }
 
-    server.tool(fn.name, {
+    const toolDef: Record<string, unknown> = {
       description: `[${skill.category}] ${fn.description || skill.description || skill.name}`,
       inputSchema,
+      annotations: buildToolAnnotations(skill),
       handler: async (args: Record<string, unknown>) => {
         const ctx = requestContext.getStore();
         const result = await executeSkill(skill.name, args, ctx?.callerUserId ?? null, ctx?.callerApiKeyId ?? null);
@@ -677,7 +678,12 @@ async function createMcpServer(filterGroups?: string[], openaiSafe = false): Pro
           content: [{ type: "text" as const, text: result }],
         };
       },
-    });
+    };
+    // Pass-through outputSchema if skill declared one in tool_definition.function.outputSchema
+    if (fn.outputSchema && typeof fn.outputSchema === "object") {
+      toolDef.outputSchema = fn.outputSchema;
+    }
+    server.tool(fn.name, toolDef as any);
   }
   if (openaiSafe && flattenedCount > 0) {
     console.log(`MCP: flattened ${flattenedCount} schemas for OpenAI compatibility`);
