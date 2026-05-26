@@ -28,7 +28,7 @@
 
 For decades, business software has been a collection of tools you operate manually — CMS, CRM, ERP, email, e-commerce — each requiring human input at every step.
 
-**FlowWink is a Business Operating System (BOS):** a unified, modular platform where every module (50+ across CMS, CRM, commerce, finance, HR, operations) exposes its capabilities as **agent skills over MCP**. An operator — local or external — turns those skills into autonomous business outcomes.
+**FlowWink is a Business Operating System (BOS):** a unified, modular platform where every module (62 across CMS, CRM, commerce, finance, HR, operations) exposes its capabilities as **agent skills over MCP**. An operator — local or external — turns those skills into autonomous business outcomes.
 
 You set the direction. The operator runs the business. You choose which operator.
 
