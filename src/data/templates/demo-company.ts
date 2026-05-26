@@ -64,8 +64,8 @@ export const demoCompanyTemplate: StarterTemplate = {
             backgroundType: 'color',
             heightMode: 'auto',
             contentAlignment: 'center',
-            primaryButton: { text: 'Open the admin', url: '/auth' },
-            secondaryButton: { text: 'Ask FlowPilot', url: '#chat-launcher' },
+            primaryButton: { text: 'Shop the demo', url: '/shop' },
+            secondaryButton: { text: 'Open the admin', url: '/auth' },
           },
         },
         {
