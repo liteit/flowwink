@@ -125,7 +125,9 @@ Compatible peer types include:
 
 ## Onboarding a new peer (4-step process)
 
-See `mem://federation/orchestrator-onboarding-process`. Summary:
+See `mem://federation/orchestrator-onboarding-process` and the practical
+walkthrough in [`../agents/agent-setup.md`](../agents/agent-setup.md)
+(invite → role → Game Master seed/reset loop). Summary:
 
 1. **Invite** — generate gateway_token (inbound) or capture peer_api_key (outbound)
 2. **Verify MCP** — call `tools/list` from peer side; confirm catalog visible
