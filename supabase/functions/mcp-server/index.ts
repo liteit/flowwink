@@ -148,13 +148,50 @@ interface SkillRow {
   description: string | null;
   category: string;
   handler?: string | null;
+  trust_level?: string | null;
+  requires_staging?: boolean | null;
   tool_definition: {
     type: string;
     function: {
       name: string;
       description: string;
       parameters: Record<string, unknown>;
+      outputSchema?: Record<string, unknown>;
     };
+  };
+}
+
+// Map FlowWink skill metadata → MCP 2025-06 tool annotations.
+// Lets external MCP clients (Claude Desktop, Cursor, OpenClaw) filter
+// read-only vs destructive tools natively without parsing our descriptions.
+function buildToolAnnotations(skill: SkillRow): Record<string, unknown> {
+  const name = skill.name.toLowerCase();
+  const trust = (skill.trust_level ?? "").toLowerCase();
+  const isStaged = skill.requires_staging === true;
+
+  // Read-only heuristic: list_*/get_*/search_*/check_*/lookup_* + trust=auto
+  const readOnly =
+    /^(list_|get_|search_|check_|lookup_|find_|fetch_|read_|describe_|preview_)/.test(name) &&
+    !isStaged;
+
+  // Destructive: staged operations OR delete/reset/cancel/refund/void verbs
+  const destructive =
+    isStaged ||
+    /^(delete_|reset_|cancel_|refund_|void_|drop_|purge_|revoke_)/.test(name);
+
+  // Idempotent: get/list operations are typically idempotent
+  const idempotent = readOnly || /^(upsert_|set_)/.test(name);
+
+  // openWorldHint=true for skills touching external systems (web/email/composio)
+  const openWorld =
+    /^(scrape_|search_web|migrate_url|send_|composio_|stripe_|firecrawl_)/.test(name);
+
+  return {
+    readOnlyHint: readOnly,
+    destructiveHint: destructive,
+    idempotentHint: idempotent,
+    openWorldHint: openWorld,
+    audience: trust === "approve" ? ["user"] : ["assistant", "user"],
   };
 }
 
