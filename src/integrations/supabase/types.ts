@@ -13081,6 +13081,7 @@ export type Database = {
           source: string
         }[]
       }
+      restock_demo_products: { Args: never; Returns: Json }
       revalue_open_balances: {
         Args: {
           p_ap_account?: string
