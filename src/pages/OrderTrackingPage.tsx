@@ -102,7 +102,7 @@ export default function OrderTrackingPage() {
         p_email: em.trim(),
       });
       if (rpcErr) throw rpcErr;
-      const result = data as { found: boolean; order?: TrackedOrder; items?: Item[] };
+      const result = data as unknown as { found: boolean; order?: TrackedOrder; items?: Item[] };
       if (!result?.found) {
         setError('No order found matching that ID and email.');
       } else {
