@@ -6,7 +6,7 @@
 
 > **The Business Operating System — operable by any agent. Ships with one.**
 >
-> A modular, self-hosted SaaS platform whose every capability is exposed as a skill over **MCP**. Run it with the built-in vertically-integrated operator **FlowPilot**, swap in an external one like **[OpenClaw](https://github.com/magnusfroste/clawable)**, mix several in parallel — or run it as a pure SaaS with humans in the loop. The platform doesn't care.
+> A modular, self-hosted SaaS platform whose every capability is exposed as a skill over **MCP**. Run it with the built-in vertically-integrated operator **FlowPilot**, swap in an external one like **[OpenClaw](https://www.clawable.org)**, mix several in parallel — or run it as a pure SaaS with humans in the loop. The platform doesn't care.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docker Image](https://img.shields.io/badge/Docker-ghcr.io-blue)](https://github.com/magnusfroste/flowwink/pkgs/container/flowwink)
@@ -63,7 +63,7 @@ You set the direction. The operator runs the business. You choose which operator
 
 All four are first-class. Disabling FlowPilot does **not** reduce what FlowWink can do — every skill is still callable over MCP, every automation still fires. See [`docs/concepts/operator-strategy.md`](docs/concepts/operator-strategy.md) and [`docs/architecture/mcp-as-platform.md`](docs/architecture/mcp-as-platform.md).
 
-> **Why this matters:** the rationale for letting traditional SaaS be orchestrated by agents — and the architecture that makes it work — is the subject of the **[Agentic Handbook (clawable)](https://github.com/magnusfroste/clawable)**. FlowWink is the reference implementation.
+> **Why this matters:** the rationale for letting traditional SaaS be orchestrated by agents — and the architecture that makes it work — is the subject of the **[Agentic Handbook (clawable)](https://www.clawable.org)**. FlowWink is the reference implementation.
 
 ---
 
@@ -146,7 +146,7 @@ All skills follow Anthropic's MCP best practices: self-describing (`Use when:` /
 
 FlowPilot is FlowWink's **vertically-integrated, local autonomous operator** — one of many possible MCP consumers, but the one that ships in the box. It runs *inside* the platform's trust boundary, which gives it advantages no external operator can replicate: zero-config onboarding, direct DB/event access, brand-aligned defaults, predictable cost.
 
-External operators like **[OpenClaw](https://github.com/magnusfroste/clawable)** instead win on velocity, plugin ecosystem and frontier reasoning. FlowWink supports both — see [`docs/concepts/operator-strategy.md`](docs/concepts/operator-strategy.md) for the honest trade-off.
+External operators like **[OpenClaw](https://www.clawable.org)** instead win on velocity, plugin ecosystem and frontier reasoning. FlowWink supports both — see [`docs/concepts/operator-strategy.md`](docs/concepts/operator-strategy.md) for the honest trade-off.
 
 ### Heartbeat Protocol (7 steps)
 
@@ -365,26 +365,28 @@ supabase db push
 
 Supported platforms: **Easypanel**, **Railway**, **Fly.io**, **Hetzner**, **DigitalOcean**, or any VPS with Docker.
 
-See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for full deployment guides.
+See **[docs/guides/deployment.md](docs/guides/deployment.md)** for full deployment guides.
 
 ---
 
 ## Documentation
 
+Start at **[docs/start-here.md](docs/start-here.md)** — the curated entry point that routes to operators, builders, agents and reference material.
+
 | Document | What it covers |
 |----------|---------------|
-| **[docs/FLOWPILOT.md](docs/FLOWPILOT.md)** | Complete FlowPilot agent reference — skills, heartbeat, tools |
-| **[docs/SKILLS-SOURCE.md](docs/SKILLS-SOURCE.md)** | Skill registry — all registered skills |
-| **[docs/MODULE-API.md](docs/MODULE-API.md)** | Module contract system, typed schemas, plugin architecture |
-| **[docs/OPENCLAW-LAW.md](docs/OPENCLAW-LAW.md)** | Agentic architecture laws |
-| **[docs/PRD.md](docs/PRD.md)** | Product requirements — modules, capabilities |
-| **[docs/ELEVATOR-PITCH.md](docs/ELEVATOR-PITCH.md)** | BOS positioning, vision, competitive landscape |
-| **[docs/SETUP.md](docs/SETUP.md)** | Supabase setup, environment variables, migrations |
-| **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** | Docker, Easypanel, Railway, Fly.io guides |
-| **[docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)** | Architecture, extending the platform, writing skills |
-| **[docs/SECURITY.md](docs/SECURITY.md)** | RLS policies, auth patterns, security model |
-| **[docs/TESTING.md](docs/TESTING.md)** | Autonomous test framework (L1–L8) |
-| **[docs/A2A-COMMUNICATION-MODEL.md](docs/A2A-COMMUNICATION-MODEL.md)** | Agent-to-Agent federation protocol |
+| **[docs/modules/flowpilot.md](docs/modules/flowpilot.md)** | FlowPilot agent reference — skills, heartbeat, tools |
+| **[docs/reference/skills-source.md](docs/reference/skills-source.md)** | Skill registry — all registered skills |
+| **[docs/reference/module-api.md](docs/reference/module-api.md)** | Module contract system, typed schemas, plugin architecture |
+| **[docs/concepts/openclaw-law.md](docs/concepts/openclaw-law.md)** | Agentic architecture laws |
+| **[docs/concepts/prd.md](docs/concepts/prd.md)** | Product requirements — modules, capabilities |
+| **[docs/concepts/elevator-pitch.md](docs/concepts/elevator-pitch.md)** | BOS positioning, vision, competitive landscape |
+| **[docs/guides/setup.md](docs/guides/setup.md)** | Supabase setup, environment variables, migrations |
+| **[docs/guides/deployment.md](docs/guides/deployment.md)** | Docker, Easypanel, Railway, Fly.io guides |
+| **[docs/builders/README.md](docs/builders/README.md)** | Architecture, extending the platform, writing skills |
+| **[docs/guides/security.md](docs/guides/security.md)** | RLS policies, auth patterns, security model |
+| **[docs/contributing/test-suite.md](docs/contributing/test-suite.md)** | Autonomous test framework (L1–L8) |
+| **[docs/concepts/a2a-communication-model.md](docs/concepts/a2a-communication-model.md)** | Agent-to-Agent federation protocol |
 | **[docs/pilot/](docs/pilot/)** | Pilot engine internals — architecture, handlers, reasoning |
 
 ---
@@ -401,13 +403,13 @@ See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for full deployment guides.
 
 ## Contributing
 
-Contributions are welcome. Open an issue or submit a pull request. See **[docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)**.
+Contributions are welcome. Open an issue or submit a pull request. See **[docs/contributing/contributing.md](docs/contributing/contributing.md)**.
 
 ## Learn More — The Agentic Handbook
 
 FlowWink is the reference implementation of a thesis: **traditional SaaS becomes radically more valuable when it's operable by agents over an open protocol**. The handbook explains why, how, and what patterns hold up in production.
 
-📖 **[clawable — The Agentic Handbook & OpenClaw](https://github.com/magnusfroste/clawable)** — Practical guide to building agentic systems, the OpenClaw operator, and the architectural laws FlowWink follows.
+📖 **[clawable — The Agentic Handbook & OpenClaw](https://www.clawable.org)** — Practical guide to building agentic systems, the OpenClaw operator, and the architectural laws FlowWink follows.
 
 Cross-references inside this repo:
 - [`docs/concepts/operator-strategy.md`](docs/concepts/operator-strategy.md) — Why FlowPilot is a *module*, not the core
