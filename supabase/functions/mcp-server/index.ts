@@ -148,13 +148,50 @@ interface SkillRow {
   description: string | null;
   category: string;
   handler?: string | null;
+  trust_level?: string | null;
+  requires_staging?: boolean | null;
   tool_definition: {
     type: string;
     function: {
       name: string;
       description: string;
       parameters: Record<string, unknown>;
+      outputSchema?: Record<string, unknown>;
     };
+  };
+}
+
+// Map FlowWink skill metadata → MCP 2025-06 tool annotations.
+// Lets external MCP clients (Claude Desktop, Cursor, OpenClaw) filter
+// read-only vs destructive tools natively without parsing our descriptions.
+function buildToolAnnotations(skill: SkillRow): Record<string, unknown> {
+  const name = skill.name.toLowerCase();
+  const trust = (skill.trust_level ?? "").toLowerCase();
+  const isStaged = skill.requires_staging === true;
+
+  // Read-only heuristic: list_*/get_*/search_*/check_*/lookup_* + trust=auto
+  const readOnly =
+    /^(list_|get_|search_|check_|lookup_|find_|fetch_|read_|describe_|preview_)/.test(name) &&
+    !isStaged;
+
+  // Destructive: staged operations OR delete/reset/cancel/refund/void verbs
+  const destructive =
+    isStaged ||
+    /^(delete_|reset_|cancel_|refund_|void_|drop_|purge_|revoke_)/.test(name);
+
+  // Idempotent: get/list operations are typically idempotent
+  const idempotent = readOnly || /^(upsert_|set_)/.test(name);
+
+  // openWorldHint=true for skills touching external systems (web/email/composio)
+  const openWorld =
+    /^(scrape_|search_web|migrate_url|send_|composio_|stripe_|firecrawl_)/.test(name);
+
+  return {
+    readOnlyHint: readOnly,
+    destructiveHint: destructive,
+    idempotentHint: idempotent,
+    openWorldHint: openWorld,
+    audience: trust === "approve" ? ["user"] : ["assistant", "user"],
   };
 }
 
@@ -218,7 +255,7 @@ async function loadExposedSkills(filterGroups?: string[]): Promise<SkillRow[]> {
   const [skillsResult, activeModules] = await Promise.all([
     sb
       .from("agent_skills")
-      .select("name, description, category, handler, tool_definition")
+      .select("name, description, category, handler, trust_level, requires_staging, tool_definition")
       .eq("enabled", true)
       .eq("mcp_exposed", true)
       .order("category"),
@@ -630,9 +667,10 @@ async function createMcpServer(filterGroups?: string[], openaiSafe = false): Pro
       flattenedCount++;
     }
 
-    server.tool(fn.name, {
+    const toolDef: Record<string, unknown> = {
       description: `[${skill.category}] ${fn.description || skill.description || skill.name}`,
       inputSchema,
+      annotations: buildToolAnnotations(skill),
       handler: async (args: Record<string, unknown>) => {
         const ctx = requestContext.getStore();
         const result = await executeSkill(skill.name, args, ctx?.callerUserId ?? null, ctx?.callerApiKeyId ?? null);
@@ -640,7 +678,12 @@ async function createMcpServer(filterGroups?: string[], openaiSafe = false): Pro
           content: [{ type: "text" as const, text: result }],
         };
       },
-    });
+    };
+    // Pass-through outputSchema if skill declared one in tool_definition.function.outputSchema
+    if (fn.outputSchema && typeof fn.outputSchema === "object") {
+      toolDef.outputSchema = fn.outputSchema;
+    }
+    server.tool(fn.name, toolDef as any);
   }
   if (openaiSafe && flattenedCount > 0) {
     console.log(`MCP: flattened ${flattenedCount} schemas for OpenAI compatibility`);
