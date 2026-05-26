@@ -584,6 +584,14 @@ export default function OrdersPage() {
 
               <Separator />
 
+              {/* Event history (system + audit) */}
+              <div>
+                <h3 className="font-semibold mb-3">Event History</h3>
+                <OrderEventHistory order={selectedOrder} />
+              </div>
+
+              <Separator />
+
               {/* Universal activity timeline */}
               <EntityActivityTimeline entityType="order" entityId={selectedOrder.id} title="Notes & Tasks" compact />
             </div>
