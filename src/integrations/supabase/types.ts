@@ -12671,6 +12671,10 @@ export type Database = {
         Args: { p_all?: boolean; p_slug?: string }
         Returns: Json
       }
+      lookup_order_tracking: {
+        Args: { p_email: string; p_order_id: string }
+        Returns: Json
+      }
       mark_expense_report_paid: {
         Args: {
           p_bank_account?: string
