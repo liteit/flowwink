@@ -3648,6 +3648,65 @@ export type Database = {
           },
         ]
       }
+      demo_run_items: {
+        Row: {
+          created_at: string
+          id: number
+          row_id: string
+          run_id: string
+          table_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          row_id: string
+          run_id: string
+          table_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          row_id?: string
+          run_id?: string
+          table_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_run_items_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "demo_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      demo_runs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          module: string
+          notes: string | null
+          scenario: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          module: string
+          notes?: string | null
+          scenario?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          module?: string
+          notes?: string | null
+          scenario?: string
+        }
+        Relationships: []
+      }
       depreciation_entries: {
         Row: {
           amount_cents: number
@@ -11884,6 +11943,10 @@ export type Database = {
       }
     }
     Functions: {
+      _demo_register_row: {
+        Args: { p_row_id: string; p_run_id: string; p_table_name: string }
+        Returns: undefined
+      }
       _ensure_manual_journal: { Args: never; Returns: string }
       _flatten_skill_schema: { Args: { td: Json }; Returns: Json }
       _global_search_internal: {
@@ -12960,6 +13023,10 @@ export type Database = {
         Returns: string
       }
       reset_all_role_module_access: { Args: never; Returns: undefined }
+      reset_module_data: {
+        Args: { p_dry_run?: boolean; p_module: string; p_run_id?: string }
+        Returns: Json
+      }
       reset_role_module_access: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: undefined
@@ -13085,6 +13152,26 @@ export type Database = {
           similarity: number
           value: Json
         }[]
+      }
+      seed_demo_crm: {
+        Args: { p_run_id: string; p_scenario?: string }
+        Returns: Json
+      }
+      seed_demo_expenses: {
+        Args: { p_run_id: string; p_scenario?: string }
+        Returns: Json
+      }
+      seed_demo_invoices: {
+        Args: { p_run_id: string; p_scenario?: string }
+        Returns: Json
+      }
+      seed_demo_quotes: {
+        Args: { p_run_id: string; p_scenario?: string }
+        Returns: Json
+      }
+      seed_module_demo: {
+        Args: { p_module: string; p_scenario?: string }
+        Returns: Json
       }
       send_dunning_reminders: {
         Args: { p_dry_run?: boolean }
