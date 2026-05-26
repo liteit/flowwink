@@ -92,6 +92,7 @@ import NewsletterConfirmedPage from "./pages/NewsletterConfirmedPage";
 import NotFound from "./pages/NotFound";
 import CheckoutPage from "./pages/CheckoutPage";
 import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
+import OrderTrackingPage from "./pages/OrderTrackingPage";
 import PricingPage from "./pages/PricingPage";
 import ShopPage from "./pages/ShopPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
@@ -219,6 +220,8 @@ const router = createBrowserRouter([
       },
       { path: "/checkout", element: <CheckoutPage /> },
       { path: "/checkout/success", element: <CheckoutSuccessPage /> },
+      { path: "/track", element: <OrderTrackingPage /> },
+      { path: "/track/:id", element: <OrderTrackingPage /> },
       { path: "/blog", element: <BlogArchivePage /> },
       { path: "/blog/category/:slug", element: <BlogCategoryPage /> },
       { path: "/blog/tag/:slug", element: <BlogTagPage /> },
