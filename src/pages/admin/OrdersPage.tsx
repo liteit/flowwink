@@ -39,6 +39,7 @@ import type { Tables } from '@/integrations/supabase/types';
 import { FulfillmentStepper } from '@/components/admin/orders/FulfillmentStepper';
 import { FulfillmentActions } from '@/components/admin/orders/FulfillmentActions';
 import { EntityActivityTimeline } from '@/components/admin/EntityActivityTimeline';
+import { OrderEventHistory } from '@/components/admin/orders/OrderEventHistory';
 import { EntityTags } from '@/components/admin/EntityTags';
 import { EntityFollowers } from '@/components/admin/EntityFollowers';
 import { SavedViewsMenu } from '@/components/admin/SavedViewsMenu';
@@ -105,6 +106,17 @@ export default function OrdersPage() {
       const ids = Array.from(selectedIds);
       const { error } = await supabase.from('orders').update({ status }).in('id', ids);
       if (error) throw error;
+      // Best-effort audit logs per order
+      const { data: userData } = await supabase.auth.getUser();
+      await supabase.from('audit_logs').insert(
+        ids.map((id) => ({
+          entity_type: 'order',
+          entity_id: id,
+          action: 'order.status_changed',
+          user_id: userData.user?.id ?? null,
+          metadata: { to: status, bulk: true },
+        }))
+      );
       return ids.length;
     },
     onSuccess: (count, status) => {
@@ -148,15 +160,24 @@ export default function OrdersPage() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
+    mutationFn: async ({ orderId, status, prevStatus }: { orderId: string; status: string; prevStatus: string }) => {
       const { error } = await supabase
         .from('orders')
         .update({ status })
         .eq('id', orderId);
       if (error) throw error;
+      const { data: userData } = await supabase.auth.getUser();
+      await supabase.from('audit_logs').insert({
+        entity_type: 'order',
+        entity_id: orderId,
+        action: 'order.status_changed',
+        user_id: userData.user?.id ?? null,
+        metadata: { from: prevStatus, to: status },
+      });
     },
-    onSuccess: () => {
+    onSuccess: (_d, vars) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['order-audit-logs', vars.orderId] });
       toast.success('Order status updated');
     },
     onError: () => {
@@ -450,7 +471,7 @@ export default function OrdersPage() {
                   <Select
                     value={selectedOrder.status}
                     onValueChange={(status) => {
-                      updateStatusMutation.mutate({ orderId: selectedOrder.id, status });
+                      updateStatusMutation.mutate({ orderId: selectedOrder.id, status, prevStatus: selectedOrder.status });
                       setSelectedOrder({ ...selectedOrder, status });
                     }}
                   >
@@ -500,7 +521,17 @@ export default function OrdersPage() {
                     trackingNumber={(selectedOrder as any).tracking_number}
                     trackingUrl={(selectedOrder as any).tracking_url}
                     fulfillmentNotes={(selectedOrder as any).fulfillment_notes}
-                    onUpdated={() => setSelectedOrder(null)}
+                    onUpdated={() => {
+                      // Refresh selected order in-place so the user sees updated stepper + history
+                      supabase
+                        .from('orders')
+                        .select('*')
+                        .eq('id', selectedOrder.id)
+                        .single()
+                        .then(({ data }) => {
+                          if (data) setSelectedOrder(data as Order);
+                        });
+                    }}
                   />
                 </div>
               </div>
@@ -560,6 +591,14 @@ export default function OrdersPage() {
                   )}
                 </div>
               )}
+
+              <Separator />
+
+              {/* Event history (system + audit) */}
+              <div>
+                <h3 className="font-semibold mb-3">Event History</h3>
+                <OrderEventHistory order={selectedOrder} />
+              </div>
 
               <Separator />
 

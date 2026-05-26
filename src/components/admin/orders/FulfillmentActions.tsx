@@ -56,9 +56,26 @@ export function FulfillmentActions({
         .update(update)
         .eq('id', orderId);
       if (error) throw error;
+
+      // Best-effort audit log
+      const { data: userData } = await supabase.auth.getUser();
+      await supabase.from('audit_logs').insert({
+        entity_type: 'order',
+        entity_id: orderId,
+        action: `order.fulfillment.${next.key}`,
+        user_id: userData.user?.id ?? null,
+        metadata: {
+          from: currentStatus,
+          to: next.key,
+          ...(trackingNumber ? { tracking_number: trackingNumber } : {}),
+          ...(trackingUrl ? { tracking_url: trackingUrl } : {}),
+          ...(notes ? { note: notes } : {}),
+        },
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['order-audit-logs', orderId] });
       toast.success(`Order marked as ${next?.label?.replace('Mark as ', '')}`);
       onUpdated?.();
     },
