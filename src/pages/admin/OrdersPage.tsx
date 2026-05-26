@@ -160,15 +160,24 @@ export default function OrdersPage() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
+    mutationFn: async ({ orderId, status, prevStatus }: { orderId: string; status: string; prevStatus: string }) => {
       const { error } = await supabase
         .from('orders')
         .update({ status })
         .eq('id', orderId);
       if (error) throw error;
+      const { data: userData } = await supabase.auth.getUser();
+      await supabase.from('audit_logs').insert({
+        entity_type: 'order',
+        entity_id: orderId,
+        action: 'order.status_changed',
+        user_id: userData.user?.id ?? null,
+        metadata: { from: prevStatus, to: status },
+      });
     },
-    onSuccess: () => {
+    onSuccess: (_d, vars) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['order-audit-logs', vars.orderId] });
       toast.success('Order status updated');
     },
     onError: () => {
