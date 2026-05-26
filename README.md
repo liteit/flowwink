@@ -122,7 +122,7 @@ Composite MCP groups (`marketing`, `sales`, `operations`, …) let an external o
 
 ---
 
-## Skills — 187 capabilities, exposed over MCP
+## Skills — 280 capabilities, exposed over MCP
 
 | Domain | Sample skills |
 |--------|---------------|
