@@ -517,7 +517,7 @@ export function useIsIntegrationActive(key: keyof IntegrationsSettings) {
   return { hasKey, isEnabled: isActive, isActive, status } as const;
 }
 
-// Get count of active integrations
+// Get count of active integrations (uses shared resolveIntegrationStatus)
 export function useActiveIntegrationsCount() {
   const { data: secretsStatus } = useIntegrationStatus();
   const { data: integrationSettings } = useIntegrations();
@@ -526,16 +526,10 @@ export function useActiveIntegrationsCount() {
 
   const keys = Object.keys(defaultIntegrationsSettings) as (keyof IntegrationsSettings)[];
   let active = 0;
-
   for (const key of keys) {
-    const requiresSecret = !CONFIG_BASED_KEYS.includes(key);
-    const cfg = integrationSettings[key]?.config ?? defaultIntegrationsSettings[key]?.config;
-    const hasKey = requiresSecret
-      ? (secretsStatus.integrations?.[key] ?? false)
-      : configHasCredential(key, cfg);
-    const explicitlyDisabled = integrationSettings[key]?.enabled === false;
-    if (hasKey && !explicitlyDisabled) active++;
+    if (resolveIntegrationStatus(key, secretsStatus.integrations, integrationSettings).isActive) {
+      active++;
+    }
   }
-
   return { active, total: keys.length };
 }
