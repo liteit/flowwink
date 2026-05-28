@@ -3,8 +3,9 @@ import { useSearchParams } from 'react-router-dom';
 import {
   FlaskConical, Play, CheckCircle2, XCircle, Clock, Loader2, Search,
   ExternalLink, Terminal, BookOpen, Layers, Boxes, Bot, Shield,
-  History, Info, RefreshCw,
+  History, Info, RefreshCw, ChevronDown, HeartPulse,
 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
