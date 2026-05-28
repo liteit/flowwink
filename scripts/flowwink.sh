@@ -86,7 +86,7 @@ cmd_help() {
     echo -e "  ${CYAN}/link${NC}            Select and link a Supabase project to this directory"
     echo ""
     echo -e "  ${BOLD}── First-time setup ──────────────────────────────────${NC}"
-    echo -e "  ${CYAN}/install${NC}         Full install: migrations → functions → admin → keys"
+    echo -e "  ${CYAN}/install${NC}         Full install (auto-prompts for /link if needed)"
     echo ""
     echo -e "  ${BOLD}── Update existing installation ──────────────────────${NC}"
     echo -e "  ${CYAN}/update-db${NC}       Push new database migrations to linked project"
@@ -652,8 +652,28 @@ cmd_setup_flowpilot() {
 cmd_install() {
     echo ""
     print_section "Full Installation"
-    require_link || return 1
 
+    # Auto-prompt for linking if not already linked
+    if [ -z "$PROJECT_REF" ]; then
+        echo -e "  ${YELLOW}⚠ No project linked.${NC}"
+        echo ""
+        read -e -p "  Link a project now? [Y/n]: " should_link
+        if [[ ! "$should_link" =~ ^[Nn]$ ]]; then
+            cmd_link
+            # Reload project info after linking
+            load_project
+        fi
+    fi
+
+    # Check again after potential linking
+    if [ -z "$PROJECT_REF" ]; then
+        echo -e "  ${RED}✗ Installation requires a linked project.${NC}"
+        echo ""
+        return 1
+    fi
+
+    echo -e "  ${DIM}Project: ${PROJECT_NAME}${NC}"
+    echo ""
     echo -e "  Runs: ${CYAN}/update-db${NC} → ${CYAN}/set-keys${NC} → ${CYAN}/update-funcs${NC} → ${CYAN}/create-admin${NC} → ${CYAN}/env${NC}"
     echo -e "  ${DIM}FlowPilot is seeded later via /admin/modules (toggle on).${NC}"
     echo ""
