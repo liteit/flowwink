@@ -31,26 +31,9 @@ interface IntegrationStatus {
   };
 }
 
-interface IntegrationsSettings {
-  stripe?: { enabled: boolean };
-  stripe_webhook?: { enabled: boolean };
-  resend?: { enabled: boolean };
-  openai?: { enabled: boolean; config?: { baseUrl?: string; model?: string } };
-  gemini?: { enabled: boolean; config?: { model?: string } };
-  anthropic?: { enabled: boolean; config?: { model?: string } };
-  unsplash?: { enabled: boolean };
-  firecrawl?: { enabled: boolean };
-  local_llm?: { enabled: boolean; config?: { endpoint?: string; model?: string } };
-  n8n?: { enabled: boolean; config?: { webhookUrl?: string; webhookType?: string; triggerMode?: string; triggerKeywords?: string[] } };
-  google_analytics?: { enabled: boolean; config?: { measurementId?: string } };
-  meta_pixel?: { enabled: boolean; config?: { pixelId?: string } };
-  slack?: { enabled: boolean; config?: { webhookUrl?: string; notifyOnNewLead?: boolean; notifyOnDealWon?: boolean; notifyOnFormSubmit?: boolean } };
-  composio?: { enabled: boolean };
-}
-
 export function useIntegrationStatus() {
   const { user } = useAuth();
-  
+
   return useQuery({
     queryKey: ['integration-status', user?.id],
     queryFn: async () => {
@@ -69,85 +52,34 @@ export function useIntegrationStatus() {
   });
 }
 
-// Helper to get integration enabled status from site_settings
-function useIntegrationsEnabledSettings() {
-  return useQuery({
-    queryKey: ['integrations-enabled-settings'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('key', 'integrations')
-        .maybeSingle();
-      
-      if (error) throw error;
-      return (data?.value as IntegrationsSettings) || {};
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-}
+// Per-provider helpers — thin wrappers over the single resolver in
+// useIntegrations.tsx (resolveIntegrationStatus). DO NOT duplicate the
+// hasKey/enabled logic here; route everything through useIsIntegrationActive
+// so adding a new config-based integration only touches CONFIG_BASED_KEYS.
+import { useIsIntegrationActive } from './useIntegrations';
 
-// Auto-enabled when key exists, unless explicitly disabled by admin
 export function useIsResendConfigured() {
-  const { data: secretsStatus } = useIntegrationStatus();
-  const { data: enabledSettings } = useIntegrationsEnabledSettings();
-  
-  const hasKey = secretsStatus?.integrations?.resend ?? false;
-  const explicitlyDisabled = enabledSettings?.resend?.enabled === false;
-  
-  return hasKey && !explicitlyDisabled;
+  return useIsIntegrationActive('resend').isActive;
 }
 
 export function useIsStripeConfigured() {
-  const { data: secretsStatus } = useIntegrationStatus();
-  const { data: enabledSettings } = useIntegrationsEnabledSettings();
-  
-  const hasKey = secretsStatus?.integrations?.stripe ?? false;
-  const explicitlyDisabled = enabledSettings?.stripe?.enabled === false;
-  
-  return hasKey && !explicitlyDisabled;
+  return useIsIntegrationActive('stripe').isActive;
 }
 
 export function useIsOpenAIConfigured() {
-  const { data: secretsStatus } = useIntegrationStatus();
-  const { data: enabledSettings } = useIntegrationsEnabledSettings();
-  
-  const hasKey = secretsStatus?.integrations?.openai ?? false;
-  const explicitlyDisabled = enabledSettings?.openai?.enabled === false;
-  
-  return hasKey && !explicitlyDisabled;
+  return useIsIntegrationActive('openai').isActive;
 }
 
 export function useIsGeminiConfigured() {
-  const { data: secretsStatus } = useIntegrationStatus();
-  const { data: enabledSettings } = useIntegrationsEnabledSettings();
-  
-  const hasKey = secretsStatus?.integrations?.gemini ?? false;
-  const explicitlyDisabled = enabledSettings?.gemini?.enabled === false;
-  
-  return hasKey && !explicitlyDisabled;
+  return useIsIntegrationActive('gemini').isActive;
 }
 
-// Local LLM: configured when an endpoint is set, unless explicitly disabled.
-// (No API key required — endpoint presence is the source of truth, matching IntegrationsStatusPage.)
-export function useIsLocalLLMConfigured() {
-  const { data: enabledSettings } = useIntegrationsEnabledSettings();
-
-  const hasEndpoint = !!enabledSettings?.local_llm?.config?.endpoint;
-  const explicitlyDisabled = enabledSettings?.local_llm?.enabled === false;
-
-  return hasEndpoint && !explicitlyDisabled;
-}
-
-// Combined helper: true if ANY AI provider is configured and not disabled
 export function useIsAnthropicConfigured() {
-  const { data: secretsStatus } = useIntegrationStatus();
-  const { data: enabledSettings } = useIntegrationsEnabledSettings();
-  
-  const hasKey = secretsStatus?.integrations?.anthropic ?? false;
-  const explicitlyDisabled = enabledSettings?.anthropic?.enabled === false;
-  
-  return hasKey && !explicitlyDisabled;
+  return useIsIntegrationActive('anthropic').isActive;
+}
+
+export function useIsLocalLLMConfigured() {
+  return useIsIntegrationActive('local_llm').isActive;
 }
 
 export function useIsAIConfigured() {
