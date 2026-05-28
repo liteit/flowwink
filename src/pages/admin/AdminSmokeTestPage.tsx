@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
+import { useModules, type ModulesSettings } from '@/hooks/useModules';
 
 type Status = 'pending' | 'running' | 'pass' | 'fail' | 'skip';
 
