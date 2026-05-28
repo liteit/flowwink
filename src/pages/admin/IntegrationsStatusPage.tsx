@@ -857,9 +857,6 @@ export default function IntegrationsStatusPage() {
                     // For these integrations, no vault secret required - just need config
                     const noSecretNeeded = ['local_llm', 'n8n', 'google_analytics', 'meta_pixel', 'slack'];
                     const requiresSecret = !noSecretNeeded.includes(key);
-                    const hasKey = requiresSecret ? (secretsStatus?.integrations?.[key] ?? false) : true;
-                    const explicitlyDisabled = integrationSettings?.[key]?.enabled === false;
-                    const isEnabled = hasKey && !explicitlyDisabled;
                     const IconComponent = iconMap[integration.icon as keyof typeof iconMap] || Bot;
                     const currentConfig = getDisplayConfig(key) || integration.config;
                     const hasConfigSection = ['openai', 'gemini', 'local_llm', 'n8n', 'resend', 'google_analytics', 'meta_pixel', 'slack', 'jina'].includes(key);
@@ -867,6 +864,10 @@ export default function IntegrationsStatusPage() {
                     const hasCredential = requiresSecret
                       ? (secretsStatus?.integrations?.[key] ?? false)
                       : hasRealCredential(key, currentConfig);
+                    // hasKey gates the toggle switch — must reflect real credential, not a hardcoded true
+                    const hasKey = hasCredential;
+                    const explicitlyDisabled = integrationSettings?.[key]?.enabled === false;
+                    const isEnabled = hasKey && !explicitlyDisabled;
 
                     return (
                       <Card
