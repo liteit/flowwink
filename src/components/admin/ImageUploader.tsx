@@ -212,7 +212,8 @@ export function ImageUploader({
           </div>
         </TabsContent>
 
-        <TabsContent value="unsplash" className="mt-3">
+        <TabsContent value="unsplash" className="mt-3 space-y-2">
+          <UnsplashConfigHint />
           <div 
             className={`${aspectClass[aspectRatio]} border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer`}
             onClick={() => setShowUnsplash(true)}
@@ -226,6 +227,7 @@ export function ImageUploader({
             </span>
           </div>
         </TabsContent>
+
 
         <TabsContent value="url" className="mt-3 space-y-3">
           <Input
