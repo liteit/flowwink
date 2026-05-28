@@ -689,11 +689,16 @@ export default function IntegrationsStatusPage() {
 
   // Calculate active count
   const integrationKeys = Object.keys(defaultIntegrationsSettings) as (keyof IntegrationsSettings)[];
+  const noSecretNeededKeys = ['local_llm', 'n8n', 'google_analytics', 'meta_pixel', 'slack'];
   let activeCount = 0;
   let configuredCount = 0;
 
   for (const key of integrationKeys) {
-    const hasKey = secretsStatus?.integrations?.[key] ?? false;
+    const requiresSecret = !noSecretNeededKeys.includes(key);
+    const cfg = integrationSettings?.[key]?.config ?? defaultIntegrationsSettings[key].config;
+    const hasKey = requiresSecret
+      ? (secretsStatus?.integrations?.[key] ?? false)
+      : hasRealCredential(key, cfg);
     const explicitlyDisabled = integrationSettings?.[key]?.enabled === false;
     if (hasKey) configuredCount++;
     if (hasKey && !explicitlyDisabled) activeCount++;
@@ -857,9 +862,6 @@ export default function IntegrationsStatusPage() {
                     // For these integrations, no vault secret required - just need config
                     const noSecretNeeded = ['local_llm', 'n8n', 'google_analytics', 'meta_pixel', 'slack'];
                     const requiresSecret = !noSecretNeeded.includes(key);
-                    const hasKey = requiresSecret ? (secretsStatus?.integrations?.[key] ?? false) : true;
-                    const explicitlyDisabled = integrationSettings?.[key]?.enabled === false;
-                    const isEnabled = hasKey && !explicitlyDisabled;
                     const IconComponent = iconMap[integration.icon as keyof typeof iconMap] || Bot;
                     const currentConfig = getDisplayConfig(key) || integration.config;
                     const hasConfigSection = ['openai', 'gemini', 'local_llm', 'n8n', 'resend', 'google_analytics', 'meta_pixel', 'slack', 'jina'].includes(key);
@@ -867,6 +869,10 @@ export default function IntegrationsStatusPage() {
                     const hasCredential = requiresSecret
                       ? (secretsStatus?.integrations?.[key] ?? false)
                       : hasRealCredential(key, currentConfig);
+                    // hasKey gates the toggle switch — must reflect real credential, not a hardcoded true
+                    const hasKey = hasCredential;
+                    const explicitlyDisabled = integrationSettings?.[key]?.enabled === false;
+                    const isEnabled = hasKey && !explicitlyDisabled;
 
                     return (
                       <Card
@@ -989,7 +995,10 @@ export default function IntegrationsStatusPage() {
         const integration = integrationSettings?.[openDrawerKey] || defaultIntegrationsSettings[openDrawerKey];
         const noSecretNeeded = ['local_llm', 'n8n', 'google_analytics', 'meta_pixel', 'slack'];
         const requiresSecret = !noSecretNeeded.includes(openDrawerKey);
-        const hasKey = requiresSecret ? (secretsStatus?.integrations?.[openDrawerKey] ?? false) : true;
+        const drawerConfig = getDisplayConfig(openDrawerKey) || integration.config;
+        const hasKey = requiresSecret
+          ? (secretsStatus?.integrations?.[openDrawerKey] ?? false)
+          : hasRealCredential(openDrawerKey, drawerConfig);
         const explicitlyDisabled = integrationSettings?.[openDrawerKey]?.enabled === false;
         const isEnabled = hasKey && !explicitlyDisabled;
         return (
