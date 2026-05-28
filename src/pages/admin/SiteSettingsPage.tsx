@@ -47,6 +47,7 @@ import { CustomerPortalCard } from '@/components/admin/CustomerPortalCard';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useUnsavedChanges, UnsavedChangesDialog } from '@/hooks/useUnsavedChanges';
 import { ResetSiteDialog } from '@/components/admin/ResetSiteDialog';
+import { DemoModeCard } from '@/components/admin/DemoModeCard';
 
 
 function EnvironmentInfoCard() {
