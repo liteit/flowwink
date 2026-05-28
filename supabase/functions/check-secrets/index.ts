@@ -66,7 +66,7 @@ serve(async (req) => {
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (roleData?.role !== 'admin') {
       console.error('[check-secrets] User is not admin:', user.id);

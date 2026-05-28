@@ -57,13 +57,13 @@ export function useIntegrationStatus() {
       const { data, error } = await supabase.functions.invoke('check-secrets');
       if (error) {
         logger.error('[useIntegrationStatus] Error:', error);
-        return null;
+        throw error;
       }
       return data as IntegrationStatus;
     },
     staleTime: 30 * 1000,
     gcTime: 60 * 1000,
-    retry: 0,
+    retry: 1,
     refetchOnWindowFocus: false,
     enabled: !!user,
   });
