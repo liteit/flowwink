@@ -256,6 +256,14 @@ export default function AdminSmokeTestPage() {
     const auto: Record<string, boolean> = {};
 
     for (const step of plan) {
+      const modKey = GROUP_MODULE[step.group];
+      if (modules && modules[modKey]?.enabled === false) {
+        setResults((r) => ({
+          ...r,
+          [step.key]: { status: 'skip', error: `Module "${modKey}" is disabled` },
+        }));
+        continue;
+      }
       setResults((r) => ({ ...r, [step.key]: { status: 'running' } }));
       const args = step.args(ctx);
       if (!args) {
