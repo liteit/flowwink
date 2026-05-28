@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/dialog';
 import { Loader2, Search, ImageIcon, Check, FolderOpen, Camera, ExternalLink, Crop, Upload, X } from 'lucide-react';
 import { ImageCropper } from './ImageCropper';
+import { UnsplashConfigHint } from './UnsplashConfigHint';
+
 import { useToast } from '@/hooks/use-toast';
 
 interface StorageFile {
