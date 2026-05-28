@@ -7,7 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-05-28
+
 ### Added
+- **Demo Data Platform**: Safe module reset & simulation data seeding (`seed_module_demo`, `reset_module_data`) with `demo_runs`/`demo_run_items` tracking
+- **Order Tracking**: Public `/track/:id` page + admin fulfillment view with full event audit log
+- **Platform Tests**: Unified `/admin/platform-tests` replacing smoke tests with module-aware suites, CI guardrails, and instance health dashboard
+- **User Role Guardrails**: Automated test suite preventing role assignment regressions in `handle_new_user` trigger and edge functions
+- **Demo Mode**: Toggle in `/admin/settings/general` controlling hourly `demo-cycle` reset job; demo login banner on auth page
+- **Workspace Chat**: Internal RAG-powered chat over documents/contracts/knowledge base with citations
+- **Expense Procure-to-Pay Loop**: Full lifecycle (draft→submitted→approved→booked→paid) with BAS 2024 defaults
+- **OCR Bank Statement Import**: Vision-based preview→commit flow via `reconciliation-import-image` edge function
+- **POS v2 (Odoo-style)**: Barcode support, split tender payments, session-based batch journal on close
+- **Stock Event Listener**: Automatic inventory movement on POS sales via `stock.movement` platform events
+- **Invoice-driven Subscriptions**: Manual subscription billing with daily cron invoice generation
+- **Staged Operations Envelope**: Human-in-the-loop approval for sensitive skills (journal entries, expense booking, period close)
+- **Voucher Integrity**: Auto-assigned voucher numbers with gap detection and explanation tools
+- **Year-End Readiness**: 6-point checklist RPC for accounting period closure
+- **Contract Templates**: 4 seeded templates + `create_contract_from_template` with anti-hallucination guards
+- **Unified Sales Lead Loop**: Firecrawl-enriched lead scoring with normalized status aliases
+- **Agent Document Upload**: MCP-exposed skill for peers to upload text/PDF to the document vault
+- **Document Shadow Markdown**: Extracted text shadow for full-text search in workspace chat
+- **Marketing Claw Department Pattern**: Composite MCP groups for external marketing agent operation
+- **Federation Directional Connections**: Multi-channel peer architecture (MCP, A2A, /v1/responses)
+- **HR Auto-Contract Loop**: `hire_application` RPC — application→employee + draft contract + onboarding checklist in one transaction
+- **Timesheet Period Lock**: Accounting period close also locks time entries
+- **HR Vacation Auto-Allocation**: Yearly vacation day allocation with audit logging
+- **Unsplash Config Hint**: Admin alert when image API key is missing during block editing
+- **Integration Status Truth**: `resolveIntegrationStatus` single source of truth; backend verification errors surfaced in UI
+
+### Changed
+- **Removed Clawable module**: Simplified architecture — single FlowWink instance, no multi-agent chat surface
+- **Federation cleanup**: Reduced operator missions to 5 core categories aligned with external-agent-as-operator pivot
+- **Smoke tests**: Skip disabled modules instead of false failures
+- **Database migrations**: Consolidated baseline for cleaner fresh installs
+- **Trust levels**: Outbound communication skills now require `approve` instead of `auto`
+
+### Fixed
+- **check-secrets edge function**: 403 errors for multi-role users resolved by explicit `admin` role filtering
+- **handle_new_user trigger**: No longer assigns redundant `writer` role when `signup_type: "admin"` is specified
+- **Demo template**: Fixed demo email credential display (`demo@flowwink.com`)
+- **Fresh install UX**: Default modules disabled by default (opt-in); fewer confusing empty states
+- **Edge function timeouts**: Fire-and-forget pattern for long-running operations bypassing 60s limits
+- **CI**: `skill-linter` exits gracefully without DB URL on GitHub Actions
 
 ## [1.2.0] - 2026-02-20
 
