@@ -447,7 +447,25 @@ cmd_set_keys() {
 
     echo -e "  ${DIM}Manage anytime: Supabase Dashboard → Settings → Edge Functions → Secrets${NC}"
     echo ""
+
+    # Edge functions only read secrets at cold start. If functions are already
+    # deployed, redeploy so they pick up the new values immediately.
+    if [ -z "${FW_SKIP_REDEPLOY:-}" ]; then
+        local deployed
+        deployed=$(supabase functions list 2>/dev/null | grep -c "ACTIVE" || echo "0")
+        if [ "$deployed" -gt 0 ]; then
+            echo -e "  ${DIM}Redeploying edge functions so they pick up the new secrets...${NC}"
+            read -e -p "  Redeploy now? [Y/n]: " redeploy
+            if [[ ! "$redeploy" =~ ^[Nn]$ ]]; then
+                cmd_update_funcs
+            else
+                echo -e "  ${YELLOW}⚠ Functions will report 'No AI provider configured' until next deploy.${NC}"
+                echo ""
+            fi
+        fi
+    fi
 }
+
 
 cmd_create_admin() {
     echo ""
@@ -629,13 +647,22 @@ cmd_install() {
     print_section "Full Installation"
     require_link || return 1
 
-    echo -e "  Runs: ${CYAN}/update-db${NC} → ${CYAN}/update-funcs${NC} → ${CYAN}/create-admin${NC} → ${CYAN}/env${NC}"
+    echo -e "  Runs: ${CYAN}/update-db${NC} → ${CYAN}/set-keys${NC} → ${CYAN}/update-funcs${NC} → ${CYAN}/create-admin${NC} → ${CYAN}/env${NC}"
+    echo -e "  ${DIM}Secrets are configured BEFORE functions deploy so cold-starts pick them up.${NC}"
     echo -e "  ${DIM}FlowPilot is seeded later via /admin/modules (toggle on).${NC}"
     echo ""
     read -e -p "  Continue? [y/N]: " confirm
     [[ ! "$confirm" =~ ^[Yy]$ ]] && echo "" && return 0
 
     cmd_update_db
+
+    echo ""
+    read -e -p "  Configure API keys now (recommended before deploying functions)? [Y/n]: " keys
+    if [[ ! "$keys" =~ ^[Nn]$ ]]; then
+        # Skip auto-redeploy inside install — functions haven't been deployed yet
+        FW_SKIP_REDEPLOY=1 cmd_set_keys
+    fi
+
     cmd_update_funcs
     cmd_create_admin
     cmd_env
@@ -645,10 +672,8 @@ cmd_install() {
     echo -e "  ${DIM}Next: log in to /admin, open /admin/modules, and enable FlowPilot${NC}"
     echo -e "  ${DIM}(or any other module) — seeding runs automatically on toggle.${NC}"
     echo ""
-
-    read -e -p "  Configure API keys now? [y/N]: " keys
-    [[ "$keys" =~ ^[Yy]$ ]] && cmd_set_keys
 }
+
 
 # ─── Generic interactive select (outside readline context) ───
 # Result index in _FW_IDX; -1 = cancelled
