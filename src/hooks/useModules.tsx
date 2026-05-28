@@ -131,7 +131,7 @@ export const defaultModulesSettings: ModulesSettings = {
   },
   pages: {
     enabled: true,
-    name: 'Pages',
+    name: 'Website',
     description: 'Pages, header, footer, branding and navigation — the complete visual layer',
     icon: 'FileText',
     category: 'content',
