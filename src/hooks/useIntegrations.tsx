@@ -455,12 +455,30 @@ export function useToggleIntegration() {
   };
 }
 
-// Check if an integration is active (has key + not explicitly disabled)
+// Config-based integrations: no vault secret needed, presence of required config field determines credential
+const CONFIG_BASED_KEYS: Array<keyof IntegrationsSettings> = ['local_llm', 'n8n', 'google_analytics', 'meta_pixel', 'slack'];
+
+function configHasCredential(key: keyof IntegrationsSettings, config: any): boolean {
+  switch (key) {
+    case 'local_llm': return !!config?.endpoint;
+    case 'n8n': return !!config?.webhookUrl;
+    case 'google_analytics': return !!config?.measurementId;
+    case 'meta_pixel': return !!config?.pixelId;
+    case 'slack': return !!config?.webhookUrl;
+    default: return false;
+  }
+}
+
+// Check if an integration is active (has key/config + not explicitly disabled)
 export function useIsIntegrationActive(key: keyof IntegrationsSettings) {
   const { data: secretsStatus } = useIntegrationStatus();
   const { data: integrationSettings } = useIntegrations();
 
-  const hasKey = secretsStatus?.integrations?.[key] ?? false;
+  const requiresSecret = !CONFIG_BASED_KEYS.includes(key);
+  const cfg = integrationSettings?.[key]?.config ?? defaultIntegrationsSettings[key]?.config;
+  const hasKey = requiresSecret
+    ? (secretsStatus?.integrations?.[key] ?? false)
+    : configHasCredential(key, cfg);
   const explicitlyDisabled = integrationSettings?.[key]?.enabled === false;
 
   return {
@@ -482,7 +500,11 @@ export function useActiveIntegrationsCount() {
   let active = 0;
 
   for (const key of keys) {
-    const hasKey = secretsStatus.integrations?.[key] ?? false;
+    const requiresSecret = !CONFIG_BASED_KEYS.includes(key);
+    const cfg = integrationSettings[key]?.config ?? defaultIntegrationsSettings[key]?.config;
+    const hasKey = requiresSecret
+      ? (secretsStatus.integrations?.[key] ?? false)
+      : configHasCredential(key, cfg);
     const explicitlyDisabled = integrationSettings[key]?.enabled === false;
     if (hasKey && !explicitlyDisabled) active++;
   }
