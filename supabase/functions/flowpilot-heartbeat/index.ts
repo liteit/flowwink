@@ -352,10 +352,11 @@ serve(async (req) => {
       agent: "flowpilot",
       skill_name: "heartbeat",
       input: { trigger: "scheduled", trace_id: traceId },
-      output: { checkpoint: true, was_timeout: isTimeout },
-      status: "failed",
+      output: { checkpoint: true, was_timeout: isTimeout, partial_run: true },
+      status: isTimeout ? "timeout" : "failed",
       error_message: (err.message || "Unknown error").slice(0, 500),
       duration_ms: duration,
+      token_usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
     });
 
     return new Response(

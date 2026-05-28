@@ -52,6 +52,9 @@ verify_jwt = false
 [functions.content-api]
 verify_jwt = false
 
+[functions.company-profile]
+verify_jwt = false
+
 [functions.customer-360]
 verify_jwt = false
 
