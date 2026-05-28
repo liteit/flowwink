@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/dialog';
 import { Loader2, Search, ImageIcon, Check, ExternalLink, Crop } from 'lucide-react';
 import { ImageCropper } from './ImageCropper';
+import { UnsplashConfigHint } from './UnsplashConfigHint';
+
 import { useToast } from '@/hooks/use-toast';
 import { getWebPFileName } from '@/lib/image-utils';
 
@@ -134,8 +136,11 @@ export function UnsplashPicker({ open, onOpenChange, onSelect }: UnsplashPickerP
             </DialogTitle>
           </DialogHeader>
 
+          <UnsplashConfigHint />
+
           {/* Search */}
           <form onSubmit={handleSearch} className="flex gap-2">
+
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
