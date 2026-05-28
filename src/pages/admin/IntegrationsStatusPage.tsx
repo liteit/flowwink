@@ -40,6 +40,7 @@ import {
   MessageSquare,
   Search,
   Megaphone,
+  AlertTriangle,
 } from "lucide-react";
 import {
   useIntegrations,
