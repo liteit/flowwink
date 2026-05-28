@@ -101,8 +101,23 @@ export function BookingBlock({ data, blockId, pageId }: BookingBlockProps) {
       setSubmitted(true);
       toast.success(data.successMessage || 'Booking request submitted!');
     } catch (error) {
-      logger.error('Error submitting booking:', error);
-      toast.error('Failed to submit booking request');
+      // Extract specific error message for user feedback
+      let errorMessage = 'Failed to submit booking request';
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        errorMessage = (error as any).message;
+      }
+
+      logger.error('Error submitting booking:', {
+        error,
+        message: errorMessage,
+        timestamp: new Date().toISOString()
+      });
+
+      // Show user-friendly error message
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
