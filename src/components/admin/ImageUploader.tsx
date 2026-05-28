@@ -9,6 +9,8 @@ import { Upload, Link, Loader2, X, ImageIcon, FolderOpen, Camera } from 'lucide-
 import { useToast } from '@/hooks/use-toast';
 import { MediaLibraryPicker } from './MediaLibraryPicker';
 import { UnsplashPicker } from './UnsplashPicker';
+import { UnsplashConfigHint } from './UnsplashConfigHint';
+
 import { convertToWebP, getWebPFileName } from '@/lib/image-utils';
 
 interface ImageUploaderProps {
