@@ -645,11 +645,11 @@ Single step of the AI site-builder. Same loop the admin /admin/copilot UI uses, 
 
 export const pagesModule = defineModule<PageModuleInput, PageModuleOutput>({
   id: 'pages',
-  name: 'Pages',
+  name: 'Website',
   version: '1.0.0',
   processes: ['content-to-conversion'],
   maturity: 'L4',
-  description: 'Create and publish CMS pages',
+  description: 'Create and publish website pages, header, footer, branding and navigation',
   capabilities: ['content:receive', 'data:write', 'webhook:trigger'],
   inputSchema: pageModuleInputSchema,
   outputSchema: pageModuleOutputSchema,
