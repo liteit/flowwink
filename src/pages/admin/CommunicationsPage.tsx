@@ -13,11 +13,13 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
-import { Mail, AlertCircle, CheckCircle2, FlaskConical, Eye } from "lucide-react";
+import { Mail, AlertCircle, CheckCircle2, FlaskConical, Eye, Settings } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { Link } from "react-router-dom";
 
 type Comm = {
   id: string;
