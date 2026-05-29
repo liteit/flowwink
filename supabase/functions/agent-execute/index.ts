@@ -334,6 +334,12 @@ serve(async (req) => {
       } else if (handler === 'internal:lint_skill') {
         result = await executeLintSkill(supabase, args);
 
+      } else if (handler === 'internal:list_communications') {
+        result = await executeListCommunications(supabase, args);
+
+      } else if (handler === 'internal:get_communication') {
+        result = await executeGetCommunication(supabase, args);
+
       } else if (handler.startsWith('rpc:')) {
         const fnName = handler.replace('rpc:', '');
         // Map skill arg names → RPC param names by prefixing p_.
