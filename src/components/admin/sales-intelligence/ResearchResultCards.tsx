@@ -81,7 +81,7 @@ export function ResearchResultCards({ result }: ResearchResultCardsProps) {
       )}
 
       {/* Contacts Found */}
-      {result.contacts.length > 0 && (
+      {(result.contacts?.length ?? 0) > 0 && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
