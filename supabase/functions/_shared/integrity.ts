@@ -43,11 +43,9 @@ export async function runIntegrityChecks(supabase: any): Promise<{
   const enabledSkills = allSkills || [];
   const issues: string[] = [];
 
-  // Info: skills without instructions (advisory — description is the required field)
-  const noInstr = enabledSkills.filter((s: any) => !s.instructions || s.instructions.trim() === '');
-  if (noInstr.length > 0) {
-    issues.push(`Info: ${noInstr.length} skills without optional instructions (description is what matters): ${noInstr.slice(0, 5).map((s: any) => s.name).join(', ')}${noInstr.length > 5 ? '...' : ''}`);
-  }
+  // Note: `instructions` is an optional per-skill field; `description` is the
+  // required one and is checked separately below. We do not report on missing
+  // instructions — it generates noise without indicating a real problem.
 
   // Hard check: skills without description
   const noDesc = enabledSkills.filter((s: any) => !s.description || s.description.trim() === '');
@@ -56,22 +54,23 @@ export async function runIntegrityChecks(supabase: any): Promise<{
   }
 
   // Hard check: invalid tool definitions.
-  // Accept either OpenAI wrapper {type:'function', function:{name, parameters}}
-  // OR a raw JSON Schema object ({type:'object', properties:{...}}) — both are
-  // valid shapes used across the codebase.
+  // Accept any of the three shapes used across the codebase:
+  //   1. OpenAI wrapper: {type:'function', function:{name, parameters}}
+  //   2. Flat OpenAI:    {name, parameters, description?}
+  //   3. Raw JSON Schema:{type:'object', properties:{...}}
   const badTd = enabledSkills.filter((s: any) => {
     if (!s.tool_definition) return true;
     const td = typeof s.tool_definition === 'string' ? JSON.parse(s.tool_definition) : s.tool_definition;
     if (!td || typeof td !== 'object') return true;
-    // OpenAI wrapper
     if (td.function && td.function.name && td.function.parameters) return false;
-    // Raw JSON Schema
+    if (td.name && td.parameters) return false;
     if (td.type === 'object' && td.properties && typeof td.properties === 'object') return false;
     return true;
   });
   if (badTd.length > 0) {
     issues.push(`${badTd.length} skills with invalid tool definitions: ${badTd.slice(0, 10).map((s: any) => s.name).join(', ')}${badTd.length > 10 ? '...' : ''}`);
   }
+
 
   // Check: critical memory keys
   const { data: memKeys } = await supabase
