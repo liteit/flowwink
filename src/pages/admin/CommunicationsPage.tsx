@@ -217,10 +217,11 @@ export default function CommunicationsPage() {
   );
 }
 
-function StatCard({ label, value, tone }: { label: string; value: number; tone?: "success" | "danger" | "muted" }) {
+function StatCard({ label, value, tone }: { label: string; value: number; tone?: "success" | "danger" | "muted" | "warning" }) {
   const color =
     tone === "success" ? "text-emerald-600" :
     tone === "danger"  ? "text-destructive" :
+    tone === "warning" ? "text-amber-600" :
     tone === "muted"   ? "text-muted-foreground" :
     "text-foreground";
   return (
@@ -230,6 +231,23 @@ function StatCard({ label, value, tone }: { label: string; value: number; tone?:
         <div className={`text-2xl font-semibold mt-1 ${color}`}>{value}</div>
       </CardContent>
     </Card>
+  );
+}
+
+function SimModeBanner() {
+  return (
+    <Alert className="border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20">
+      <FlaskConical className="h-4 w-4 text-amber-600" />
+      <AlertTitle className="text-amber-800 dark:text-amber-200">Simulation mode active</AlertTitle>
+      <AlertDescription className="text-amber-700 dark:text-amber-300">
+        No email provider is configured — all sends are simulated and never leave the platform.
+        Go to{" "}
+        <Link to="/admin/settings" className="underline font-medium">
+          Settings → Integrations
+        </Link>{" "}
+        to connect Resend, SMTP, or Composio.
+      </AlertDescription>
+    </Alert>
   );
 }
 
