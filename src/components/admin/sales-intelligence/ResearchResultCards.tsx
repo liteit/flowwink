@@ -118,7 +118,7 @@ export function ResearchResultCards({ result }: ResearchResultCardsProps) {
           <CardContent>
             <ScrollArea className="max-h-[500px]">
               <div className="space-y-4">
-                {result.questions_and_answers.map((qa, i) => (
+                {result.questions_and_answers?.map((qa, i) => (
                   <div key={i} className="space-y-1.5">
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-sm font-medium">{qa.question}</p>
