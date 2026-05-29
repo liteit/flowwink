@@ -108,7 +108,7 @@ export const approvalsModule = defineModule<ApprovalsInput, ApprovalsOutput>({
   capabilities: ['data:read', 'data:write'],
   inputSchema: approvalsInputSchema,
   outputSchema: approvalsOutputSchema,
-  skills: ['manage_approvals'],
+  skills: ['manage_approvals', 'approve_pending_operation', 'list_pending_operations', 'reject_pending_operation'],
   skillSeeds: APPROVAL_SKILLS,
 
   async publish(input: ApprovalsInput): Promise<ApprovalsOutput> {
