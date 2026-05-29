@@ -59,11 +59,12 @@ export function SendEmailDialog({ open, onOpenChange, recipientEmail, recipientN
       let senderName = user?.email || 'Sales';
       let senderTitle = '';
       if (user) {
-        const { data: profile } = await supabase
+        const { data: profile } = await (supabase as any)
           .from('profiles')
           .select('display_name, email_from_name, job_title')
           .eq('user_id', user.id)
           .maybeSingle();
+
         if (profile) {
           senderName = (profile as any).email_from_name || (profile as any).display_name || senderName;
           senderTitle = (profile as any).job_title || '';
