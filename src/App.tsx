@@ -63,7 +63,7 @@ import KbArticleEditorPage from "./pages/admin/KbArticleEditorPage";
 import IntegrationsStatusPage from "./pages/admin/IntegrationsStatusPage";
 import CopilotPage from "./pages/admin/CopilotPage";
 import FlowChatPage from "./pages/admin/FlowChatPage";
-import AdminSmokeTestPage from "./pages/admin/AdminSmokeTestPage";
+
 import LiveSupportPage from "./pages/admin/LiveSupportPage";
 
 import TemplateLivePreviewPage from "./pages/admin/TemplateLivePreviewPage";
