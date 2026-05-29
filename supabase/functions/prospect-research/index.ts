@@ -1,20 +1,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getServiceClient } from '../_shared/supabase-clients.ts';
 
 /**
- * Prospect Research — Data Collector (No AI)
- * 
+ * Prospect Research — Data Collector + CRM Persister
+ *
  * Chains: web-search → web-scrape → contact-finder
- * Returns raw data for FlowPilot (or UI) to interpret.
- * 
- * OpenClaw alignment: This is a "hand" — it gathers data.
- * FlowPilot is the "brain" that analyzes the results.
+ * Persists the company + each Hunter contact (as a lead) so the rest of
+ * the Sales Intelligence flow (Fit Analysis, AI Compose, …) has DB IDs
+ * to operate on. Without this the UI shows contacts but every follow-up
+ * action ("Run Fit Analysis", "Compose email") silently fails.
  */
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 async function callSkill(functionName: string, body: Record<string, unknown>): Promise<any> {
@@ -50,62 +50,150 @@ serve(async (req) => {
 
     console.log(`Researching: ${company_name} (${company_url || 'no URL'})`);
 
-    // Step 1: Web search for company info
+    // Step 1: Web search
     const searchResult = await callSkill('web-search', {
       query: `${company_name} company about`,
       limit: 3,
     });
 
-    // Step 2: Scrape company website if URL provided
+    // Step 2: Scrape company website
     let scrapeResult = null;
     const scrapeUrl = company_url || searchResult?.results?.[0]?.url;
     if (scrapeUrl) {
-      scrapeResult = await callSkill('web-scrape', {
-        url: scrapeUrl,
-        max_length: 5000,
-      });
+      scrapeResult = await callSkill('web-scrape', { url: scrapeUrl, max_length: 5000 });
     }
 
     // Step 3: Find contacts via Hunter.io
-    let contacts = null;
-    const domain = scrapeUrl ? new URL(scrapeUrl).hostname.replace('www.', '') : null;
+    let contactsRaw: any[] = [];
+    let domain: string | null = null;
+    if (scrapeUrl) {
+      try {
+        domain = new URL(scrapeUrl.startsWith('http') ? scrapeUrl : `https://${scrapeUrl}`).hostname.replace(/^www\./, '');
+      } catch {
+        domain = null;
+      }
+    }
     if (domain) {
-      contacts = await callSkill('contact-finder', {
+      const contactsRes = await callSkill('contact-finder', {
         action: 'domain_search',
         domain,
-        limit: 5,
+        limit: 6,
       });
+      contactsRaw = contactsRes?.contacts || [];
     }
 
-    // Return raw collected data — no AI interpretation
+    // Step 4: Persist company (upsert by name+domain)
+    const supabase = getServiceClient();
+    let companyId: string | null = null;
+    {
+      const { data: existing } = await supabase
+        .from('companies')
+        .select('id')
+        .ilike('name', company_name)
+        .maybeSingle();
+
+      const companyPayload: Record<string, unknown> = {
+        name: company_name,
+        domain: domain ?? undefined,
+        website: scrapeUrl ?? undefined,
+        enriched_at: new Date().toISOString(),
+      };
+
+      if (existing?.id) {
+        await supabase.from('companies').update(companyPayload).eq('id', existing.id);
+        companyId = existing.id;
+      } else {
+        const { data: inserted, error } = await supabase
+          .from('companies')
+          .insert(companyPayload)
+          .select('id')
+          .single();
+        if (error) console.error('company insert failed:', error.message);
+        companyId = inserted?.id ?? null;
+      }
+    }
+
+    // Step 5: Persist contacts as leads (upsert by email)
+    const savedContacts: Array<{ id: string; email: string; name?: string }> = [];
+    for (const c of contactsRaw) {
+      const email: string | undefined = c?.email || c?.value;
+      if (!email) continue;
+      const name = [c?.first_name, c?.last_name].filter(Boolean).join(' ').trim() || c?.name || undefined;
+
+      const { data: existingLead } = await supabase
+        .from('leads')
+        .select('id')
+        .ilike('email', email)
+        .maybeSingle();
+
+      const leadPayload: Record<string, unknown> = {
+        email,
+        name,
+        company_id: companyId,
+        source: 'prospect-research',
+        status: 'lead',
+      };
+
+      if (existingLead?.id) {
+        await supabase.from('leads').update({ company_id: companyId, name }).eq('id', existingLead.id);
+        savedContacts.push({ id: existingLead.id, email, name });
+      } else {
+        const { data: inserted, error } = await supabase
+          .from('leads')
+          .insert(leadPayload)
+          .select('id')
+          .single();
+        if (error) {
+          console.error('lead insert failed:', error.message);
+          continue;
+        }
+        if (inserted?.id) savedContacts.push({ id: inserted.id, email, name });
+      }
+    }
+
+    // Step 6: Build UI-friendly payload (matches ResearchResult)
     const result = {
       success: true,
-      company_name,
-      company_url: scrapeUrl || null,
-      domain,
-      search_results: searchResult?.results || [],
-      website_content: scrapeResult?.content?.substring(0, 3000) || null,
-      website_metadata: scrapeResult?.metadata || null,
-      contacts: contacts?.contacts || [],
+      company: {
+        id: companyId ?? undefined,
+        name: company_name,
+        domain: domain ?? undefined,
+      },
+      contacts: savedContacts,
+      hunter_contacts_found: savedContacts.length,
+      questions_and_answers: [],
+      company_summary: {
+        name: company_name,
+        industry: undefined,
+        size_estimate: undefined,
+        main_offerings: [],
+        potential_pain_points: [],
+      },
+      // raw collected data preserved for FlowPilot
+      _raw: {
+        search_results: searchResult?.results || [],
+        website_content: scrapeResult?.content?.substring(0, 3000) || null,
+        website_metadata: scrapeResult?.metadata || null,
+      },
       data_sources: {
         search: !!searchResult?.results?.length,
         scrape: !!scrapeResult?.content,
-        contacts: !!contacts?.contacts?.length,
+        contacts: savedContacts.length > 0,
       },
     };
 
-    console.log(`Research complete for ${company_name}: search=${result.data_sources.search}, scrape=${result.data_sources.scrape}, contacts=${result.data_sources.contacts}`);
-
-    return new Response(
-      JSON.stringify(result),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    console.log(
+      `Research complete for ${company_name}: company=${!!companyId}, contacts_saved=${savedContacts.length}`,
     );
 
+    return new Response(JSON.stringify(result), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('Prospect research error:', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   }
 });
