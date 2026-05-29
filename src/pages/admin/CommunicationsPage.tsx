@@ -73,6 +73,7 @@ export default function CommunicationsPage() {
     simulated: rows.filter((r) => r.simulated).length,
     failed: rows.filter((r) => r.status === "failed").length,
   };
+  const simModeActive = rows.length > 0 && stats.simulated === stats.total && stats.sent === 0;
 
   return (
     <AdminLayout>
@@ -84,10 +85,12 @@ export default function CommunicationsPage() {
       </AdminPageHeader>
       <AdminPageContainer>
         <div className="space-y-6">
+          {simModeActive && <SimModeBanner />}
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <StatCard label="Total" value={stats.total} />
             <StatCard label="Sent" value={stats.sent} tone="success" />
-            <StatCard label="Simulated" value={stats.simulated} tone="muted" />
+            <StatCard label="Simulated" value={stats.simulated} tone={simModeActive ? "warning" : "muted"} />
             <StatCard label="Failed" value={stats.failed} tone="danger" />
           </div>
 
