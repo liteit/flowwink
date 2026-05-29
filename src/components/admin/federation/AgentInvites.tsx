@@ -30,7 +30,6 @@ interface MissionTemplate {
   description: string;
   instructions: string;
   focusResources: string[];
-  focusTools: string[];
   /** Modules that must be enabled for this mission to make sense. Empty = always available. */
   requiredModules?: ModuleKey[];
 }
@@ -82,7 +81,6 @@ POST /rest/execute {"tool": "release_lock", "arguments": {"lane": "lead:abc123"}
 
 You own the initiative. Don't wait for instructions — observe the platform state and act like a competent business operator would.`,
     focusResources: ['flowwink://briefing', 'flowwink://skills', 'flowwink://modules'],
-    focusTools: ['acquire_lock', 'release_lock', 'list_leads', 'update_lead', 'list_orders', 'list_pages', 'update_page_block'],
   },
   {
     id: 'growth-operator',
@@ -104,18 +102,14 @@ You own the initiative. Don't wait for instructions — observe the platform sta
 3. **Content as growth engine**: Identify high-traffic pages. Suggest or create blog content targeting keywords.
 4. **Conversion optimization**: Review landing pages for CTA clarity and SEO strength.
 
-## Tools You'll Use Most
+## Finding your tools
 
-- \`list_leads\`, \`update_lead\`, \`qualify_lead\` — lead management
-- \`list_deals\`, \`update_deal\` — pipeline management
-- \`list_pages\`, \`update_page_block\` — landing page optimization
-- \`list_blog_posts\`, \`create_blog_post\` — content marketing
+Don't assume tool names — discover them. Use \`search_skills\` with intent like "score a new lead", "advance a stale deal", or "optimize a landing page for SEO", then \`execute_skill\` the one you pick. The registry is the source of truth.
 
 ## Operating Principle
 
 Every action should tie back to revenue. Score leads, advance deals, optimize pages — in that priority order.`,
     focusResources: ['flowwink://briefing', 'flowwink://skills'],
-    focusTools: ['list_leads', 'update_lead', 'list_deals', 'update_deal', 'list_pages', 'list_blog_posts'],
     requiredModules: ['leads', 'deals'],
   },
   {
@@ -144,13 +138,10 @@ unfulfilled → picked → packed → shipped → delivered
 
 Use \`acquire_lock\` on order operations to prevent double-processing.
 
-## Tools You'll Use Most
+## Finding your tools
 
-- \`list_orders\`, \`update_order\` — order management
-- \`list_products\`, \`update_product\` — catalog management
-- \`list_bookings\` — appointment management`,
+Don't assume tool names — discover them. Use \`search_skills\` with intent like "advance an order to shipped", "flag low-stock products", or "update product pricing", then \`execute_skill\` the one you pick. The registry is the source of truth.`,
     focusResources: ['flowwink://briefing', 'flowwink://skills'],
-    focusTools: ['list_orders', 'list_products', 'update_product', 'list_bookings'],
     requiredModules: ['ecommerce'],
   },
 
@@ -180,7 +171,6 @@ Use \`acquire_lock\` on order operations to prevent double-processing.
 
 Close the Hire-to-Onboard loop end-to-end — application in, fully onboarded employee with contract out. Never leave a new hire without a contract or checklist.`,
     focusResources: ['flowwink://briefing', 'flowwink://skills', 'flowwink://modules'],
-    focusTools: ['list_applications', 'hire_application', 'list_employees', 'create_employment_contract', 'list_onboarding_checklists'],
     requiredModules: ['hr'],
   },
   {
@@ -208,7 +198,6 @@ Close the Hire-to-Onboard loop end-to-end — application in, fully onboarded em
 
 Books must always balance and reflect reality. Prefer autonomous reconciliation over hard triggers, and always operate via templates.`,
     focusResources: ['flowwink://briefing', 'flowwink://skills', 'flowwink://modules'],
-    focusTools: ['list_invoices', 'create_invoice', 'list_expenses', 'approve_expense', 'list_journal_entries', 'reconcile_transaction'],
     requiredModules: ['invoicing', 'accounting'],
   },
   {
@@ -220,7 +209,6 @@ Books must always balance and reflect reality. Prefer autonomous reconciliation 
     description: 'Write your own instructions for the agent',
     instructions: '',
     focusResources: ['flowwink://briefing', 'flowwink://skills', 'flowwink://modules'],
-    focusTools: [],
   },
 ];
 
@@ -288,7 +276,9 @@ export function AgentInvites() {
             mission_name: selectedMission === 'custom' ? peerName : mission.name,
             instructions: instructions,
             focus_resources: mission.focusResources,
-            focus_tools: mission.focusTools,
+            // No hardcoded tool list — operators discover real skills via search_skills /
+            // rest/tools. Hardcoded names drift from the registry and mislead agents.
+            focus_tools: [],
           }),
         }
       );
@@ -352,11 +342,6 @@ ${mission.focusResources.map(r => {
   const key = r.replace('flowwink://', '');
   return '- `flowwink://' + key + '` — ' + (info?.description || '');
 }).join('\n')}
-
-## Key Tools
-
-These skills are most relevant for your mission${isOperator ? ' (find them via `search_skills`)' : ''}:
-${mission.focusTools.map(t => '- `' + t + '`').join('\n')}
 
 ## Your Mission: ${mission.name}
 
@@ -502,12 +487,10 @@ Read the \`flowwink://briefing\` resource — it should return identity, health 
               </div>
             </div>
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1.5">Key Tools</p>
-              <div className="flex flex-wrap gap-1">
-                {mission.focusTools.map(t => (
-                  <Badge key={t} variant="outline" className="text-[10px] font-mono">{t}</Badge>
-                ))}
-              </div>
+              <p className="text-xs font-medium text-muted-foreground mb-1.5">Tools</p>
+              <p className="text-[11px] text-muted-foreground">
+                Discovered at runtime via <span className="font-mono">search_skills</span> — no fixed list.
+              </p>
             </div>
             {selectedMission !== 'custom' && (
               <div>
