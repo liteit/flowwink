@@ -105,8 +105,11 @@ export default function ProfilePage() {
           bio: bio.trim() || null,
           avatar_url: avatarUrl || null,
           show_as_author: showAsAuthor,
+          email_from_address: emailFromAddress.trim() || null,
+          email_from_name: emailFromName.trim() || null,
+          email_reply_to: emailReplyTo.trim() || null,
           updated_at: new Date().toISOString(),
-        })
+        } as any)
         .eq('id', user.id);
 
       if (error) throw error;
