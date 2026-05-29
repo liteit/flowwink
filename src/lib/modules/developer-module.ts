@@ -69,7 +69,7 @@ export const developerModule = defineModule<Input, Output>({
   inputSchema,
   outputSchema,
 
-  skills: ['global_search', 'lint_skill'],
+  skills: ['global_search', 'lint_skill', 'seed_module_demo', 'reset_module_data'],
   skillSeeds: PLATFORM_SKILLS,
 
   async publish(input: Input): Promise<Output> {

@@ -1,0 +1,1 @@
+UPDATE public.agent_skills SET mcp_exposed = true, enabled = true WHERE name = 'sla_check';
