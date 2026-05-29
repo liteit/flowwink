@@ -254,7 +254,7 @@ serve(async (req: Request) => {
         subject: body.subject,
         html: body.html,
         text: body.text,
-        replyTo: body.replyTo,
+        replyTo,
         tags: body.tags,
       });
     } else {
@@ -271,7 +271,7 @@ serve(async (req: Request) => {
         subject: body.subject,
         html: body.html,
         text: body.text,
-        replyTo: body.replyTo,
+        replyTo,
       });
     }
 
