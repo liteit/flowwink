@@ -107,7 +107,7 @@ export function ResearchResultCards({ result }: ResearchResultCardsProps) {
       )}
 
       {/* Qualifying Questions */}
-      {result.questions_and_answers.length > 0 && (
+      {(result.questions_and_answers?.length ?? 0) > 0 && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
