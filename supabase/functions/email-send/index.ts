@@ -26,7 +26,8 @@ interface SendBody {
   subject: string;
   html: string;
   text?: string;
-  fromOverride?: string;     // "Name <addr@example.com>"
+  fromOverride?: string;     // "Name <addr@example.com>" — explicit per-call override (highest priority)
+  sender_user_id?: string;   // Per-user override: look up profile.email_from_address and use it as From
   replyTo?: string;
   tags?: Record<string, string>;
 }
