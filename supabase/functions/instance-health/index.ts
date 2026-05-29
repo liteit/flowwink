@@ -137,6 +137,8 @@ Deno.serve(async (req) => {
         last_run: lastHb?.updated_at ?? null,
         age_hours: heartbeatAgeHours ? Math.round(heartbeatAgeHours * 10) / 10 : null,
         stale: heartbeatStale,
+        skipped: heartbeatSkipped,
+        reason: heartbeatSkipped ? 'flowpilot_disabled' : undefined,
       },
       integrity: {
         score: integrity.score,
