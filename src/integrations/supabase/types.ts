@@ -8240,6 +8240,9 @@ export type Database = {
           bio: string | null
           created_at: string
           email: string
+          email_from_address: string | null
+          email_from_name: string | null
+          email_reply_to: string | null
           full_name: string | null
           id: string
           show_as_author: boolean | null
@@ -8251,6 +8254,9 @@ export type Database = {
           bio?: string | null
           created_at?: string
           email: string
+          email_from_address?: string | null
+          email_from_name?: string | null
+          email_reply_to?: string | null
           full_name?: string | null
           id: string
           show_as_author?: boolean | null
@@ -8262,6 +8268,9 @@ export type Database = {
           bio?: string | null
           created_at?: string
           email?: string
+          email_from_address?: string | null
+          email_from_name?: string | null
+          email_reply_to?: string | null
           full_name?: string | null
           id?: string
           show_as_author?: boolean | null
