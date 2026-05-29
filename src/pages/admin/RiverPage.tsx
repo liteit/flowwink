@@ -498,48 +498,9 @@ export default function RiverPage() {
     <AdminLayout>
       <AdminPageContainer>
         <div className="grid grid-cols-12 gap-6">
-          {/* Left panel — pinned */}
-          <aside className="col-span-12 lg:col-span-3 space-y-3">
-            <div className="flex items-center gap-2">
-              <Pin className="h-4 w-4 text-primary" />
-              <h2 className="text-sm font-semibold tracking-tight">Pinned</h2>
-              <Badge variant="secondary" className="ml-auto h-5 px-1.5 text-[10px]">
-                {pinnedPosts.length}
-              </Badge>
-            </div>
-            {pinnedPosts.length === 0 ? (
-              <p className="text-xs text-muted-foreground px-1">
-                Nothing pinned yet. Admins can pin posts from the feed.
-              </p>
-            ) : (
-              <ul className="space-y-1.5">
-                {pinnedPosts.map((p) => (
-                  <li key={p.id}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        document
-                          .getElementById(`river-post-${p.id}`)
-                          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }}
-                      className="w-full text-left rounded-md border bg-primary/5 hover:bg-primary/10 px-2.5 py-2 transition"
-                    >
-                      <div className="text-xs font-medium line-clamp-2">
-                        {p.body || '(no text)'}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5">
-                        {formatDistanceToNow(new Date(p.created_at), { addSuffix: true })}
-                      </div>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </aside>
-
-          {/* Main feed */}
-          <main className="col-span-12 lg:col-span-9">
-            <div className="max-w-2xl mx-auto space-y-4">
+          {/* Main feed — left */}
+          <main className="col-span-12 lg:col-span-9 order-2 lg:order-1">
+            <div className="max-w-2xl space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
                   <Waves className="h-5 w-5 text-primary" />
@@ -581,7 +542,47 @@ export default function RiverPage() {
               )}
             </div>
           </main>
+
+          {/* Pinned — right */}
+          <aside className="col-span-12 lg:col-span-3 order-1 lg:order-2 space-y-3">
+            <div className="flex items-center gap-2">
+              <Pin className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold tracking-tight">Pinned</h2>
+              <Badge variant="secondary" className="ml-auto h-5 px-1.5 text-[10px]">
+                {pinnedPosts.length}
+              </Badge>
+            </div>
+            {pinnedPosts.length === 0 ? (
+              <p className="text-xs text-muted-foreground px-1">
+                Nothing pinned yet. Admins can pin posts from the feed.
+              </p>
+            ) : (
+              <ul className="space-y-1.5">
+                {pinnedPosts.map((p) => (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        document
+                          .getElementById(`river-post-${p.id}`)
+                          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }}
+                      className="w-full text-left rounded-md border bg-primary/5 hover:bg-primary/10 px-2.5 py-2 transition"
+                    >
+                      <div className="text-xs font-medium line-clamp-2">
+                        {p.body || '(no text)'}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        {formatDistanceToNow(new Date(p.created_at), { addSuffix: true })}
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </aside>
         </div>
+
       </AdminPageContainer>
     </AdminLayout>
   );
