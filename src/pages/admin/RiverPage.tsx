@@ -31,12 +31,14 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import {
   type RiverPost,
+  type RiverAuthor,
   uploadRiverMedia,
   useCreateRiverPost,
   useDeleteRiverPost,
   useRiverFeed,
   useRiverReactions,
   useRiverReplies,
+  useRiverAuthors,
   useToggleReaction,
   useTogglePin,
 } from '@/hooks/useRiver';
