@@ -553,6 +553,7 @@ export default function RiverPage() {
                         post={p}
                         reactions={reactions}
                         isAdmin={isAdmin}
+                        author={authors[p.author_id]}
                       />
                     </div>
                   ))}
