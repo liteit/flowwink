@@ -368,10 +368,12 @@ function PostCard({
   post,
   reactions,
   isAdmin,
+  author,
 }: {
   post: RiverPost;
   reactions: { emoji: string; user_id: string; post_id: string }[];
   isAdmin: boolean;
+  author?: RiverAuthor;
 }) {
   const { user } = useAuth();
   const [showReplies, setShowReplies] = useState(false);
@@ -385,13 +387,14 @@ function PostCard({
       <CardContent className="p-4">
         <div className="flex gap-3">
           <Avatar className="h-9 w-9 mt-0.5">
+            {author?.avatar_url && <AvatarImage src={author.avatar_url} alt="" />}
             <AvatarFallback className="text-xs">
-              {initialsFor(post.author_id)}
+              {initialsFor(author, post.author_id)}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 text-sm">
-              <span className="font-semibold">{post.author_id.slice(0, 8)}</span>
+              <span className="font-semibold">{displayName(author, post.author_id)}</span>
               <span className="text-muted-foreground text-xs">
                 · {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
               </span>
