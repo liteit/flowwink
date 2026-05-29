@@ -28,6 +28,9 @@ export default function ProfilePage() {
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [showAsAuthor, setShowAsAuthor] = useState(false);
+  const [emailFromAddress, setEmailFromAddress] = useState('');
+  const [emailFromName, setEmailFromName] = useState('');
+  const [emailReplyTo, setEmailReplyTo] = useState('');
   
   // Password change state
   const [newPassword, setNewPassword] = useState('');
@@ -39,6 +42,9 @@ export default function ProfilePage() {
       setBio(profile.bio || '');
       setAvatarUrl(profile.avatar_url || '');
       setShowAsAuthor(profile.show_as_author || false);
+      setEmailFromAddress((profile as any).email_from_address || '');
+      setEmailFromName((profile as any).email_from_name || '');
+      setEmailReplyTo((profile as any).email_reply_to || '');
     }
   }, [profile]);
 
