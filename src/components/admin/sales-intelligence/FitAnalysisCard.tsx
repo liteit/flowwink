@@ -41,7 +41,7 @@ export function FitAnalysisCard({ result }: FitAnalysisCardProps) {
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-2">Problem → Solution Mapping</p>
                 <div className="space-y-2">
-                  {result.problem_mapping.map((pm, i) => (
+                  {result.problem_mapping?.map((pm, i) => (
                     <div key={i} className="flex items-start gap-2 text-sm">
                       <Badge variant="outline" className="text-xs shrink-0 mt-0.5">
                         {pm.prospect_problem}
