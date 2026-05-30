@@ -35,7 +35,7 @@ export function FitAnalysisCard({ result }: FitAnalysisCardProps) {
             <p className="text-sm text-muted-foreground flex-1">{result.fit_advice}</p>
           </div>
 
-          {result.problem_mapping.length > 0 && (
+          {(result.problem_mapping?.length ?? 0) > 0 && (
             <>
               <Separator />
               <div>
