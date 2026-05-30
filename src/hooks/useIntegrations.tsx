@@ -313,6 +313,9 @@ export const defaultIntegrationsSettings: IntegrationsSettings = {
     secretName: 'HUNTER_API_KEY',
     docsUrl: 'https://hunter.io/api',
     docsLabel: 'Get API key',
+    config: {
+      maxContacts: 2,
+    },
   },
   jina: {
 
