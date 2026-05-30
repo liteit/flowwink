@@ -231,6 +231,53 @@ function TestConfigConnectionButton({
   );
 }
 
+// Hunter.io live credit indicator — calls hunter-account edge function
+function HunterCreditsBadge({ hasKey }: { hasKey: boolean }) {
+  const [info, setInfo] = useState<{ remaining: number; available: number; plan: string | null } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!hasKey) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('hunter-account');
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Failed to read account');
+      setInfo({
+        remaining: data.searches?.remaining ?? 0,
+        available: data.searches?.available ?? 0,
+        plan: data.plan_name ?? null,
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed');
+    } finally {
+      setLoading(false);
+    }
+  }, [hasKey]);
+
+  if (!hasKey) return null;
+
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-md border bg-muted/30 px-2.5 py-1.5 text-xs">
+      <span className="text-muted-foreground">Hunter credits</span>
+      {info ? (
+        <span className="font-medium">
+          {info.remaining.toLocaleString()} / {info.available.toLocaleString()}
+          {info.plan && <span className="text-muted-foreground ml-1">({info.plan})</span>}
+        </span>
+      ) : error ? (
+        <span className="text-destructive">{error}</span>
+      ) : (
+        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" disabled={loading} onClick={load}>
+          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Check'}
+        </Button>
+      )}
+    </div>
+  );
+}
+
 // Integration Configuration Component - no auto-save, uses parent callback directly
 function IntegrationConfigPanel({ 
   integrationKey,
