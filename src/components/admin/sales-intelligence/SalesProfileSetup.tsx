@@ -94,29 +94,7 @@ export function SalesProfileSetup() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <CardTitle className="text-base">Company Positioning</CardTitle>
-              <CardDescription>
-                ICP, value proposition and differentiators live in Business Identity — the single source agents use for prospecting and fit analysis.
-              </CardDescription>
-            </div>
-            <Badge variant="secondary">Team-wide</Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Button asChild variant="outline" size="sm" className="w-full gap-2">
-            <Link to="/admin/business-identity">
-              Edit Business Identity
-              <ArrowRight className="h-3 w-3" />
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
-
+    <div className="grid gap-4">
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
