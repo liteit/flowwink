@@ -360,6 +360,9 @@ function OpenAIUsageBadge({ hasKey, budgetUsd, warnAtPct }: { hasKey: boolean; b
       )}
     </div>
   );
+}
+
+
 
 // Integration Configuration Component - no auto-save, uses parent callback directly
 function IntegrationConfigPanel({ 
