@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { getServiceClient } from '../_shared/supabase-clients.ts';
+import { getServiceClient, resolveCaller } from '../_shared/supabase-clients.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,14 +43,27 @@ serve(async (req) => {
       });
     }
 
-    const input: ProfileSetupInput = { type, data, user_id: raw.user_id as string | undefined };
+    const authHeader = req.headers.get('Authorization');
+    const caller = authHeader ? await resolveCaller(authHeader) : null;
+    if (type === 'user' && caller?.error) {
+      return new Response(JSON.stringify({ error: 'Authentication required for user profile' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-            const supabase = getServiceClient();
+    const input: ProfileSetupInput = {
+      type,
+      data,
+      user_id: type === 'user'
+        ? caller?.user?.id
+        : (raw.user_id as string | undefined),
+    };
+    const supabase = getServiceClient();
 
     const userId = input.type === 'user' ? (input.user_id || null) : null;
 
     // Upsert the profile
-    const { data, error } = await supabase
+    const { data: profile, error } = await supabase
       .from('sales_intelligence_profiles')
       .upsert(
         {
@@ -76,7 +88,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      profile: data,
+      profile,
       message: `${input.type} profile saved successfully`,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
