@@ -6,9 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, Loader2, Check, AlertCircle, ArrowRight } from "lucide-react";
+import { User, Loader2, Check, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
+
 
 interface UserProfileData {
   [key: string]: unknown;
