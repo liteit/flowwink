@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -34,13 +34,24 @@ interface SendEmailDialogProps {
   recipientName?: string;
   /** Optional CRM context used to ground the AI draft. */
   leadContext?: LeadComposeContext;
+  /** Optional prefilled subject (e.g. from Fit Analysis intro letter). */
+  initialSubject?: string;
+  /** Optional prefilled body (e.g. from Fit Analysis intro letter). */
+  initialBody?: string;
 }
 
-export function SendEmailDialog({ open, onOpenChange, recipientEmail, recipientName, leadContext }: SendEmailDialogProps) {
-  const [subject, setSubject] = useState('');
-  const [body, setBody] = useState('');
+export function SendEmailDialog({ open, onOpenChange, recipientEmail, recipientName, leadContext, initialSubject, initialBody }: SendEmailDialogProps) {
+  const [subject, setSubject] = useState(initialSubject ?? '');
+  const [body, setBody] = useState(initialBody ?? '');
   const [sending, setSending] = useState(false);
   const [drafting, setDrafting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      if (initialSubject !== undefined) setSubject(initialSubject);
+      if (initialBody !== undefined) setBody(initialBody);
+    }
+  }, [open, initialSubject, initialBody]);
   const { data: chatSettings } = useChatSettings();
 
   const handleDraft = async () => {

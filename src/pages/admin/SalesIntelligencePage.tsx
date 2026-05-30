@@ -233,7 +233,7 @@ export default function SalesIntelligencePage() {
 
                 {/* Fit Analysis Results */}
                 {fitResult && fitResult.success && (
-                  <FitAnalysisCard result={fitResult} />
+                  <FitAnalysisCard result={fitResult} companyName={result.company?.name} />
                 )}
               </>
             )}
