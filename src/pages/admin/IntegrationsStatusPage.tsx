@@ -231,6 +231,53 @@ function TestConfigConnectionButton({
   );
 }
 
+// Hunter.io live credit indicator — calls hunter-account edge function
+function HunterCreditsBadge({ hasKey }: { hasKey: boolean }) {
+  const [info, setInfo] = useState<{ remaining: number; available: number; plan: string | null } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!hasKey) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('hunter-account');
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Failed to read account');
+      setInfo({
+        remaining: data.searches?.remaining ?? 0,
+        available: data.searches?.available ?? 0,
+        plan: data.plan_name ?? null,
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed');
+    } finally {
+      setLoading(false);
+    }
+  }, [hasKey]);
+
+  if (!hasKey) return null;
+
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-md border bg-muted/30 px-2.5 py-1.5 text-xs">
+      <span className="text-muted-foreground">Hunter credits</span>
+      {info ? (
+        <span className="font-medium">
+          {info.remaining.toLocaleString()} / {info.available.toLocaleString()}
+          {info.plan && <span className="text-muted-foreground ml-1">({info.plan})</span>}
+        </span>
+      ) : error ? (
+        <span className="text-destructive">{error}</span>
+      ) : (
+        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" disabled={loading} onClick={load}>
+          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Check'}
+        </Button>
+      )}
+    </div>
+  );
+}
+
 // Integration Configuration Component - no auto-save, uses parent callback directly
 function IntegrationConfigPanel({ 
   integrationKey,
@@ -523,6 +570,35 @@ function IntegrationConfigPanel({
             checked={config?.preferFreeTier ?? true}
             onCheckedChange={(checked) => handleChange({ preferFreeTier: checked })}
           />
+        </div>
+      </div>
+    );
+  }
+
+  if (integrationKey === 'hunter') {
+    const maxContacts = config?.maxContacts ?? 2;
+    return (
+      <div className="space-y-3 pt-3 border-t">
+        <div className="space-y-2">
+          <Label htmlFor="hunter-max" className="text-xs">Decision-makers per prospect</Label>
+          <Select
+            value={String(maxContacts)}
+            onValueChange={(v) => handleChange({ maxContacts: parseInt(v, 10) })}
+          >
+            <SelectTrigger id="hunter-max" className="h-8 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1 — minimum spend</SelectItem>
+              <SelectItem value="2">2 — recommended (top decision-makers)</SelectItem>
+              <SelectItem value="3">3</SelectItem>
+              <SelectItem value="5">5</SelectItem>
+              <SelectItem value="10">10 — full domain dump</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Lower values save Hunter.io credits. Each contact returned counts as one search request.
+          </p>
         </div>
       </div>
     );
@@ -885,7 +961,7 @@ export default function IntegrationsStatusPage() {
                     const requiresSecret = !CONFIG_BASED_KEYS.includes(key);
                     const IconComponent = iconMap[integration.icon as keyof typeof iconMap] || Bot;
                     const currentConfig = getDisplayConfig(key) || integration.config;
-                    const hasConfigSection = ['openai', 'gemini', 'local_llm', 'n8n', 'resend', 'google_analytics', 'meta_pixel', 'slack', 'jina'].includes(key);
+                    const hasConfigSection = ['openai', 'gemini', 'local_llm', 'n8n', 'resend', 'google_analytics', 'meta_pixel', 'slack', 'jina', 'hunter'].includes(key);
                     // Single source of truth — same resolver used by hooks + count loop
                     const { hasKey, isActive: isEnabled } = resolveIntegrationStatus(
                       key,
@@ -948,6 +1024,11 @@ export default function IntegrationsStatusPage() {
                           </div>
                         </CardHeader>
                         <CardContent className="pt-0 space-y-3">
+                          {key === 'hunter' && (
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <HunterCreditsBadge hasKey={hasKey} />
+                            </div>
+                          )}
                           {/* Actions */}
                           <div className="flex items-center gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
                             {(key === 'openai' || key === 'gemini' || key === 'anthropic') && (

@@ -55,6 +55,8 @@ export interface IntegrationProviderConfig {
   preferFreeTier?: boolean;
   // Meta Ads
   adAccountId?: string;
+  // Hunter.io
+  maxContacts?: number; // How many decision-makers to keep per prospect (saves credits)
 }
 
 // Integration configuration type
@@ -311,6 +313,9 @@ export const defaultIntegrationsSettings: IntegrationsSettings = {
     secretName: 'HUNTER_API_KEY',
     docsUrl: 'https://hunter.io/api',
     docsLabel: 'Get API key',
+    config: {
+      maxContacts: 2,
+    },
   },
   jina: {
 
