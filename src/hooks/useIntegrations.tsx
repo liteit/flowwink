@@ -57,6 +57,10 @@ export interface IntegrationProviderConfig {
   adAccountId?: string;
   // Hunter.io
   maxContacts?: number; // How many decision-makers to keep per prospect (saves credits)
+  // OpenAI usage guard — soft monthly USD budget. UI warns when month-to-date
+  // estimated spend reaches `warnAtPct` of this value. Does not block requests.
+  monthlyBudgetUsd?: number;
+  warnAtPct?: number; // 0-100, default 80
 }
 
 // Integration configuration type
@@ -174,6 +178,8 @@ export const defaultIntegrationsSettings: IntegrationsSettings = {
     config: {
       baseUrl: 'https://api.openai.com/v1',
       model: 'gpt-4.1-mini',
+      monthlyBudgetUsd: 50,
+      warnAtPct: 80,
     },
   },
   gemini: {
