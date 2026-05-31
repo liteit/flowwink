@@ -1578,7 +1578,7 @@ export const agencyKbCategories: TemplateKbCategory[] = [
         title: 'Architecture Options',
         slug: 'architecture',
         question: 'How should I structure multiple client sites?',
-        answer_text: 'Three approaches: 1) Single instance with shared database (simplest, best for related sites), 2) Single instance with separate databases per client (more isolation), 3) Separate Docker containers per client (complete isolation, easiest to transfer). Most agencies use approach 2 or 3 depending on client requirements.',
+        answer_text: 'Three approaches: 1) Single instance with shared database (simplest, best for related sites), 2) Single instance with separate databases per client (more isolation), 3) Separate Supabase + Vercel projects per client (complete isolation, easiest to transfer to the client later). Most agencies use approach 2 or 3 depending on client requirements.',
         is_featured: true,
         include_in_chat: true,
       },
