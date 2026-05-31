@@ -134,6 +134,7 @@ export const surveysModule = defineModule<Input, Output>({
   description:
     'Capture customer satisfaction with one-click NPS, CSAT, and custom surveys. Triggered manually or automatically after orders, tickets, contracts and bookings. Detractor responses auto-route to FlowPilot for recovery; promoter responses boost lead score and surface testimonial opportunities.',
   capabilities: ['data:read', 'data:write'],
+  tier: 'standard',
   inputSchema,
   outputSchema,
   skills: ['create_survey_campaign', 'send_survey', 'list_survey_responses'],

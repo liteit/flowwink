@@ -232,6 +232,7 @@ export const salesIntelligenceModule = defineModule<SalesIntelligenceInput, Sale
   maturity: 'L4',
   description: 'Prospect research, fit analysis, profile management, and introduction letter generation',
   capabilities: ['data:read', 'data:write'],
+  tier: 'standard',
   inputSchema: salesIntelligenceInputSchema,
   outputSchema: salesIntelligenceOutputSchema,
 

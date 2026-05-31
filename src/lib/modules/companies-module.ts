@@ -94,6 +94,7 @@ export const companiesModule = defineModule<CompanyModuleInput, CompanyModuleOut
   maturity: 'L4',
   description: 'Create and manage company records with optional AI enrichment',
   capabilities: ['content:receive', 'data:write'],
+  tier: 'standard',
   inputSchema: companyModuleInputSchema,
   outputSchema: companyModuleOutputSchema,
 

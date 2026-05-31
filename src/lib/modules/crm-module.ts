@@ -626,6 +626,7 @@ export const crmModule = defineModule<CRMLeadInput, CRMLeadOutput>({
   maturity: 'L4',
   description: 'Create and manage leads',
   capabilities: ['content:receive', 'data:write', 'webhook:trigger'],
+  tier: 'standard',
   inputSchema: crmLeadInputSchema,
   outputSchema: crmLeadOutputSchema,
 

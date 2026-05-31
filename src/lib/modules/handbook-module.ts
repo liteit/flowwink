@@ -74,6 +74,7 @@ export const handbookModule = defineModule<HandbookInput, HandbookOutput>({
   maturity: 'L2',
   description: 'Agentic methodology handbook with search and reader capabilities',
   capabilities: ['data:read'],
+  tier: 'standard',
   inputSchema: handbookInputSchema,
   outputSchema: handbookOutputSchema,
 

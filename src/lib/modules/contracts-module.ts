@@ -243,6 +243,7 @@ export const contractsModule = defineModule<ContractsInput, ContractsOutput>({
   maturity: 'L3',
   description: 'Contract lifecycle management with renewal tracking and document storage',
   capabilities: ['data:write', 'data:read'],
+  tier: 'standard',
   inputSchema: contractsInputSchema,
   outputSchema: contractsOutputSchema,
 

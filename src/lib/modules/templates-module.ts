@@ -53,6 +53,7 @@ export const templatesModule = defineModule<TemplatesInput, TemplatesOutput>({
   maturity: 'L3',
   description: 'Template gallery, export current site as reusable template, and import templates from file',
   capabilities: ['data:read', 'data:write'],
+  tier: 'core',
   inputSchema: templatesInputSchema,
   outputSchema: templatesOutputSchema,
 

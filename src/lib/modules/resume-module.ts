@@ -193,6 +193,7 @@ export const resumeModule = defineModule<ResumeMatchInput, ResumeMatchOutput>({
   maturity: 'L2',
   description: 'Match consultant profiles against job descriptions with AI-powered scoring and cover letters',
   capabilities: ['data:read', 'content:produce'],
+  tier: 'extended',
   inputSchema: resumeMatchInputSchema,
   outputSchema: resumeMatchOutputSchema,
 

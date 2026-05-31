@@ -98,6 +98,7 @@ export const shippingModule = defineModule<Input, Output>({
   description:
     'Outbound shipping with multi-parcel support and carrier integrations. Built-in: PostNord, DHL, Bring. Tracking URLs are auto-rendered from per-carrier templates.',
   capabilities: ['data:read', 'data:write'],
+  tier: 'extended',
   inputSchema,
   outputSchema,
   skills: ['manage_carrier', 'manage_shipment'],

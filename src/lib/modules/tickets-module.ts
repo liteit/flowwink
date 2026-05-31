@@ -62,6 +62,7 @@ export const ticketsModule = defineModule<TicketModuleInput, TicketModuleOutput>
   maturity: 'L3',
   description: 'Helpdesk ticket management with Kanban pipeline',
   capabilities: ['content:receive', 'data:write', 'webhook:trigger'],
+  tier: 'standard',
   inputSchema: ticketModuleInputSchema,
   outputSchema: ticketModuleOutputSchema,
 

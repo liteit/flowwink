@@ -36,6 +36,7 @@ export const workspaceChatModule = defineModule<Input, Output>({
   description:
     'Internal authenticated chat that blends your workspace data with the model\'s own knowledge and optional web search — with source citations. No mutations.',
   capabilities: ['data:read'],
+  tier: 'standard',
   inputSchema,
   outputSchema,
 

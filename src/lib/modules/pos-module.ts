@@ -211,6 +211,7 @@ export const posModule = defineModule<Input, Output>({
   maturity: 'L3',
   description: 'In-store register — sessions, receipts, split payments, stock-aware product catalog',
   capabilities: ['data:read', 'data:write'],
+  tier: 'extended',
   inputSchema,
   outputSchema,
 

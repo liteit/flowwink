@@ -185,6 +185,7 @@ export const invoicingModule = defineModule<InvoicingInput, InvoicingOutput>({
   maturity: 'L4',
   description: 'Create and manage invoices with line items, tax computation, and status tracking',
   capabilities: ['data:write', 'data:read'],
+  tier: 'standard',
   inputSchema: invoicingInputSchema,
   outputSchema: invoicingOutputSchema,
 

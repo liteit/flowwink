@@ -154,6 +154,7 @@ export const wikiModule = defineModule<Input, Output>({
   description:
     'Internal TEdit-style wiki / intranet. Authenticated users can read and edit; CamelCase / [[WikiWord]] auto-linking creates missing pages on click. Surfaces as a selectable knowledge source in Cowork Chat.',
   capabilities: ['data:read', 'data:write', 'content:receive'],
+  tier: 'standard',
   inputSchema,
   outputSchema,
   skills: ['manage_wiki_page', 'search_wiki'],

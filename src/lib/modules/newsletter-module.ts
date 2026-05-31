@@ -351,6 +351,7 @@ export const newsletterModule = defineModule<NewsletterModuleInput, NewsletterMo
   maturity: 'L4',
   description: 'Create newsletter drafts for sending',
   capabilities: ['content:receive', 'data:write'],
+  tier: 'standard',
   inputSchema: newsletterModuleInputSchema,
   outputSchema: newsletterModuleOutputSchema,
 

@@ -177,6 +177,7 @@ export const emailModule = defineModule<Input, Output>({
   description:
     'Provider-agnostic email sender. Routes system emails through SMTP or Resend.',
   capabilities: ['data:write'],
+  tier: 'core',
   inputSchema,
   outputSchema,
 

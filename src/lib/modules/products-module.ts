@@ -500,6 +500,7 @@ export const productsModule = defineModule<ProductModuleInput, ProductModuleOutp
   maturity: 'L3',
   description: 'Create and manage e-commerce products',
   capabilities: ['content:receive', 'data:write', 'webhook:trigger'],
+  tier: 'extended',
   inputSchema: productModuleInputSchema,
   outputSchema: productModuleOutputSchema,
 

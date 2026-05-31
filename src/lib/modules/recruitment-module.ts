@@ -295,6 +295,7 @@ export const recruitmentModule = defineModule<RecruitmentInput, RecruitmentOutpu
   description:
     'Applicant Tracking System — job postings, candidate pipeline, AI scoring and outreach. FlowPilot runs the daily pipeline review.',
   capabilities: ['data:write', 'data:read'],
+  tier: 'extended',
   inputSchema: recruitmentInputSchema,
   outputSchema: recruitmentOutputSchema,
 

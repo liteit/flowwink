@@ -204,6 +204,7 @@ export const reconciliationModule = defineModule<Input, Output>({
     'Bank reconciliation: Stripe payout sync + bank file import (CAMT.053/MT940/OFX/CSV/SIE) + OCR import of statement images/PDFs. Auto-matches against invoices/expenses/orders.',
   requires: ['accounting'],
   capabilities: ['data:read', 'data:write'],
+  tier: 'standard',
   inputSchema,
   outputSchema,
 

@@ -76,6 +76,7 @@ export const formsModule = defineModule<FormSubmissionModuleInput, FormSubmissio
   maturity: 'L4',
   description: 'Process form submissions and create leads',
   capabilities: ['content:receive', 'data:write', 'webhook:trigger'],
+  tier: 'standard',
   inputSchema: formSubmissionModuleInputSchema,
   outputSchema: formSubmissionModuleOutputSchema,
 

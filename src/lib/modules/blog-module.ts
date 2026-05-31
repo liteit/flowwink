@@ -634,6 +634,7 @@ export const blogModule = defineModule<BlogModuleInput, BlogModuleOutput>({
   maturity: 'L4',
   description: 'Publish content to the blog',
   capabilities: ['content:receive', 'data:write', 'webhook:trigger'],
+  tier: 'standard',
   inputSchema: blogModuleInputSchema,
   outputSchema: blogModuleOutputSchema,
 

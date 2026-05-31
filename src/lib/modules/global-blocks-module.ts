@@ -17,6 +17,7 @@ export const globalBlocksModule = defineModule<GlobalBlockModuleInput, GlobalBlo
   maturity: 'L3',
   description: 'Create reusable global content blocks (header, footer, etc.)',
   capabilities: ['content:receive', 'data:write'],
+  tier: 'core',
   inputSchema: globalBlockModuleInputSchema,
   outputSchema: globalBlockModuleOutputSchema,
 

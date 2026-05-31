@@ -68,6 +68,7 @@ export const calendarModule = defineModule<Input, Output>({
   maturity: 'L3',
   description: 'Unified calendar aggregating bookings, tasks, leave and renewals',
   capabilities: ['data:read'],
+  tier: 'standard',
   inputSchema,
   outputSchema,
 
