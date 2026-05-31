@@ -9,7 +9,6 @@
 > A modular, self-hosted SaaS platform whose every capability is exposed as a skill over **MCP**. Run it with the built-in vertically-integrated operator **FlowPilot**, swap in an external one like **[OpenClaw](https://www.clawable.org)**, mix several in parallel — or run it as a pure SaaS with humans in the loop. The platform doesn't care.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Docker Image](https://img.shields.io/badge/Docker-ghcr.io-blue)](https://github.com/magnusfroste/flowwink/pkgs/container/flowwink)
 [![Release](https://img.shields.io/badge/release-v2.1-brightgreen)](https://github.com/magnusfroste/flowwink/releases)
 
 ---
