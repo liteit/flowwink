@@ -354,6 +354,44 @@ const suite_ai_usage_logging: SuiteFn = async (admin) => {
   return out;
 };
 
+/** Suite: demo cycle — verify cron job is scheduled when demo_mode is on. */
+const suite_demo_cycle: SuiteFn = async (admin) => {
+  const out: TestResult[] = [];
+
+  out.push(
+    await runCheck("demo_cycle", "cron job scheduled when demo_mode is enabled", async () => {
+      const { data: flag } = await admin
+        .from("site_settings")
+        .select("value")
+        .eq("key", "demo_mode")
+        .maybeSingle();
+      const isDemo = flag?.value === true || (flag?.value as any)?.enabled === true;
+      if (!isDemo) {
+        throw new SkipTest("demo_mode is off on this instance — cron check not applicable.");
+      }
+      const { data, error } = await admin.rpc("demo_cycle_cron_status");
+      if (error) throw new Error(error.message);
+      const status = data as any;
+      if (!status?.scheduled) {
+        throw new Error(
+          "demo_mode is enabled but demo-cycle-hourly cron is NOT scheduled. " +
+          "Toggle Demo Mode off and on in Settings → General to re-register it, " +
+          "or run enable_demo_cycle_cron(url, anon_key) directly.",
+        );
+      }
+      if (status.active === false) {
+        throw new Error("cron job exists but is inactive (cron.job.active = false).");
+      }
+      if (status.last_status && status.last_status !== "succeeded" && status.last_status !== "starting") {
+        throw new Error(`last cron run failed: ${status.last_status} — ${status.last_message ?? ""}`);
+      }
+      return { details: status };
+    }),
+  );
+
+  return out;
+};
+
 const SUITES: Record<string, SuiteFn> = {
   instance_health: suite_instance_health,
   mcp_invariants: suite_mcp_invariants,
@@ -363,6 +401,7 @@ const SUITES: Record<string, SuiteFn> = {
   event_bus: suite_event_bus,
   ai_usage_logging: suite_ai_usage_logging,
   skill_manifest_coverage: suite_skill_manifest_coverage,
+  demo_cycle: suite_demo_cycle,
 };
 
 // ─── Suite: Skill Manifest Coverage ──────────────────────────────────────────
