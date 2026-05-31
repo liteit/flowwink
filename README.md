@@ -353,18 +353,21 @@ npm run dev   # migrations run automatically
 
 ### Deploy to production
 
-```bash
-# Docker (recommended)
-docker pull ghcr.io/magnusfroste/flowwink:latest
+The recommended FlowWink stack:
 
-# Or deploy edge functions manually
-supabase functions deploy agent-execute agent-operate flowpilot-heartbeat
+- **Backend** — [Supabase Cloud](https://supabase.com/) (free tier works for getting started). Holds the database, auth, edge functions and storage.
+- **Frontend** — deploy this repo to [Vercel](https://vercel.com/), Netlify, Cloudflare Pages, or any static host. Vercel auto-deploys on every push to `main`.
+
+```bash
+# Push database schema + edge functions to your Supabase project
+supabase link --project-ref <your-ref>
 supabase db push
+supabase functions deploy --project-ref <your-ref>
 ```
 
-Supported platforms: **Easypanel**, **Railway**, **Fly.io**, **Hetzner**, **DigitalOcean**, or any VPS with Docker.
+Then point your Vercel project at this repo and set the three env vars (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`). That's it.
 
-See **[docs/guides/deployment.md](docs/guides/deployment.md)** for full deployment guides.
+See **[docs/guides/deployment.md](docs/guides/deployment.md)** for the full walkthrough.
 
 ---
 
