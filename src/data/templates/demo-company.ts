@@ -281,9 +281,23 @@ export const demoCompanyTemplate: StarterTemplate = {
           type: 'text',
           data: {
             content: { type: 'doc', content: [
-              { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'How this demo works' }] },
-              { type: 'paragraph', content: [{ type: 'text', text: 'Every hour a cron job calls reset_module_data to wipe the dynamic data this demo produced, then seed_module_demo re-stages a fresh scenario across CRM, quotes, invoices and expenses. Static content (pages, KB, products) is never touched.' }] },
-              { type: 'paragraph', content: [{ type: 'text', text: 'Email is disabled. Outbound communication skills are set to approve, so agents propose sends in the approval queue at /admin/approvals instead of firing real messages.' }] },
+              { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'What the hourly cron actually does' }] },
+              { type: 'paragraph', content: [{ type: 'text', text: 'Every hour on the hour, the demo-cycle job runs reset_module_data → seed_module_demo across the pilot modules, then restocks the shop. It only deletes rows it created itself (tracked in demo_run_items) — your admin edits and the static content set are safe.' }] },
+              { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'Wiped & re-seeded every hour' }] },
+              { type: 'bulletList', content: [
+                { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'CRM — leads, contacts, deals' }] }] },
+                { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Quotes — drafts and sent quotes' }] }] },
+                { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Invoices — generated, tracked, paid' }] }] },
+                { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Expenses — submitted, approved, booked' }] }] },
+                { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Ecommerce — orders, fulfillment, stock levels' }] }] },
+              ]},
+              { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'Survives the reset' }] },
+              { type: 'bulletList', content: [
+                { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Pages, blog posts, KB articles, products, branding' }] }] },
+                { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'FlowPilot soul, objectives, skills, agent memory' }] }] },
+                { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Anything you create as a logged-in admin (until next cycle for dynamic modules)' }] }] },
+              ]},
+              { type: 'paragraph', content: [{ type: 'text', text: 'Email is disabled on this instance. Outbound skills are set to approve, so agents queue proposed sends in /admin/approvals instead of firing real messages.' }] },
             ]},
           },
         },
