@@ -376,7 +376,7 @@ HMAC-SHA256 signatures · Retry with exponential backoff · Auto-disable after 5
 
 ## 10. Deployment
 
-- **Self-hosted**: Docker with `docker-compose.yml`
+- **Frontend**: Self-hosted from this repo on Vercel / Netlify / Cloudflare Pages
 - **Edge Functions**: Deployed to Supabase (`supabase functions deploy`)
 - **Public functions**: `--no-verify-jwt`
 - **Admin functions**: Default JWT verification

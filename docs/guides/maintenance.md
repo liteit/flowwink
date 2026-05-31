@@ -88,14 +88,16 @@ curl -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
   -o storage-backup.json
 ```
 
-#### Application Backups
-```bash
-# Backup Docker images
-docker save flowwink:latest | gzip > flowwink-backup-$(date +%Y%m%d).tar.gz
+#### Frontend & config backups
 
-# Backup configuration files
-tar -czf config-backup-$(date +%Y%m%d).tar.gz .env nginx.conf docker-compose.yml
+The frontend is a static SPA built from this git repo — git history is the backup. Tag releases (`git tag v2.1.x`) so you can roll back. Vercel keeps every deploy and supports instant rollback.
+
+For local env, back up `.env` only (it contains the Supabase URL and keys):
+
+```bash
+cp .env .env.backup-$(date +%Y%m%d)
 ```
+
 
 ### Backup Retention Policy
 - **Daily backups**: Keep 7 days

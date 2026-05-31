@@ -13,9 +13,8 @@ You're an operator if you want to **use** FlowWink for a business — not modify
 
 | Step | Doc |
 |---|---|
-| 5-minute Docker quickstart | [`../guides/docker-quickstart.md`](../guides/docker-quickstart.md) |
-| Full backend setup & env | [`../guides/setup.md`](../guides/setup.md) |
-| Production deployment (Docker, Easypanel, Railway) | [`../guides/deployment.md`](../guides/deployment.md) |
+| Backend setup & env vars | [`../guides/setup.md`](../guides/setup.md) |
+| Production deployment (Supabase Cloud + Vercel) | [`../guides/deployment.md`](../guides/deployment.md) |
 | Security & auth model | [`../guides/security.md`](../guides/security.md) |
 | **System Settings reference** (`/admin/settings`) | [`./system-settings.md`](./system-settings.md) |
 
