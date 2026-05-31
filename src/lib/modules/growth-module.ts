@@ -277,6 +277,7 @@ export const growthModule = defineModule<GrowthCampaignInput, GrowthCampaignOutp
   maturity: 'L3',
   description: 'Manage ad campaigns and track paid growth performance',
   capabilities: ['data:read', 'data:write'],
+  tier: 'standard',
   inputSchema: growthCampaignInputSchema,
   outputSchema: growthCampaignOutputSchema,
 

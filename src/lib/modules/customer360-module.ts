@@ -56,6 +56,7 @@ export const customer360Module = defineModule<Input, Output>({
   description:
     'One screen showing every signal, deal, order, invoice, ticket, booking, subscription, chat and webinar tied to a person or customer — with a unified timeline and lifetime-value KPIs.',
   capabilities: ['data:read'],
+  tier: 'standard',
   inputSchema,
   outputSchema,
 

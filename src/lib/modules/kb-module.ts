@@ -91,6 +91,7 @@ export const kbModule = defineModule<KBArticleModuleInput, KBArticleModuleOutput
   maturity: 'L3',
   description: 'Create knowledge base articles',
   capabilities: ['content:receive', 'data:write'],
+  tier: 'standard',
   inputSchema: kbArticleModuleInputSchema,
   outputSchema: kbArticleModuleOutputSchema,
 

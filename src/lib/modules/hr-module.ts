@@ -147,6 +147,7 @@ export const hrModule = defineModule<HrInput, HrOutput>({
   maturity: 'L3',
   description: 'Employee directory, leave management, and organizational structure',
   capabilities: ['data:write', 'data:read'],
+  tier: 'standard',
   inputSchema: hrInputSchema,
   outputSchema: hrOutputSchema,
 

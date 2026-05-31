@@ -79,6 +79,7 @@ export const mediaModule = defineModule<MediaModuleInput, MediaModuleOutput>({
   maturity: 'L2',
   description: 'Manage media assets and files',
   capabilities: ['data:read', 'data:write'],
+  tier: 'core',
   inputSchema: mediaModuleInputSchema,
   outputSchema: mediaModuleOutputSchema,
 

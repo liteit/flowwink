@@ -106,6 +106,7 @@ export const projectsModule = defineModule<ProjectsInput, ProjectsOutput>({
   maturity: 'L3',
   description: 'Project and task management with Kanban boards, assignments, and time tracking integration',
   capabilities: ['data:write', 'data:read'],
+  tier: 'standard',
   inputSchema: projectsInputSchema,
   outputSchema: projectsOutputSchema,
 

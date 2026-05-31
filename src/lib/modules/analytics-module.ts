@@ -193,6 +193,7 @@ export const analyticsModule = defineModule<Input, Output>({
   maturity: 'L3',
   description: 'Dashboard with insights on leads, deals, and newsletter performance',
   capabilities: ['data:read'],
+  tier: 'standard',
   inputSchema,
   outputSchema,
 

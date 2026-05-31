@@ -174,6 +174,7 @@ export const liveSupportModule = defineModule<Input, Output>({
   maturity: 'L3',
   description: 'Human agent takeover for escalated chat conversations',
   capabilities: ['data:read', 'data:write'],
+  tier: 'standard',
   inputSchema,
   outputSchema,
 

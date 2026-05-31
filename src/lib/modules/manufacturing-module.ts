@@ -274,6 +274,7 @@ export const manufacturingModule = defineModule<ManufacturingInput, Manufacturin
   description:
     'MRP-light: Bills of Materials, Manufacturing Orders, component reservation, and the link from production demand to procurement.',
   capabilities: ['data:write', 'data:read'],
+  tier: 'extended',
   inputSchema: manufacturingInputSchema,
   outputSchema: manufacturingOutputSchema,
 

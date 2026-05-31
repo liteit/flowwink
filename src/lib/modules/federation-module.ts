@@ -649,6 +649,7 @@ export const federationModule = defineModule<FederationPeerInput, FederationPeer
   maturity: 'L3',
   description: 'Agent-to-Agent protocol — register and manage peer connections',
   capabilities: ['data:read', 'data:write'],
+  tier: 'core',
   inputSchema: federationPeerInputSchema,
   outputSchema: federationPeerOutputSchema,
 

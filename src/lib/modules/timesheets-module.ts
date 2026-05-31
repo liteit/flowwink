@@ -127,6 +127,7 @@ export const timesheetsModule = defineModule<TimesheetsInput, TimesheetsOutput>(
   description: 'Time tracking for employees and projects with billable/non-billable categorization',
   requires: ['projects'],
   capabilities: ['data:write', 'data:read'],
+  tier: 'standard',
   inputSchema: timesheetsInputSchema,
   outputSchema: timesheetsOutputSchema,
 

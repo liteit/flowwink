@@ -129,6 +129,7 @@ const fieldServiceModule = defineModule<Input, Output>({
   description:
     'Dispatch on-site service orders: schedule technicians, track visits, capture signatures and auto-generate invoices on completion.',
   capabilities: ['data:write', 'data:read'],
+  tier: 'extended',
   inputSchema,
   outputSchema,
   skills: ['manage_service_order'],

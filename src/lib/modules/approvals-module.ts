@@ -106,6 +106,7 @@ export const approvalsModule = defineModule<ApprovalsInput, ApprovalsOutput>({
   description:
     'Generic approval engine — define rules (entity type + amount threshold + required role) and route requests for sign-off. Used by Purchasing, Expenses, Invoicing and Quotes.',
   capabilities: ['data:read', 'data:write'],
+  tier: 'standard',
   inputSchema: approvalsInputSchema,
   outputSchema: approvalsOutputSchema,
   skills: ['manage_approvals', 'approve_pending_operation', 'list_pending_operations', 'reject_pending_operation'],

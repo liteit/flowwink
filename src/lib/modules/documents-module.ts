@@ -176,6 +176,7 @@ export const documentsModule = defineModule<DocumentsInput, DocumentsOutput>({
   maturity: 'L3',
   description: 'Document management with categorization, entity linking, and version tracking',
   capabilities: ['data:write', 'data:read'],
+  tier: 'core',
   inputSchema: documentsInputSchema,
   outputSchema: documentsOutputSchema,
 

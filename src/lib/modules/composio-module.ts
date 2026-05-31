@@ -162,6 +162,7 @@ export const composioModule = defineModule<ComposioActionInput, ComposioActionOu
   maturity: 'L3',
   description: 'Connect to 1000+ external apps via managed OAuth and intent-based tool resolution',
   capabilities: ['data:read', 'data:write', 'webhook:trigger'],
+  tier: 'standard',
   inputSchema: composioActionInputSchema,
   outputSchema: composioActionOutputSchema,
 

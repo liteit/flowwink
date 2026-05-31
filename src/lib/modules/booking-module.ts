@@ -282,6 +282,7 @@ export const bookingModule = defineModule<BookingModuleInput, BookingModuleOutpu
   maturity: 'L3',
   description: 'Create and manage bookings/appointments',
   capabilities: ['content:receive', 'data:write', 'webhook:trigger'],
+  tier: 'standard',
   inputSchema: bookingModuleInputSchema,
   outputSchema: bookingModuleOutputSchema,
 

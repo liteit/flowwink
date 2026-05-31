@@ -139,6 +139,7 @@ export const slaModule = defineModule<SlaInput, SlaOutput>({
   description:
     'Service level agreement monitoring for order fulfillment, ticket response, lead handling, chat reply times, and booking confirmations. Auto-detects violations, auto-resolves when entities are handled.',
   capabilities: ['data:read', 'data:write'],
+  tier: 'standard',
   inputSchema: slaInputSchema,
   outputSchema: slaOutputSchema,
 

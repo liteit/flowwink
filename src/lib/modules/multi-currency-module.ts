@@ -126,6 +126,7 @@ export const multiCurrencyModule = defineModule<Input, Output>({
   description:
     'Sell and bill in multiple currencies with daily ECB rates and FX revaluation of open AR/AP.',
   capabilities: ['data:read', 'data:write'],
+  tier: 'standard',
   inputSchema,
   outputSchema,
   skills: ['set_exchange_rate', 'fetch_ecb_rates', 'revalue_open_balances'],

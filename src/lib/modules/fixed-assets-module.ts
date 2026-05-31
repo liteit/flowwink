@@ -129,6 +129,7 @@ export const fixedAssetsModule = defineModule<Input, Output>({
     'Capitalize equipment, run monthly depreciation, and post disposals — all to BAS 2024 accounts (1210/1219/7832 + 3970/7970).',
   requires: ['accounting'],
   capabilities: ['data:read', 'data:write'],
+  tier: 'extended',
   inputSchema,
   outputSchema,
   skills: ['register_fixed_asset', 'run_monthly_depreciation', 'dispose_fixed_asset', 'propose_annual_depreciation'],

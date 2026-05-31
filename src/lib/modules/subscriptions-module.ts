@@ -238,6 +238,7 @@ export const subscriptionsModule = defineModule<Input, Output>({
   description: 'Recurring revenue lifecycle — active customers, MRR, churn, dunning, renewals, win-back',
   requires: ['invoicing'],
   capabilities: ['data:read', 'data:write'],
+  tier: 'extended',
   inputSchema,
   outputSchema,
 

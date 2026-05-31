@@ -48,6 +48,7 @@ const FLOWPILOT_IDENTITY = {
     'Autonomous self-improvement & skill evolution',
     'A2A peer communication',
   ],
+  tier: 'core',
   boundaries: [
     'Cannot send newsletters or emails without explicit approval',
     'Cannot delete user data or drop tables',

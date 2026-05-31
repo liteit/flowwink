@@ -90,6 +90,7 @@ export const browserControlModule = defineModule<BrowserControlInput, BrowserCon
   maturity: 'L3',
   description: 'Chrome Extension relay for authenticated web browsing — enables FlowPilot to read login-walled sites (LinkedIn, X) using your browser session',
   capabilities: ['data:read'],
+  tier: 'standard',
   inputSchema: browserControlInputSchema,
   outputSchema: browserControlOutputSchema,
 

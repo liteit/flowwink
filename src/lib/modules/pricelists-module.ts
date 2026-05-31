@@ -134,6 +134,7 @@ export const pricelistsModule = defineModule<Input, Output>({
   description:
     'Versioned pricing per customer, company, or period — Odoo-style price lists with fixed prices or discount %. Resolves the best applicable price for any product+customer+date.',
   capabilities: ['data:read', 'data:write'],
+  tier: 'extended',
   inputSchema,
   outputSchema,
   skills: ['manage_pricelist', 'manage_pricelist_item', 'resolve_pricelist_price'],

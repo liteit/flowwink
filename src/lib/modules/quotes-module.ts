@@ -108,6 +108,7 @@ export const quotesModule = defineModule<QuotesInput, QuotesOutput>({
   description:
     'Sales quotes with line items, versioning, customer e-sign via public link, reusable templates, and approval workflow before sending high-value offers.',
   capabilities: ['data:read', 'data:write'],
+  tier: 'standard',
   inputSchema: quotesInputSchema,
   outputSchema: quotesOutputSchema,
   skills: ['manage_quote'],

@@ -651,6 +651,7 @@ export const pagesModule = defineModule<PageModuleInput, PageModuleOutput>({
   maturity: 'L4',
   description: 'Create and publish website pages, header, footer, branding and navigation',
   capabilities: ['content:receive', 'data:write', 'webhook:trigger'],
+  tier: 'standard',
   inputSchema: pageModuleInputSchema,
   outputSchema: pageModuleOutputSchema,
 
