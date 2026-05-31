@@ -164,6 +164,14 @@ export async function bootstrapModule(
   const skillSeeds = unified?.skillSeeds ?? bootstrap?.skills ?? [];
   if (skillSeeds.length) {
     for (const skill of skillSeeds) {
+      // Defensive: skip undefined/empty entries (trailing-comma or accidental holes
+      // in a seeds array would otherwise crash the entire module bootstrap).
+      if (!skill || typeof skill !== 'object' || !skill.name) {
+        const msg = `Skipped invalid skill seed in ${moduleId} (missing name)`;
+        result.errors.push(msg);
+        logger.warn(`[module-bootstrap] ${msg}`, skill);
+        continue;
+      }
       try {
         const { data: existing } = await supabase
           .from('agent_skills')
@@ -207,12 +215,14 @@ export async function bootstrapModule(
         }
         result.seededSkills++;
       } catch (err) {
-        const msg = `Skill ${skill.name}: ${err instanceof Error ? err.message : 'Unknown'}`;
+        const skillName = skill?.name ?? '<unknown>';
+        const msg = `Skill ${skillName}: ${err instanceof Error ? err.message : 'Unknown'}`;
         result.errors.push(msg);
         logger.error(`[module-bootstrap] ${msg}`);
       }
     }
   }
+
 
   // 5. Seed automations (upsert by name) — unified or legacy.
   //    Automations only run when FlowPilot module is enabled (FlowPilot owns the cron loop).
@@ -222,6 +232,12 @@ export async function bootstrapModule(
   }
   if (automations.length && flowpilotEnabled) {
     for (const auto of automations) {
+      if (!auto || typeof auto !== 'object' || !auto.name) {
+        const msg = `Skipped invalid automation seed in ${moduleId} (missing name)`;
+        result.errors.push(msg);
+        logger.warn(`[module-bootstrap] ${msg}`, auto);
+        continue;
+      }
       try {
         const { data: existing } = await supabase
           .from('agent_automations')
@@ -245,12 +261,14 @@ export async function bootstrapModule(
           result.seededAutomations++;
         }
       } catch (err) {
-        const msg = `Automation ${auto.name}: ${err instanceof Error ? err.message : 'Unknown'}`;
+        const autoName = auto?.name ?? '<unknown>';
+        const msg = `Automation ${autoName}: ${err instanceof Error ? err.message : 'Unknown'}`;
         result.errors.push(msg);
         logger.error(`[module-bootstrap] ${msg}`);
       }
     }
   }
+
 
   logger.log(`[module-bootstrap] ${moduleId}: ${result.seededSkills} skills, ${result.seededAutomations} automations`);
 
