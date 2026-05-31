@@ -12402,6 +12402,8 @@ export type Database = {
       }
       create_payroll_run: { Args: { p_period_date: string }; Returns: Json }
       current_employee_id: { Args: never; Returns: string }
+      demo_cycle_cron_status: { Args: never; Returns: Json }
+      disable_demo_cycle_cron: { Args: never; Returns: Json }
       dispatch_automation_event: {
         Args: {
           entity_id?: string
@@ -12426,6 +12428,10 @@ export type Database = {
       emit_platform_event: {
         Args: { _event_name: string; _payload?: Json; _source?: string }
         Returns: string
+      }
+      enable_demo_cycle_cron: {
+        Args: { p_anon_key: string; p_function_url: string }
+        Returns: Json
       }
       evaluate_approval_required: {
         Args: {
