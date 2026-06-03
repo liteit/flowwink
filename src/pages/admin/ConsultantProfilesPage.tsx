@@ -244,6 +244,24 @@ function CopyCheckinLinkButton({ profileId, profileName }: { profileId: string; 
   );
 }
 
+function LastCheckinCell({ profileId }: { profileId: string }) {
+  const { data, isLoading } = useLastCheckin(profileId);
+  if (isLoading) {
+    return <span className="text-xs text-muted-foreground">…</span>;
+  }
+  if (!data?.created_at) {
+    return <span className="text-xs text-muted-foreground">Never</span>;
+  }
+  return (
+    <span
+      className="text-xs text-muted-foreground"
+      title={new Date(data.created_at).toLocaleString()}
+    >
+      {formatDistanceToNow(new Date(data.created_at), { addSuffix: true })}
+    </span>
+  );
+}
+
 export default function ConsultantProfilesPage() {
   const { data: profiles = [], isLoading } = useConsultantProfiles();
   const queryClient = useQueryClient();
