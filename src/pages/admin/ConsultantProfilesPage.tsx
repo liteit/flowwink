@@ -476,6 +476,22 @@ export default function ConsultantProfilesPage() {
             />
             <Button
               variant="outline"
+              onClick={() => reindexMutation.mutate()}
+              disabled={reindexMutation.isPending || (staleQuery.data ?? 0) === 0}
+              title="Re-embed profiles flagged stale so semantic search stays fresh"
+            >
+              {reindexMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4 mr-2" />
+              )}
+              Re-index
+              {(staleQuery.data ?? 0) > 0 && (
+                <Badge variant="secondary" className="ml-2">{staleQuery.data}</Badge>
+              )}
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => fileInputRef.current?.click()}
               disabled={isParsing}
             >
@@ -490,6 +506,7 @@ export default function ConsultantProfilesPage() {
               <Plus className="h-4 w-4 mr-2" />
               Add Consultant
             </Button>
+
           </div>
         </AdminPageHeader>
 
