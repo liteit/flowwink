@@ -54,6 +54,15 @@ function describeValue(v: unknown): string {
   return s.length > 240 ? s.slice(0, 240) + "…" : s;
 }
 
+function FieldRow({ fieldKey, value }: { fieldKey: string; value: unknown }) {
+  return (
+    <>
+      <dt className="text-muted-foreground">{fieldKey}</dt>
+      <dd className="break-words">{describeValue(value)}</dd>
+    </>
+  );
+}
+
 export function CheckinHistoryButton({
   profileId,
   profileName,
