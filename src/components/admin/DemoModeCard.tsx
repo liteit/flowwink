@@ -106,7 +106,8 @@ export function DemoModeCard() {
         </CardTitle>
         <CardDescription>
           Enable only on a dedicated demo instance. Pilot modules (CRM, Quotes, Invoices,
-          Expenses, Ecommerce) are wiped and re-seeded hourly by the <code>demo-cycle</code> job.
+          Expenses, Ecommerce) are wiped and re-seeded daily at 03:00 UTC by the{' '}
+          <code>demo-cycle</code> job.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
