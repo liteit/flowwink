@@ -161,8 +161,8 @@ export function DemoModeCard() {
         {enabled && (
           <Alert variant="destructive">
             <AlertDescription>
-              All non-template data in pilot modules will be reset every hour. Do not store
-              real customer data on this instance.
+              All non-template data in pilot modules will be reset every night at 03:00 UTC.
+              Do not store real customer data on this instance.
             </AlertDescription>
           </Alert>
         )}
