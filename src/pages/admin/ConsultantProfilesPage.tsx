@@ -513,8 +513,9 @@ export default function ConsultantProfilesPage() {
                   <TableHead className="hidden md:table-cell">Skills</TableHead>
                   <TableHead className="hidden sm:table-cell">Experience</TableHead>
                   <TableHead className="hidden lg:table-cell">Availability</TableHead>
+                  <TableHead className="hidden lg:table-cell">Last check-in</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
+                  <TableHead className="w-[130px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
