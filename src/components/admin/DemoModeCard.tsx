@@ -106,7 +106,8 @@ export function DemoModeCard() {
         </CardTitle>
         <CardDescription>
           Enable only on a dedicated demo instance. Pilot modules (CRM, Quotes, Invoices,
-          Expenses, Ecommerce) are wiped and re-seeded hourly by the <code>demo-cycle</code> job.
+          Expenses, Ecommerce) are wiped and re-seeded daily at 03:00 UTC by the{' '}
+          <code>demo-cycle</code> job.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -114,7 +115,7 @@ export function DemoModeCard() {
           <div className="space-y-0.5">
             <Label>Demo cycle active</Label>
             <p className="text-sm text-muted-foreground">
-              Off on customer sites. Templates and KB are never touched.
+              Off on customer sites. Templates and KB are never touched. Runs once per day.
             </p>
           </div>
           <Switch
@@ -160,8 +161,8 @@ export function DemoModeCard() {
         {enabled && (
           <Alert variant="destructive">
             <AlertDescription>
-              All non-template data in pilot modules will be reset every hour. Do not store
-              real customer data on this instance.
+              All non-template data in pilot modules will be reset every night at 03:00 UTC.
+              Do not store real customer data on this instance.
             </AlertDescription>
           </Alert>
         )}
