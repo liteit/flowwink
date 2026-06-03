@@ -115,7 +115,7 @@ export function DemoModeCard() {
           <div className="space-y-0.5">
             <Label>Demo cycle active</Label>
             <p className="text-sm text-muted-foreground">
-              Off on customer sites. Templates and KB are never touched.
+              Off on customer sites. Templates and KB are never touched. Runs once per day.
             </p>
           </div>
           <Switch
