@@ -562,6 +562,9 @@ export default function ConsultantProfilesPage() {
                         {profile.availability || "unknown"}
                       </Badge>
                     </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <LastCheckinCell profileId={profile.id} />
+                    </TableCell>
                     <TableCell>
                       <Badge
                         variant={profile.is_active ? "default" : "outline"}
@@ -573,6 +576,7 @@ export default function ConsultantProfilesPage() {
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <CopyCheckinLinkButton profileId={profile.id} profileName={profile.name} />
+                        <CheckinHistoryButton profileId={profile.id} profileName={profile.name} />
                         <Button
                           variant="ghost"
                           size="icon"
