@@ -5,8 +5,7 @@
  * Features ROI calculator, competitor comparisons, and white-label positioning.
  */
 import type { StarterTemplate, TemplatePage } from './types';
-import { agencyBlogPosts } from '@/data/template-blog-posts';
-import { agencyKbCategories } from '@/data/template-kb-articles';
+
 
 const flowwinkAgencyPages: TemplatePage[] = [
   {
@@ -772,8 +771,8 @@ export const flowwinkAgencyTemplate: StarterTemplate = {
   aiChatPosition: 'Widget + Page',
   helpStyle: 'hybrid',
   pages: flowwinkAgencyPages,
-  blogPosts: agencyBlogPosts,
-  kbCategories: agencyKbCategories,
+  // blog + KB demo data is seeded via "Seed demo data" on the Blog / Knowledge Base modules.
+
   requiredModules: ['chat', 'blog', 'newsletter', 'forms', 'knowledgeBase'],
   branding: {
     logo: '',
