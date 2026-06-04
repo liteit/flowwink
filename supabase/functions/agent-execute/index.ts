@@ -4852,11 +4852,26 @@ async function executeBlogPostsManagement(
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (title !== undefined) updates.title = title;
     if (excerpt !== undefined) updates.excerpt = excerpt;
-    if (featured_image !== undefined) updates.featured_image = featured_image;
+    if (featured_image !== undefined) {
+      if (featured_image === 'auto') {
+        // Look up current post to use title/excerpt as query basis
+        const { data: cur } = await supabase.from('blog_posts')
+          .select('title, excerpt, meta_json').eq('id', resolvedPostId).single();
+        const query = cur?.title || '';
+        const body = cur?.excerpt || (cur?.meta_json as any)?.topic || '';
+        const photo = await findUnsplashPhoto(query, body);
+        if (photo && photo !== 'no_key') {
+          updates.featured_image = photo.url;
+          updates.featured_image_alt = photo.alt;
+        }
+      } else {
+        updates.featured_image = featured_image;
+      }
+    }
     const { data, error } = await supabase.from('blog_posts')
-      .update(updates).eq('id', resolvedPostId).select('id, title, status').single();
+      .update(updates).eq('id', resolvedPostId).select('id, title, status, featured_image').single();
     if (error) throw new Error(`Update post failed: ${error.message}`);
-    return { post_id: data.id, status: 'updated' };
+    return { post_id: data.id, status: 'updated', featured_image: data.featured_image };
   }
 
   if (action === 'publish') {
