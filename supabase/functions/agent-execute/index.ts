@@ -3655,8 +3655,74 @@ async function executeBlogAction(
     status: data.status,
     url: `/blog/${data.slug}`,
     has_featured_image: !!featuredImage,
+    image_status: imageStatus,
   };
 }
+
+// --- Unsplash helper: multi-pass keyword search with Swedish/English fallback ---
+// Returns: photo object, null (network error), or 'no_key' (env var missing).
+async function findUnsplashPhoto(
+  primary: string,
+  bodyContent?: string,
+): Promise<{ url: string; alt: string; matchedQuery: string } | null | 'no_key'> {
+  const unsplashKey = Deno.env.get('UNSPLASH_ACCESS_KEY');
+  if (!unsplashKey) return 'no_key';
+
+  // Build a ranked list of query candidates. Unsplash is English-heavy, so we
+  // strip diacritics + Swedish stop-words and fall back to shorter phrases.
+  const stop = new Set([
+    'och','att','det','den','en','ett','är','som','på','av','för','med','till','i','vi','de','du','om','så','men','har','kan','jag','inte','eller','när','vad','hur','varför','där','här','sig','sin','sitt','min','dig','mig',
+    'the','and','of','to','in','for','on','with','a','an','is','are','be','this','that','it','from','by','as','at','or','how','what','why','when','your','our','their','his','her',
+  ]);
+  const clean = (s: string) =>
+    s.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/).filter(w => w.length > 2 && !stop.has(w));
+
+  const primaryWords = clean(primary || '');
+  const bodyWords = clean((bodyContent || '').slice(0, 500));
+  const candidates: string[] = [];
+  if (primary?.trim()) candidates.push(primary.trim());
+  if (primaryWords.length) candidates.push(primaryWords.slice(0, 4).join(' '));
+  if (primaryWords.length > 2) candidates.push(primaryWords.slice(0, 2).join(' '));
+  if (primaryWords[0]) candidates.push(primaryWords[0]);
+  if (bodyWords.length) candidates.push(bodyWords.slice(0, 3).join(' '));
+  if (bodyWords[0]) candidates.push(bodyWords[0]);
+
+  const seen = new Set<string>();
+  for (const q of candidates) {
+    const key = q.toLowerCase().trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    try {
+      const url = new URL('https://api.unsplash.com/search/photos');
+      url.searchParams.set('query', q);
+      url.searchParams.set('per_page', '1');
+      url.searchParams.set('orientation', 'landscape');
+      url.searchParams.set('content_filter', 'high');
+      const resp = await fetch(url.toString(), {
+        headers: { 'Authorization': `Client-ID ${unsplashKey}`, 'Accept-Version': 'v1' },
+      });
+      if (!resp.ok) {
+        console.warn(`[unsplash] HTTP ${resp.status} for query "${q}"`);
+        continue;
+      }
+      const data = await resp.json();
+      const photo = data.results?.[0];
+      if (photo?.urls?.regular) {
+        return {
+          url: photo.urls.regular,
+          alt: photo.alt_description || photo.description || `Photo by ${photo.user?.name || 'Unsplash'}`,
+          matchedQuery: q,
+        };
+      }
+    } catch (e) {
+      console.error(`[unsplash] fetch failed for "${q}":`, e);
+      return null;
+    }
+  }
+  return { url: '', alt: '', matchedQuery: '' } as any && null;
 
 // =============================================================================
 // Booking module — full handler with availability checking
