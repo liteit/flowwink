@@ -153,7 +153,7 @@ const demoKbCategories: TemplateKbCategory[] = [
         title: 'What resets every hour',
         slug: 'what-resets-every-hour',
         question: 'What gets reset, and what is preserved?',
-        answer_text: 'Pages, blog posts, KB articles, products and branding are static — installed once, never touched. Leads, deals, quotes, invoices, expenses, orders and stock levels are wiped and re-seeded hourly by the demo-cycle job.',
+        answer_text: 'Think of the demo as two layers. The first layer is your work — pages, blog posts, KB articles, products, branding and any admin edits you make. That layer is installed once and never touched, so anything you change sticks around. The second layer is the business activity FlowPilot generates — leads, deals, quotes, invoices, expenses, orders and stock levels. That layer is wiped and re-seeded every hour by the demo-cycle job, so the next visitor gets a fresh scenario.',
         include_in_chat: true,
       },
       {
