@@ -6,9 +6,6 @@ import {
   Settings,
   Cookie,
   Search,
-  Newspaper,
-  BookOpen,
-  Package,
   ArrowRight,
   Check,
   X,
@@ -18,8 +15,8 @@ import {
   Send,
   ImageIcon,
   Trash2,
-  UserCheck,
 } from 'lucide-react';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -256,9 +253,6 @@ export function TemplatePreviewDialog({
   const clearCount = useMemo(() => {
     let count = 0;
     if (options.pages && existingContent.pagesCount > 0) count += existingContent.pagesCount;
-    if (options.blogPosts && existingContent.blogPostsCount > 0) count += existingContent.blogPostsCount;
-    if (options.kbContent && existingContent.kbCategoriesCount > 0) count += existingContent.kbCategoriesCount;
-    if (options.products && existingContent.productsCount > 0) count += existingContent.productsCount;
     if (options.clearMedia && existingContent.mediaCount > 0) count += existingContent.mediaCount;
     return count;
   }, [options, existingContent]);
@@ -277,17 +271,17 @@ export function TemplatePreviewDialog({
       footerSettings: true,
       seoSettings: true,
       cookieBannerSettings: true,
-      blogPosts: !!template.blogPosts?.length,
-      kbContent: !!template.kbCategories?.length,
-      products: !!template.products?.length,
-      consultants: !!template.consultants?.length,
+      blogPosts: false,
+      kbContent: false,
+      products: false,
+      consultants: false,
       modules: !!template.requiredModules?.length,
       resetObjectives: false,
       clearMedia: false,
       downloadImages: templateImageCount > 0,
       publishPages: true,
-      publishBlogPosts: true,
-      publishKbArticles: true,
+      publishBlogPosts: false,
+      publishKbArticles: false,
     });
   };
 
@@ -316,10 +310,8 @@ export function TemplatePreviewDialog({
 
   // Check if anything is selected
   const hasSelection = options.pages || options.branding || options.chatSettings || 
-    options.headerSettings || options.footerSettings || options.seoSettings || options.cookieBannerSettings ||
-    options.blogPosts || options.kbContent || options.products;
+    options.headerSettings || options.footerSettings || options.seoSettings || options.cookieBannerSettings;
 
-  const kbArticleCount = template.kbCategories?.reduce((acc, cat) => acc + cat.articles.length, 0) || 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -444,57 +436,10 @@ export function TemplatePreviewDialog({
               hasExisting={existingContent.hasCookieBanner}
             />
 
-            {/* Blog Posts - only show if template has them */}
-            {template.blogPosts && template.blogPosts.length > 0 && (
-              <SettingRow
-                icon={<Newspaper className="h-4 w-4" />}
-                label="Blog Posts"
-                templateValue={`${template.blogPosts.length} posts`}
-                existingValue={`${existingContent.blogPostsCount} posts`}
-                enabled={options.blogPosts}
-                onToggle={(v) => updateOption('blogPosts', v)}
-                hasExisting={existingContent.blogPostsCount > 0}
-              />
-            )}
+            {/* Note: Blog posts, KB articles, products and consultants are
+                no longer seeded from templates. Enable the corresponding
+                module under /admin/modules and click "Seed demo data" there. */}
 
-            {/* KB Content - only show if template has it */}
-            {template.kbCategories && template.kbCategories.length > 0 && (
-              <SettingRow
-                icon={<BookOpen className="h-4 w-4" />}
-                label="Knowledge Base"
-                templateValue={`${template.kbCategories.length} categories`}
-                existingValue={`${existingContent.kbCategoriesCount} categories`}
-                enabled={options.kbContent}
-                onToggle={(v) => updateOption('kbContent', v)}
-                hasExisting={existingContent.kbCategoriesCount > 0}
-              />
-            )}
-
-            {/* Products - only show if template has them */}
-            {template.products && template.products.length > 0 && (
-              <SettingRow
-                icon={<Package className="h-4 w-4" />}
-                label="Products"
-                templateValue={`${template.products.length} products`}
-                existingValue={`${existingContent.productsCount} products`}
-                enabled={options.products}
-                onToggle={(v) => updateOption('products', v)}
-                hasExisting={existingContent.productsCount > 0}
-              />
-            )}
-
-            {/* Consultants - only show if template has them */}
-            {template.consultants && template.consultants.length > 0 && (
-              <SettingRow
-                icon={<UserCheck className="h-4 w-4" />}
-                label="Consultant Profiles"
-                templateValue={`${template.consultants.length} consultants`}
-                existingValue="Existing profiles"
-                enabled={options.consultants}
-                onToggle={(v) => updateOption('consultants', v)}
-                hasExisting={false}
-              />
-            )}
 
             {/* Additional Options Section */}
             <Separator className="my-4" />
@@ -536,27 +481,8 @@ export function TemplatePreviewDialog({
               />
             )}
 
-            {/* Publish Blog Posts */}
-            {options.blogPosts && template.blogPosts && template.blogPosts.length > 0 && (
-              <OptionRow
-                icon={<Send className="h-4 w-4" />}
-                label="Publish Blog Posts Immediately"
-                description={`Publish all ${template.blogPosts.length} blog posts when creating`}
-                enabled={options.publishBlogPosts}
-                onToggle={(v) => updateOption('publishBlogPosts', v)}
-              />
-            )}
 
-            {/* Publish KB Articles */}
-            {options.kbContent && template.kbCategories && kbArticleCount > 0 && (
-              <OptionRow
-                icon={<Send className="h-4 w-4" />}
-                label="Publish KB Articles Immediately"
-                description={`Publish all ${kbArticleCount} knowledge base articles when creating`}
-                enabled={options.publishKbArticles}
-                onToggle={(v) => updateOption('publishKbArticles', v)}
-              />
-            )}
+
           </div>
         </div>
 
