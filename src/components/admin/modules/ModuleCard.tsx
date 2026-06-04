@@ -4,6 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { getSeederForModule } from "@/lib/module-demo-seed";
 import { 
   Check, 
   Lock, 
@@ -19,6 +22,8 @@ import {
   Eye,
   AlertTriangle,
   Plug,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { moduleRegistry } from "@/lib/module-registry";
 import type { ModuleStats } from "@/hooks/useModuleStats";
