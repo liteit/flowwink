@@ -255,7 +255,7 @@ export const demoCompanyTemplate: StarterTemplate = {
             videoMuted: true,
             showVideoControls: false,
             overlayColor: 'dark',
-            overlayOpacity: 0.55,
+            overlayOpacity: 70,
             textTheme: 'light',
             heightMode: '80vh',
             contentAlignment: 'center',
