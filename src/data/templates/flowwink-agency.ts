@@ -771,8 +771,8 @@ export const flowwinkAgencyTemplate: StarterTemplate = {
   aiChatPosition: 'Widget + Page',
   helpStyle: 'hybrid',
   pages: flowwinkAgencyPages,
-  blogPosts: agencyBlogPosts,
-  kbCategories: agencyKbCategories,
+  // blog + KB demo data is seeded via "Seed demo data" on the Blog / Knowledge Base modules.
+
   requiredModules: ['chat', 'blog', 'newsletter', 'forms', 'knowledgeBase'],
   branding: {
     logo: '',
