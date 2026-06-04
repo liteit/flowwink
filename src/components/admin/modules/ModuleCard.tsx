@@ -103,6 +103,7 @@ export function ModuleCard({
 }: ModuleCardProps) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [seeding, setSeeding] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const navigate = useNavigate();
   
   // Check if this module has a registry entry (has API)
