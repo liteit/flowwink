@@ -62,7 +62,7 @@
             "videoMuted": true,
             "showVideoControls": false,
             "overlayColor": "dark",
-            "overlayOpacity": 0.55,
+            "overlayOpacity": 70,
             "textTheme": "light",
             "heightMode": "80vh",
             "contentAlignment": "center",
@@ -571,7 +571,7 @@
       "is_featured": true,
       "content": [
         {
-          "id": "text-ldhsuf7",
+          "id": "text-c4aaox8",
           "type": "text",
           "data": {
             "content": {
@@ -701,7 +701,7 @@
       "excerpt": "A tiny checklist that keeps the books clean.",
       "content": [
         {
-          "id": "text-na8xaga",
+          "id": "text-qgwewtn",
           "type": "text",
           "data": {
             "content": {
@@ -784,7 +784,7 @@
       "excerpt": "How simulated outbound communication works — and why it matters.",
       "content": [
         {
-          "id": "text-uf9im1y",
+          "id": "text-myb8zon",
           "type": "text",
           "data": {
             "content": {
@@ -832,7 +832,7 @@
       "excerpt": "What happens between checkout and a tracking page.",
       "content": [
         {
-          "id": "text-75ukue3",
+          "id": "text-1b30554",
           "type": "text",
           "data": {
             "content": {
@@ -880,7 +880,7 @@
       "excerpt": "How the procure-to-pay loop closes itself on this demo.",
       "content": [
         {
-          "id": "text-5kyvwn2",
+          "id": "text-4kn90im",
           "type": "text",
           "data": {
             "content": {
@@ -916,7 +916,7 @@
       "excerpt": "A map of the demo cycle.",
       "content": [
         {
-          "id": "text-tuhh9eb",
+          "id": "text-pvq5i4g",
           "type": "text",
           "data": {
             "content": {
