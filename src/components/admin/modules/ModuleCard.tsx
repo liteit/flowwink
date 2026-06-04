@@ -328,6 +328,26 @@ export function ModuleCard({
               <span>Active</span>
             </div>
           )}
+
+          {/* Demo data seeder — only for modules with a seeder registered */}
+          {isEnabled && seederName && (
+            <div className="pt-2 border-t border-border/50">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full h-7 text-xs"
+                onClick={handleSeed}
+                disabled={seeding}
+              >
+                {seeding ? (
+                  <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3 w-3 mr-1.5" />
+                )}
+                Seed demo data
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
