@@ -372,6 +372,8 @@ export const demoCompanyTemplate: StarterTemplate = {
             iconStyle: 'circle',
           },
         },
+      ],
+    },
     {
       title: 'How this demo works',
       slug: 'how-this-demo-works',
