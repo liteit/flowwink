@@ -24,7 +24,19 @@ import {
   Plug,
   Sparkles,
   Loader2,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { moduleRegistry } from "@/lib/module-registry";
 import type { ModuleStats } from "@/hooks/useModuleStats";
 import type { ModulesSettings, ModuleConfig, ModuleAutonomy } from "@/hooks/useModules";
