@@ -11,7 +11,7 @@ import { StarterTemplate } from '@/data/templates';
 import { validateTemplate, ValidationResult } from '@/lib/template-validator';
 import { extractImagesFromTemplate } from '@/lib/image-extraction';
 import { TemplatePreviewDialog, TemplateOverwriteOptions } from '@/components/admin/templates/TemplatePreviewDialog';
-import { FlowPilotOnboardingWizard } from '@/components/admin/FlowPilotOnboardingWizard';
+
 import { useTemplateInstaller } from '@/hooks/useTemplateInstaller';
 
 interface InstallTemplateDialogProps {
