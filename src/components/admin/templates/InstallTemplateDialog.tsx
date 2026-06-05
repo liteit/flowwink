@@ -11,7 +11,7 @@ import { StarterTemplate } from '@/data/templates';
 import { validateTemplate, ValidationResult } from '@/lib/template-validator';
 import { extractImagesFromTemplate } from '@/lib/image-extraction';
 import { TemplatePreviewDialog, TemplateOverwriteOptions } from '@/components/admin/templates/TemplatePreviewDialog';
-import { FlowPilotOnboardingWizard } from '@/components/admin/FlowPilotOnboardingWizard';
+
 import { useTemplateInstaller } from '@/hooks/useTemplateInstaller';
 
 interface InstallTemplateDialogProps {
@@ -26,7 +26,7 @@ export function InstallTemplateDialog({ template, open, onOpenChange }: InstallT
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [showValidationDialog, setShowValidationDialog] = useState(false);
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
-  const [showOnboardingWizard, setShowOnboardingWizard] = useState(false);
+  
 
   const templateImageInfo = useMemo(() => {
     if (!template) return null;
@@ -186,16 +186,13 @@ export function InstallTemplateDialog({ template, open, onOpenChange }: InstallT
                 <Button variant="outline" size="sm" onClick={() => navigate('/admin/pages')}>
                   View Pages
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setShowOnboardingWizard(true)} className="gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Set Goals
-                </Button>
                 {installer.createdPageIds[0] && (
                   <Button size="sm" onClick={() => navigate(`/admin/pages/${installer.createdPageIds[0]}`)}>
                     Edit Homepage
                   </Button>
                 )}
               </div>
+
             </div>
           )}
         </DialogContent>
@@ -248,13 +245,6 @@ export function InstallTemplateDialog({ template, open, onOpenChange }: InstallT
           </ScrollArea>
         </DialogContent>
       </Dialog>
-
-      {/* FlowPilot onboarding */}
-      <FlowPilotOnboardingWizard
-        open={showOnboardingWizard}
-        onOpenChange={setShowOnboardingWizard}
-        templateName={template.name}
-      />
     </>
   );
 }
