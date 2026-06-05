@@ -31,6 +31,7 @@ export const MODULE_DEMO_SEEDERS: Partial<Record<keyof ModulesSettings, string>>
   recruitment: "recruitment",
   pricelists: "pricelists",
   surveys: "surveys",
+  documents: "documents",
 };
 
 export function getSeederForModule(
