@@ -114,6 +114,7 @@ function TaskBoard({ projectId }: { projectId: string }) {
   const { data: tasks, isLoading } = useProjectTasks(projectId);
   const updateTask = useUpdateProjectTask();
   const createTask = useCreateProjectTask();
+  const deleteTask = useDeleteProjectTask();
   const [newTitle, setNewTitle] = useState("");
 
   const handleAddTask = () => {
@@ -138,7 +139,7 @@ function TaskBoard({ projectId }: { projectId: string }) {
           <div key={col} className="space-y-2">
             <h4 className="text-sm font-medium text-muted-foreground">{columnLabels[col]}</h4>
             {tasks?.filter(t => t.status === col).map(task => (
-              <Card key={task.id} className="cursor-pointer hover:shadow-sm transition-shadow">
+              <Card key={task.id} className="group hover:shadow-sm transition-shadow">
                 <CardContent className="p-3">
                   <div className="flex items-start gap-2">
                     <button onClick={() => {
@@ -151,6 +152,13 @@ function TaskBoard({ projectId }: { projectId: string }) {
                       <p className="text-sm font-medium truncate">{task.title}</p>
                       {task.due_date && <p className="text-xs text-muted-foreground">{format(new Date(task.due_date), "MMM d")}</p>}
                     </div>
+                    <button
+                      onClick={() => deleteTask.mutate({ id: task.id, project_id: projectId })}
+                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                      aria-label="Delete task"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </CardContent>
               </Card>
@@ -162,6 +170,69 @@ function TaskBoard({ projectId }: { projectId: string }) {
         ))}
       </div>
     </div>
+  );
+}
+
+function ProjectCard({ project, selected, onSelect }: { project: Project; selected: boolean; onSelect: () => void }) {
+  const [editOpen, setEditOpen] = useState(false);
+  const del = useDeleteProject();
+
+  return (
+    <>
+      <Card className={`group cursor-pointer transition-colors ${selected ? "ring-2 ring-primary" : "hover:bg-muted/50"}`} onClick={onSelect}>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="font-medium flex-1 min-w-0 truncate">{project.name}</h3>
+            <div className="flex items-center gap-1">
+              <Badge variant="outline" className={project.is_active ? PROJECT_STATUS_COLORS.active : PROJECT_STATUS_COLORS.completed}>
+                {project.is_active ? "Active" : "Completed"}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => { e.stopPropagation(); setEditOpen(true); }}
+                aria-label="Edit project"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label="Delete project"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete project?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete "{project.name}" and all its tasks. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => del.mutate(project.id)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+          {project.client_name && <p className="text-sm text-muted-foreground mt-1">{project.client_name}</p>}
+        </CardContent>
+      </Card>
+      {editOpen && <EditProjectDialog project={project} open={editOpen} onOpenChange={setEditOpen} />}
+    </>
   );
 }
 
