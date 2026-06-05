@@ -106,3 +106,54 @@ export function useUpdateProjectTask() {
     onError: (e: Error) => toast.error(e.message),
   });
 }
+
+export function useUpdateProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Project> & { id: string }) => {
+      const { error } = await supabase.from("projects").update(updates as any).eq("id", id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Project updated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useDeleteProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Delete child tasks first to avoid FK issues
+      const { error: tasksErr } = await supabase.from("project_tasks").delete().eq("project_id", id);
+      if (tasksErr) throw tasksErr;
+      const { error } = await supabase.from("projects").delete().eq("id", id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Project deleted");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useDeleteProjectTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, project_id }: { id: string; project_id: string }) => {
+      const { error } = await supabase.from("project_tasks").delete().eq("id", id);
+      if (error) throw error;
+      return project_id;
+    },
+    onSuccess: (projectId) => {
+      qc.invalidateQueries({ queryKey: ["project_tasks", projectId] });
+      toast.success("Task deleted");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
