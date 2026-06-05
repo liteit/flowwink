@@ -13279,6 +13279,10 @@ export type Database = {
         Args: { p_run_id: string; p_scenario?: string }
         Returns: Json
       }
+      seed_demo_inventory: {
+        Args: { p_run_id: string; p_scenario?: string }
+        Returns: Json
+      }
       seed_demo_invoices: {
         Args: { p_run_id: string; p_scenario?: string }
         Returns: Json
