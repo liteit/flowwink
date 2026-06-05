@@ -245,13 +245,6 @@ export function InstallTemplateDialog({ template, open, onOpenChange }: InstallT
           </ScrollArea>
         </DialogContent>
       </Dialog>
-
-      {/* FlowPilot onboarding */}
-      <FlowPilotOnboardingWizard
-        open={showOnboardingWizard}
-        onOpenChange={setShowOnboardingWizard}
-        templateName={template.name}
-      />
     </>
   );
 }
