@@ -224,7 +224,6 @@ export const helpCenterTemplate: StarterTemplate = {
   aiChatPosition: 'Configurable via helpStyle',
   helpStyle: 'hybrid',
   pages: hybridHelpPages,
-  kbCategories: hybridHelpCategories,
   requiredModules: ['knowledgeBase', 'chat', 'forms', 'bookings'],
   branding: {
     logo: '',

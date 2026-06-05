@@ -256,7 +256,6 @@ export const momentumTemplate: StarterTemplate = {
   tagline: 'One page. Maximum impact.',
   aiChatPosition: 'Disabled for clean single-page experience',
   pages: momentumPages,
-  blogPosts: momentumBlogPosts,
   requiredModules: ['blog', 'chat', 'forms', 'leads'],
   branding: {
     logo: '',

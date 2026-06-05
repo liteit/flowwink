@@ -671,8 +671,6 @@ export const digitalShopTemplate: StarterTemplate = {
   helpStyle: 'none',
   pages: digitalShopPages,
   requiredModules: ['ecommerce', 'chat', 'forms', 'blog', 'inventory'],
-  blogPosts: digitalShopBlogPosts,
-  products: digitalShopProducts,
   branding: {
     logo: '',
     organizationName: 'Digital Shop',

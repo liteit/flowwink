@@ -795,8 +795,6 @@ export const launchpadTemplate: StarterTemplate = {
   tagline: 'Perfect for startups & SaaS',
   aiChatPosition: 'Small card widget for quick support',
   pages: launchpadPages,
-  blogPosts: launchpadBlogPosts,
-  kbCategories: launchpadKbCategories,
   requiredModules: ['blog', 'knowledgeBase', 'chat', 'newsletter', 'leads', 'forms'],
   branding: {
     logo: '',

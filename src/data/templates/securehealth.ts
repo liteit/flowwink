@@ -349,8 +349,6 @@ export const securehealthTemplate: StarterTemplate = {
   tagline: 'For organizations where cloud AI is not an option',
   aiChatPosition: 'Full-height featured AI with explicit privacy messaging',
   pages: securehealthPages,
-  blogPosts: securehealthBlogPosts,
-  kbCategories: securehealthKbCategories,
   requiredModules: ['blog', 'knowledgeBase', 'chat', 'forms', 'bookings'],
   branding: {
     logo: '',

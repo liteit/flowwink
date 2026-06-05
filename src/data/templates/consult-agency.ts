@@ -27,7 +27,6 @@ export const consultAgencyTemplate: StarterTemplate = {
   tagline: 'Your website is a consultant. Always on. Always current.',
   aiChatPosition: 'Agentic consultant — live roster data, answers any brief, qualifies leads, A2A-ready for enterprise integrations',
   requiredModules: ['blog', 'chat', 'leads', 'deals', 'companies', 'forms', 'bookings', 'newsletter', 'resume'],
-  blogPosts: consultAgencyBlogPosts,
 
   pages: [
 
@@ -988,7 +987,6 @@ export const consultAgencyTemplate: StarterTemplate = {
   },
 
 
-  consultants: [
     {
       name: 'Anna Lindqvist',
       title: 'CTO & Tech Leadership Advisor',

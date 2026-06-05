@@ -695,8 +695,6 @@ export const serviceProTemplate: StarterTemplate = {
   helpStyle: 'none',
   pages: serviceProPages,
   requiredModules: ['bookings', 'ecommerce', 'forms', 'chat', 'leads', 'blog'],
-  blogPosts: serviceProBlogPosts,
-  products: serviceProProducts,
   branding: {
     logo: '',
     organizationName: 'ServicePro',
