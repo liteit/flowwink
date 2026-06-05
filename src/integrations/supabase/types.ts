@@ -13243,11 +13243,27 @@ export type Database = {
         Args: { p_run_id: string; p_scenario?: string }
         Returns: Json
       }
+      seed_demo_consultants: {
+        Args: { p_run_id: string; p_scenario?: string }
+        Returns: Json
+      }
+      seed_demo_crm: {
+        Args: { p_run_id: string; p_scenario?: string }
+        Returns: Json
+      }
       seed_demo_ecommerce: {
         Args: { p_run_id: string; p_scenario?: string }
         Returns: Json
       }
+      seed_demo_expenses: {
+        Args: { p_run_id: string; p_scenario?: string }
+        Returns: Json
+      }
       seed_demo_hr: {
+        Args: { p_run_id: string; p_scenario?: string }
+        Returns: Json
+      }
+      seed_demo_invoices: {
         Args: { p_run_id: string; p_scenario?: string }
         Returns: Json
       }
@@ -13260,6 +13276,10 @@ export type Database = {
         Returns: Json
       }
       seed_demo_projects: {
+        Args: { p_run_id: string; p_scenario?: string }
+        Returns: Json
+      }
+      seed_demo_quotes: {
         Args: { p_run_id: string; p_scenario?: string }
         Returns: Json
       }
