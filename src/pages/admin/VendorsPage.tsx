@@ -12,8 +12,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search, Edit2, Building2, Globe, Mail, Phone } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Building2, Globe, Mail, Phone } from 'lucide-react';
 
 interface Vendor {
   id: string;
@@ -42,6 +43,8 @@ export default function VendorsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteName, setDeleteName] = useState('');
 
   const { data: vendors = [], isLoading } = useQuery({
     queryKey: ['vendors'],
@@ -85,6 +88,24 @@ export default function VendorsPage() {
       toast({ title: editingId ? 'Vendor updated' : 'Vendor created' });
     },
     onError: (e) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('vendors').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vendors'] });
+      setDeleteId(null);
+      setDeleteName('');
+      toast({ title: 'Vendor deleted' });
+    },
+    onError: (e: Error) => {
+      toast({ title: 'Could not delete vendor', description: e.message, variant: 'destructive' });
+      setDeleteId(null);
+      setDeleteName('');
+    },
   });
 
   const openEdit = (v: Vendor) => {
@@ -263,15 +284,42 @@ export default function VendorsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openEdit(v); }}>
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center">
+                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openEdit(v); }}>
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteId(v.id); setDeleteName(v.name); }}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
+
+        <AlertDialog open={!!deleteId} onOpenChange={(o) => { if (!o) { setDeleteId(null); setDeleteName(''); } }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete vendor?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently remove <strong>{deleteName}</strong>.
+                If this vendor is linked to purchase orders, products, or invoices, deletion will be blocked.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => { setDeleteId(null); setDeleteName(''); }}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => deleteId && deleteMutation.mutate(deleteId)}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AdminLayout>
   );
