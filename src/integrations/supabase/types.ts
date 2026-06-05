@@ -13243,11 +13243,23 @@ export type Database = {
         Args: { p_run_id: string; p_scenario?: string }
         Returns: Json
       }
+      seed_demo_companies: {
+        Args: { p_run_id: string; p_scenario?: string }
+        Returns: Json
+      }
       seed_demo_consultants: {
         Args: { p_run_id: string; p_scenario?: string }
         Returns: Json
       }
+      seed_demo_contracts: {
+        Args: { p_run_id: string; p_scenario?: string }
+        Returns: Json
+      }
       seed_demo_crm: {
+        Args: { p_run_id: string; p_scenario?: string }
+        Returns: Json
+      }
+      seed_demo_deals: {
         Args: { p_run_id: string; p_scenario?: string }
         Returns: Json
       }
@@ -13275,6 +13287,10 @@ export type Database = {
         Args: { p_run_id: string; p_scenario?: string }
         Returns: Json
       }
+      seed_demo_pricelists: {
+        Args: { p_run_id: string; p_scenario?: string }
+        Returns: Json
+      }
       seed_demo_projects: {
         Args: { p_run_id: string; p_scenario?: string }
         Returns: Json
@@ -13283,11 +13299,23 @@ export type Database = {
         Args: { p_run_id: string; p_scenario?: string }
         Returns: Json
       }
+      seed_demo_recruitment: {
+        Args: { p_run_id: string; p_scenario?: string }
+        Returns: Json
+      }
+      seed_demo_surveys: {
+        Args: { p_run_id: string; p_scenario?: string }
+        Returns: Json
+      }
       seed_demo_tickets: {
         Args: { p_run_id: string; p_scenario?: string }
         Returns: Json
       }
       seed_demo_vendors: {
+        Args: { p_run_id: string; p_scenario?: string }
+        Returns: Json
+      }
+      seed_demo_wiki: {
         Args: { p_run_id: string; p_scenario?: string }
         Returns: Json
       }
