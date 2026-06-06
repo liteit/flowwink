@@ -73,7 +73,7 @@ export interface IntegrationConfig {
   icon: string;
   category: 'payments' | 'communication' | 'ai' | 'media' | 'automation' | 'analytics' | 'notifications' | 'sales' | 'advertising';
   features: string[];
-  secretName: string;
+  secretName?: string;
   docsUrl: string;
   docsLabel?: string;
   settingsUrl?: string;
