@@ -163,6 +163,7 @@ export function ModuleCard({
           : `Seeded ${inserted} demo ${seederName} row(s)`,
         { description: "Use Reset to remove only the demo data." },
       );
+      queryClient.invalidateQueries({ queryKey: ["module-seed-counts"] });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Seeding failed";
       toast.error(msg);
