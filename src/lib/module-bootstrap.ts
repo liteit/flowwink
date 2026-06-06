@@ -37,6 +37,8 @@ export interface AutomationSeed {
   trigger_config: Record<string, unknown>;
   skill_name: string;
   skill_arguments: Record<string, unknown>;
+  /** Who runs it. Defaults to 'platform' (deterministic, no FlowPilot needed). */
+  executor?: 'platform' | 'flowpilot' | 'openclaw' | 'external';
 }
 
 export interface ModuleBootstrap {
