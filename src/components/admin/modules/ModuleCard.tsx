@@ -141,7 +141,9 @@ export function ModuleCard({
       // Seeders return varied shapes in `detail` (e.g. {blog_posts_created: 3},
       // {kb_articles_created: 3, kb_category_created: 1}, {products_created: 6, orders_created: 5}).
       // Sum all numeric fields so the toast reflects the total rows created.
-      const detail = (data as { detail?: Record<string, unknown> } | null)?.detail ?? {};
+      const detail = (data as { result?: Record<string, unknown>; detail?: Record<string, unknown> } | null)?.result
+        ?? (data as { detail?: Record<string, unknown> } | null)?.detail
+        ?? {};
       const parts = Object.entries(detail)
         .filter(([, v]) => typeof v === "number" && (v as number) > 0)
         .map(([k, v]) => `${v} ${k.replace(/_/g, " ")}`);
