@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 import { Clock, ExternalLink, Zap, AlertCircle, CheckCircle2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +33,7 @@ function collectSeededAutomationNames(moduleId: string): string[] {
 
 export function ModuleAutomationsSection({ moduleId }: ModuleAutomationsSectionProps) {
   const seededNames = collectSeededAutomationNames(moduleId);
+  const queryClient = useQueryClient();
 
   const { data: automations, isLoading } = useQuery({
     queryKey: ["module-automations", moduleId, seededNames],
@@ -47,6 +50,21 @@ export function ModuleAutomationsSection({ moduleId }: ModuleAutomationsSectionP
       if (error) throw error;
       return data ?? [];
     },
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
+      const { error } = await supabase
+        .from("agent_automations")
+        .update({ enabled })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, { enabled }) => {
+      toast.success(enabled ? "Automation enabled" : "Automation disabled");
+      queryClient.invalidateQueries({ queryKey: ["module-automations", moduleId] });
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 
   if (seededNames.length === 0) return null;
@@ -90,27 +108,31 @@ export function ModuleAutomationsSection({ moduleId }: ModuleAutomationsSectionP
                 key={a.id}
                 className="rounded-lg border p-3 bg-muted/20 space-y-1.5"
               >
-                <div className="flex items-center gap-2 flex-wrap">
-                  <code className="text-xs font-mono">{a.name}</code>
-                  <Badge
-                    variant={a.enabled ? "default" : "secondary"}
-                    className="text-[10px] px-1.5 py-0"
-                  >
-                    {a.enabled ? "on" : "off"}
-                  </Badge>
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                    {a.executor}
-                  </Badge>
-                  {cron && (
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-mono">
-                      {cron}
-                    </Badge>
-                  )}
-                  {a.trigger_type !== "cron" && (
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
+                    <code className="text-xs font-mono truncate">{a.name}</code>
                     <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                      {a.trigger_type}
+                      {a.executor}
                     </Badge>
-                  )}
+                    {cron && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-mono">
+                        {cron}
+                      </Badge>
+                    )}
+                    {a.trigger_type !== "cron" && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        {a.trigger_type}
+                      </Badge>
+                    )}
+                  </div>
+                  <Switch
+                    checked={a.enabled}
+                    disabled={toggleMutation.isPending}
+                    onCheckedChange={(checked) =>
+                      toggleMutation.mutate({ id: a.id, enabled: checked })
+                    }
+                    aria-label={`Toggle ${a.name}`}
+                  />
                 </div>
                 {a.description && (
                   <p className="text-[11px] text-muted-foreground">{a.description}</p>
