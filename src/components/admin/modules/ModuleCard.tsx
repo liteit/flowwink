@@ -5,8 +5,10 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getSeederForModule } from "@/lib/module-demo-seed";
+import { useModuleSeedCounts } from "@/hooks/useModuleSeedCounts";
 import { 
   Check, 
   Lock, 
@@ -105,6 +107,8 @@ export function ModuleCard({
   const [seeding, setSeeding] = useState(false);
   const [resetting, setResetting] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { data: seedCounts } = useModuleSeedCounts();
   
   // Check if this module has a registry entry (has API)
   const registryModule = moduleRegistry.list().find(m => m.id === moduleId);
@@ -127,6 +131,8 @@ export function ModuleCard({
 
   // Demo seeder available?
   const seederName = getSeederForModule(moduleId);
+  const seededCount = seederName ? (seedCounts?.[seederName] ?? 0) : 0;
+  const hasSeededData = seededCount > 0;
 
   const handleSeed = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -157,6 +163,7 @@ export function ModuleCard({
           : `Seeded ${inserted} demo ${seederName} row(s)`,
         { description: "Use Reset to remove only the demo data." },
       );
+      queryClient.invalidateQueries({ queryKey: ["module-seed-counts"] });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Seeding failed";
       toast.error(msg);
@@ -179,6 +186,7 @@ export function ModuleCard({
         (data as { total_rows?: number; deleted_total?: number } | null)?.total_rows ??
         (data as { deleted_total?: number } | null)?.deleted_total ?? 0;
       toast.success(`Reset complete — removed ${deleted} demo row(s)`);
+      queryClient.invalidateQueries({ queryKey: ["module-seed-counts"] });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Reset failed";
       toast.error(msg);
@@ -392,20 +400,24 @@ export function ModuleCard({
                 ) : (
                   <Sparkles className="h-3 w-3 mr-1.5" />
                 )}
-                Seed
+                {hasSeededData ? "Re-seed" : "Seed"}
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-7 text-xs px-2"
-                    disabled={seeding || resetting}
+                    className="h-7 text-xs px-2 gap-1"
+                    disabled={seeding || resetting || !hasSeededData}
+                    title={hasSeededData ? `${seededCount} demo row(s) seeded` : "No demo data to reset"}
                   >
                     {resetting ? (
                       <Loader2 className="h-3 w-3 animate-spin" />
                     ) : (
                       <Trash2 className="h-3 w-3" />
+                    )}
+                    {hasSeededData && (
+                      <span className="font-mono text-[10px]">{seededCount}</span>
                     )}
                   </Button>
                 </AlertDialogTrigger>
