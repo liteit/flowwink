@@ -12849,27 +12849,6 @@ export type Database = {
         Args: { p_attended?: boolean; p_registration_id: string }
         Returns: Json
       }
-      match_consultants: {
-        Args: {
-          match_count?: number
-          only_active?: boolean
-          query_embedding: string
-          query_text?: string
-          semantic_weight?: number
-        }
-        Returns: {
-          availability: string
-          experience_years: number
-          hybrid_score: number
-          id: string
-          name: string
-          semantic_score: number
-          skills: string[]
-          summary: string
-          text_score: number
-          title: string
-        }[]
-      }
       match_invoice_to_receipt: {
         Args: { p_invoice_id: string; p_tolerance_pct?: number }
         Returns: Json
