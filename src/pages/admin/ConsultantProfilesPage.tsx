@@ -542,6 +542,33 @@ export default function ConsultantProfilesPage() {
                 <Badge variant="secondary" className="ml-2">{staleQuery.data}</Badge>
               )}
             </Button>
+            {cronStatusQuery.data && (
+              <Badge
+                variant={cronStatusQuery.data.scheduled ? "secondary" : "outline"}
+                className="gap-1"
+                title={
+                  cronStatusQuery.data.scheduled
+                    ? `Background re-index ${cronStatusQuery.data.schedule ?? ""}`
+                    : "Background job not scheduled — click to set up"
+                }
+              >
+                {bootstrapMutation.isPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : cronStatusQuery.data.scheduled ? (
+                  <Check className="h-3 w-3" />
+                ) : null}
+                {cronStatusQuery.data.scheduled ? "Auto-index on" : (
+                  <button
+                    type="button"
+                    onClick={() => bootstrapMutation.mutate()}
+                    className="underline-offset-2 hover:underline"
+                  >
+                    Enable auto-index
+                  </button>
+                )}
+              </Badge>
+            )}
+
             <Button
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
