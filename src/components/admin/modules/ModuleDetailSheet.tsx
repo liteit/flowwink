@@ -45,6 +45,7 @@ import { toast } from "sonner";
 import JSZip from "jszip";
 import { FlowPilotDetails } from "./FlowPilotDetails";
 import { ModuleSkillsSection } from "./ModuleSkillsSection";
+import { ModuleAutomationsSection } from "./ModuleAutomationsSection";
 import { SubscriptionsDunningToggle } from "./SubscriptionsDunningToggle";
 import { ComposioPanel } from "./ComposioPanel";
 import { ReBootstrapButton } from "./ReBootstrapButton";
@@ -527,6 +528,10 @@ export function ModuleDetailSheet({
             {/* Agent Skills (read-only operator view) */}
             <Separator />
             <ModuleSkillsSection moduleId={moduleId} variant="inline" defaultOpen={false} />
+
+            {/* Automations seeded by this module */}
+            <Separator />
+            <ModuleAutomationsSection moduleId={moduleId} />
 
             {/* Browser Control Setup */}
             {moduleId === 'browserControl' && (
