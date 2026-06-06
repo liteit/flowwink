@@ -37,7 +37,7 @@ import { moduleRegistry } from "@/lib/module-registry";
 import { getModuleWebhookEvents } from "@/lib/module-webhook-events";
 import type { ModuleCapability } from "@/types/module-contracts";
 import type { ModuleStats } from "@/hooks/useModuleStats";
-import type { ModuleAutonomy, ModuleConfig, ModulesSettings, BookingEmailProvider } from "@/hooks/useModules";
+import type { ModuleAutonomy, ModuleConfig, ModulesSettings, BookingEmailProvider, ConsultantAnonymization } from "@/hooks/useModules";
 import { useModules, useUpdateModules } from "@/hooks/useModules";
 import { formatDistanceToNow } from "date-fns";
 import { useExtensionRelay } from "@/hooks/useExtensionRelay";
