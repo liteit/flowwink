@@ -51,7 +51,7 @@ export const demoCompanyTemplate: StarterTemplate = {
           id: 'announcement-demo',
           type: 'announcement-bar',
           data: {
-            message: '⚡ Live demo — everything resets every day. Login: demo@flowwink.com / demo1234',
+            message: '⚡ Live demo — 40+ modules, 250+ MCP skills. Login: demo@flowwink.com / demo1234',
             linkText: 'Open admin',
             linkUrl: '/auth',
             variant: 'gradient',
@@ -66,7 +66,7 @@ export const demoCompanyTemplate: StarterTemplate = {
             eyebrow: 'LIVE DEMO · RESETS EVERY DAY',
             eyebrowColor: 'primary',
             title: 'Watch a business run itself.',
-            subtitle: 'This site is a live FlowWink instance. FlowPilot handles leads, quotes, invoices and expenses around the clock. Sign in with demo / demo1234 and break things — we reset every day.',
+            subtitle: 'FlowWink exposes 40+ modules and 250+ MCP skills. FlowPilot handles leads, quotes, invoices and expenses — or connect your own OpenClaw or Hermes agent and let it run your business. Sign in with demo / demo1234 and explore.',
             backgroundType: 'video',
             videoType: 'direct',
             videoUrl: '/videos/hero-demo-ambient.mp4',
@@ -94,12 +94,12 @@ export const demoCompanyTemplate: StarterTemplate = {
           id: 'stats-demo',
           type: 'stats',
           data: {
-            title: 'What FlowPilot is doing right now',
+            title: 'What you get out of the box',
             stats: [
-              { value: 'CRM', label: 'Live leads & deals', icon: 'Users' },
-              { value: 'Quotes', label: 'Drafted & sent', icon: 'FileText' },
-              { value: 'Invoices', label: 'Generated & tracked', icon: 'Receipt' },
-              { value: 'Expenses', label: 'Booked & reconciled', icon: 'Wallet' },
+              { value: '40+', label: 'Modules', icon: 'LayoutGrid' },
+              { value: '250+', label: 'MCP skills', icon: 'Sparkles' },
+              { value: 'OpenClaw', label: 'Bring your agent', icon: 'Bot' },
+              { value: 'Self-hosted', label: 'Free to run', icon: 'Gift' },
             ],
           },
         },
@@ -121,6 +121,8 @@ export const demoCompanyTemplate: StarterTemplate = {
             content: { type: 'doc', content: [
               { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'What the daily cron actually does' }] },
               { type: 'paragraph', content: [{ type: 'text', text: 'Every day at 03:00 UTC, the demo-cycle job runs reset_module_data → seed_module_demo across the pilot modules, then restocks the shop. It only deletes rows it created itself (tracked in demo_run_items) — your admin edits and the static content set are safe.' }] },
+              { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'Built for agents — 250+ MCP skills' }] },
+              { type: 'paragraph', content: [{ type: 'text', text: 'FlowWink exposes every module as MCP tools. Leads, quotes, invoices, expenses, stock, projects, timesheets — all callable by an external agent. Connect OpenClaw, Hermes, or any MCP-compatible operator and let it run your business autonomously.' }] },
               { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'Wiped & re-seeded every day' }] },
               { type: 'bulletList', content: [
                 { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'CRM — leads, contacts, deals' }] }] },
@@ -142,7 +144,7 @@ export const demoCompanyTemplate: StarterTemplate = {
         {
           id: 'cta-demo',
           type: 'cta',
-          data: { title: 'Run your own', subtitle: 'FlowWink is self-hosted and free. Clone the repo and bring your own brain (OpenAI, Gemini, or a local model).', buttonText: 'Get FlowWink', buttonUrl: 'https://www.clawable.org', gradient: true },
+          data: { title: 'Run your own', subtitle: 'Self-hosted and free. Clone the repo, connect your OpenClaw or Hermes agent over MCP, and let it run your business. Bring your own brain — OpenAI, Gemini, or a local model.', buttonText: 'Get FlowWink', buttonUrl: 'https://www.clawable.org', gradient: true },
         },
       ],
     },
@@ -211,7 +213,7 @@ export const demoCompanyTemplate: StarterTemplate = {
           type: 'hero',
           data: {
             title: 'A live business, reset every day.',
-            subtitle: 'This is the same FlowWink you would self-host — just with a cron job that wipes the data so the next visitor sees a fresh scenario.',
+            subtitle: 'This is the same FlowWink you would self-host — 40+ modules and 250+ MCP skills. Connect your own agent and let it run the business.',
             backgroundType: 'color',
             heightMode: 'compact',
             contentAlignment: 'center',
@@ -223,8 +225,8 @@ export const demoCompanyTemplate: StarterTemplate = {
           data: {
             title: 'The pitch in four numbers',
             stats: [
-              { value: '62', label: 'Modules available', icon: 'LayoutGrid' },
-              { value: '280', label: 'MCP-exposed skills', icon: 'Sparkles' },
+              { value: '40+', label: 'Modules available', icon: 'LayoutGrid' },
+              { value: '250+', label: 'MCP-exposed skills', icon: 'Sparkles' },
               { value: '24h', label: 'Reset interval', icon: 'Timer' },
               { value: '0€', label: 'License cost', icon: 'Gift' },
             ],
@@ -235,7 +237,7 @@ export const demoCompanyTemplate: StarterTemplate = {
           type: 'features',
           data: {
             title: 'Think of it as two layers',
-            subtitle: 'One layer is the website and shop you set up once. The other is the day-to-day business activity that FlowPilot runs — and that we reset every day so the next visitor gets a fresh stage.',
+            subtitle: 'One layer is the website and shop you set up once. The other is 250+ MCP skills across 40+ modules that your agent — FlowPilot, OpenClaw, Hermes, or any MCP client — can call to run the business. We reset the operational data every day so the next visitor sees a fresh stage.',
             features: [
               {
                 id: 'layer-static',
@@ -246,8 +248,8 @@ export const demoCompanyTemplate: StarterTemplate = {
               {
                 id: 'layer-dynamic',
                 icon: 'RefreshCw',
-                title: 'Resets daily — the business',
-                description: 'Leads, deals, quotes, invoices, expenses, orders and stock levels. This is the data FlowPilot generated while operating the company. The daily cron wipes it and re-seeds a new scenario.',
+                title: 'MCP gateway — the business',
+                description: 'Leads, deals, quotes, invoices, expenses, orders and stock levels. Every module exposes skills over MCP. Connect OpenClaw, Hermes, or any MCP-compatible agent and let it operate the company. The daily cron wipes the data and re-seeds a fresh scenario.',
               },
             ],
             columns: 2,
@@ -262,7 +264,7 @@ export const demoCompanyTemplate: StarterTemplate = {
           data: {
             content: { type: 'doc', content: [
               { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Sign in and explore' }] },
-              { type: 'paragraph', content: [{ type: 'text', text: 'Open /auth and log in with demo@flowwink.com / demo1234. You land in the admin with full access. Start with /admin/leads, /admin/orders, /admin/communications and /admin/approvals — that is where you see autonomous behaviour in context.' }] },
+              { type: 'paragraph', content: [{ type: 'text', text: 'Open /auth and log in with demo@flowwink.com / demo1234. You land in the admin with full access. Start with /admin/leads, /admin/orders, /admin/communications and /admin/approvals — that is where you see autonomous behaviour in context. Then try connecting your own agent via MCP.' }] },
               { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'What is not real' }] },
               { type: 'paragraph', content: [{ type: 'text', text: 'No emails leave the building. No card is ever charged. Anything FlowPilot would have sent shows up as simulated in /admin/communications, and outbound skills queue proposals in /admin/approvals instead of firing.' }] },
               { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Tip' }] },
@@ -273,7 +275,7 @@ export const demoCompanyTemplate: StarterTemplate = {
         {
           id: 'how-cta',
           type: 'cta',
-          data: { title: 'Run your own instance', subtitle: 'Clone, configure your Supabase project and your AI key, and you are live.', buttonText: 'Get FlowWink', buttonUrl: 'https://www.clawable.org', gradient: true },
+          data: { title: 'Run your own instance', subtitle: 'Clone, configure your Supabase project and your AI key. Then connect your OpenClaw or Hermes agent over MCP and let it run your business. You are live in minutes.', buttonText: 'Get FlowWink', buttonUrl: 'https://www.clawable.org', gradient: true },
         },
       ],
     },
@@ -297,7 +299,7 @@ export const demoCompanyTemplate: StarterTemplate = {
     landingPageEnabled: true,
     widgetPosition: 'bottom-right',
     welcomeMessage: 'Hi! This is a public demo. Ask me what FlowPilot is doing — or sign in (demo / demo1234) and poke around.',
-    systemPrompt: 'You are the concierge for a public FlowWink demo. Explain what FlowPilot does, mention that data resets daily, and never claim emails were actually sent.',
+    systemPrompt: 'You are the concierge for a public FlowWink demo. Explain what FlowPilot does, mention that FlowWink exposes 250+ MCP skills across 40+ modules, and that users can connect their own OpenClaw or Hermes agent. Mention that data resets daily, and never claim emails were actually sent.',
     suggestedPrompts: [
       'What does FlowPilot do here?',
       'How often does this demo reset?',
@@ -315,7 +317,7 @@ export const demoCompanyTemplate: StarterTemplate = {
   seoSettings: {
     siteTitle: 'FlowWink Demo',
     titleTemplate: '%s | FlowWink Demo',
-    defaultDescription: 'A public FlowWink instance running a fictional company. FlowPilot handles operations live; data resets every day.',
+    defaultDescription: 'A public FlowWink instance running a fictional company. 40+ modules and 250+ MCP-exposed skills. Connect your own OpenClaw or Hermes agent and let it run your business.',
     robotsIndex: true,
     robotsFollow: true,
   },
