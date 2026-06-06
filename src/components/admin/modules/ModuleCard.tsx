@@ -402,42 +402,46 @@ export function ModuleCard({
                 )}
                 {hasSeededData ? "Re-seed" : "Seed"}
               </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-xs px-2 gap-1"
-                    disabled={seeding || resetting || !hasSeededData}
-                    title={hasSeededData ? `${seededCount} demo row(s) seeded` : "No demo data to reset"}
-                  >
-                    {resetting ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-3 w-3" />
-                    )}
-                    {hasSeededData && (
+              {hasSeededData ? (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs px-2 gap-1"
+                      disabled={seeding || resetting}
+                      title={`${seededCount} demo row(s) seeded`}
+                    >
+                      {resetting ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3 w-3" />
+                      )}
                       <span className="font-mono text-[10px]">{seededCount}</span>
-                    )}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Reset demo data?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This removes only rows seeded by previous demo runs for
-                      <strong> {config.name}</strong>. Your real data,
-                      manually-added rows and admin edits are never touched.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleReset}>
-                      Remove demo rows
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Reset demo data?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This removes only rows seeded by previous demo runs for
+                        <strong> {config.name}</strong>. Your real data,
+                        manually-added rows and admin edits are never touched.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleReset}>
+                        Remove demo rows
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : (
+                <Badge variant="outline" className="h-7 text-[10px] px-2 py-0 text-muted-foreground">
+                  0 seeded
+                </Badge>
+              )}
             </div>
           )}
         </CardContent>
