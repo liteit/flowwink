@@ -182,6 +182,29 @@ AI-powered matching of consultants to a job description.
     },
     instructions: `## consultant_checkin_update\n### What\nSaves updated consultant profile info gathered during a check-in interview.\n### When to use\n- After 3-5 exchanges with the consultant when you have concrete updates.\n- Only include fields you have information about.\n### Parameters\n- **profile_id**: Required UUID.\n- bio, summary, skills, availability, experience_years, experience_json: optional updates.`,
   },
+  {
+    name: 'reindex_consultants',
+    description: 'Re-embed consultant profiles whose semantic-search index is stale. Use when: an automation or admin wants to refresh embeddings after bulk profile changes; keeping vector search up to date. NOT for: matching consultants to a job (match_consultant); editing profiles (manage_consultant_profile).',
+    category: 'system',
+    handler: 'edge:resume-match',
+    scope: 'internal',
+    trust_level: 'auto',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'reindex_consultants',
+        description: 'Embed consultant_profiles rows currently flagged embedding_status=stale.',
+        parameters: {
+          type: 'object',
+          properties: {
+            action: { type: 'string', enum: ['reindex_stale'], default: 'reindex_stale' },
+            limit: { type: 'number', description: 'Max profiles to process per run (1-100)', default: 25 },
+          },
+        },
+      },
+    },
+    instructions: `## reindex_consultants\n### What\nProcesses stale consultant profile embeddings in batches.\n### When to use\n- Scheduled background job (every 10 min by default).\n- After importing many consultants.\n### Parameters\n- action: only \"reindex_stale\" is supported today.\n- limit: defaults to 25, max 100.`,
+  },
 ];
 
 
@@ -201,8 +224,22 @@ export const resumeModule = defineModule<ResumeMatchInput, ResumeMatchOutput>({
     'manage_consultant_profile',
     'match_consultant',
     'consultant_checkin_update',
+    'reindex_consultants',
   ],
   skillSeeds: RESUME_SKILLS,
+
+  automations: [
+    {
+      name: 'consultant_reindex_stale',
+      description: 'Background job that embeds consultant profiles flagged as stale so semantic search stays fresh.',
+      trigger_type: 'cron',
+      trigger_config: { expression: '*/10 * * * *' },
+      skill_name: 'reindex_consultants',
+      skill_arguments: { action: 'reindex_stale', limit: 25 },
+      executor: 'platform',
+    },
+  ],
+
 
   async publish(input: ResumeMatchInput): Promise<ResumeMatchOutput> {
     try {

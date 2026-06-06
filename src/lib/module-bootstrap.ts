@@ -37,6 +37,8 @@ export interface AutomationSeed {
   trigger_config: Record<string, unknown>;
   skill_name: string;
   skill_arguments: Record<string, unknown>;
+  /** Who runs it. Defaults to 'platform' (deterministic, no FlowPilot needed). */
+  executor?: 'platform' | 'flowpilot' | 'openclaw' | 'external';
 }
 
 export interface ModuleBootstrap {
@@ -224,50 +226,53 @@ export async function bootstrapModule(
   }
 
 
-  // 5. Seed automations (upsert by name) — unified or legacy.
-  //    Automations only run when FlowPilot module is enabled (FlowPilot owns the cron loop).
+  // 5. Seed automations (upsert by name).
+  //    Platform-executor automations always seed (the dispatcher runs them).
+  //    Only `executor='flowpilot'` ones require the FlowPilot module to be on.
   const automations = (unified?.automations ?? bootstrap?.automations ?? []);
-  if (automations.length && !flowpilotEnabled) {
-    logger.log(`[module-bootstrap] FlowPilot disabled — skipping ${automations.length} automations for ${moduleId} (skills still seeded for MCP)`);
-  }
-  if (automations.length && flowpilotEnabled) {
-    for (const auto of automations) {
-      if (!auto || typeof auto !== 'object' || !auto.name) {
-        const msg = `Skipped invalid automation seed in ${moduleId} (missing name)`;
-        result.errors.push(msg);
-        logger.warn(`[module-bootstrap] ${msg}`, auto);
-        continue;
-      }
-      try {
-        const { data: existing } = await supabase
-          .from('agent_automations')
-          .select('id')
-          .eq('name', auto.name)
-          .maybeSingle();
+  for (const auto of automations) {
+    if (!auto || typeof auto !== 'object' || !auto.name) {
+      const msg = `Skipped invalid automation seed in ${moduleId} (missing name)`;
+      result.errors.push(msg);
+      logger.warn(`[module-bootstrap] ${msg}`, auto);
+      continue;
+    }
+    const executor = auto.executor ?? 'platform';
+    if (executor === 'flowpilot' && !flowpilotEnabled) {
+      logger.log(`[module-bootstrap] FlowPilot disabled — skipping flowpilot automation '${auto.name}'`);
+      continue;
+    }
+    try {
+      const { data: existing } = await supabase
+        .from('agent_automations')
+        .select('id')
+        .eq('name', auto.name)
+        .maybeSingle();
 
-        if (!existing) {
-          const { error } = await supabase
-            .from('agent_automations')
-            .insert([{
-              name: auto.name,
-              description: auto.description,
-              trigger_type: auto.trigger_type,
-              trigger_config: auto.trigger_config as Json,
-              skill_name: auto.skill_name,
-              skill_arguments: auto.skill_arguments as Json,
-              enabled: true,
-            }]);
-          if (error) throw error;
-          result.seededAutomations++;
-        }
-      } catch (err) {
-        const autoName = auto?.name ?? '<unknown>';
-        const msg = `Automation ${autoName}: ${err instanceof Error ? err.message : 'Unknown'}`;
-        result.errors.push(msg);
-        logger.error(`[module-bootstrap] ${msg}`);
+      if (!existing) {
+        const { error } = await supabase
+          .from('agent_automations')
+          .insert([{
+            name: auto.name,
+            description: auto.description,
+            trigger_type: auto.trigger_type,
+            trigger_config: auto.trigger_config as Json,
+            skill_name: auto.skill_name,
+            skill_arguments: auto.skill_arguments as Json,
+            executor,
+            enabled: true,
+          }]);
+        if (error) throw error;
+        result.seededAutomations++;
       }
+    } catch (err) {
+      const autoName = auto?.name ?? '<unknown>';
+      const msg = `Automation ${autoName}: ${err instanceof Error ? err.message : 'Unknown'}`;
+      result.errors.push(msg);
+      logger.error(`[module-bootstrap] ${msg}`);
     }
   }
+
 
 
   logger.log(`[module-bootstrap] ${moduleId}: ${result.seededSkills} skills, ${result.seededAutomations} automations`);
