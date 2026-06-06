@@ -484,7 +484,7 @@ export function useToggleIntegration() {
 // Config-based integrations: no vault secret needed, presence of required
 // config field determines credential. EXPORTED so all callers share one list.
 export const CONFIG_BASED_KEYS: ReadonlyArray<keyof IntegrationsSettings> = [
-  'local_llm', 'n8n', 'google_analytics', 'meta_pixel', 'slack',
+  'local_llm', 'n8n', 'google_analytics', 'meta_pixel', 'slack', 'searxng',
 ];
 
 export function configHasCredential(
@@ -497,6 +497,7 @@ export function configHasCredential(
     case 'google_analytics': return !!config?.measurementId;
     case 'meta_pixel': return !!config?.pixelId;
     case 'slack': return !!config?.webhookUrl;
+    case 'searxng': return !!config?.url;
     default: return false;
   }
 }
