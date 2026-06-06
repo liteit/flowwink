@@ -148,7 +148,7 @@ export const navigationGroups: NavGroup[] = [
     items: [
       
       { name: "Chat Widget", href: "/admin/chat", icon: MessageSquare, moduleId: "chat" },
-      { name: "Templates", href: "/admin/templates", icon: Puzzle, moduleId: "templates" },
+      { name: "Templates", href: "/admin/templates", icon: LayoutTemplate, moduleId: "templates" },
       { name: "Modules", href: "/admin/modules", icon: Puzzle },
       { name: "Automations", href: "/admin/automations", icon: Zap },
       { name: "Integrations", href: "/admin/integrations", icon: Plug },
