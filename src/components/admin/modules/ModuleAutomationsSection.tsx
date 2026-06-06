@@ -108,27 +108,31 @@ export function ModuleAutomationsSection({ moduleId }: ModuleAutomationsSectionP
                 key={a.id}
                 className="rounded-lg border p-3 bg-muted/20 space-y-1.5"
               >
-                <div className="flex items-center gap-2 flex-wrap">
-                  <code className="text-xs font-mono">{a.name}</code>
-                  <Badge
-                    variant={a.enabled ? "default" : "secondary"}
-                    className="text-[10px] px-1.5 py-0"
-                  >
-                    {a.enabled ? "on" : "off"}
-                  </Badge>
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                    {a.executor}
-                  </Badge>
-                  {cron && (
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-mono">
-                      {cron}
-                    </Badge>
-                  )}
-                  {a.trigger_type !== "cron" && (
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
+                    <code className="text-xs font-mono truncate">{a.name}</code>
                     <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                      {a.trigger_type}
+                      {a.executor}
                     </Badge>
-                  )}
+                    {cron && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-mono">
+                        {cron}
+                      </Badge>
+                    )}
+                    {a.trigger_type !== "cron" && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        {a.trigger_type}
+                      </Badge>
+                    )}
+                  </div>
+                  <Switch
+                    checked={a.enabled}
+                    disabled={toggleMutation.isPending}
+                    onCheckedChange={(checked) =>
+                      toggleMutation.mutate({ id: a.id, enabled: checked })
+                    }
+                    aria-label={`Toggle ${a.name}`}
+                  />
                 </div>
                 {a.description && (
                   <p className="text-[11px] text-muted-foreground">{a.description}</p>
