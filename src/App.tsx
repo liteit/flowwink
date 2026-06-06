@@ -19,6 +19,8 @@ import PagesListPage from "./pages/admin/PagesListPage";
 import NewPagePage from "./pages/admin/NewPagePage";
 import PageEditorPage from "./pages/admin/PageEditorPage";
 import UsersPage from "./pages/admin/UsersPage";
+import LoginActivityPage from "./pages/admin/LoginActivityPage";
+
 import RolePermissionsPage from "./pages/admin/RolePermissionsPage";
 import MediaLibraryPage from "./pages/admin/MediaLibraryPage";
 import SiteSettingsPage from "./pages/admin/SiteSettingsPage";
