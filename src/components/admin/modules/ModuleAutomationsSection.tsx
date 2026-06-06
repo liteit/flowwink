@@ -33,6 +33,7 @@ function collectSeededAutomationNames(moduleId: string): string[] {
 
 export function ModuleAutomationsSection({ moduleId }: ModuleAutomationsSectionProps) {
   const seededNames = collectSeededAutomationNames(moduleId);
+  const queryClient = useQueryClient();
 
   const { data: automations, isLoading } = useQuery({
     queryKey: ["module-automations", moduleId, seededNames],
@@ -49,6 +50,21 @@ export function ModuleAutomationsSection({ moduleId }: ModuleAutomationsSectionP
       if (error) throw error;
       return data ?? [];
     },
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
+      const { error } = await supabase
+        .from("agent_automations")
+        .update({ enabled })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, { enabled }) => {
+      toast.success(enabled ? "Automation enabled" : "Automation disabled");
+      queryClient.invalidateQueries({ queryKey: ["module-automations", moduleId] });
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 
   if (seededNames.length === 0) return null;
