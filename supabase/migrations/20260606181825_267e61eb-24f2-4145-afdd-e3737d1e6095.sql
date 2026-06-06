@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.match_consultants(extensions.vector, text, integer, double precision, boolean);
