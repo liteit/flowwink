@@ -104,9 +104,11 @@ export default function LoginActivityPage() {
           </TabsContent>
         ))}
       </Tabs>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }
+
 
 function StatCard({ label, value, accent }: { label: string; value: number; accent?: 'rose' }) {
   return (
