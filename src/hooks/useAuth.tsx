@@ -44,20 +44,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
 
-        // Fire-and-forget auth event tracking (admin login monitor)
-        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' || event === 'PASSWORD_RECOVERY') {
-          const map: Record<string, string> = {
-            SIGNED_IN: 'sign_in',
-            SIGNED_OUT: 'sign_out',
-            TOKEN_REFRESHED: 'token_refreshed',
-            PASSWORD_RECOVERY: 'password_reset',
-          };
-          // Skip noisy token_refreshed for now (keeps table tidy)
-          if (event !== 'TOKEN_REFRESHED') {
-            trackAuthEvent(map[event], session?.user?.id ?? null, session?.user?.email ?? null);
-          }
-        }
-
         // Defer profile fetch with setTimeout to avoid deadlock
         if (session?.user) {
           setTimeout(() => {
@@ -86,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
 
   const trackAuthEvent = (
     event_type: string,
