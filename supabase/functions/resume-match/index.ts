@@ -222,11 +222,18 @@ serve(async (req) => {
     });
     if (rpcErr) throw rpcErr;
 
+    // Anonymize for public callers. Internal callers (admin tooling, FlowPilot,
+    // MCP skills) can pass `internal: true` to bypass and get real names.
+    const isInternal = body.internal === true;
+    const anonMode: AnonMode = isInternal ? 'off' : await loadAnonymizationMode(supabase);
+    const safeMatches = (matches || []).map((m: any) => anonymizeMatch(m, anonMode));
+
     return json({
       success: true,
-      matches: matches || [],
+      matches: safeMatches,
       mode: queryEmbedding ? 'hybrid' : 'text_only',
       provider: usedProvider,
+      anonymization: anonMode,
     });
   } catch (error) {
     console.error('Resume match error:', error);
