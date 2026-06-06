@@ -5,8 +5,10 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getSeederForModule } from "@/lib/module-demo-seed";
+import { useModuleSeedCounts } from "@/hooks/useModuleSeedCounts";
 import { 
   Check, 
   Lock, 
