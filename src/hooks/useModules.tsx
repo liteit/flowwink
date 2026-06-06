@@ -313,6 +313,7 @@ export const defaultModulesSettings: ModulesSettings = {
     requiresAI: true,
     enhancedByFlowPilot: true,
     optionalIntegrations: ['openai', 'gemini'],
+    publicAnonymization: 'full',
   },
   browserControl: {
     enabled: false,
