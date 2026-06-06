@@ -769,6 +769,29 @@ function IntegrationConfigPanel({
     );
   }
 
+  if (integrationKey === 'searxng') {
+    return (
+      <div className="space-y-3 pt-3 border-t">
+        <div className="space-y-2">
+          <Label htmlFor="searxng-url" className="text-xs">Instance URL *</Label>
+          <Input
+            id="searxng-url"
+            value={config?.url || ''}
+            onChange={(e) => handleChange({ url: e.target.value })}
+            placeholder="https://searx.example.com"
+            className="h-8 text-sm"
+          />
+          <p className="text-xs text-muted-foreground">
+            Base URL of your self-hosted SearXNG instance. Used as a free fallback (or primary) for web search.
+            Make sure your instance has the JSON output format enabled in <code>settings.yml</code>.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+
+
   if (integrationKey === 'resend') {
     const emailConfig = config?.emailConfig || { fromEmail: 'onboarding@resend.dev', fromName: 'Newsletter' };
     const newsletterTracking = config?.newsletterTracking || { enableOpenTracking: false, enableClickTracking: false };
