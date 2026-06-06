@@ -356,56 +356,12 @@ export default function ConsultantProfilesPage() {
     },
   });
 
-  // ---- Background cron job status + self-bootstrap -----------------------
-  const cronStatusQuery = useQuery({
-    queryKey: ["consultant-reindex-cron-status"],
-    queryFn: async () => {
-      const { data, error } = await (supabase as any).rpc(
-        "consultant_reindex_cron_status"
-      );
-      if (error) throw error;
-      return data as { scheduled: boolean; schedule?: string; active?: boolean };
-    },
-    refetchInterval: 60_000,
-  });
+  // Background re-index is handled by the platform automation
+  // `consultant_reindex_stale` (seeded with the Consultants module,
+  // run by `automation-dispatcher` every 10 min). No per-instance
+  // bootstrap required.
 
-  const bootstrapMutation = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke(
-        "bootstrap-consultant-indexing",
-        { body: { action: "ensure" } }
-      );
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      toast({
-        title: "Auto-reindex scheduled",
-        description: "Background job will embed stale profiles every 10 minutes.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["consultant-reindex-cron-status"] });
-    },
-    onError: (e: unknown) => {
-      toast({
-        title: "Could not schedule background job",
-        description: e instanceof Error ? e.message : "Bootstrap failed.",
-        variant: "destructive",
-      });
-    },
-  });
 
-  // Auto-bootstrap once if the module is set up but the cron job is missing.
-  useEffect(() => {
-    if (
-      cronStatusQuery.data &&
-      cronStatusQuery.data.scheduled === false &&
-      !bootstrapMutation.isPending &&
-      !bootstrapMutation.isSuccess
-    ) {
-      bootstrapMutation.mutate();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cronStatusQuery.data?.scheduled]);
 
 
 
