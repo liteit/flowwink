@@ -45,6 +45,7 @@ import { toast } from "sonner";
 import JSZip from "jszip";
 import { FlowPilotDetails } from "./FlowPilotDetails";
 import { ModuleSkillsSection } from "./ModuleSkillsSection";
+import { ModuleAutomationsSection } from "./ModuleAutomationsSection";
 import { SubscriptionsDunningToggle } from "./SubscriptionsDunningToggle";
 import { ComposioPanel } from "./ComposioPanel";
 import { ReBootstrapButton } from "./ReBootstrapButton";
