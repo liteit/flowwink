@@ -195,7 +195,6 @@ function lintFile(file: string): Finding[] {
         });
         break;
       }
-      }
     }
   }
 
