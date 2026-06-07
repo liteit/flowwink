@@ -517,6 +517,17 @@ serve(async (req) => {
         }
 
         if (adminEmails.length > 0) {
+          // Resolve site origin (env → site_settings.general → fallback)
+          let siteOrigin = Deno.env.get('PUBLIC_SITE_URL') || '';
+          if (!siteOrigin) {
+            const { data: gs } = await supabase.from('site_settings')
+              .select('value').eq('key', 'general').maybeSingle();
+            const v = (gs?.value as any) || {};
+            siteOrigin = v.siteUrl || v.site_url || v.public_url || v.publicUrl || '';
+          }
+          if (!siteOrigin) siteOrigin = 'https://flowwink.lovable.app';
+          siteOrigin = siteOrigin.replace(/\/$/, '');
+
           // Build email HTML
           const healthEmoji = healthScore >= 75 ? "🟢" : healthScore >= 50 ? "🟡" : "🔴";
           const emailHtml = buildBriefingEmail({
@@ -528,7 +539,9 @@ serve(async (req) => {
             actionItems,
             metrics,
             productName,
+            dashboardUrl: `${siteOrigin}/admin`,
           });
+
 
           const fromAddress = fpEnabled
             ? "FlowPilot <flowpilot@news.flowwink.com>"
@@ -596,12 +609,15 @@ function buildBriefingEmail(data: {
   actionItems: any[];
   metrics: any;
   productName?: string;
+  dashboardUrl?: string;
 }) {
   const { title, summary, healthScore, healthEmoji, sections, actionItems, metrics } = data;
   const productName = data.productName ?? "FlowPilot";
+  const dashboardUrl = data.dashboardUrl ?? "https://flowwink.lovable.app/admin";
   const footerLine = productName === "FlowPilot"
     ? "Sent by FlowPilot · Your autonomous business co-pilot"
     : "Sent by FlowWink · Your business operating system";
+
 
   const priorityColors: Record<string, string> = {
     high: "#ef4444",
@@ -696,7 +712,7 @@ function buildBriefingEmail(data: {
 
         <!-- CTA -->
         <tr><td style="padding:20px 24px;text-align:center;border-top:1px solid #f3f4f6;">
-          <a href="https://flowwink.lovable.app/admin" style="display:inline-block;padding:12px 32px;background:#111827;color:#ffffff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">Open Dashboard →</a>
+          <a href="${dashboardUrl}" style="display:inline-block;padding:12px 32px;background:#111827;color:#ffffff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">Open Dashboard →</a>
         </td></tr>
 
         <!-- Footer -->
