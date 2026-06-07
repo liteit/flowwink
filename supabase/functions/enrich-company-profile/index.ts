@@ -27,33 +27,24 @@ serve(async (req) => {
       );
     }
 
-    const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
-    if (!firecrawlKey) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Web search not configured. Add Firecrawl integration to enable public record enrichment." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Search public web for company data
+    // Delegate to web-search edge function so admin-configured provider
+    // priority (SearXNG / Firecrawl / Jina) is respected automatically.
     const searchQuery = `"${identifier}" company revenue employees founded`;
-    console.log("Searching public records for:", searchQuery);
+    console.log("Searching public records via web-search (priority-aware):", searchQuery);
 
-    const searchResp = await fetch("https://api.firecrawl.dev/v1/search", {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const searchResp = await fetch(`${supabaseUrl}/functions/v1/web-search`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${firecrawlKey}`,
+        Authorization: `Bearer ${serviceKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        query: searchQuery,
-        limit: 3,
-        scrapeOptions: { formats: ["markdown"] },
-      }),
+      body: JSON.stringify({ query: searchQuery, limit: 3, scrape: true }),
     });
 
     if (!searchResp.ok) {
-      console.error("Firecrawl search failed:", searchResp.status);
+      console.error("web-search failed:", searchResp.status);
       return new Response(
         JSON.stringify({ success: true, raw_results: [], source: "web_search" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -61,7 +52,8 @@ serve(async (req) => {
     }
 
     const searchData = await searchResp.json();
-    const results = searchData?.data || searchData?.results || [];
+    const results = searchData?.results || [];
+    console.log(`Search provider used: ${searchData?.provider}`);
 
     // Return raw search results — FlowPilot does the interpretation
     const rawResults = results.map((r: any) => ({
