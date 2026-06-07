@@ -79,8 +79,20 @@ export default function KbArticleEditorPage() {
         is_featured: article.is_featured,
         include_in_chat: article.include_in_chat,
       });
-      if (article.answer_json) {
-        editor.commands.setContent(article.answer_json as any);
+      // Prefer answer_json (Tiptap doc). Fallback to answer_text for articles
+      // created via MCP/agent that only wrote the plain-text mirror.
+      const json: any = article.answer_json;
+      const hasJsonContent =
+        json && typeof json === "object" && Array.isArray(json.content) && json.content.length > 0;
+      if (hasJsonContent) {
+        editor.commands.setContent(json);
+      } else if (article.answer_text && article.answer_text.trim()) {
+        const paragraphs = article.answer_text
+          .split(/\n{2,}/)
+          .map((p) => p.trim())
+          .filter(Boolean)
+          .map((text) => ({ type: "paragraph", content: [{ type: "text", text }] }));
+        editor.commands.setContent({ type: "doc", content: paragraphs.length ? paragraphs : [{ type: "paragraph" }] });
       }
     }
   }, [article, editor]);
