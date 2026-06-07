@@ -2693,6 +2693,9 @@ async function executeKbAction(
   if (action === 'create') {
     const { title, question, answer, category = 'general', include_in_chat = true, is_featured = false } = args as any;
     if (!title || !question) throw new Error('title and question are required');
+    if (!answer || (typeof answer === 'string' && !answer.trim())) {
+      throw new Error('answer is required and must contain the full article body (plain text, markdown, or a Tiptap doc). Empty answers render as blank articles.');
+    }
     const articleSlug = title.toLowerCase().replace(/[^a-z0-9åäö]+/g, '-').replace(/(^-|-$)/g, '');
 
     // Resolve category string → category_id UUID
@@ -2719,9 +2722,11 @@ async function executeKbAction(
       categoryId = newCat.id;
     }
 
+    const { answer_text, answer_json } = normalizeKbAnswer(answer);
     const { data, error } = await supabase.from('kb_articles').insert({
       title, question,
-      answer_text: answer || '',
+      answer_text,
+      answer_json,
       slug: articleSlug,
       category_id: categoryId,
       include_in_chat, is_featured,
