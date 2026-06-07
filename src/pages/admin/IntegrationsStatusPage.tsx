@@ -445,6 +445,38 @@ function IntegrationConfigPanel({
   const alwaysShow = noSecretNeeded.includes(integrationKey as string);
   if (!alwaysShow && (!hasKey || !isEnabled)) return null;
 
+  // Shared priority selector for web-data providers (firecrawl/searxng/jina).
+  // 1 = try first, 3 = last resort. Runtime (web-search/web-scrape edge functions)
+  // iterates providers in this order with automatic fallback on failure.
+  const WEB_PROVIDER_DEFAULTS: Record<string, number> = { searxng: 1, firecrawl: 2, jina: 3 };
+  const isWebProvider = integrationKey in WEB_PROVIDER_DEFAULTS;
+  const currentPriority = Number(config?.priority) || WEB_PROVIDER_DEFAULTS[integrationKey as string];
+  const PriorityField = isWebProvider ? (
+    <div className="space-y-2 pt-3 border-t">
+      <Label htmlFor={`${integrationKey}-priority`} className="text-xs">Fallback priority</Label>
+      <Select
+        value={String(currentPriority)}
+        onValueChange={(v) => handleChange({ priority: parseInt(v, 10) })}
+      >
+        <SelectTrigger id={`${integrationKey}-priority`} className="h-8 text-sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="1">#1 — try first</SelectItem>
+          <SelectItem value="2">#2</SelectItem>
+          <SelectItem value="3">#3 — last resort</SelectItem>
+        </SelectContent>
+      </Select>
+      <p className="text-xs text-muted-foreground">
+        Order in which web search/scrape tries this provider. Lower = earlier. Used by FlowPilot, prospect research, and content tools.
+      </p>
+    </div>
+  ) : null;
+
+  if (integrationKey === 'firecrawl') {
+    return <div className="space-y-3">{PriorityField}</div>;
+  }
+
   if (integrationKey === 'openai') {
     return (
       <div className="space-y-3 pt-3 border-t">
@@ -749,6 +781,7 @@ function IntegrationConfigPanel({
             onCheckedChange={(checked) => handleChange({ preferFreeTier: checked })}
           />
         </div>
+        {PriorityField}
       </div>
     );
   }
@@ -799,6 +832,7 @@ function IntegrationConfigPanel({
             Make sure your instance has the JSON output format enabled in <code>settings.yml</code>.
           </p>
         </div>
+        {PriorityField}
       </div>
     );
   }
@@ -1162,7 +1196,12 @@ export default function IntegrationsStatusPage() {
                     const requiresSecret = !CONFIG_BASED_KEYS.includes(key);
                     const IconComponent = iconMap[integration.icon as keyof typeof iconMap] || Bot;
                     const currentConfig = getDisplayConfig(key) || integration.config;
-                    const hasConfigSection = ['openai', 'gemini', 'local_llm', 'n8n', 'resend', 'google_analytics', 'meta_pixel', 'slack', 'jina', 'hunter', 'searxng'].includes(key);
+                    const hasConfigSection = ['openai', 'gemini', 'local_llm', 'n8n', 'resend', 'google_analytics', 'meta_pixel', 'slack', 'jina', 'hunter', 'searxng', 'firecrawl'].includes(key);
+                    // Web-data providers share a priority-ordered fallback chain.
+                    const WEB_PROVIDER_DEFAULT_PRIORITY: Record<string, number> = { searxng: 1, firecrawl: 2, jina: 3 };
+                    const webProviderPriority = key in WEB_PROVIDER_DEFAULT_PRIORITY
+                      ? (Number(currentConfig?.priority) || WEB_PROVIDER_DEFAULT_PRIORITY[key])
+                      : null;
                     // Single source of truth — same resolver used by hooks + count loop
                     const { hasKey, isActive: isEnabled } = resolveIntegrationStatus(
                       key,
@@ -1196,6 +1235,11 @@ export default function IntegrationsStatusPage() {
                               <div>
                                 <CardTitle className="text-base flex items-center gap-2">
                                   {integration.name}
+                                  {webProviderPriority && isEnabled && (
+                                    <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-mono">
+                                      #{webProviderPriority}
+                                    </Badge>
+                                  )}
                                   {isLoading ? (
                                     <Skeleton className="h-5 w-20" />
                                   ) : (

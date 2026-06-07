@@ -37,9 +37,12 @@ async function getIntegrationConfig(): Promise<{
   firecrawlEnabled: boolean;
   searxngEnabled: boolean;
   searxngUrl: string | null;
+  /** Provider keys ordered by admin-configured priority (1 = first). */
+  providerOrder: Array<'firecrawl' | 'searxng' | 'jina'>;
 }> {
+  const DEFAULT_PRIORITY = { searxng: 1, firecrawl: 2, jina: 3 } as const;
   try {
-            const sb = getServiceClient();
+    const sb = getServiceClient();
     const { data } = await sb
       .from('site_settings')
       .select('value')
@@ -49,14 +52,28 @@ async function getIntegrationConfig(): Promise<{
     const firecrawl = data?.value?.firecrawl;
     const searxng = data?.value?.searxng;
     const rawUrl = (searxng?.config?.url as string | undefined)?.trim() || null;
+    const priorities: Record<'firecrawl' | 'searxng' | 'jina', number> = {
+      firecrawl: Number(firecrawl?.config?.priority) || DEFAULT_PRIORITY.firecrawl,
+      searxng: Number(searxng?.config?.priority) || DEFAULT_PRIORITY.searxng,
+      jina: Number(jina?.config?.priority) || DEFAULT_PRIORITY.jina,
+    };
+    const providerOrder = (Object.keys(priorities) as Array<'firecrawl' | 'searxng' | 'jina'>)
+      .sort((a, b) => priorities[a] - priorities[b]);
     return {
       preferFreeTier: jina?.config?.preferFreeTier ?? true,
       firecrawlEnabled: firecrawl?.enabled !== false,
       searxngEnabled: searxng?.enabled !== false && !!rawUrl,
       searxngUrl: rawUrl ? rawUrl.replace(/\/+$/, '') : null,
+      providerOrder,
     };
   } catch {
-    return { preferFreeTier: true, firecrawlEnabled: true, searxngEnabled: false, searxngUrl: null };
+    return {
+      preferFreeTier: true,
+      firecrawlEnabled: true,
+      searxngEnabled: false,
+      searxngUrl: null,
+      providerOrder: ['searxng', 'firecrawl', 'jina'],
+    };
   }
 }
 
@@ -129,105 +146,85 @@ serve(async (req) => {
     let provider = 'none';
 
     const integrationConfig = await getIntegrationConfig();
-    const firecrawlAvailable = firecrawlKey && integrationConfig.firecrawlEnabled;
-    const searxngAvailable = integrationConfig.searxngEnabled && integrationConfig.searxngUrl;
+    const firecrawlAvailable = !!firecrawlKey && integrationConfig.firecrawlEnabled;
+    const searxngAvailable = integrationConfig.searxngEnabled && !!integrationConfig.searxngUrl;
 
-    const useFirecrawl = preferred_provider === 'firecrawl' || (preferred_provider === 'auto' && firecrawlAvailable);
-    const useSearxng = preferred_provider === 'searxng' || (preferred_provider === 'auto' && searxngAvailable);
-    const useJina = preferred_provider === 'jina' || preferred_provider === 'auto';
-
-    // --- Strategy 1: Firecrawl Search (paid, higher quality) ---
-    if (useFirecrawl && firecrawlKey) {
-      console.log('[web-search] Using Firecrawl for:', query);
-      try {
-        const res = await fetch('https://api.firecrawl.dev/v1/search', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${firecrawlKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            query,
-            limit,
-            lang: lang || undefined,
-            country: country || undefined,
-          }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          results = (data.data || []).map((r: any) => ({
-            title: r.title || '',
-            url: r.url || '',
-            description: r.description || '',
-            content: r.markdown || r.content || undefined,
-          }));
-          provider = 'firecrawl';
-        } else {
-          console.warn('[web-search] Firecrawl failed:', res.status);
-        }
-      } catch (e) {
-        console.warn('[web-search] Firecrawl error:', e);
-      }
+    // Resolve provider chain: explicit preferred_provider wins; otherwise sort by
+    // admin-configured priority and skip providers that aren't available.
+    let chain: Array<'firecrawl' | 'searxng' | 'jina'>;
+    if (preferred_provider !== 'auto') {
+      chain = [preferred_provider as 'firecrawl' | 'searxng' | 'jina'];
+    } else {
+      chain = integrationConfig.providerOrder.filter((p) => {
+        if (p === 'firecrawl') return firecrawlAvailable;
+        if (p === 'searxng') return searxngAvailable;
+        return true; // jina has a keyless fallback, always reachable
+      });
     }
 
-    // --- Strategy 2: SearXNG (self-hosted, free) ---
-    if (results.length === 0 && useSearxng && integrationConfig.searxngUrl) {
-      console.log('[web-search] Using SearXNG for:', query);
-      const sx = await searxngSearch(integrationConfig.searxngUrl, query, limit, lang);
-      if (sx.ok && sx.results.length > 0) {
-        results = sx.results;
-        provider = 'searxng';
-      }
-    }
+    for (const candidate of chain) {
+      if (results.length > 0) break;
 
-
-    // --- Strategy 2: Jina Search (free first → API key → keyless fallback) ---
-    if (results.length === 0 && useJina) {
-      const { preferFreeTier } = integrationConfig;
-
-      if (preferFreeTier) {
-        // Try keyless first
-        console.log('[web-search] Trying Jina Search (keyless) for:', query);
-        const keyless = await jinaSearch(query, limit);
-        if (keyless.ok && keyless.results.length > 0) {
-          results = keyless.results;
-          provider = 'jina-free';
-        } else if (jinaKey) {
-          // Keyless failed, fall back to API key
-          console.log('[web-search] Keyless failed, using Jina API key');
-          const authed = await jinaSearch(query, limit, jinaKey);
-          if (authed.ok) {
-            results = authed.results;
-            provider = 'jina-api';
+      if (candidate === 'firecrawl' && firecrawlKey) {
+        console.log('[web-search] Trying Firecrawl for:', query);
+        try {
+          const res = await fetch('https://api.firecrawl.dev/v1/search', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${firecrawlKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, limit, lang: lang || undefined, country: country || undefined }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            results = (data.data || []).map((r: any) => ({
+              title: r.title || '', url: r.url || '', description: r.description || '',
+              content: r.markdown || r.content || undefined,
+            }));
+            if (results.length > 0) provider = 'firecrawl';
+          } else {
+            console.warn('[web-search] Firecrawl failed:', res.status);
           }
+        } catch (e) {
+          console.warn('[web-search] Firecrawl error:', e);
         }
-      } else if (jinaKey) {
-        // preferFreeTier disabled — go straight to API key
-        console.log('[web-search] Using Jina Search (API key) for:', query);
-        const authed = await jinaSearch(query, limit, jinaKey);
-        if (authed.ok) {
-          results = authed.results;
-          provider = 'jina-api';
+      }
+
+      if (candidate === 'searxng' && integrationConfig.searxngUrl) {
+        console.log('[web-search] Trying SearXNG for:', query);
+        const sx = await searxngSearch(integrationConfig.searxngUrl, query, limit, lang);
+        if (sx.ok && sx.results.length > 0) {
+          results = sx.results;
+          provider = 'searxng';
         }
-      } else {
-        // No API key configured, try keyless anyway
-        console.log('[web-search] Using Jina Search (keyless fallback) for:', query);
-        const keyless = await jinaSearch(query, limit);
-        if (keyless.ok) {
-          results = keyless.results;
-          provider = 'jina-free';
+      }
+
+      if (candidate === 'jina') {
+        const { preferFreeTier } = integrationConfig;
+        if (preferFreeTier) {
+          console.log('[web-search] Trying Jina (keyless) for:', query);
+          const keyless = await jinaSearch(query, limit);
+          if (keyless.ok && keyless.results.length > 0) {
+            results = keyless.results; provider = 'jina-free';
+          } else if (jinaKey) {
+            console.log('[web-search] Keyless failed, using Jina API key');
+            const authed = await jinaSearch(query, limit, jinaKey);
+            if (authed.ok) { results = authed.results; provider = 'jina-api'; }
+          }
+        } else if (jinaKey) {
+          console.log('[web-search] Trying Jina (API key) for:', query);
+          const authed = await jinaSearch(query, limit, jinaKey);
+          if (authed.ok) { results = authed.results; provider = 'jina-api'; }
+        } else {
+          console.log('[web-search] Trying Jina (keyless fallback) for:', query);
+          const keyless = await jinaSearch(query, limit);
+          if (keyless.ok) { results = keyless.results; provider = 'jina-free'; }
         }
       }
     }
 
-    console.log(`[web-search] Found ${results.length} results via ${provider}`);
+    console.log(`[web-search] Found ${results.length} results via ${provider} (chain: ${chain.join('→')})`);
 
     return new Response(JSON.stringify({
-      success: true,
-      provider,
-      results,
-      query,
+      success: true, provider, results, query,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
