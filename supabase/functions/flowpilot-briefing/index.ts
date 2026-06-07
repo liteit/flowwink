@@ -517,6 +517,17 @@ serve(async (req) => {
         }
 
         if (adminEmails.length > 0) {
+          // Resolve site origin (env → site_settings.general → fallback)
+          let siteOrigin = Deno.env.get('PUBLIC_SITE_URL') || '';
+          if (!siteOrigin) {
+            const { data: gs } = await supabase.from('site_settings')
+              .select('value').eq('key', 'general').maybeSingle();
+            const v = (gs?.value as any) || {};
+            siteOrigin = v.siteUrl || v.site_url || v.public_url || v.publicUrl || '';
+          }
+          if (!siteOrigin) siteOrigin = 'https://flowwink.lovable.app';
+          siteOrigin = siteOrigin.replace(/\/$/, '');
+
           // Build email HTML
           const healthEmoji = healthScore >= 75 ? "🟢" : healthScore >= 50 ? "🟡" : "🔴";
           const emailHtml = buildBriefingEmail({
@@ -528,7 +539,9 @@ serve(async (req) => {
             actionItems,
             metrics,
             productName,
+            dashboardUrl: `${siteOrigin}/admin`,
           });
+
 
           const fromAddress = fpEnabled
             ? "FlowPilot <flowpilot@news.flowwink.com>"
