@@ -195,9 +195,9 @@ function lintFile(file: string): Finding[] {
       let sm: RegExpExecArray | null;
       while ((sm = spreadRe.exec(arg)) !== null) {
         const ident = sm[1];
-        const isRiskyRaw = RISKY_IDENTS.has(ident);
+        const isRawArg = RAW_ARG_IDENTS.has(ident);
         const isTainted = tainted.has(ident);
-        if (!isRiskyRaw && !isTainted) continue;
+        if (!isRawArg && !isTainted) continue;
         if (hasNearbyStrip(lines, i)) continue;
         findings.push({
           file: relFile,
