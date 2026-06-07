@@ -40,7 +40,7 @@ serve(async (req) => {
         Authorization: `Bearer ${serviceKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ query: searchQuery, limit: 3, scrape: true }),
+      body: JSON.stringify({ query: searchQuery, limit: 3 }),
     });
 
     if (!searchResp.ok) {
