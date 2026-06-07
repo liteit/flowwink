@@ -6718,7 +6718,7 @@ async function executeDbAction(
           }).eq('id', contract.id);
         if (uErr) throw new Error(`Update contract failed: ${uErr.message}`);
 
-        // Resolve site origin (env first, then site_settings.general, fallback to lovable preview)
+        // Resolve site origin (env first, then site_settings.general)
         let origin = Deno.env.get('PUBLIC_SITE_URL') || '';
         if (!origin) {
           const { data: setting } = await supabase.from('site_settings')
@@ -6726,7 +6726,9 @@ async function executeDbAction(
           const v = (setting?.value as any) || {};
           origin = v.siteUrl || v.site_url || v.public_url || v.publicUrl || '';
         }
-        if (!origin) origin = 'https://flowwink.lovable.app';
+        if (!origin) {
+          throw new Error('Public Site URL is not configured. Set it in Admin → Site Settings → General (or PUBLIC_SITE_URL env).');
+        }
         origin = origin.replace(/\/$/, '');
 
 

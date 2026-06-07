@@ -54,8 +54,16 @@ serve(async (req) => {
         });
       }
 
-      // Use existing confirmation_token for verification
-      const verificationUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/newsletter/manage?token=${subscriber.confirmation_token}&email=${encodeURIComponent(email)}`;
+      // Resolve site origin (env → site_settings.general). Self-hosted: no Lovable fallback.
+      let siteOrigin = Deno.env.get("PUBLIC_SITE_URL") || "";
+      if (!siteOrigin) {
+        const { data: gs } = await supabase.from("site_settings")
+          .select("value").eq("key", "general").maybeSingle();
+        const v = (gs?.value as any) || {};
+        siteOrigin = v.siteUrl || v.site_url || v.public_url || v.publicUrl || "";
+      }
+      siteOrigin = (siteOrigin || "").replace(/\/$/, "");
+      const verificationUrl = `${siteOrigin}/newsletter/manage?token=${subscriber.confirmation_token}&email=${encodeURIComponent(email)}`;
 
       console.log(`[newsletter-gdpr] Verification URL generated for: ${email}`);
 

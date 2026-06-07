@@ -517,7 +517,7 @@ serve(async (req) => {
         }
 
         if (adminEmails.length > 0) {
-          // Resolve site origin (env → site_settings.general → fallback)
+          // Resolve site origin (env → site_settings.general). No Lovable fallback (self-hosted).
           let siteOrigin = Deno.env.get('PUBLIC_SITE_URL') || '';
           if (!siteOrigin) {
             const { data: gs } = await supabase.from('site_settings')
@@ -525,8 +525,7 @@ serve(async (req) => {
             const v = (gs?.value as any) || {};
             siteOrigin = v.siteUrl || v.site_url || v.public_url || v.publicUrl || '';
           }
-          if (!siteOrigin) siteOrigin = 'https://flowwink.lovable.app';
-          siteOrigin = siteOrigin.replace(/\/$/, '');
+          siteOrigin = (siteOrigin || '').replace(/\/$/, '');
 
           // Build email HTML
           const healthEmoji = healthScore >= 75 ? "🟢" : healthScore >= 50 ? "🟡" : "🔴";
@@ -613,7 +612,7 @@ function buildBriefingEmail(data: {
 }) {
   const { title, summary, healthScore, healthEmoji, sections, actionItems, metrics } = data;
   const productName = data.productName ?? "FlowPilot";
-  const dashboardUrl = data.dashboardUrl ?? "https://flowwink.lovable.app/admin";
+  const dashboardUrl = data.dashboardUrl ?? "/admin";
   const footerLine = productName === "FlowPilot"
     ? "Sent by FlowPilot · Your autonomous business co-pilot"
     : "Sent by FlowWink · Your business operating system";
