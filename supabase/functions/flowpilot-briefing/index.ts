@@ -612,7 +612,7 @@ function buildBriefingEmail(data: {
 }) {
   const { title, summary, healthScore, healthEmoji, sections, actionItems, metrics } = data;
   const productName = data.productName ?? "FlowPilot";
-  const dashboardUrl = data.dashboardUrl ?? "https://flowwink.lovable.app/admin";
+  const dashboardUrl = data.dashboardUrl ?? "/admin";
   const footerLine = productName === "FlowPilot"
     ? "Sent by FlowPilot · Your autonomous business co-pilot"
     : "Sent by FlowWink · Your business operating system";
