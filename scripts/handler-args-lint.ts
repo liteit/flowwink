@@ -83,11 +83,38 @@ function hasNearbyStrip(lines: string[], violationIdx: number): boolean {
  * Targets: .insert(<expr>), .update(<expr>), .upsert(<expr>)
  * Flags when <expr> spreads or directly passes a risky identifier.
  */
+/**
+ * Build the set of "tainted" variable names: variables whose initial value
+ * spreads one of the risky identifiers, e.g.
+ *   const updates = { ...rest, updated_at: now };
+ * Variables built explicitly (empty `{}` then populated key-by-key) are NOT
+ * tainted and won't be flagged — that's the safe pattern.
+ */
+function collectTaintedVars(src: string): Set<string> {
+  const tainted = new Set<string>();
+  const declRe = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)(?:\s*:\s*[^=]+)?\s*=\s*\{([\s\S]{0,400}?)\}/g;
+  let m: RegExpExecArray | null;
+  while ((m = declRe.exec(src)) !== null) {
+    const name = m[1];
+    const body = m[2];
+    const spreadRe = /\.\.\.\s*([A-Za-z_$][\w$]*)/g;
+    let sm: RegExpExecArray | null;
+    while ((sm = spreadRe.exec(body)) !== null) {
+      if (RISKY_IDENTS.has(sm[1])) {
+        tainted.add(name);
+        break;
+      }
+    }
+  }
+  return tainted;
+}
+
 function lintFile(file: string): Finding[] {
   const src = fs.readFileSync(file, 'utf8');
   const lines = src.split('\n');
   const findings: Finding[] = [];
   const relFile = path.relative(ROOT, file);
+  const tainted = collectTaintedVars(src);
 
   // Regex catches both `.update(rest)` and `.update({ ...rest, foo: 1 })`
   // and the multi-line form `.update({\n  ...rest,\n  updated_at: ...\n})`.
