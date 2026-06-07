@@ -683,6 +683,7 @@ function IntegrationConfigPanel({
     );
   }
 
+
   if (integrationKey === 'slack') {
     return (
       <div className="space-y-3 pt-3 border-t">
@@ -1316,7 +1317,7 @@ export default function IntegrationsStatusPage() {
       {/* Integration Config Drawer */}
       {openDrawerKey && (() => {
         const integration = integrationSettings?.[openDrawerKey] || defaultIntegrationsSettings[openDrawerKey];
-        const noSecretNeeded = ['local_llm', 'n8n', 'google_analytics', 'meta_pixel', 'slack'];
+        const noSecretNeeded = ['local_llm', 'n8n', 'google_analytics', 'meta_pixel', 'slack', 'searxng'];
         const requiresSecret = !noSecretNeeded.includes(openDrawerKey);
         const effectiveConfig = drawerConfig ?? getDisplayConfig(openDrawerKey) ?? integration.config;
         const hasKey = requiresSecret
