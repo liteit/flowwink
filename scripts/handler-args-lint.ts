@@ -46,6 +46,7 @@ const RAW_ARG_IDENTS = new Set([
 // Only flag these if their declaration is actually tainted (spreads RAW idents).
 const BUILDER_IDENTS = new Set([
   'data', 'fields', 'patch', 'updates', 'record', 'row',
+  'body', 'payload', 'input', 'params',
 ]);
 
 // Union — used when scanning spread expressions (we want to catch any leak).
