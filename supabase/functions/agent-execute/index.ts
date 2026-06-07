@@ -4445,6 +4445,52 @@ async function resolveResendFrom(supabase: any): Promise<string> {
   return 'FlowPilot <flowpilot@news.flowwink.com>';
 }
 
+// Log an outbound email to the gateway log so it appears in /admin/communications.
+// Fire-and-forget — never let a logging error fail the email send itself.
+async function logOutboundEmail(
+  supabase: any,
+  row: {
+    status: 'sent' | 'failed' | 'simulated';
+    recipient: string | string[];
+    subject: string | null;
+    body_html?: string | null;
+    body_text?: string | null;
+    from?: string | null;
+    provider_message_id?: string | null;
+    error_message?: string | null;
+    source?: string | null;
+    related_entity_type?: string | null;
+    related_entity_id?: string | null;
+    extra_metadata?: Record<string, unknown>;
+  },
+): Promise<void> {
+  try {
+    const recipient = Array.isArray(row.recipient) ? row.recipient.join(', ') : row.recipient;
+    await supabase.from('outbound_communications').insert({
+      channel: 'email',
+      status: row.status,
+      provider: 'resend',
+      simulated: row.status === 'simulated',
+      recipient,
+      subject: row.subject,
+      body_html: row.body_html ?? null,
+      body_text: row.body_text ?? null,
+      source: row.source ?? 'agent-execute',
+      related_entity_type: row.related_entity_type ?? null,
+      related_entity_id: row.related_entity_id ?? null,
+      error_message: row.error_message ?? null,
+      metadata: {
+        from: row.from ?? null,
+        provider_message_id: row.provider_message_id ?? null,
+        ...(row.extra_metadata ?? {}),
+      },
+      sent_at: row.status === 'sent' ? new Date().toISOString() : null,
+    });
+  } catch (e) {
+    console.error('[agent-execute] failed to log outbound_communications:', e);
+  }
+}
+
 
 async function executeSendEmailToLead(
   supabase: any,
