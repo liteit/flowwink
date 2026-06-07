@@ -486,7 +486,7 @@ async function fetchResource(resourceKey: string): Promise<unknown> {
     case "briefing": {
       // Aggregated context briefing — one call for full situational awareness
       const [
-        bHealth, bIdentity, bObjectives, bActivity, bModules, bAutomations, bHeartbeat, bSkillCount, bCompanyProfile, bBranding
+        bHealth, bIdentity, bObjectives, bActivity, bModules, bAutomations, bHeartbeat, bSkillCount, bCompanyProfile, bBranding, bOperatorSetting, bInboundPeer
       ] = await Promise.all([
         // Health counts
         (async () => {
@@ -562,33 +562,103 @@ async function fetchResource(resourceKey: string): Promise<unknown> {
           .select("value")
           .eq("key", "branding")
           .maybeSingle(),
+        // Operator override (optional explicit declaration)
+        sb.from("site_settings")
+          .select("value")
+          .eq("key", "operator")
+          .maybeSingle(),
+        // Most recent inbound MCP federation peer (likely external operator if FlowPilot is off)
+        sb.from("federation_connections")
+          .select("last_activity_at, metadata, peer_id, a2a_peers!inner(name, slug)")
+          .eq("direction", "inbound")
+          .eq("transport", "mcp")
+          .eq("status", "active")
+          .order("last_activity_at", { ascending: false, nullsFirst: false })
+          .limit(1)
+          .maybeSingle(),
       ]);
 
+      // Derive operator (who is actually running this instance)
+      const modulesRaw = (bModules.data?.value ?? {}) as Record<string, { enabled?: boolean }>;
+      const flowpilotEnabled = modulesRaw?.flowpilot?.enabled === true;
+      const operatorOverride = (bOperatorSetting as any)?.data?.value ?? null;
+      const inboundPeer = (bInboundPeer as any)?.data ?? null;
+      const inboundPeerName = inboundPeer?.a2a_peers?.name ?? inboundPeer?.a2a_peers?.slug ?? null;
+
+      let operator: Record<string, unknown>;
+      if (operatorOverride?.type) {
+        operator = { ...operatorOverride, flowpilot_enabled: flowpilotEnabled };
+      } else if (flowpilotEnabled) {
+        operator = { type: "flowpilot", flowpilot_enabled: true };
+      } else if (inboundPeerName) {
+        operator = {
+          type: "external",
+          peer: inboundPeerName,
+          flowpilot_enabled: false,
+          note: "FlowPilot module is disabled — an external peer appears to be operating this instance via MCP. Objectives/heartbeat are owned by the external operator, not this platform. Do NOT recommend enabling FlowPilot (single-architect policy).",
+        };
+      } else {
+        operator = {
+          type: "manual",
+          flowpilot_enabled: false,
+          note: "No autonomous operator configured. This instance runs in SaaS mode — humans operate it directly via /admin.",
+        };
+      }
+
+      // Heartbeat is operator-aware: only meaningful when FlowPilot owns the role
+      const heartbeat = (() => {
+        if (!flowpilotEnabled) {
+          return {
+            status: "n/a",
+            reason: operator.type === "external" ? "external_operator" : "flowpilot_disabled",
+            note: "Heartbeat is a FlowPilot-internal loop. When FlowPilot is disabled, the absence of a recent heartbeat is expected, not a fault.",
+          };
+        }
+        return bHeartbeat.data ? {
+          status: bHeartbeat.data.status,
+          duration_ms: bHeartbeat.data.duration_ms,
+          last_run: bHeartbeat.data.created_at,
+          token_usage: bHeartbeat.data.token_usage,
+        } : { status: "pending", reason: "no_heartbeat_run_yet" };
+      })();
+
+      // Objectives are operator-aware
+      const objectiveRows = (bObjectives.data ?? []).map((o: any) => ({
+        id: o.id,
+        goal: o.goal,
+        status: o.status,
+        progress: o.progress,
+      }));
+      const objectivesPayload = (!flowpilotEnabled && operator.type === "external")
+        ? {
+            list: objectiveRows,
+            owned_by: "external_operator",
+            note: "These objectives (if any) are legacy/seed records. The external operator owns mission/goal-setting for this instance — query the operator directly for its current mission.",
+          }
+        : { list: objectiveRows, owned_by: flowpilotEnabled ? "flowpilot" : "none" };
+
       return {
+        operator,
         identity: bIdentity,
         company_profile: (bCompanyProfile as any)?.data?.value ?? null,
         branding: (bBranding as any)?.data?.value ?? null,
         health: bHealth,
-        objectives: (bObjectives.data ?? []).map((o: any) => ({
-          id: o.id,
-          goal: o.goal,
-          status: o.status,
-          progress: o.progress,
-        })),
+        objectives: objectivesPayload,
         recent_activity: (bActivity.data ?? []).map((a: any) => ({
           skill: a.skill_name,
           status: a.status,
           at: a.created_at,
         })),
         active_modules: (() => {
-          const raw = (bModules.data?.value ?? {}) as Record<string, { enabled?: boolean }>;
-          const enabled = Object.entries(raw)
+          const enabled = Object.entries(modulesRaw)
             .filter(([, v]) => v?.enabled === true)
             .map(([k]) => k);
           return {
             enabled,
-            count: enabled.length,
-            available_count: Object.keys(raw).length,
+            active_count: enabled.length,
+            available_count: Object.keys(modulesRaw).length,
+            opt_in_model: true,
+            note: "Modules are opt-in (Odoo-style). Inactive modules are not 'unused waste' — they are capabilities this instance chose not to enable. Only activate via /admin/modules if the underlying business process is actually run here.",
           };
         })(),
         automations: {
@@ -599,12 +669,7 @@ async function fetchResource(resourceKey: string): Promise<unknown> {
           })),
           count: bAutomations.data?.length ?? 0,
         },
-        heartbeat: bHeartbeat.data ? {
-          status: bHeartbeat.data.status,
-          duration_ms: bHeartbeat.data.duration_ms,
-          last_run: bHeartbeat.data.created_at,
-          token_usage: bHeartbeat.data.token_usage,
-        } : null,
+        heartbeat,
         skill_count: bSkillCount.count ?? 0,
         timestamp: new Date().toISOString(),
       };
