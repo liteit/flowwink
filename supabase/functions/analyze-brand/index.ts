@@ -21,10 +21,14 @@ serve(async (req) => {
       );
     }
 
+    // NOTE: This function intentionally bypasses the SearXNG/Firecrawl/Jina
+    // priority order. The `branding` format (colors, fonts, logo extraction)
+    // is a Firecrawl-only capability — no other provider supports it. If
+    // Firecrawl is not configured, brand analysis is not possible.
     const apiKey = Deno.env.get('FIRECRAWL_API_KEY');
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Firecrawl API key missing. Add FIRECRAWL_API_KEY in Cloud Secrets.' }),
+        JSON.stringify({ success: false, error: 'Brand analysis requires Firecrawl (only provider that supports branding extraction). Add FIRECRAWL_API_KEY in Cloud Secrets.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
