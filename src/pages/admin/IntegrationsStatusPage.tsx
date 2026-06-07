@@ -1247,6 +1247,15 @@ export default function IntegrationsStatusPage() {
                             {(key === 'local_llm' || key === 'n8n') && (
                               <TestConfigConnectionButton provider={key} config={currentConfig} isEnabled={isEnabled} />
                             )}
+                            {INTEGRATION_TO_MODULE[key] && isEnabled && (
+                              <Link
+                                to={`/admin/modules?module=${INTEGRATION_TO_MODULE[key]!.moduleId}`}
+                                className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                              >
+                                {INTEGRATION_TO_MODULE[key]!.label}
+                                <ExternalLink className="h-3 w-3" />
+                              </Link>
+                            )}
                             <a
                               href={integration.docsUrl}
                               target="_blank"
