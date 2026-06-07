@@ -111,3 +111,51 @@ function json(body: unknown, status = 200) {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
+
+/**
+ * Coerce common malformed shapes for `services` into the canonical
+ * [{id, name, description}] form expected by the UI.
+ *
+ * Accepted inputs:
+ *   - "Foo"                          → {id, name: "Foo", description: ""}
+ *   - {name, description}            → {id, name, description}
+ *   - {service, desc}                → {id, name: service, description: desc}
+ *   - {title, summary}               → {id, name: title, description: summary}
+ *   - {description: "..."} (no name) → DROPPED (would render as empty card)
+ *   - Record<string, string>         → [{name, description}, ...] (legacy object form)
+ */
+function normalizeServicesField(data: Record<string, unknown>): Record<string, unknown> {
+  if (!("services" in data)) return data;
+  const raw = data.services;
+  const out: Array<{ id: string; name: string; description: string }> = [];
+
+  const pushItem = (name: unknown, description: unknown, id?: unknown) => {
+    const n = typeof name === "string" ? name.trim() : "";
+    if (!n) return; // drop nameless entries — they become empty placeholders in the UI
+    out.push({
+      id: typeof id === "string" && id ? id : crypto.randomUUID(),
+      name: n,
+      description: typeof description === "string" ? description.trim() : "",
+    });
+  };
+
+  if (Array.isArray(raw)) {
+    for (const item of raw) {
+      if (typeof item === "string") {
+        pushItem(item, "");
+      } else if (item && typeof item === "object") {
+        const o = item as Record<string, unknown>;
+        const name = o.name ?? o.service ?? o.title ?? o.label;
+        const description = o.description ?? o.desc ?? o.summary ?? o.details ?? "";
+        pushItem(name, description, o.id);
+      }
+    }
+  } else if (raw && typeof raw === "object") {
+    // Legacy object form: { "Service A": "desc A", "Service B": "desc B" }
+    for (const [name, description] of Object.entries(raw as Record<string, unknown>)) {
+      pushItem(name, description);
+    }
+  }
+
+  return { ...data, services: out };
+}
