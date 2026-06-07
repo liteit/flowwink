@@ -52,6 +52,7 @@ const KB_SKILLS: SkillSeed[] = [
             },
             answer: {
               type: 'string',
+              description: 'REQUIRED for create and for any update that changes the body. Full article body — plain text or markdown. The server mirrors this into both answer_text (search/chat) and answer_json (Tiptap doc used by the public renderer), so passing only the title leaves the public page blank. Empty strings are rejected.',
             },
             category: {
               type: 'string',
