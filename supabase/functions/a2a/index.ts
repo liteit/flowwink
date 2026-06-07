@@ -749,6 +749,8 @@ async function handleOutbound(req: Request): Promise<Response> {
   if (peerError || !peer) return json({ error: `Peer not found or not active` }, 404);
   if (!peer.url) return json({ error: `Peer '${peer.name}' has no URL configured — cannot make outbound calls` }, 400);
 
+  // args-lint-ignore: `args` here is the raw HTTP request body (not agent-execute injected fields).
+  // Stored as jsonb in `input` for audit log; PostgREST accepts arbitrary keys.
   const { data: activityRow } = await supabase
     .from('a2a_activity')
     .insert({ peer_id: peer.id, direction: 'outbound', skill_name: effectiveSkill, input: rawMessage ? { message: rawMessage, ...args } : args, status: 'pending' })
