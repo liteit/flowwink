@@ -61,7 +61,12 @@ serve(async (req) => {
         return json({ success: false, error: "data object is required for update" }, 400);
       }
 
-      let next: Record<string, unknown> = incomingData as Record<string, unknown>;
+      // Defensive normalization: services MUST be [{id, name, description}].
+      // Agents often guess (strings, {description} only, etc.) — coerce or drop
+      // so the UI never renders empty placeholder cards.
+      const normalized = normalizeServicesField(incomingData as Record<string, unknown>);
+
+      let next: Record<string, unknown> = normalized;
       if (body.merge !== false) {
         const { data: existing } = await sb
           .from("site_settings")
@@ -69,7 +74,7 @@ serve(async (req) => {
           .eq("key", "company_profile")
           .maybeSingle();
         const current = (existing?.value ?? {}) as Record<string, unknown>;
-        next = { ...current, ...incomingData };
+        next = { ...current, ...normalized };
       }
 
       const { data, error } = await sb
