@@ -832,6 +832,7 @@ function IntegrationConfigPanel({
             Make sure your instance has the JSON output format enabled in <code>settings.yml</code>.
           </p>
         </div>
+        {PriorityField}
       </div>
     );
   }
