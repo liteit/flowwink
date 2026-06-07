@@ -712,7 +712,7 @@ function buildBriefingEmail(data: {
 
         <!-- CTA -->
         <tr><td style="padding:20px 24px;text-align:center;border-top:1px solid #f3f4f6;">
-          <a href="https://flowwink.lovable.app/admin" style="display:inline-block;padding:12px 32px;background:#111827;color:#ffffff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">Open Dashboard →</a>
+          <a href="${dashboardUrl}" style="display:inline-block;padding:12px 32px;background:#111827;color:#ffffff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">Open Dashboard →</a>
         </td></tr>
 
         <!-- Footer -->
