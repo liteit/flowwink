@@ -683,26 +683,6 @@ function IntegrationConfigPanel({
     );
   }
 
-  if (integrationKey === 'searxng') {
-    return (
-      <div className="space-y-3 pt-3 border-t">
-        <div className="space-y-2">
-          <Label htmlFor="searxng-url" className="text-xs">Instance URL *</Label>
-          <Input
-            id="searxng-url"
-            value={config?.url || ''}
-            onChange={(e) => handleChange({ url: e.target.value.trim() })}
-            placeholder="https://app-searxng.example.com"
-            className="h-8 text-sm"
-          />
-          <p className="text-xs text-muted-foreground">
-            Base URL of your SearXNG instance. Must support <code>/search?format=json</code>.
-            Used as a privacy-respecting, self-hosted alternative to Firecrawl/Jina for <code>search_web</code>.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   if (integrationKey === 'slack') {
     return (
