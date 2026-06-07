@@ -1177,10 +1177,11 @@ export default function IntegrationsStatusPage() {
                             : !hasKey
                             ? "border-dashed opacity-60"
                             : "border-border/50 bg-muted/20"
-                        } ${hasConfigSection && hasKey && isEnabled ? "cursor-pointer hover:shadow-sm" : ""}`}
+                        } ${hasConfigSection && (hasKey ? isEnabled : !requiresSecret) ? "cursor-pointer hover:shadow-sm" : ""}`}
                         onClick={() => {
-                          if (hasConfigSection && hasKey && isEnabled) openDrawer(key, currentConfig);
+                          if (hasConfigSection && (hasKey ? isEnabled : !requiresSecret)) openDrawer(key, currentConfig);
                         }}
+
                       >
                         <CardHeader className="pb-3">
                           <div className="flex items-start justify-between gap-3">
