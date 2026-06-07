@@ -439,7 +439,11 @@ function IntegrationConfigPanel({
     onConfigChange({ ...config, ...updates });
   }, [config, onConfigChange]);
 
-  if (!hasKey || !isEnabled) return null;
+  // Integrations that don't require a secret (URL-only, etc.) must always show their
+  // config form so the user can enter the URL needed to enable them.
+  const noSecretNeeded = ['local_llm', 'n8n', 'google_analytics', 'meta_pixel', 'slack', 'searxng'];
+  const alwaysShow = noSecretNeeded.includes(integrationKey as string);
+  if (!alwaysShow && (!hasKey || !isEnabled)) return null;
 
   if (integrationKey === 'openai') {
     return (
