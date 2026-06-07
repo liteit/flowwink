@@ -4878,6 +4878,19 @@ async function executeSendInvoiceForOrder(
     emailResult = resendRes.ok
       ? { sent: true, message_id: resendData?.id }
       : { sent: false, error: resendData?.message || resendRes.statusText };
+    await logOutboundEmail(supabase, {
+      status: resendRes.ok ? 'sent' : 'failed',
+      recipient: order.customer_email,
+      subject: `Invoice ${invoice.invoice_number} from FlowPilot`,
+      body_html: html,
+      from: fromEmail,
+      provider_message_id: resendData?.id ?? null,
+      error_message: resendRes.ok ? null : (resendData?.message || resendRes.statusText),
+      source: 'send_invoice',
+      related_entity_type: 'invoice',
+      related_entity_id: invoice.id,
+      extra_metadata: { order_id, invoice_number: invoice.invoice_number },
+    });
   }
 
   // 7. Audit trail
