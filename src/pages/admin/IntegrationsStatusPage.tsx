@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { GmailIntegrationCard } from "@/components/admin/integrations/GmailIntegrationCard";
 import { useIntegrationModuleMap } from "@/hooks/useModuleReadiness";
@@ -71,6 +72,13 @@ const iconMap = {
   MessageSquare,
   Search,
   Megaphone,
+};
+
+// Integrations that have a paired module the admin should configure after connecting.
+// Keeps the "integration is the plug, module is the appliance" model navigable.
+const INTEGRATION_TO_MODULE: Partial<Record<keyof IntegrationsSettings, { moduleId: string; label: string }>> = {
+  composio: { moduleId: 'composio', label: 'Configure Composio module' },
+  resend: { moduleId: 'email', label: 'Configure Email module' },
 };
 
 // Local alias for the page — pure delegate to the shared switch in useIntegrations.tsx.
@@ -1238,6 +1246,15 @@ export default function IntegrationsStatusPage() {
                             )}
                             {(key === 'local_llm' || key === 'n8n') && (
                               <TestConfigConnectionButton provider={key} config={currentConfig} isEnabled={isEnabled} />
+                            )}
+                            {INTEGRATION_TO_MODULE[key] && isEnabled && (
+                              <Link
+                                to={`/admin/modules?module=${INTEGRATION_TO_MODULE[key]!.moduleId}`}
+                                className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                              >
+                                {INTEGRATION_TO_MODULE[key]!.label}
+                                <ExternalLink className="h-3 w-3" />
+                              </Link>
                             )}
                             <a
                               href={integration.docsUrl}

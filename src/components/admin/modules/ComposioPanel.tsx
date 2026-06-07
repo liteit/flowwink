@@ -215,7 +215,14 @@ export function ComposioPanel() {
             Connect external apps for FlowPilot automation
           </p>
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          <a
+            href="/admin/integrations#composio"
+            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+          >
+            Manage integration
+            <ExternalLink className="h-3 w-3" />
+          </a>
           <Button variant="outline" size="sm" onClick={handleDiagnose} disabled={isDiagnosing} className="text-xs">
             {isDiagnosing ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <AlertCircle className="h-3.5 w-3.5 mr-1" />}
             Run diagnostic

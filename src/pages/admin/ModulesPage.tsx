@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Power, PowerOff } from "lucide-react";
@@ -172,6 +173,8 @@ export default function ModulesPage() {
   const { toast } = useToast();
   const [localModules, setLocalModules] = useState<ModulesSettings | null>(null);
   const [search, setSearch] = useState("");
+  const [searchParams] = useSearchParams();
+  const deepLinkModule = searchParams.get("module");
 
   useEffect(() => {
     if (modules) {
@@ -477,6 +480,7 @@ export default function ModulesPage() {
                         onAdminUIToggle={module.autonomy === 'agent-capable' ? (adminUI) => handleAdminUIToggle(module.id, adminUI) : undefined}
                         isUpdating={updateModules.isPending}
                         IconComponent={IconComponent}
+                        autoOpen={deepLinkModule === module.id}
                       />
                     );
                   })}

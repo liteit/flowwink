@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -88,6 +88,8 @@ interface ModuleCardProps {
   onAdminUIToggle?: (enabled: boolean) => void;
   isUpdating: boolean;
   IconComponent: React.ComponentType<{ className?: string }>;
+  /** When true, opens the detail sheet automatically on mount (used for deep-linking from integrations). */
+  autoOpen?: boolean;
 }
 
 export function ModuleCard({
@@ -102,6 +104,7 @@ export function ModuleCard({
   onAdminUIToggle,
   isUpdating,
   IconComponent,
+  autoOpen = false,
 }: ModuleCardProps) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [seeding, setSeeding] = useState(false);
@@ -109,6 +112,11 @@ export function ModuleCard({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: seedCounts } = useModuleSeedCounts();
+
+  // Deep-link: auto-open the detail sheet when arriving via ?module=<id>
+  useEffect(() => {
+    if (autoOpen) setDetailOpen(true);
+  }, [autoOpen]);
   
   // Check if this module has a registry entry (has API)
   const registryModule = moduleRegistry.list().find(m => m.id === moduleId);
