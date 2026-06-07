@@ -167,21 +167,24 @@ function lintFile(file: string): Finding[] {
       const arg = argText.trim();
       if (!arg) continue;
 
-      // Pattern 1: bare identifier — flag if risky raw OR tainted variable.
+      // Pattern 1: bare identifier
+      //   - RAW_ARG_IDENTS (args/rest/body/...) → always flag (almost always a bug)
+      //   - BUILDER_IDENTS (updates/patch/...) → flag only if tainted
+      //   - any other identifier → flag only if tainted
       const bareMatch = arg.match(/^([A-Za-z_$][\w$]*)$/);
       if (bareMatch) {
         const ident = bareMatch[1];
-        const isRiskyRaw = RISKY_IDENTS.has(ident);
+        const isRawArg = RAW_ARG_IDENTS.has(ident);
         const isTainted = tainted.has(ident);
-        if ((isRiskyRaw || isTainted) && !hasNearbyStrip(lines, i)) {
+        if ((isRawArg || isTainted) && !hasNearbyStrip(lines, i)) {
           findings.push({
             file: relFile,
             line: i + 1,
             snippet: line.trim(),
-            rule: isTainted ? 'tainted-var-into-write' : 'no-bare-args-spread',
+            rule: isTainted ? 'tainted-var-into-write' : 'raw-arg-into-write',
             message: isTainted
               ? `.${method}(${ident}) — '${ident}' was built by spreading raw agent args; it carries _-prefixed fields straight to PostgREST.`
-              : `.${method}(${ident}) passes the raw agent-supplied object straight to PostgREST. Strip _-prefixed fields first.`,
+              : `.${method}(${ident}) passes the raw agent arg bag to PostgREST. Strip _-prefixed fields first.`,
           });
         }
         continue;
