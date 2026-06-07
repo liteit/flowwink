@@ -63,6 +63,8 @@ export interface IntegrationProviderConfig {
   warnAtPct?: number; // 0-100, default 80
   // SearXNG — self-hosted search base URL (e.g. https://searx.example.com)
   url?: string;
+  // Web-data provider fallback order (firecrawl/searxng/jina). 1 = try first.
+  priority?: number;
 }
 
 // Integration configuration type
