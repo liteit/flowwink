@@ -418,18 +418,18 @@ export default function SiteSettingsPage() {
             {/* Public Site URL — used by backend skills to build absolute links */}
             <Card>
               <CardHeader>
-                <CardTitle className="font-serif">Public Site URL</CardTitle>
-                <CardDescription>
-                  The canonical URL of this site (e.g. <code>https://www.autoversio.ai</code>).
-                  Used by FlowPilot and MCP skills to build absolute links — contract signing
-                  URLs, invoice/quote links, briefing emails, etc. Leave empty to fall back to
-                  the Lovable preview domain.
-                </CardDescription>
+              <CardTitle className="font-serif">Public Site URL</CardTitle>
+              <CardDescription>
+                The canonical URL of this site (e.g. <code>https://www.yourcompany.com</code>).
+                Used by FlowPilot and MCP skills to build absolute links — contract signing
+                URLs, invoice/quote links, briefing emails, etc. Leave empty to fall back to
+                the Lovable preview domain.
+              </CardDescription>
               </CardHeader>
               <CardContent>
                 <Input
                   type="url"
-                  placeholder="https://www.autoversio.ai"
+                  placeholder="https://www.yourcompany.com"
                   value={generalData.siteUrl ?? ''}
                   onChange={(e) => setGeneralData(prev => ({ ...prev, siteUrl: e.target.value.trim() }))}
                 />
