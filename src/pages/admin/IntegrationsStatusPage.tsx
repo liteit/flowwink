@@ -1177,10 +1177,11 @@ export default function IntegrationsStatusPage() {
                             : !hasKey
                             ? "border-dashed opacity-60"
                             : "border-border/50 bg-muted/20"
-                        } ${hasConfigSection && hasKey && isEnabled ? "cursor-pointer hover:shadow-sm" : ""}`}
+                        } ${hasConfigSection && (hasKey ? isEnabled : !requiresSecret) ? "cursor-pointer hover:shadow-sm" : ""}`}
                         onClick={() => {
-                          if (hasConfigSection && hasKey && isEnabled) openDrawer(key, currentConfig);
+                          if (hasConfigSection && (hasKey ? isEnabled : !requiresSecret)) openDrawer(key, currentConfig);
                         }}
+
                       >
                         <CardHeader className="pb-3">
                           <div className="flex items-start justify-between gap-3">
@@ -1268,7 +1269,7 @@ export default function IntegrationsStatusPage() {
                             </a>
                           </div>
 
-                          {/* CLI Command — only if not yet configured */}
+                          {/* CLI Command — only if not yet configured (secret-based) */}
                           {!hasKey && requiresSecret && !statusUnavailable && (
                             <div className="flex items-center gap-2">
                               <code className="flex-1 text-xs bg-muted px-2 py-1.5 rounded font-mono truncate">
@@ -1279,6 +1280,19 @@ export default function IntegrationsStatusPage() {
                               </Button>
                             </div>
                           )}
+
+                          {/* Configure CTA for config-based integrations not yet set up */}
+                          {!hasKey && !requiresSecret && hasConfigSection && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                              onClick={(e) => { e.stopPropagation(); openDrawer(key, currentConfig); }}
+                            >
+                              Configure
+                            </Button>
+                          )}
+
                         </CardContent>
                       </Card>
                     );
