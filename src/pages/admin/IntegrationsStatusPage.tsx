@@ -445,6 +445,38 @@ function IntegrationConfigPanel({
   const alwaysShow = noSecretNeeded.includes(integrationKey as string);
   if (!alwaysShow && (!hasKey || !isEnabled)) return null;
 
+  // Shared priority selector for web-data providers (firecrawl/searxng/jina).
+  // 1 = try first, 3 = last resort. Runtime (web-search/web-scrape edge functions)
+  // iterates providers in this order with automatic fallback on failure.
+  const WEB_PROVIDER_DEFAULTS: Record<string, number> = { searxng: 1, firecrawl: 2, jina: 3 };
+  const isWebProvider = integrationKey in WEB_PROVIDER_DEFAULTS;
+  const currentPriority = Number(config?.priority) || WEB_PROVIDER_DEFAULTS[integrationKey as string];
+  const PriorityField = isWebProvider ? (
+    <div className="space-y-2 pt-3 border-t">
+      <Label htmlFor={`${integrationKey}-priority`} className="text-xs">Fallback priority</Label>
+      <Select
+        value={String(currentPriority)}
+        onValueChange={(v) => handleChange({ priority: parseInt(v, 10) })}
+      >
+        <SelectTrigger id={`${integrationKey}-priority`} className="h-8 text-sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="1">#1 — try first</SelectItem>
+          <SelectItem value="2">#2</SelectItem>
+          <SelectItem value="3">#3 — last resort</SelectItem>
+        </SelectContent>
+      </Select>
+      <p className="text-xs text-muted-foreground">
+        Order in which web search/scrape tries this provider. Lower = earlier. Used by FlowPilot, prospect research, and content tools.
+      </p>
+    </div>
+  ) : null;
+
+  if (integrationKey === 'firecrawl') {
+    return <div className="space-y-3">{PriorityField}</div>;
+  }
+
   if (integrationKey === 'openai') {
     return (
       <div className="space-y-3 pt-3 border-t">
