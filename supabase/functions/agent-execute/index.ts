@@ -6718,15 +6718,17 @@ async function executeDbAction(
           }).eq('id', contract.id);
         if (uErr) throw new Error(`Update contract failed: ${uErr.message}`);
 
-        // Resolve site origin (env first, then site_settings, fallback to lovable preview)
+        // Resolve site origin (env first, then site_settings.general, fallback to lovable preview)
         let origin = Deno.env.get('PUBLIC_SITE_URL') || '';
         if (!origin) {
           const { data: setting } = await supabase.from('site_settings')
             .select('value').eq('key', 'general').maybeSingle();
-          origin = (setting?.value as any)?.site_url || (setting?.value as any)?.public_url || '';
+          const v = (setting?.value as any) || {};
+          origin = v.siteUrl || v.site_url || v.public_url || v.publicUrl || '';
         }
         if (!origin) origin = 'https://flowwink.lovable.app';
         origin = origin.replace(/\/$/, '');
+
 
         return {
           contract_id: contract.id,
