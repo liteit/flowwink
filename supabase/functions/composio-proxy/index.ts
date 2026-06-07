@@ -245,6 +245,36 @@ Deno.serve(async (req) => {
         return json({ error: extractErrorMessage(res.data, `Failed to execute ${actionName}`), details: res.data }, res.status);
       }
 
+      // Log outbound email when generic execute sends Gmail
+      if (actionName === 'GMAIL_SEND_EMAIL') {
+        const input = params?.input || {};
+        const to = input.recipient_email || input.to || '';
+        const subject = input.subject || '';
+        const body = input.body || input.body_text || input.message || '';
+        const cc = input.cc || null;
+        const bcc = input.bcc || null;
+        const success = res.data?.successful === true || res.data?.success === true || res.data?.data?.response_data?.labelIds?.includes?.('SENT');
+
+        await logComposioOutbound({
+          channel: 'email',
+          recipient: to,
+          subject,
+          body_text: body,
+          status: success ? 'sent' : 'failed',
+          error_message: success ? null : extractErrorMessage(res.data, 'Gmail send failed'),
+          metadata: {
+            tool: 'GMAIL_SEND_EMAIL',
+            via: 'generic_execute',
+            entity_id: effectiveUserId,
+            cc,
+            bcc,
+            gmail_message_id: res.data?.data?.response_data?.id ?? null,
+            thread_id: res.data?.data?.response_data?.threadId ?? null,
+            log_id: res.data?.log_id ?? null,
+          },
+        });
+      }
+
       return json({ result: res.data });
     }
 
