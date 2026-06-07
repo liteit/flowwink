@@ -676,7 +676,7 @@ export type FederationPeerOutput = z.infer<typeof federationPeerOutputSchema>;
 // =============================================================================
 
 export const composioActionInputSchema = z.object({
-  action: z.enum(['search_tools', 'execute', 'list_apps', 'connect_app']),
+  action: z.enum(['search_tools', 'execute', 'list_apps', 'connect_app', 'diagnose']),
   intent: z.string().optional(),
   app: z.string().optional(),
   params: z.record(z.unknown()).optional(),
