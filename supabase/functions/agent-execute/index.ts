@@ -2655,6 +2655,41 @@ Output ONLY the alt text, nothing else.`;
 // Knowledge Base module handlers
 // =============================================================================
 
+/**
+ * Normalize an `answer` value into both plain text (for search/chat context)
+ * and a minimal Tiptap doc (for the public renderer which reads answer_json).
+ *
+ * Accepts:
+ *   - string (plain text or markdown — split on blank lines into paragraphs)
+ *   - Tiptap doc ({ type: 'doc', content: [...] }) — passed through
+ *   - anything else → coerced to string
+ */
+function normalizeKbAnswer(answer: unknown): { answer_text: string; answer_json: unknown } {
+  if (answer && typeof answer === 'object' && (answer as any).type === 'doc' && Array.isArray((answer as any).content)) {
+    // Extract plain text from Tiptap doc
+    const extractText = (node: any): string => {
+      if (!node) return '';
+      if (node.type === 'text') return String(node.text || '');
+      if (Array.isArray(node.content)) return node.content.map(extractText).join('');
+      return '';
+    };
+    const text = (answer as any).content.map(extractText).join('\n\n').trim();
+    return { answer_text: text, answer_json: answer };
+  }
+  const text = String(answer ?? '').trim();
+  const paragraphs = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+  const doc = {
+    type: 'doc',
+    content: paragraphs.length > 0
+      ? paragraphs.map((p) => ({
+          type: 'paragraph',
+          content: [{ type: 'text', text: p }],
+        }))
+      : [{ type: 'paragraph' }],
+  };
+  return { answer_text: text, answer_json: doc };
+}
+
 async function executeKbAction(
   supabase: SupabaseClient,
   skillName: string,
