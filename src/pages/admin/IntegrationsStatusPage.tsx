@@ -73,6 +73,13 @@ const iconMap = {
   Megaphone,
 };
 
+// Integrations that have a paired module the admin should configure after connecting.
+// Keeps the "integration is the plug, module is the appliance" model navigable.
+const INTEGRATION_TO_MODULE: Partial<Record<keyof IntegrationsSettings, { moduleId: string; label: string }>> = {
+  composio: { moduleId: 'composio', label: 'Configure Composio module' },
+  resend: { moduleId: 'email', label: 'Configure Email module' },
+};
+
 // Local alias for the page — pure delegate to the shared switch in useIntegrations.tsx.
 // Kept so existing call sites (badge rendering) read naturally.
 function hasRealCredential(
