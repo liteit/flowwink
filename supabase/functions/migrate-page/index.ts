@@ -770,6 +770,11 @@ serve(async (req) => {
     }
     const supabase = getServiceClient();
 
+    // NOTE: migrate-page intentionally keeps Firecrawl-first ordering regardless
+    // of the SearXNG/Firecrawl/Jina priority in site_settings. Site migration
+    // requires the `branding` format + screenshots + full rawHtml, all of which
+    // are Firecrawl-only capabilities. Jina is used as last-resort fallback for
+    // text-only scraping when Firecrawl is unavailable or disabled.
     const firecrawlKey = Deno.env.get('FIRECRAWL_API_KEY');
 
     // Check if Firecrawl is enabled in site_settings
