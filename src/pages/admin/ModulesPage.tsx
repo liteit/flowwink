@@ -173,6 +173,8 @@ export default function ModulesPage() {
   const { toast } = useToast();
   const [localModules, setLocalModules] = useState<ModulesSettings | null>(null);
   const [search, setSearch] = useState("");
+  const [searchParams] = useSearchParams();
+  const deepLinkModule = searchParams.get("module");
 
   useEffect(() => {
     if (modules) {
