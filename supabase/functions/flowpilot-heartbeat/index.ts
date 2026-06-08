@@ -243,8 +243,25 @@ serve(async (req) => {
     ]);
 
     // 1. Token budget — give fresh sites more room to work
-    const TOKEN_BUDGET = siteMaturity.isFresh ? 180_000 : 120_000;
-    const maxIter = siteMaturity.isFresh ? 18 : 15;
+    let TOKEN_BUDGET = siteMaturity.isFresh ? 180_000 : 120_000;
+    let maxIter = siteMaturity.isFresh ? 18 : 15;
+    let skillCategories = ['content', 'analytics', 'system', 'growth', 'crm', 'communication', 'search'];
+
+    // Optional intensity override (cost control + local fast-simulation). Applied
+    // only when the 'heartbeat_overrides' site_settings key exists; absent in
+    // production → zero effect. Lets a heavy run be throttled to fit a tighter
+    // CPU budget (notably `supabase functions serve` during npm run flowpilot:sim,
+    // whose per-request CPU limit the full-size context assembly would blow).
+    const { data: hbOv } = await supabase
+      .from('site_settings').select('value').eq('key', 'heartbeat_overrides').maybeSingle();
+    const ov = (hbOv?.value || null) as
+      { tokenBudget?: number; maxIterations?: number; skillCategories?: string[] } | null;
+    if (ov) {
+      if (ov.tokenBudget) TOKEN_BUDGET = Math.min(TOKEN_BUDGET, ov.tokenBudget);
+      if (ov.maxIterations) maxIter = Math.min(maxIter, ov.maxIterations);
+      if (Array.isArray(ov.skillCategories) && ov.skillCategories.length) skillCategories = ov.skillCategories;
+      console.log(`[heartbeat] trace=${traceId} Intensity override active: budget=${TOKEN_BUDGET} iter=${maxIter} cats=${skillCategories.length}`);
+    }
 
     console.log(`[heartbeat] trace=${traceId} Site maturity: ${siteMaturity.isFresh ? 'FRESH' : 'mature'}, budget: ${TOKEN_BUDGET}${customProtocol ? ', custom protocol' : ''}`);
 
@@ -281,7 +298,7 @@ serve(async (req) => {
       tokenBudget: TOKEN_BUDGET,
       // Essential categories for autonomous work (~42 skills instead of 91)
       // CRM + communication skills are available via chain_skills if needed
-      skillCategories: ['content', 'analytics', 'system', 'growth', 'crm', 'communication', 'search'],
+      skillCategories,
     });
 
     const timeoutPromise = new Promise<never>((_, reject) =>

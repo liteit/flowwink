@@ -28,7 +28,8 @@
     "skills:json": "bun run scripts/skills-to-json.ts",
     "sync:skills": "bun run scripts/sync-skills.ts",
     "fleet:status": "bun run scripts/fleet-status.ts",
-    "local:smoke": "bun run scripts/local-smoke.ts"
+    "local:smoke": "bun run scripts/local-smoke.ts",
+    "flowpilot:sim": "bun run scripts/flowpilot-simulate.ts"
   },
   "dependencies": {
     "@codemirror/lang-html": "^6.4.11",
