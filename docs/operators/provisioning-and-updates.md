@@ -76,6 +76,20 @@ never shows up as a false diff.
 > Always run `skill-linter` after a sync to confirm the surface is clean:
 > `DATABASE_URL=… npm run lint:skill`.
 
+### Fleet drift detector
+
+For a one-glance health snapshot across **every** instance (read-only), run:
+
+```bash
+PGPW='<db password>' npm run fleet:status
+```
+
+It reports, per site: skill counts, malformed `tool_definition`s, drift vs. the
+code artifact, and unresolvable `rpc:` / `edge:` handlers — and flags forks
+(which don't auto-deploy from `main`). Instances live in `scripts/fleet.json`
+(refs only, no secrets). Run it after a fleet-wide update, or on a schedule, to
+catch a site that has drifted.
+
 ## Runbook: ship a change to the fleet
 
 After merging a change that touches **skills, handlers, or edge functions**:

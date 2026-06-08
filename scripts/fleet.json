@@ -1,0 +1,9 @@
+{
+  "_comment": "Known FlowWink fleet — name → Supabase project ref. No secrets here; the DB password is passed via the PGPW env var at runtime. Add new sites as they are provisioned.",
+  "instances": [
+    { "name": "autoversio", "ref": "trpejhoieysrwiuhskkm", "fork": true },
+    { "name": "liteit", "ref": "cdwpqcevbcbqxhycsqhm" },
+    { "name": "demo", "ref": "lcztuuaxulxivhbnkcpm" },
+    { "name": "www", "ref": "hebytraibjmbqntsljph" }
+  ]
+}
