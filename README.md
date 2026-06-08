@@ -398,6 +398,7 @@ Start at **[docs/start-here.md](docs/start-here.md)** — the curated entry poin
 | **[docs/guides/setup.md](docs/guides/setup.md)** | Supabase setup, environment variables, migrations |
 | **[docs/guides/deployment.md](docs/guides/deployment.md)** | Supabase Cloud + Vercel deployment walkthrough |
 | **[docs/operators/provisioning-and-updates.md](docs/operators/provisioning-and-updates.md)** | Multi-site provisioning, the update runbook, skill-sync & drift prevention |
+| **[docs/operators/local-development.md](docs/operators/local-development.md)** | Run Supabase locally (OrbStack/Docker) to validate migrations & changes before prod |
 | **[docs/builders/README.md](docs/builders/README.md)** | Architecture, extending the platform, writing skills |
 | **[docs/guides/security.md](docs/guides/security.md)** | RLS policies, auth patterns, security model |
 | **[docs/contributing/test-suite.md](docs/contributing/test-suite.md)** | Autonomous test framework (L1–L8) |

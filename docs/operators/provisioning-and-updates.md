@@ -136,17 +136,49 @@ mismatches in the dispatch layer, not by renaming the shared DB function.**
 
 These are designed but not yet built; tackle before more developers distribute:
 
-1. **Baseline-squash the schema.** 450+ imperative migrations make new-site setup
-   slow and brittle. Generate `supabase/migrations/00000000000000_baseline.sql`
-   from a clean, fully-migrated instance (`supabase db dump --schema-only`),
-   `supabase migration repair --status applied 00000000000000` on the existing
-   fleet, archive the historical migrations, and keep only post-baseline deltas.
-   Re-baseline every ~6 months.
-2. **Consolidate edge functions into domain routers.** ~99 functions sits at the
-   Supabase free-tier ceiling. Merge thin senders behind one router each (the
-   `reconciliation` / `a2a` functions already route sub-paths via
-   `url.pathname`): `send-*-email` → `notify`, `newsletter-*` → `newsletter`,
-   `enrich-*` / `prospect-*` → `enrich`. Target well under 100.
+### 1. Baseline-squash the schema
+
+450+ imperative migrations (~2.6 MB) make new-site setup slow and brittle; a
+baseline replaces them with a single ~1 MB schema file (225 tables) + future
+deltas. **This is a coupled prod operation** — the repo squash and a
+`migration repair` on every existing instance must happen together, or the next
+`supabase db push` to an existing site tries to re-create tables that already
+exist and fails. **Validate on local Supabase first** (see
+[local-development.md](./local-development.md)). Procedure:
+
+```bash
+# 1. Generate the baseline from a clean, fully-migrated instance (read-only).
+supabase db dump --db-url 'postgresql://postgres:<pw>@db.<ref>.supabase.co:5432/postgres' \
+  -f supabase/migrations/00000000000000_baseline.sql
+
+# 2. VALIDATE LOCALLY before touching prod:
+#    - archive the 450+ historical files (git mv supabase/migrations/2025*  …/_archive/)
+#    - supabase db reset  → applies ONLY baseline + post-baseline deltas
+#    - diff the resulting schema against a fully-migrated instance; they must match
+#    - run sync:skills + lint:skill against the local DB → clean
+
+# 3. Only once local is green, on EACH existing instance:
+supabase migration repair --status applied 00000000000000 --db-url '<conn>'
+#    (marks the baseline as already-applied so db push never re-runs it)
+
+# 4. Commit the baseline + archived migrations.
+```
+
+Re-baseline every ~6 months as deltas accumulate.
+
+### 2. Consolidate edge functions into domain routers
+
+~99 functions sits at the Supabase free-tier ceiling. The `reconciliation` /
+`a2a` functions already route sub-paths via `url.pathname`, so the pattern
+exists. **But consolidation here has the same lockstep tail as the RPC rename
+above:** nearly every function is invoked by the admin frontend directly, and
+forks don't auto-deploy — so you cannot delete an old function until *every*
+frontend (including forks) is live on the new router. Safe sequence: ship the
+router additively, migrate all callers, redeploy all frontends, *then* delete
+the old functions. There are no dead functions to delete outright (all
+zero-reference ones are crons/webhooks/test runners). Treat this as a planned
+migration, not a quick win — and consider routing the admin UI through fewer
+gateways first.
 3. **Fail loud on migrations.** `scripts/run-migrations.js` swallows errors so a
    Vercel build "succeeds" against a DB that never migrated — a prime drift
    source. Either fail the build, or decouple migrations from the build and run
