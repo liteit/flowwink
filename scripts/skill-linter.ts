@@ -218,6 +218,10 @@ function lintSingleSkill(skill: AgentSkillRow, ctx: LintCtx): SkillReport {
         message: `Handler points to RPC "${rpcName}" but no such function exists in public schema.`,
         fix: `Create the migration for ${rpcName}() or fix the handler value.`,
       });
+    } else if (validArgs.size === 1 && (validArgs.has('args') || validArgs.has('p_args'))) {
+      // jsonb-args RPC: signature is `(args jsonb)`. The dispatcher forwards the
+      // whole argument object under `args`, so individual skill properties are
+      // never mapped one-to-one — there is no per-prop drift to check here.
     } else {
       // Apply mapRpcArgs transform
       const mapped = propNames

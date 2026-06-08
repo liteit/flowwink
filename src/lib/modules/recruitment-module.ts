@@ -283,6 +283,7 @@ const RECRUITMENT_AUTOMATIONS: AutomationSeed[] = [
     trigger_config: { cron: '30 8 * * 1-5', expression: '30 8 * * 1-5' },
     skill_name: 'summarize_candidate_pipeline',
     skill_arguments: { stuck_threshold_days: 7 },
+    executor: 'flowpilot',
   },
 ];
 

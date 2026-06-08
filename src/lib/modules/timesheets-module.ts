@@ -30,6 +30,15 @@ type TimesheetsOutput = z.infer<typeof timesheetsOutputSchema>;
 
 const TIMESHEET_SKILLS: SkillSeed[] = [
   {
+    name: 'lock_timesheet_period',
+    description: 'Lock all time entries in a fiscal month so they can no longer be edited. Use when: month-end close, payroll cutoff, "lock timesheets for March". NOT for: deleting individual entries (use log_time) or closing the accounting period (close_accounting_period).',
+    category: 'commerce',
+    handler: 'rpc:lock_timesheet_period',
+    scope: 'internal',
+    trust_level: 'notify',
+    tool_definition: {"type":"function","function":{"name":"lock_timesheet_period","parameters":{"type":"object","required":["fiscal_year","period_month"],"properties":{"notes":{"type":"string"},"fiscal_year":{"type":"integer","description":"Year, e.g. 2026"},"period_month":{"type":"integer","description":"Month 1-12"}}},"description":"Lock all time entries in a fiscal month."}} as SkillSeed['tool_definition'],
+  },
+  {
     name: 'log_time',
     description: 'Log time entries for projects. Use when: employee reports hours worked, FlowPilot processes daily standups, user says "I worked 4 hours on X". NOT for: project management (use manage_projects), summaries (use timesheet_summary).',
     category: 'commerce',

@@ -227,16 +227,16 @@
   },
   {
     "skill_name": "lock_timesheet_period",
-    "rpc_name": "close_accounting_period",
+    "rpc_name": "lock_timesheet_period",
     "pg_args": [
-      "p_year",
-      "p_month",
+      "p_fiscal_year",
+      "p_period_month",
       "p_notes"
     ],
     "skill_props": [
-      "month",
+      "fiscal_year",
       "notes",
-      "year"
+      "period_month"
     ]
   },
   {

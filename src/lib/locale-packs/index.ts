@@ -37,7 +37,7 @@ export function getPack(id: string | null | undefined): AccountingLocalePack {
  * Server/edge code should read from site_settings instead.
  */
 export function getActivePack(): AccountingLocalePack {
-  if (typeof window === 'undefined') return LOCALE_PACKS[DEFAULT_LOCALE_ID];
+  if (typeof window === 'undefined' || !window.localStorage) return LOCALE_PACKS[DEFAULT_LOCALE_ID];
   const id = window.localStorage.getItem(ACTIVE_PACK_STORAGE_KEY) || DEFAULT_LOCALE_ID;
   return getPack(id);
 }
@@ -48,7 +48,7 @@ export function getActivePack(): AccountingLocalePack {
  * Includes cross-tab sync via the storage event.
  */
 export function setActivePackId(id: string) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !window.localStorage) return;
   const previous = window.localStorage.getItem(ACTIVE_PACK_STORAGE_KEY);
   window.localStorage.setItem(ACTIVE_PACK_STORAGE_KEY, id);
   if (previous !== id) {

@@ -109,6 +109,14 @@
   },
   "_skill_auto_filled_columns": {
     "_comment": "Per-skill exemptions: columns the skill's handler/service-layer fills automatically (e.g. user_id from JWT, auto-generated invoice numbers, or update-only skills that never insert a new row).",
+    "generate_site_from_identity": [
+      "slug",
+      "title"
+    ],
+    "landing_page_compose": [
+      "slug",
+      "title"
+    ],
     "manage_document": [
       "file_name"
     ],

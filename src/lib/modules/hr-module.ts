@@ -25,6 +25,15 @@ type HrOutput = z.infer<typeof hrOutputSchema>;
 
 const HR_SKILLS: SkillSeed[] = [
   {
+    name: 'auto_allocate_vacation',
+    description: 'Allocate annual vacation days for all active employees at year-end based on age/tenure policies, including capped carry-over from previous year. Use when: rolling over to a new fiscal year, onboarding HR module mid-year. NOT for: per-employee manual adjustments (use manage_leave).',
+    category: 'crm',
+    handler: 'rpc:auto_allocate_vacation',
+    scope: 'internal',
+    trust_level: 'notify',
+    tool_definition: {"type":"function","function":{"name":"auto_allocate_vacation","parameters":{"type":"object","required":["p_year"],"properties":{"p_year":{"type":"integer","description":"Fiscal year to allocate, e.g. 2026"},"p_dry_run":{"type":"boolean","description":"If true, returns preview without writing"}}},"description":"Bulk-allocate vacation days for a fiscal year based on active vacation_policies; writes audit log per employee."}} as SkillSeed['tool_definition'],
+  },
+  {
     name: 'manage_employee',
     description: 'Create, update, search, and deactivate employee records. Use when: adding new team members, updating roles/departments, offboarding. NOT for: leave requests (use manage_leave), documents.',
     category: 'crm',

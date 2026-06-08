@@ -33,6 +33,42 @@ type PurchasingOutput = z.infer<typeof purchasingOutputSchema>;
 
 const PURCHASING_SKILLS: SkillSeed[] = [
   {
+    name: 'register_vendor_invoice',
+    description: 'Register an incoming vendor invoice (AP inbox). Use when: a vendor bill arrives that needs 3-way matching against a PO before payment. NOT for: customer invoices (use create_invoice).',
+    category: 'commerce',
+    handler: 'db:vendor_invoices',
+    scope: 'internal',
+    trust_level: 'notify',
+    tool_definition: {"type":"function","function":{"name":"register_vendor_invoice","parameters":{"type":"object","required":["vendor_id","invoice_number","total_cents"],"properties":{"currency":{"type":"string"},"due_date":{"type":"string"},"tax_cents":{"type":"number"},"vendor_id":{"type":"string"},"total_cents":{"type":"number"},"invoice_date":{"type":"string"},"invoice_number":{"type":"string"},"subtotal_cents":{"type":"number"},"purchase_order_id":{"type":"string"}}},"description":"Register an incoming vendor invoice for 3-way matching"}} as SkillSeed['tool_definition'],
+  },
+  {
+    name: 'match_po_to_invoice',
+    description: '3-way match a vendor invoice against its PO and goods receipts within tolerance. Use when: a registered vendor invoice needs validation before approval. NOT for: customer reconciliation or listing variances (flag_invoice_variance).',
+    category: 'commerce',
+    handler: 'rpc:match_po_to_invoice',
+    scope: 'internal',
+    trust_level: 'notify',
+    tool_definition: {"type":"function","function":{"name":"match_po_to_invoice","parameters":{"type":"object","required":["invoice_id"],"properties":{"invoice_id":{"type":"string"},"variance_tolerance_pct":{"type":"number","default":2}}},"description":"Run 3-way match for a vendor invoice"}} as SkillSeed['tool_definition'],
+  },
+  {
+    name: 'flag_invoice_variance',
+    description: 'List vendor invoices flagged with price/quantity variance against their PO that need manual review. Use when: admin wants to see what failed automated 3-way matching. NOT for: inspecting a single invoice (use get_invoice) or auto-approving (use auto_approve_vendor_invoice).',
+    category: 'commerce',
+    handler: 'db:vendor_invoices',
+    scope: 'internal',
+    trust_level: 'notify',
+    tool_definition: {"type":"function","function":{"name":"flag_invoice_variance","parameters":{"type":"object","properties":{}},"description":"List vendor invoices flagged with price/quantity variance against their PO that need manual review."}} as SkillSeed['tool_definition'],
+  },
+  {
+    name: 'list_reorder_candidates',
+    description: 'List products at or below their reorder point with preferred vendor info. Use when: reviewing what needs reordering, "vad behöver beställas?". NOT for: actually placing orders (use auto_generate_purchase_orders).',
+    category: 'commerce',
+    handler: 'rpc:list_reorder_candidates',
+    scope: 'external',
+    trust_level: 'notify',
+    tool_definition: {"type":"function","function":{"name":"list_reorder_candidates","parameters":{"type":"object","properties":{}},"description":"List products needing reorder with vendor pricing"}} as SkillSeed['tool_definition'],
+  },
+  {
     name: 'manage_vendor',
     description: 'Create, list, update, or deactivate vendors/suppliers. Use when: admin asks to add a new supplier, update vendor details, or review the vendor list. NOT for: creating purchase orders (use create_purchase_order).',
     category: 'commerce',

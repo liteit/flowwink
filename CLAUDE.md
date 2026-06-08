@@ -117,6 +117,32 @@ It lives in `_shared/skills/` (NOT under `pilot/`) precisely because the gateway
 
 **FlowPilot does NOT call its own MCP gateway internally** — it shares the Engine and hits the DB / `executeSkill` directly. Deliberate, not an omission: MCP would add an HTTP hop, auth, and JSON-RPC serialization for zero gain when you're already inside the same Deno process with service-role DB access. MCP is a transport for *crossing a trust/process boundary*; FlowPilot is already on the inside of it.
 
+### REST compatibility layer (`/rest/*`)
+
+The `/rest/execute` endpoint mirrors the MCP tool surface but over plain HTTP POST. It respects `?mode=dispatch` and `?groups=` query params just like the native MCP transport:
+
+- `POST /rest/execute` — call any skill by name: `{ "tool": "browse_blog", "arguments": {} }`
+- `POST /rest/execute?mode=dispatch` — exposes `search_skills` and `execute_skill` as tools:
+  - `{ "tool": "search_skills", "arguments": { "query": "create knowledge base article" } }`
+  - `{ "tool": "execute_skill", "arguments": { "name": "browse_blog", "arguments": {} } }`
+- `GET /rest/resources/:key` — read resources (requires `Accept: text/event-stream` for `/rest/skills`; use `/rest/resources/briefing` etc. for JSON)
+- `GET /rest/groups` — list skill categories and their modules
+- `POST /rest/lock/acquire` / `/rest/lock/release` — distributed locking for multi-step ops
+
+**Bug fixed (2026-06-07):** `/rest/execute` previously ignored `?mode=dispatch` and returned "Unknown tool: search_skills". Fixed — dispatch mode now works via both native MCP and REST.
+
+### Skill schema gotchas for external operators
+
+**`manage_kb_article` create** — KB articles are Q&A format. Fields:
+- `title` (required) — display title
+- `question` (optional, auto-derived from title if omitted: `"What is {title}?"`)
+- `answer` / `content` / `body` (required, all accepted as aliases) — full article body
+- `category` — string name or slug; auto-creates category if none exist
+
+**`manage_wiki_page` update** — requires `slug` to identify the page. If `slug` is omitted but `title` matches an existing page (case-insensitive), the slug is auto-resolved. Safe pattern: `search_wiki` first to get the slug, then `update`.
+
+**`manage_wiki_page` create** — requires `content_md` (markdown body). Empty bodies are rejected at the handler level to prevent blank pages.
+
 ### Template System
 
 Templates live in `src/data/templates/` as TypeScript, registered in `index.ts → ALL_TEMPLATES`.

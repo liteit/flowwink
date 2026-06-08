@@ -21,6 +21,15 @@ type Output = z.infer<typeof outputSchema>;
 
 const SKILLS: SkillSeed[] = [
   {
+    name: 'propose_annual_depreciation',
+    description: 'Compute proposed annual depreciation for all active fixed assets (straight_line and declining). Returns one proposal per asset with account codes and amount. Use when: running year-end close. NOT for: monthly depreciation (run_monthly_depreciation) or registering an asset (register_fixed_asset).',
+    category: 'commerce',
+    handler: 'rpc:propose_annual_depreciation',
+    scope: 'internal',
+    trust_level: 'notify',
+    tool_definition: {"type":"function","function":{"name":"propose_annual_depreciation","parameters":{"type":"object","required":["p_year"],"properties":{"p_year":{"type":"integer","description":"Fiscal year, e.g. 2025"}}},"description":"Compute proposed annual depreciation for all active fixed assets."}} as SkillSeed['tool_definition'],
+  },
+  {
     name: 'register_fixed_asset',
     description:
       'Register a new fixed asset (equipment, furniture, vehicles, IT) and post the acquisition journal entry. Use when: a new piece of equipment is purchased and capitalized rather than expensed. NOT for: small consumables (use expenses), software subscriptions (use bills), or intangibles (separate flow).',

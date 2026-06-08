@@ -22,6 +22,33 @@ type Output = z.infer<typeof outputSchema>;
 // =============================================================================
 const PLATFORM_SKILLS: SkillSeed[] = [
   {
+    name: 'lint_skill',
+    description: 'Run the Agent Contract Integrity pre-release checklist on one or all agent skills (arg-mapping, NOT NULL coverage, description quality, MCP exposure). Use when: user asks to lint, verify, audit, or pre-release-check skills. Returns structured findings with severity and suggested fixes. NOT for: actually fixing the issues — only reports them.',
+    category: 'system',
+    handler: 'internal:lint_skill',
+    scope: 'internal',
+    trust_level: 'notify',
+    tool_definition: {"type":"function","function":{"name":"lint_skill","parameters":{"type":"object","required":[],"properties":{"skill_name":{"type":"string","description":"Optional: lint only this skill. Omit to lint all enabled skills."},"include_passing":{"type":"boolean","default":false,"description":"If true, include skills with zero findings. Default false."},"auto_filled_columns":{"type":"object","description":"Per-skill NOT NULL exemptions: {\"skill_name\":[\"col_a\"]}","additionalProperties":{"type":"array","items":{"type":"string"}}}}},"description":"Run the Agent Contract Integrity pre-release checklist on one or all enabled skills."}} as SkillSeed['tool_definition'],
+  },
+  {
+    name: 'reset_module_data',
+    description: 'Removes demo/simulation data previously created by seed_module_demo (only rows registered in demo_run_items). Use when: clearing demo data before going live; resetting a module to a clean state. NOT for: deleting real customer data, templates, or KB articles — it never touches those.',
+    category: 'system',
+    handler: 'rpc:reset_module_data',
+    scope: 'internal',
+    trust_level: 'approve',
+    tool_definition: {"type":"function","function":{"name":"reset_module_data","parameters":{"type":"object","required":["module"],"properties":{"module":{"type":"string","description":"Module name, or \"all\" to reset every module"},"run_id":{"type":"string","format":"uuid","description":"Optional: restrict to a specific demo run"},"dry_run":{"type":"boolean","default":true,"description":"If true, returns counts without deleting. Default true."}}},"description":"Removes demo/simulation data previously created by seed_module_demo. Only deletes rows explicitly registered in demo_run_items. Defaults to dry_run=true."}} as SkillSeed['tool_definition'],
+  },
+  {
+    name: 'seed_module_demo',
+    description: 'Seeds realistic demo/simulation data into a specific module, tagging every row with a demo run ID for clean removal later. Use when: a game-master agent wants to set up a scenario for testing or showcasing a workflow. NOT for: real customer data, or removing demo data (use reset_module_data).',
+    category: 'system',
+    handler: 'rpc:seed_module_demo',
+    scope: 'internal',
+    trust_level: 'auto',
+    tool_definition: {"type":"function","function":{"name":"seed_module_demo","parameters":{"type":"object","required":["module"],"properties":{"module":{"enum":["crm","quotes","invoices","expenses"],"type":"string","description":"Module to seed"},"scenario":{"type":"string","default":"default","description":"Scenario name (e.g. quiet, busy, lead_storm). Default: default"}}},"description":"Seeds realistic demo/simulation data into a specific module, tagged with a demo run ID for clean removal."}} as SkillSeed['tool_definition'],
+  },
+  {
     name: 'global_search',
     description:
       'Unified search across all major business entities: companies, leads, deals, orders, invoices, quotes, tickets, contracts, documents, kb_articles, products, pages, blog_posts, employees, vendors, projects. Use when: looking up a record by name/email/number/keyword without knowing which table it lives in. NOT for: listing all records of one type (use the dedicated list/manage_* skill instead).',

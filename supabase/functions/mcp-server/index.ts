@@ -1278,6 +1278,58 @@ app.post("/rest/execute", async (c) => {
     return c.json({ ok: false, error: "Missing 'tool' field in request body" }, 400, corsHeaders);
   }
 
+  const callerUserId = (c.get("apiKeyCreatedBy" as any) as string | null) ?? null;
+  const callerApiKeyId = (c.get("apiKeyId" as any) as string | null) ?? null;
+
+  // ?mode=dispatch → expose search_skills + execute_skill via REST (mirrors the MCP 2-tool surface)
+  const url = new URL(c.req.url);
+  const dispatchMode = url.searchParams.get("mode") === "dispatch";
+  const groupsParam = url.searchParams.get("groups");
+  const filterGroups = groupsParam ? groupsParam.split(",").map((g) => g.trim()).filter(Boolean) : undefined;
+
+  if (dispatchMode && tool === "search_skills") {
+    const query = typeof args?.query === "string" ? args.query : "";
+    const groups = Array.isArray(args?.groups)
+      ? (args.groups as unknown[]).filter((g): g is string => typeof g === "string")
+      : undefined;
+    const limit = Math.min(typeof args?.limit === "number" ? args.limit : 15, 40);
+    const scope = groups && groups.length ? groups : filterGroups;
+    const matchSkills = await loadExposedSkills(scope);
+    const defs = matchSkills.map((s) => s.tool_definition).filter((d) => d?.function?.name);
+    let ranked = defs;
+    if (query) {
+      const usageBoost = await loadRecentUsageCounts(serviceClient()).catch(() => ({}));
+      ranked = scoreSkillsByIntent(defs, query, { maxSkills: limit, usageBoost });
+    }
+    const catalog = ranked.slice(0, limit).map((d: any) => ({
+      name: d.function.name,
+      description: d.function.description,
+      input_schema: d.function.parameters || { type: "object", properties: {} },
+    }));
+    return c.json({ ok: true, tool, result: { count: catalog.length, skills: catalog } }, 200, corsHeaders);
+  }
+
+  if (dispatchMode && tool === "execute_skill") {
+    const name = typeof args?.name === "string" ? args.name : "";
+    const skillArgs = args?.arguments && typeof args.arguments === "object"
+      ? (args.arguments as Record<string, unknown>)
+      : {};
+    if (!name) {
+      return c.json({ ok: false, error: "Missing 'name'. Call search_skills first to find a skill." }, 400, corsHeaders);
+    }
+    const exposed = await loadExposedSkills(filterGroups);
+    const match = exposed.find((s) => s.tool_definition?.function?.name === name);
+    if (!match) {
+      return c.json({ ok: false, error: `Unknown skill: ${name}. Use search_skills to discover valid names.` }, 404, corsHeaders);
+    }
+    const result = await executeSkill(match.name, skillArgs, callerUserId, callerApiKeyId);
+    try {
+      return c.json({ ok: true, tool: name, result: JSON.parse(result) }, 200, corsHeaders);
+    } catch {
+      return c.json({ ok: true, tool: name, result }, 200, corsHeaders);
+    }
+  }
+
   const skills = await loadExposedSkills();
   const match = skills.find((s) => s.tool_definition?.function?.name === tool);
   if (!match) {
@@ -1288,8 +1340,6 @@ app.post("/rest/execute", async (c) => {
     );
   }
 
-  const callerUserId = (c.get("apiKeyCreatedBy" as any) as string | null) ?? null;
-  const callerApiKeyId = (c.get("apiKeyId" as any) as string | null) ?? null;
   const result = await executeSkill(match.name, args || {}, callerUserId, callerApiKeyId);
   try {
     return c.json({ ok: true, tool, result: JSON.parse(result) }, 200, corsHeaders);

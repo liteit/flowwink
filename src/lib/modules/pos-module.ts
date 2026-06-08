@@ -107,7 +107,7 @@ const POS_SKILLS: SkillSeed[] = [
     name: 'list_pos_sales',
     description: 'List recent POS sales with filters. Use when: reviewing daily takings, finding a receipt, audit. NOT for: aggregated revenue (today_summary).',
     category: 'commerce',
-    handler: 'edge:agent-execute',
+    handler: 'db:pos_sales',
     scope: 'internal',
     tool_definition: {
       type: 'function',

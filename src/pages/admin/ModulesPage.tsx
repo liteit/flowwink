@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Power, PowerOff } from "lucide-react";
+import { Search, Power, PowerOff, RefreshCw } from "lucide-react";
 import { 
   FileText, 
   BookOpen, 
@@ -173,6 +173,7 @@ export default function ModulesPage() {
   const { toast } = useToast();
   const [localModules, setLocalModules] = useState<ModulesSettings | null>(null);
   const [search, setSearch] = useState("");
+  const [resyncing, setResyncing] = useState(false);
   const [searchParams] = useSearchParams();
   const deepLinkModule = searchParams.get("module");
 
@@ -341,6 +342,36 @@ export default function ModulesPage() {
     }
   };
 
+  // Re-bootstrap every enabled module from the current code seeds. This is the
+  // durable fix for skill drift: bootstrapModule() refreshes ALL definition
+  // fields (description, tool_definition, handler, …) from src/lib/modules/*,
+  // so improvements that shipped in code but never re-ran bootstrap on this
+  // instance get synced. Run after a deploy on each instance.
+  const handleResyncAll = async () => {
+    if (!localModules) return;
+    setResyncing(true);
+    try {
+      const targets = Object.entries(localModules)
+        .filter(([, config]) => config.enabled)
+        .map(([id]) => id as keyof ModulesSettings);
+      const results = await runWithConcurrency(targets, 5, (id) => bootstrapModule(id, localModules));
+      const failed = results.filter((r) => !r.ok || r.value.errors.length > 0);
+      if (failed.length > 0) {
+        toast({
+          title: `Synced ${targets.length - failed.length}/${targets.length} modules — ${failed.length} had issues`,
+          description: failed.slice(0, 3).map((r) => r.ok === false
+            ? `${String(r.item)}: ${r.error instanceof Error ? r.error.message : 'failed'}`
+            : `${String(r.item)}: ${r.value.errors[0] ?? 'errors'}`).join(' · '),
+          variant: 'destructive',
+        });
+      } else {
+        toast({ title: `Synced skills from code for all ${targets.length} enabled modules` });
+      }
+    } finally {
+      setResyncing(false);
+    }
+  };
+
   const enabledCount = localModules 
     ? Object.values(localModules).filter(m => m.enabled).length 
     : 0;
@@ -444,6 +475,16 @@ export default function ModulesPage() {
           >
             <PowerOff className="h-3.5 w-3.5 mr-1.5" />
             Disable {search ? 'matching' : 'all'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleResyncAll}
+            disabled={resyncing || !localModules}
+            title="Re-bootstrap every enabled module from code — syncs skill descriptions, tool definitions and handlers. Run after a deploy."
+          >
+            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${resyncing ? 'animate-spin' : ''}`} />
+            {resyncing ? 'Syncing…' : 'Sync skills from code'}
           </Button>
         </div>
 

@@ -17,6 +17,35 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// Postgres RPCs whose signature is exactly `(args jsonb)` — they receive the
+// whole argument object under a single `args` key instead of one `p_`-prefixed
+// param per field. The rpc: dispatcher forwards `{ args: {...} }` for these.
+// Keep in sync with `select proname from pg_proc where
+// pg_get_function_identity_arguments(oid)='args jsonb'`.
+const JSONB_ARG_RPCS = new Set<string>([
+  'mcp_register_fixed_asset',
+  'mcp_dispose_fixed_asset',
+  'mcp_run_monthly_depreciation',
+  'mcp_revalue_open_balances',
+  'mcp_set_exchange_rate',
+  'mcp_create_payroll_run',
+  'mcp_approve_payroll_run',
+  'mcp_mark_payroll_paid',
+  'mcp_list_payroll_runs',
+  'mcp_list_payroll_lines',
+]);
+
+// RPCs whose parameters are `_`-prefixed (not the usual `p_`). These are also
+// called directly by the frontend and the billing cron with `_` names, so the
+// signature is kept `_` (renaming would force an un-coordinatable frontend +
+// DB + cron lockstep under Vercel auto-deploy). agent-execute maps skill args
+// to `_<name>` for these instead of `p_<name>`.
+const UNDERSCORE_PARAM_RPCS = new Set<string>([
+  'create_manual_subscription',
+  'cancel_manual_subscription',
+  'generate_subscription_invoice',
+]);
+
 interface ExecuteRequest {
   skill_id?: string;
   skill_name?: string;
@@ -342,30 +371,48 @@ serve(async (req) => {
 
       } else if (handler.startsWith('rpc:')) {
         const fnName = handler.replace('rpc:', '');
-        // Map skill arg names → RPC param names by prefixing p_.
-        // Some older MCP callers still send generic names like query/limit while newer
-        // skill contracts use domain-specific names such as search_query/result_limit.
-        // Normalize those aliases here so the RPC signature stays backward compatible.
-        // IMPORTANT: strip underscore-prefixed agent-internal fields (e.g. _caller_user_id,
-        // _approved, _bypass_approval, _objective_context, trace_id) BEFORE prefixing — otherwise
-        // they get sent as `p__caller_user_id` and break Postgres function-signature lookup.
-        const rawRpcArgs: Record<string, unknown> = {};
+
+        // jsonb-args RPCs take a single `args jsonb` parameter instead of one
+        // param per field. The generic `p_`-prefix mapping below would send
+        // `p_name`, `p_cost_cents`, … which never match the lone `args` param,
+        // so every call silently failed. For these, forward the cleaned args
+        // object whole under `args`. Keep this set in sync with Postgres
+        // functions whose signature is exactly `(args jsonb)` — the skill
+        // linter (Layer 1) auto-detects the same shape.
+        // Strip underscore-prefixed agent-internal fields (e.g. _caller_user_id,
+        // _approved, _bypass_approval, _objective_context, trace_id) up front —
+        // they must never reach an RPC under any naming convention.
+        const cleanedArgs: Record<string, unknown> = {};
         for (const [k, v] of Object.entries(args || {})) {
           if (k.startsWith('_')) continue;
           if (k === 'trace_id' || k === 'objective_context') continue;
-          rawRpcArgs[k.startsWith('p_') ? k : `p_${k}`] = v;
+          cleanedArgs[k] = v;
         }
 
-        const rpcArgs = { ...rawRpcArgs };
-        if (fnName === 'mcp_global_search') {
-          if (rpcArgs.p_search_query === undefined && rpcArgs.p_query !== undefined) {
-            rpcArgs.p_search_query = rpcArgs.p_query;
+        let rpcArgs: Record<string, unknown>;
+        if (JSONB_ARG_RPCS.has(fnName)) {
+          // jsonb-args RPCs take a single `args jsonb` parameter instead of one
+          // param per field. The generic `p_`-prefix mapping would send
+          // `p_name`, `p_cost_cents`, … which never match the lone `args` param,
+          // so every call silently failed. Forward the cleaned args object whole.
+          rpcArgs = { args: cleanedArgs };
+        } else {
+          // Map skill arg names → RPC param names by prefixing p_.
+          rpcArgs = {};
+          for (const [k, v] of Object.entries(cleanedArgs)) {
+            rpcArgs[k.startsWith('p_') ? k : `p_${k}`] = v;
           }
-          if (rpcArgs.p_result_limit === undefined && rpcArgs.p_limit !== undefined) {
-            rpcArgs.p_result_limit = rpcArgs.p_limit;
+          // Backward-compatible aliases for mcp_global_search (query/limit → search_query/result_limit).
+          if (fnName === 'mcp_global_search') {
+            if (rpcArgs.p_search_query === undefined && rpcArgs.p_query !== undefined) {
+              rpcArgs.p_search_query = rpcArgs.p_query;
+            }
+            if (rpcArgs.p_result_limit === undefined && rpcArgs.p_limit !== undefined) {
+              rpcArgs.p_result_limit = rpcArgs.p_limit;
+            }
+            delete rpcArgs.p_query;
+            delete rpcArgs.p_limit;
           }
-          delete rpcArgs.p_query;
-          delete rpcArgs.p_limit;
         }
 
         const { data: rpcData, error: rpcErr } = await supabase.rpc(fnName, rpcArgs);
@@ -2726,10 +2773,13 @@ async function executeKbAction(
   }
 
   if (action === 'create') {
-    const { title, question, answer, category = 'general', include_in_chat = true, is_featured = false } = args as any;
-    if (!title || !question) throw new Error('title and question are required');
+    const { title, category = 'general', include_in_chat = true, is_featured = false } = args as any;
+    // Accept content/body as aliases for answer; auto-generate question from title if omitted
+    const answer = (args as any).answer ?? (args as any).content ?? (args as any).body;
+    const question = (args as any).question || (title ? `What is ${title}?` : '');
+    if (!title || !question) throw new Error('title is required');
     if (!answer || (typeof answer === 'string' && !answer.trim())) {
-      throw new Error('answer is required and must contain the full article body (plain text, markdown, or a Tiptap doc). Empty answers render as blank articles.');
+      throw new Error('answer (or content) is required and must contain the full article body (plain text, markdown, or a Tiptap doc). Empty answers render as blank articles.');
     }
     const articleSlug = title.toLowerCase().replace(/[^a-z0-9åäö]+/g, '-').replace(/(^-|-$)/g, '');
 
@@ -2916,8 +2966,14 @@ async function executeWikiAction(
   }
 
   if (action === 'update') {
-    const slug = String((args as any).slug || '');
-    if (!slug) throw new Error('slug is required');
+    let slug = String((args as any).slug || '');
+    // If slug is missing but title is provided, look up the page by title
+    if (!slug && (args as any).title) {
+      const { data: found } = await supabase
+        .from('wiki_pages').select('slug').ilike('title', (args as any).title).maybeSingle();
+      if (found?.slug) slug = found.slug;
+    }
+    if (!slug) throw new Error('slug is required — pass the wiki page slug, or a title that matches an existing page exactly');
     const patch: Record<string, unknown> = {};
     if (typeof (args as any).title === 'string') patch.title = (args as any).title;
     if (typeof (args as any).content_md === 'string') {
@@ -3629,6 +3685,22 @@ async function executeBlogAction(
       return { tag_id: data.id, name: data.name, slug: data.slug };
     }
     return { error: `Unknown blog categories action: ${action}` };
+  }
+
+  // content_calendar_view — editorial calendar: drafts + scheduled + recently published.
+  // Read-only. Previously fell through to write_blog_post and failed with "title required".
+  if (skillName === 'content_calendar_view') {
+    const { limit = 50 } = args as any;
+    const { data, error } = await supabase.from('blog_posts')
+      .select('id, title, slug, status, published_at, updated_at')
+      .order('updated_at', { ascending: false })
+      .limit(Math.min(Number(limit) || 50, 200));
+    if (error) throw new Error(`Content calendar view failed: ${error.message}`);
+    const posts = data || [];
+    const by_status: Record<string, any[]> = {};
+    for (const p of posts as any[]) (by_status[p.status] ??= []).push(p);
+    const counts = Object.fromEntries(Object.entries(by_status).map(([k, v]) => [k, v.length]));
+    return { calendar: posts, by_status, counts };
   }
 
   // write_blog_post — PURE SENSOR
@@ -7250,6 +7322,14 @@ const GENERIC_CRUD_TABLES = new Set([
   'manufacturing_orders',
   // Analytics
   'page_views',
+  // SLA monitoring (policies + violations — read/list skills, writes guarded by RLS)
+  'sla_policies', 'sla_violations',
+  // Surveys & NPS (campaigns + responses — read/list skills)
+  'survey_campaigns', 'survey_responses', 'survey_templates',
+  // Point of Sale (registers/sessions/sales — read/list skills)
+  'pos_registers', 'pos_sessions', 'pos_sales', 'pos_sale_lines',
+  // Staged-operations approval queue (list/read; approve/reject via dedicated RPCs)
+  'pending_operations',
   // Products + profiles + site_settings (read-skills; writes guarded by RLS)
   'products', 'profiles', 'site_settings',
 ]);

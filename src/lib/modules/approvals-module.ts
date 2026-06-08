@@ -56,6 +56,33 @@ type ApprovalsOutput = z.infer<typeof approvalsOutputSchema>;
 
 const APPROVAL_SKILLS: SkillSeed[] = [
   {
+    name: 'reject_pending_operation',
+    description: 'Reject a staged operation with a reason. Use when: preview from a staged skill call is wrong or unsafe. NOT for: approving it (approve_pending_operation) or listing the queue (list_pending_operations).',
+    category: 'system',
+    handler: 'rpc:reject_pending_operation',
+    scope: 'internal',
+    trust_level: 'auto',
+    tool_definition: {"type":"function","function":{"name":"reject_pending_operation","parameters":{"type":"object","required":["p_id"],"properties":{"p_id":{"type":"string","format":"uuid"},"p_reason":{"type":"string"}}},"description":"Reject a staged operation with a reason."}} as SkillSeed['tool_definition'],
+  },
+  {
+    name: 'approve_pending_operation',
+    description: 'Approve a staged operation so it can be executed. Use when: a previous skill call returned staged=true and the preview is acceptable. NOT for: rejecting it (reject_pending_operation) or listing the queue (list_pending_operations).',
+    category: 'system',
+    handler: 'rpc:approve_pending_operation',
+    scope: 'internal',
+    trust_level: 'auto',
+    tool_definition: {"type":"function","function":{"name":"approve_pending_operation","parameters":{"type":"object","required":["p_id"],"properties":{"p_id":{"type":"string","format":"uuid"}}},"description":"Approve a staged operation so it can be executed."}} as SkillSeed['tool_definition'],
+  },
+  {
+    name: 'list_pending_operations',
+    description: 'List pending staged operations awaiting approval/rejection. Use when: agent or admin needs to see the queue. NOT for: approving (approve_pending_operation) or rejecting (reject_pending_operation) an operation.',
+    category: 'system',
+    handler: 'db:pending_operations',
+    scope: 'internal',
+    trust_level: 'auto',
+    tool_definition: {"type":"function","function":{"name":"list_pending_operations","parameters":{"type":"object","properties":{"limit":{"type":"integer","default":50},"action":{"enum":["list"],"type":"string","default":"list"},"status":{"type":"string"}}},"description":"List pending staged operations awaiting approval/rejection."}} as SkillSeed['tool_definition'],
+  },
+  {
     name: 'manage_approvals',
     description:
       'Generic approval workflow engine: request approval for an entity, list pending requests, approve/reject/cancel, and evaluate whether an entity needs approval based on amount thresholds. Use when: a purchase order/expense report/invoice/quote crosses an approval threshold, an admin needs to see what is awaiting their decision, FlowPilot wants to know if an action requires human sign-off before proceeding. NOT for: managing the underlying entity itself (use manage_purchase_order, manage_expenses, manage_invoice, manage_quote).',
