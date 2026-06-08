@@ -470,18 +470,18 @@ export function ResetSiteDialog({ open, onOpenChange }: ResetSiteDialogProps) {
         key: 'operations',
         label: 'Clearing projects, tasks, time entries & expenses',
         fn: async () => {
-          await supabase.from('time_entries').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-          await supabase.from('project_tasks').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-          await supabase.from('project_members').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-          await supabase.from('projects').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-          await supabase.from('expense_attachments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-          await supabase.from('expense_payments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-          await supabase.from('expenses').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-          await supabase.from('handbook_chapters').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-          await supabase.from('wiki_pages').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-          await supabase.from('river_reactions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-          await supabase.from('river_posts').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-          await supabase.from('timesheet_period_locks').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          await wipe('time_entries');
+          await wipe('project_tasks');
+          await wipe('project_members');
+          await wipe('projects');
+          await wipe('expense_attachments');
+          await wipe('expense_payments');
+          await wipe('expenses');
+          await wipe('handbook_chapters');
+          await wipe('wiki_pages');
+          await wipe('river_reactions');
+          await wipe('river_posts');
+          await wipe('timesheet_period_locks');
         }
       });
     }
