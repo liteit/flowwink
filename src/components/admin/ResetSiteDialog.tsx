@@ -151,7 +151,14 @@ export function ResetSiteDialog({ open, onOpenChange }: ResetSiteDialogProps) {
   const executeReset = async () => {
     setIsResetting(true);
     setStep('progress');
-    
+
+    // Helper: bulk-delete all rows from a table by name. Untyped on purpose —
+    // chaining many supabase.from('x').delete() inside one fn blows TS depth.
+    const wipe = async (table: string, throwOnError = false) => {
+      const { error } = await (supabase as any).from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (error && throwOnError) throw error;
+    };
+
     const tasks: { key: keyof ResetOptions; label: string; fn: () => Promise<void> }[] = [];
     
     if (options.formSubmissions) {
