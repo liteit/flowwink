@@ -512,6 +512,9 @@ export function ResetSiteDialog({ open, onOpenChange }: ResetSiteDialogProps) {
           await supabase.from('bank_import_batches').delete().neq('id', '00000000-0000-0000-0000-000000000000');
           await supabase.from('payroll_export_lines').delete().neq('id', '00000000-0000-0000-0000-000000000000');
           await supabase.from('payroll_exports').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          // expense_reports + depreciation_entries hold journal_entry_id FKs — must clear before journal_entries
+          await supabase.from('expense_reports').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          await supabase.from('depreciation_entries').delete().neq('id', '00000000-0000-0000-0000-000000000000');
           await supabase.from('journal_entry_line_taxes').delete().neq('id', '00000000-0000-0000-0000-000000000000');
           await supabase.from('journal_entry_lines').delete().neq('id', '00000000-0000-0000-0000-000000000000');
           await supabase.from('journal_entries').delete().neq('id', '00000000-0000-0000-0000-000000000000');
