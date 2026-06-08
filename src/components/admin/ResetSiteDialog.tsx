@@ -664,7 +664,13 @@ export function ResetSiteDialog({ open, onOpenChange }: ResetSiteDialogProps) {
             { key: 'integrations', value: {} },
             { key: 'kb', value: { enabled: true, menuSlug: 'help', menuTitle: 'Help', showInMenu: true } },
             { key: 'custom_themes', value: [] },
+            // Business identity — reset to blank so a fresh site has no leftover company profile
+            { key: 'company_name', value: '' },
+            { key: 'company_profile', value: {} },
           ];
+
+          // Also delete any ad-hoc business identity keys that aren't in the upsert list
+          await (supabase as any).from('site_settings').delete().in('key', ['business_identity', 'business_profile']);
 
           for (const setting of defaultSettings) {
             const { error } = await supabase
