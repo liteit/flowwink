@@ -184,11 +184,18 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    // Exponential backoff — check consecutive heartbeat failures
+    // Exponential backoff — check *recent* consecutive heartbeat failures.
+    // Bound to a 48h window: backoff should react to a current outage, never to
+    // stale history. Without this window a handful of month-old failures (e.g.
+    // left over from before an auth/config fix) sit at the top of the list and
+    // perpetually trigger the skip below, because skipped runs log nothing so
+    // the failure streak can never be cleared by a fresh success.
+    const backoffWindowStart = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
     const { data: recentHeartbeats } = await supabase
       .from('agent_activity')
       .select('status')
       .eq('skill_name', 'heartbeat')
+      .gte('created_at', backoffWindowStart)
       .order('created_at', { ascending: false })
       .limit(5);
 

@@ -192,6 +192,12 @@ verify_jwt = false
 [functions.fetch-fx-rates]
 verify_jwt = false
 
+[functions.flowpilot-briefing]
+verify_jwt = false
+
+[functions.flowpilot-heartbeat]
+verify_jwt = false
+
 [functions.flowpilot-learn]
 verify_jwt = false
 
