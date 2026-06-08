@@ -669,11 +669,8 @@ export function ResetSiteDialog({ open, onOpenChange }: ResetSiteDialogProps) {
             { key: 'company_profile', value: {} },
           ];
 
-          // Also delete any other identity/business keys that may have been added ad-hoc
+          // Also delete any ad-hoc business identity keys that aren't in the upsert list
           await (supabase as any).from('site_settings').delete().in('key', ['business_identity', 'business_profile']);
-          // Strip the inline placeholder we just added before the upsert loop
-          const _afterUpsertCleanup = null;
-          void _afterUpsertCleanup;
 
           for (const setting of defaultSettings) {
             const { error } = await supabase
