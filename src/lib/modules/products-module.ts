@@ -381,7 +381,7 @@ Places an order through the create-checkout edge function. In sandbox mode, comp
     name: 'check_order_status',
     description: 'Check the status of an existing order by ID. Use when: a user inquires about their purchase; verifying order progress; providing delivery updates. NOT for: managing orders (manage_orders); looking up orders by email (lookup_order).',
     category: 'commerce',
-    handler: 'edge:order-status',
+    handler: 'module:orders',
     scope: 'external',
     tool_definition: {
       type: 'function',

@@ -171,6 +171,9 @@ verify_jwt = false
 [functions.sla-check]
 verify_jwt = false
 
+[functions.field-service-skill]
+verify_jwt = false
+
 [functions.survey-send]
 verify_jwt = false
 
