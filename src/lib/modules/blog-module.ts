@@ -39,7 +39,7 @@ const BLOG_SKILLS: SkillSeed[] = [
             },
             content: {
               type: 'string',
-              description: 'Full blog post content in markdown format. Use ## for headings, paragraphs, and bullet points. Do NOT include the title as H1.',
+              description: 'REQUIRED. The full, finished blog post body in markdown — YOU must generate it in your reasoning before calling; this skill does not generate from a topic. Use ## for headings, paragraphs, and bullet points. Do NOT include the title as H1.',
             },
             tone: {
               type: 'string',
@@ -63,7 +63,7 @@ const BLOG_SKILLS: SkillSeed[] = [
           },
           required: [
             'title',
-            'topic',
+            'content',
           ],
         },
       },
@@ -77,12 +77,12 @@ Creates a draft blog post in the CMS with title, topic, tone, and content.
 - NOT for updating existing posts (use manage_blog_posts with action='update')
 ### Parameters
 - **title**: Required. The blog post title.
-- **topic**: Required. Brief or topic description used for AI generation if no content provided.
-- **content**: Always provide full markdown. Do NOT leave empty expecting AI generation — quality is much lower. Use ## for headings, paragraphs, bullets. Do NOT include the title as H1.
+- **content**: Required. The full, finished markdown body — generate it in your own reasoning FIRST, then pass it here. This skill is a pure sink: it does NOT generate content from a topic. Use ## for headings, paragraphs, bullets. Do NOT include the title as H1.
+- **topic**: Optional. A short brief stored alongside the post; it is NOT used to generate content.
 - **tone**: Defaults to 'professional'. Options: professional, casual, technical, storytelling.
 - **language**: ISO code (en, sv). Defaults to site language.
 ### Edge cases
-- If no content provided, handler generates via AI — but quality is lower than agent-written content.
+- Calling with an empty/missing content fails ("content is required") — write_blog_post no longer generates from a topic. Produce the content via your reasoning loop, then call this.
 - Title must be unique; duplicates get a numeric suffix.
 - **status**: Optional. 'draft' (default) or 'published'. Pass 'published' to make the post live in one call — required when the user asks to "draft and publish".`,
   },
