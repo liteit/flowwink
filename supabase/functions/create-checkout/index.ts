@@ -108,7 +108,7 @@ serve(async (req: Request) => {
           customer_email: customerEmail,
           customer_name: customerName,
           total_cents: totalCents,
-          currency: currency.toUpperCase(),
+          currency: (currency || 'SEK').toUpperCase(),
           status: orderStatus,
           user_id: userId || null,
           metadata: {
