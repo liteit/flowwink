@@ -194,7 +194,7 @@ Manages product inventory: list stock levels, update quantities, check low-stock
       },
     },
     instructions: 'Get a product catalog snapshot. Identify items to promote or restock.',
-  },,
+  },
   {
     name: 'lookup_order',
     description: 'Look up order status by order ID or customer email. Use when: a customer inquires about their order; verifying order progress; retrieving order details for support. NOT for: managing orders (manage_orders); browsing products (browse_products).',
