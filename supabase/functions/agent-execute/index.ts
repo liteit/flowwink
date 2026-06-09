@@ -5599,11 +5599,39 @@ async function executeDbAction(
       }
 
       if (skillName === 'accounting_reports') {
-        const { report_type = 'profit_loss', period = 'all', account_code } = args as any;
+        // Accept the schema param `type` (and legacy `report_type`); map the
+        // schema enum to the internal report logic. Previously ONLY `report_type`
+        // was read, so the schema's `type` was ignored and EVERY report silently
+        // returned profit_loss. The chart also uses account_type='revenue' (not
+        // 'income'), and the schema offers from_date/to_date — both were dropped.
+        const rargs = args as any;
+        const rawType: string = rargs.type || rargs.report_type || 'profit_loss';
+        const TYPE_MAP: Record<string, string> = {
+          income_statement: 'profit_loss', profit_loss: 'profit_loss', pnl: 'profit_loss',
+          balance_sheet: 'balance_sheet',
+          general_ledger: 'ledger', ledger: 'ledger', account_balance: 'ledger',
+          trial_balance: 'trial_balance', unbooked_invoices: 'unbooked_invoices',
+        };
+        const report_type = TYPE_MAP[rawType] || rawType;
+        const { period = 'all', account_code, from_date, to_date } = rargs;
 
-        // Determine date filter
-        let sinceDate: string | null = null;
-        if (period !== 'all') {
+        // unbooked_invoices: issued invoices not yet posted to the ledger.
+        if (report_type === 'unbooked_invoices') {
+          const { data: inv } = await supabase.from('invoices')
+            .select('id, invoice_number, customer_name, total_cents, currency, status, issue_date, due_date')
+            .not('status', 'in', '("paid","booked","posted","cancelled","void","draft")')
+            .order('issue_date', { ascending: true });
+          return {
+            report_type: 'unbooked_invoices', period,
+            invoices: inv || [], count: (inv || []).length,
+            total_cents: (inv || []).reduce((s: number, i: any) => s + Number(i.total_cents || 0), 0),
+          };
+        }
+
+        // Date filter — explicit from_date/to_date take precedence over `period`.
+        let sinceDate: string | null = from_date || null;
+        const untilDate: string | null = to_date || null;
+        if (!sinceDate && period !== 'all') {
           const now = new Date();
           const since = new Date(now);
           if (period === 'month') since.setMonth(now.getMonth() - 1);
@@ -5619,6 +5647,7 @@ async function executeDbAction(
         `).eq('journal_entries.status', 'posted');
 
         if (sinceDate) linesQuery = linesQuery.gte('journal_entries.entry_date', sinceDate);
+        if (untilDate) linesQuery = linesQuery.lte('journal_entries.entry_date', untilDate);
         if (account_code) linesQuery = linesQuery.eq('account_code', account_code);
 
         const { data: lines, error: linesErr } = await linesQuery;
@@ -5654,8 +5683,20 @@ async function executeDbAction(
 
         const balances = Array.from(balanceMap.values()).sort((a, b) => a.account_code.localeCompare(b.account_code));
 
-        if (report_type === 'account_balance' || report_type === 'ledger') {
-          return { report_type, period, accounts: balances, total_accounts: balances.length };
+        if (report_type === 'ledger') {
+          return { report_type: 'general_ledger', period, accounts: balances, total_accounts: balances.length };
+        }
+
+        if (report_type === 'trial_balance') {
+          const totalDebit = balances.reduce((s, b) => s + b.debit_total, 0);
+          const totalCredit = balances.reduce((s, b) => s + b.credit_total, 0);
+          return {
+            report_type: 'trial_balance', period,
+            accounts: balances,
+            total_debit_cents: totalDebit,
+            total_credit_cents: totalCredit,
+            balanced: totalDebit === totalCredit,
+          };
         }
 
         if (report_type === 'balance_sheet') {
@@ -5664,10 +5705,17 @@ async function executeDbAction(
           const equity = balances.filter(b => b.account_type === 'equity' && b.balance !== 0);
           const totalAssets = assets.reduce((s, a) => s + a.balance, 0);
           const totalLiabilities = liabilities.reduce((s, a) => s + a.balance, 0);
-          const totalEquity = equity.reduce((s, a) => s + a.balance, 0);
+          // Current-period net result (revenue − expense) sits in equity as
+          // "current year earnings" until the period is closed to retained
+          // earnings — without it the balance sheet won't balance mid-year.
+          const currentYearResult = balances.reduce((s, b) =>
+            (b.account_type === 'revenue' || b.account_type === 'income') ? s + b.balance
+              : b.account_type === 'expense' ? s - b.balance : s, 0);
+          const totalEquity = equity.reduce((s, a) => s + a.balance, 0) + currentYearResult;
           return {
             report_type: 'balance_sheet', period,
             assets, liabilities, equity,
+            current_year_result_cents: currentYearResult,
             total_assets_cents: totalAssets,
             total_liabilities_cents: totalLiabilities,
             total_equity_cents: totalEquity,
@@ -5676,7 +5724,7 @@ async function executeDbAction(
         }
 
         if (report_type === 'profit_loss') {
-          const income = balances.filter(b => b.account_type === 'income' && b.balance !== 0);
+          const income = balances.filter(b => (b.account_type === 'revenue' || b.account_type === 'income') && b.balance !== 0);
           const expenses = balances.filter(b => b.account_type === 'expense' && b.balance !== 0);
           const totalIncome = income.reduce((s, a) => s + a.balance, 0);
           const totalExpenses = expenses.reduce((s, a) => s + a.balance, 0);
@@ -5690,7 +5738,7 @@ async function executeDbAction(
           };
         }
 
-        return { error: `Unknown report_type: ${report_type}` };
+        return { error: `Unknown report type: ${rawType}` };
       }
 
       // ─── manage_journal_entry ──────────────────────────────────────────
