@@ -21,6 +21,17 @@ const OBJECTIVE_TOOLS = [
   { type: 'function', function: { name: 'objective_delete', description: 'Permanently delete an objective and its linked activities.', parameters: { type: 'object', properties: { objective_id: { type: 'string' } }, required: ['objective_id'] } } },
 ];
 
+// Automation management (create/list/update/delete). Shared by the self-mod
+// surface AND the autonomous heartbeat — a recurring objective ("blog every day")
+// is fulfilled by CREATING a cron automation, so the operator must be able to
+// make them, not just execute existing ones.
+const AUTOMATION_MANAGE_TOOLS = [
+  { type: 'function', function: { name: 'automation_create', description: 'Create a new automation (cron/event-triggered skill). Use this to fulfil a RECURRING objective — e.g. a daily blog — by scheduling the skill, instead of decomposing it into a one-shot plan that only runs once.', parameters: { type: 'object', properties: { name: { type: 'string' }, description: { type: 'string' }, trigger_type: { type: 'string', enum: ['cron', 'event', 'signal'] }, trigger_config: { type: 'object' }, skill_name: { type: 'string' }, skill_arguments: { type: 'object' }, enabled: { type: 'boolean' } }, required: ['name', 'trigger_type', 'trigger_config', 'skill_name'] } } },
+  { type: 'function', function: { name: 'automation_list', description: 'List all automations.', parameters: { type: 'object', properties: { enabled_only: { type: 'boolean' } } } } },
+  { type: 'function', function: { name: 'automation_update', description: 'Update an existing automation by ID or name.', parameters: { type: 'object', properties: { automation_id: { type: 'string' }, automation_name: { type: 'string' }, updates: { type: 'object', description: 'Fields to update: name, description, trigger_type, trigger_config, skill_name, skill_arguments, enabled' } }, required: ['updates'] } } },
+  { type: 'function', function: { name: 'automation_delete', description: 'Permanently delete an automation by ID or name.', parameters: { type: 'object', properties: { automation_id: { type: 'string' }, automation_name: { type: 'string' } } } } },
+];
+
 const SELF_MOD_TOOLS = [
   { type: 'function', function: { name: 'skill_create', description: 'Create a new skill in your registry.', parameters: { type: 'object', properties: { name: { type: 'string' }, description: { type: 'string' }, handler: { type: 'string' }, category: { type: 'string', enum: ['content', 'crm', 'communication', 'automation', 'search', 'analytics'] }, scope: { type: 'string', enum: ['internal', 'external', 'both'] }, trust_level: { type: 'string', enum: ['auto', 'notify', 'approve'], description: 'auto=silent execution, notify=execute+notify admin, approve=block until approved' }, tool_definition: { type: 'object' } }, required: ['name', 'description', 'handler', 'tool_definition'] } } },
   { type: 'function', function: { name: 'skill_update', description: 'Update an existing skill.', parameters: { type: 'object', properties: { skill_name: { type: 'string' }, updates: { type: 'object' } }, required: ['skill_name', 'updates'] } } },
@@ -30,10 +41,7 @@ const SELF_MOD_TOOLS = [
   { type: 'function', function: { name: 'skill_delete', description: 'Permanently delete a skill from the registry.', parameters: { type: 'object', properties: { skill_name: { type: 'string' } }, required: ['skill_name'] } } },
   { type: 'function', function: { name: 'skill_instruct', description: 'Add rich instructions/knowledge to a skill (WRITE operation).', parameters: { type: 'object', properties: { skill_name: { type: 'string' }, instructions: { type: 'string' } }, required: ['skill_name', 'instructions'] } } },
   { type: 'function', function: { name: 'skill_read', description: 'Load full instructions, handler, and metadata for a skill BEFORE executing it.', parameters: { type: 'object', properties: { skill_name: { type: 'string', description: 'Exact skill name to load instructions for' } }, required: ['skill_name'] } } },
-  { type: 'function', function: { name: 'automation_create', description: 'Create a new automation. Disabled by default for safety.', parameters: { type: 'object', properties: { name: { type: 'string' }, description: { type: 'string' }, trigger_type: { type: 'string', enum: ['cron', 'event', 'signal'] }, trigger_config: { type: 'object' }, skill_name: { type: 'string' }, skill_arguments: { type: 'object' }, enabled: { type: 'boolean' } }, required: ['name', 'trigger_type', 'trigger_config', 'skill_name'] } } },
-  { type: 'function', function: { name: 'automation_list', description: 'List all automations.', parameters: { type: 'object', properties: { enabled_only: { type: 'boolean' } } } } },
-  { type: 'function', function: { name: 'automation_update', description: 'Update an existing automation by ID or name.', parameters: { type: 'object', properties: { automation_id: { type: 'string' }, automation_name: { type: 'string' }, updates: { type: 'object', description: 'Fields to update: name, description, trigger_type, trigger_config, skill_name, skill_arguments, enabled' } }, required: ['updates'] } } },
-  { type: 'function', function: { name: 'automation_delete', description: 'Permanently delete an automation by ID or name.', parameters: { type: 'object', properties: { automation_id: { type: 'string' }, automation_name: { type: 'string' } } } } },
+  ...AUTOMATION_MANAGE_TOOLS,
 ];
 
 const REFLECT_TOOL = [
@@ -211,13 +219,21 @@ export function getBuiltInTools(groups: BuiltInToolGroup[]): any[] {
   if (groups.includes('reflect')) tools.push(...REFLECT_TOOL);
   if (groups.includes('soul')) tools.push(...SOUL_TOOL);
   if (groups.includes('planning')) tools.push(...PLANNING_TOOLS);
-  if (groups.includes('automations-exec')) tools.push(...AUTOMATION_EXEC_TOOLS);
+  if (groups.includes('automations-exec')) tools.push(...AUTOMATION_EXEC_TOOLS, ...AUTOMATION_MANAGE_TOOLS);
   if (groups.includes('workflows')) tools.push(...WORKFLOW_TOOLS);
   if (groups.includes('a2a')) tools.push(...A2A_TOOLS);
   if (groups.includes('skill-packs')) tools.push(...SKILL_PACK_TOOLS);
   if (groups.includes('planning')) tools.push(...CHAIN_SKILLS_TOOL);
   if (groups.includes('planning')) tools.push(...OUTCOME_TOOLS);
-  return tools;
+  // De-dup by tool name — groups can overlap (self-mod and automations-exec both
+  // carry the automation_* tools) and a duplicate function name breaks the LLM API.
+  const seen = new Set<string>();
+  return tools.filter((t) => {
+    const n = t?.function?.name;
+    if (!n || seen.has(n)) return false;
+    seen.add(n);
+    return true;
+  });
 }
 
 export const BUILT_IN_TOOL_NAMES = new Set([

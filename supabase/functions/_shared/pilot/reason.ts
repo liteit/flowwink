@@ -819,9 +819,15 @@ export async function reason(
     
     // Intent-based adaptive tool window (OpenClaw alignment: no hardcoded routing, just smart filtering)
     const lastUserMsg = [...messages].reverse().find((m: any) => m.role === 'user')?.content || '';
-    if (lastUserMsg && skillTools.length > 25) {
+    // Score against what the operator is actually trying to do, not just the
+    // trigger phrase. config.scoringIntent (e.g. the active objectives) is folded
+    // in so the shared relevance engine surfaces objective-fulfilling skills a
+    // generic meta trigger would otherwise rank out. Same scorer external agents
+    // use via search_skills — now fed a real intent on the internal path too.
+    const scoringIntent = [config.scoringIntent, lastUserMsg].filter(Boolean).join('\n');
+    if (scoringIntent && skillTools.length > 25) {
       const usageBoost = await loadRecentUsageCounts(supabase);
-      skillTools = scoreSkillsByIntent(skillTools, lastUserMsg, { maxSkills: 25, usageBoost });
+      skillTools = scoreSkillsByIntent(skillTools, scoringIntent, { maxSkills: 25, usageBoost });
     }
     
     console.log(`[reason] trace=${traceId} Loaded ${builtInTools.length} built-in + ${skillTools.length} skill tools (tier: ${currentSkillTier}, cached)${config.skillCategories ? ` (categories: ${config.skillCategories.join(',')})` : ' (ALL categories)'}`);

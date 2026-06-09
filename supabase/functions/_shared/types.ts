@@ -41,6 +41,17 @@ export interface ReasonConfig {
   tokenBudget?: number;
   /** Filter skills by category — if set, only skills in these categories are loaded */
   skillCategories?: string[];
+  /**
+   * Extra intent text used ONLY for skill-relevance scoring (never shown to the
+   * LLM). Autonomous runs (heartbeat) trigger with generic meta-text — "evaluate
+   * outcomes, advance objectives" — so objective-fulfilling skills (e.g.
+   * write_blog_post) get scored out of the top-N, leaving only meta tools. Pass
+   * the active objectives here so the shared relevance engine surfaces the skills
+   * the operator actually needs — feeding the same scorer a real intent the way
+   * an external agent's search_skills query already does. (Law 1: better intent,
+   * not hardcoded routing.)
+   */
+  scoringIntent?: string;
 }
 
 export interface ReasonResult {

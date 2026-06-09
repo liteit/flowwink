@@ -225,20 +225,34 @@ serve(async (req) => {
       );
     }
 
-    // 0. Integrity gate + context gathering in parallel
+    // Intensity override (cost control + local fast-simulation), read before
+    // context-gathering so it can also drop the CPU-heaviest loaders. Applied
+    // only when the 'heartbeat_overrides' site_settings key exists; absent in
+    // production → zero effect.
+    const { data: hbOv } = await supabase
+      .from('site_settings').select('value').eq('key', 'heartbeat_overrides').maybeSingle();
+    const ov = (hbOv?.value || null) as
+      { tokenBudget?: number; maxIterations?: number; skillCategories?: string[]; lightContext?: boolean } | null;
+    const light = !!ov?.lightContext;
+
+    // 0. Integrity gate + context gathering in parallel. In lightContext mode the
+    // analytical loaders (integrity gate, self-healing, CMS schema, cross-module
+    // insights, maturity scan) are stubbed — they dominate CPU and blow the local
+    // `functions serve` per-request limit — while the operator keeps its soul,
+    // memories, objectives, activity, stats and automations.
     const [integrityContext, { soul, identity, agents, tools, user, bootstrap }, memoryCtx, objectiveCtx, activityCtx, statsCtx, automationCtx, healingReport, cmsSchemaCtx, heartbeatStateCtx, siteMaturity, crossModuleCtx, customProtocol] = await Promise.all([
-      runIntegrityGate(supabase),
+      light ? Promise.resolve('') : runIntegrityGate(supabase),
       loadWorkspaceFiles(supabase),
       loadMemories(supabase),
       loadObjectives(supabase, { unlockedOnly: true }),
       loadRecentActivity(supabase),
       loadSiteStats(supabase),
       loadLinkedAutomations(supabase),
-      runSelfHealing(supabase),
-      loadCMSSchema(supabase),
+      light ? Promise.resolve('') : runSelfHealing(supabase),
+      light ? Promise.resolve('') : loadCMSSchema(supabase),
       loadHeartbeatState(supabase),
-      detectSiteMaturity(supabase),
-      loadCrossModuleInsights(supabase),
+      light ? Promise.resolve({ isFresh: false }) : detectSiteMaturity(supabase),
+      light ? Promise.resolve('') : loadCrossModuleInsights(supabase),
       loadHeartbeatProtocol(supabase),
     ]);
 
@@ -247,15 +261,7 @@ serve(async (req) => {
     let maxIter = siteMaturity.isFresh ? 18 : 15;
     let skillCategories = ['content', 'analytics', 'system', 'growth', 'crm', 'communication', 'search'];
 
-    // Optional intensity override (cost control + local fast-simulation). Applied
-    // only when the 'heartbeat_overrides' site_settings key exists; absent in
-    // production → zero effect. Lets a heavy run be throttled to fit a tighter
-    // CPU budget (notably `supabase functions serve` during npm run flowpilot:sim,
-    // whose per-request CPU limit the full-size context assembly would blow).
-    const { data: hbOv } = await supabase
-      .from('site_settings').select('value').eq('key', 'heartbeat_overrides').maybeSingle();
-    const ov = (hbOv?.value || null) as
-      { tokenBudget?: number; maxIterations?: number; skillCategories?: string[] } | null;
+    // Apply the budget/iteration/skill side of the override read above.
     if (ov) {
       if (ov.tokenBudget) TOKEN_BUDGET = Math.min(TOKEN_BUDGET, ov.tokenBudget);
       if (ov.maxIterations) maxIter = Math.min(maxIter, ov.maxIterations);
@@ -299,6 +305,11 @@ serve(async (req) => {
       // Essential categories for autonomous work (~42 skills instead of 91)
       // CRM + communication skills are available via chain_skills if needed
       skillCategories,
+      // Feed the relevance scorer the operator's actual goals — not just the
+      // generic trigger phrase — so objective-fulfilling skills (write_blog_post,
+      // newsletter, …) surface instead of only meta tools. (Fix for the
+      // "deliberates but never executes" loop.)
+      scoringIntent: (objectiveCtx || '').slice(0, 1500),
     });
 
     const timeoutPromise = new Promise<never>((_, reject) =>
