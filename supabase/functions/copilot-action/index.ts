@@ -124,6 +124,16 @@ serve(async (req) => {
   try {
     const { messages, currentModules, continueAfterToolCall } = await req.json();
 
+    // Validate input before touching it — an empty/missing `messages` would
+    // otherwise throw "Cannot read properties of undefined (reading 'length')"
+    // below. Fail fast with a clear contract error instead of a 500.
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'messages is required (a non-empty array of chat messages).' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
             const supabase = getServiceClient();
 
     let aiConfig;
