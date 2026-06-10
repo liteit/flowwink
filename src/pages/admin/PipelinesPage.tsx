@@ -37,7 +37,7 @@ interface Stage {
   is_lost: boolean;
 }
 
-interface Record {
+interface PipelineRecord {
   id: string;
   stage_id: string | null;
   title: string;
@@ -104,7 +104,7 @@ function Board({ entityType }: { entityType: EntityType }) {
         stage_id: r.stage_id,
         title: r[cfg.titleCol] ?? '(untitled)',
         subtitle: cfg.subtitleCol ? String(r[cfg.subtitleCol] ?? '') : null,
-      })) as Record[];
+      })) as PipelineRecord[];
     },
   });
 
@@ -120,7 +120,7 @@ function Board({ entityType }: { entityType: EntityType }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const grouped = useMemo(() => {
-    const out: Record[][] = (stagesQuery.data ?? []).map(() => []);
+    const out: PipelineRecord[][] = (stagesQuery.data ?? []).map(() => []);
     const idx = new Map((stagesQuery.data ?? []).map((s, i) => [s.id, i]));
     (recordsQuery.data ?? []).forEach(r => {
       if (r.stage_id && idx.has(r.stage_id)) out[idx.get(r.stage_id)!].push(r);
@@ -161,7 +161,7 @@ function Board({ entityType }: { entityType: EntityType }) {
   );
 }
 
-function Column({ stage, records, link }: { stage: Stage; records: Record[]; link: (id: string) => string }) {
+function Column({ stage, records, link }: { stage: Stage; records: PipelineRecord[]; link: (id: string) => string }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
   return (
     <div className="flex flex-col min-w-[260px] max-w-[300px] flex-1">
@@ -182,7 +182,7 @@ function Column({ stage, records, link }: { stage: Stage; records: Record[]; lin
   );
 }
 
-function Item({ record, link }: { record: Record; link: string }) {
+function Item({ record, link }: { record: PipelineRecord; link: string }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: record.id });
   return (
     <div
