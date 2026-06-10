@@ -44,7 +44,7 @@ interface Record {
   subtitle?: string | null;
 }
 
-const CONFIG: Record<EntityType, { table: 'leads' | 'deals' | 'tickets'; titleCol: string; subtitleCol?: string; link: (id: string) => string }> = {
+const CONFIG: { [K in EntityType]: { table: 'leads' | 'deals' | 'tickets'; titleCol: string; subtitleCol?: string; link: (id: string) => string } } = {
   lead: { table: 'leads', titleCol: 'name', subtitleCol: 'email', link: id => `/admin/leads/${id}` },
   deal: { table: 'deals', titleCol: 'title', subtitleCol: 'value_cents', link: id => `/admin/deals/${id}` },
   ticket: { table: 'tickets', titleCol: 'subject', subtitleCol: 'priority', link: id => `/admin/tickets` },
