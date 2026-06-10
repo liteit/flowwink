@@ -20,6 +20,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreateProduct, useUpdateProduct, type Product, type ProductType } from '@/hooks/useProducts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ProductVariantsPanel } from '@/components/admin/products/ProductVariantsPanel';
+import { SalesUomSelect } from '@/components/admin/products/SalesUomSelect';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect as useEffectAlias, useState as useStateAlias } from 'react';
 
 interface ProductDialogProps {
   open: boolean;
@@ -130,12 +135,33 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
     onOpenChange(false);
   };
 
+  const [salesUomId, setSalesUomId] = useStateAlias<string | null>(null);
+  useEffectAlias(() => {
+    if (!product) { setSalesUomId(null); return; }
+    (supabase as any).from('products').select('sales_uom_id').eq('id', product.id).maybeSingle()
+      .then(({ data }: any) => setSalesUomId(data?.sales_uom_id ?? null))
+      .catch(() => setSalesUomId(null));
+  }, [product]);
+
+  const saveSalesUom = async (id: string) => {
+    await (supabase as any).from('products').update({ sales_uom_id: salesUomId }).eq('id', id);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{product ? 'Edit Product' : 'New Product'}</DialogTitle>
         </DialogHeader>
+        <Tabs defaultValue="details">
+          <TabsList>
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="variants" disabled={!product}>Variants</TabsTrigger>
+          </TabsList>
+          <TabsContent value="variants" className="mt-4">
+            {product ? <ProductVariantsPanel productId={product.id} /> : null}
+          </TabsContent>
+          <TabsContent value="details" className="mt-4">
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
@@ -303,6 +329,16 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
             )}
           </div>
 
+          {/* Sales unit */}
+          <div className="space-y-3 rounded-lg border p-4">
+            <SalesUomSelect value={salesUomId} onChange={setSalesUomId} />
+            {product && (
+              <Button type="button" size="sm" variant="outline" onClick={() => saveSalesUom(product.id)}>
+                Save sales unit
+              </Button>
+            )}
+          </div>
+
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
@@ -312,6 +348,8 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
             </Button>
           </div>
         </form>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

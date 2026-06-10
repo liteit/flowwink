@@ -160,6 +160,11 @@ import ActivitiesPage from "./pages/admin/ActivitiesPage";
 import PricelistsPage from "./pages/admin/PricelistsPage";
 import ReturnsPage from "./pages/admin/ReturnsPage";
 import ShippingPage from "./pages/admin/ShippingPage";
+import PipelinesPage from "./pages/admin/PipelinesPage";
+import PipelineStagesPage from "./pages/admin/PipelineStagesPage";
+import UnitsOfMeasurePage from "./pages/admin/UnitsOfMeasurePage";
+import ApprovalChainsPage from "./pages/admin/ApprovalChainsPage";
+import ApprovalInboxPage from "./pages/admin/ApprovalInboxPage";
 
 
 const TemplateGalleryPage = lazy(() => import("./pages/admin/TemplateGalleryPage"));
@@ -281,7 +286,12 @@ const router = createBrowserRouter([
       { path: "/admin/companies", element: <CompaniesPage /> },
       { path: "/admin/companies/:id", element: <CompanyDetailPage /> },
       { path: "/admin/products", element: <ProductsPage /> },
+      { path: "/admin/products/units", element: <UnitsOfMeasurePage /> },
       { path: "/admin/orders", element: <OrdersPage /> },
+      { path: "/admin/pipelines", element: <PipelinesPage /> },
+      { path: "/admin/pipelines/stages", element: <PipelineStagesPage /> },
+      { path: "/admin/approvals/chains", element: <ApprovalChainsPage /> },
+      { path: "/admin/approvals/inbox", element: <ApprovalInboxPage /> },
       { path: "/admin/customers", element: <CustomersPage /> },
       { path: "/admin/inventory", element: <InventoryPage /> },
       { path: "/admin/vendors", element: <VendorsPage /> },
