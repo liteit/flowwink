@@ -9,12 +9,15 @@ category: reference
 > **GENERATED FILE.** Run `bun run scripts/parity-report.ts` to refresh.
 > Edit `docs/parity/capabilities/<module>.json` to change scores.
 
-**Scored modules:** 31  ·  **Mean parity:** 38%  ·  **Unscored modules:** 31
+**Benchmarked modules:** 54  ·  **Mean parity:** 45%  ·  **Differentiators (no Odoo benchmark):** 8  ·  **Unscored:** 0
 
 ## Scored modules
 
 | Module | Odoo app | Maturity → target | Parity | Done/Partial/Missing | Open epics |
 |---|---|---|---|---|---|
+| **workspace-chat** | Discuss (mail.channel) | L3 → L4 | `█░░░░░░░░░` 7% | 0/1/5 | — |
+| **handbook** | Knowledge (internal handbook) | L2 → L4 | `█░░░░░░░░░` 13% | 0/1/2 | — |
+| **calendar** | Calendar (calendar.event) | L3 → L4 | `██░░░░░░░░` 17% | 0/1/4 | — |
 | **companies** | Contacts (res.partner companies) | L4 → L4 | `██░░░░░░░░` 21% | 3/0/9 | — |
 | **shipping** | Inventory → Delivery/Shipping connectors | L2 → L4 | `██░░░░░░░░` 22% | 4/0/11 | — |
 | **approvals** | Approvals + studio approval rules | L3 → L4 | `██░░░░░░░░` 23% | 3/0/6 | EPIC-04 |
@@ -24,17 +27,22 @@ category: reference
 | **projects** | Project (project.project/project.task) | L3 → L4 | `███░░░░░░░` 29% | 5/0/8 | — |
 | **crm** | CRM (crm.lead, crm.stage) | L4 → L4 | `███░░░░░░░` 30% | 4/1/6 | EPIC-03 |
 | **subscriptions** | Subscriptions (sale.subscription) | L3 → L4 | `███░░░░░░░` 32% | 6/0/8 | — |
+| **docs** | Knowledge (documentation) | L3 → L4 | `███░░░░░░░` 33% | 2/0/3 | — |
 | **tickets** | Helpdesk (helpdesk.ticket) | L3 → L4 | `███░░░░░░░` 33% | 7/0/10 | EPIC-03 |
 | **manufacturing** | Manufacturing (mrp.production) | L2 → L4 | `████░░░░░░` 35% | 8/0/10 | — |
 | **inventory** | Inventory (stock) | L3 → L4 | `████░░░░░░` 36% | 7/1/8 | EPIC-02 |
 | **multi-currency** | Accounting multi-currency | L2 → L4 | `████░░░░░░` 36% | 5/0/5 | — |
 | **payroll** | Payroll (hr.payslip) | L2 → L4 | `████░░░░░░` 36% | 8/0/9 | — |
+| **email** | Mail / Discuss (outbound email) | L3 → L4 | `████░░░░░░` 38% | 2/1/4 | — |
 | **field-service** | Field Service (industry_fsm) | L2 → L4 | `████░░░░░░` 38% | 5/2/7 | — |
 | **pricelists** | Sales pricelists (product.pricelist) | L3 → L4 | `████░░░░░░` 38% | 5/0/7 | — |
+| **forms** | Website forms | L4 → L4 | `████░░░░░░` 39% | 1/3/3 | — |
 | **invoicing** | Invoicing (account.move) | L4 → L4 | `████░░░░░░` 39% | 7/0/7 | — |
 | **pos** | Point of Sale (pos.order) | L3 → L4 | `████░░░░░░` 39% | 7/0/9 | — |
 | **booking** | Appointments (calendar.appointment) | L3 → L4 | `████░░░░░░` 41% | 9/0/10 | — |
 | **sla** | Helpdesk SLA policies | L3 → L4 | `████░░░░░░` 41% | 7/0/8 | — |
+| **chat** | Livechat + chatbot | L3 → L4 | `████░░░░░░` 42% | 0/4/1 | — |
+| **global-blocks** | Website building blocks/snippets | L3 → L4 | `████░░░░░░` 42% | 0/3/1 | — |
 | **fixed-assets** | Accounting → Assets | L3 → L4 | `████░░░░░░` 44% | 7/0/7 | — |
 | **quotes** | Sales (sale.order quotation) | L3 → L4 | `████░░░░░░` 44% | 8/0/8 | — |
 | **reconciliation** | Accounting bank reconciliation | L3 → L4 | `████░░░░░░` 44% | 7/0/6 | — |
@@ -44,14 +52,36 @@ category: reference
 | **contracts** | Sign + contract management | L3 → L4 | `█████░░░░░` 50% | 7/0/5 | — |
 | **purchasing** | Purchase (purchase.order) | L3 → L4 | `█████░░░░░` 50% | 10/0/8 | EPIC-04 |
 | **resume** | Employees → Skills / niche consultant pool | L2 → L4 | `█████░░░░░` 50% | 3/0/3 | — |
+| **templates** | Website themes | L3 → L4 | `█████░░░░░` 50% | 0/4/0 | — |
 | **recruitment** | Recruitment (hr.applicant) | L3 → L4 | `█████░░░░░` 53% | 9/0/7 | — |
+| **documents** | Documents (documents.document) | L3 → L4 | `██████░░░░` 56% | 2/1/3 | — |
+| **media** | Website media library | L2 → L4 | `██████░░░░` 57% | 2/3/1 | — |
+| **wiki** | Knowledge (knowledge.article) | L2 → L4 | `██████░░░░` 57% | 3/0/3 | — |
+| **analytics** | Website analytics / Dashboards | L3 → L4 | `██████░░░░` 58% | 2/1/2 | — |
+| **newsletter** | Email Marketing (mailing.mailing) | L4 → L4 | `██████░░░░` 59% | 3/4/2 | — |
+| **blog** | Blog (blog.post) | L4 → L4 | `██████░░░░` 63% | 3/2/2 | — |
+| **growth** | Marketing Automation + Social Marketing | L3 → L4 | `██████░░░░` 64% | 2/2/1 | — |
+| **surveys** | Surveys (survey.survey) | L2 → L4 | `██████░░░░` 64% | 2/4/0 | — |
+| **pages** | Website (website.page) | L4 → L4 | `███████░░░` 70% | 5/0/3 | — |
+| **kb** | Knowledge / Helpdesk KB | L3 → L4 | `███████░░░` 71% | 3/2/1 | — |
+| **live-support** | Livechat (im_livechat) | L3 → L4 | `███████░░░` 71% | 3/2/1 | — |
 | **hr** | Employees + Time Off + Attendances + Appraisals (hr.employee) | L3 → L4 | `███████░░░` 74% | 14/1/5 | — |
+| **webinars** | Events (event.event) | L3 → L4 | `████████░░` 78% | 4/2/1 | — |
+| **customer360** | Contacts 360 view (partner timeline) | L3 → L4 | `██████████` 100% | 2/0/0 | — |
+| **sales-intelligence** | CRM lead scoring (partial counterpart) | L4 → L4 | `██████████` 100% | 1/0/0 | — |
 
-## Unscored modules (breadth backlog)
+## Differentiators (no Odoo counterpart — excluded from the mean)
 
-> Create `docs/parity/capabilities/<module>.json` for each — see `_schema.md`.
-
-`analytics` · `blog` · `browser-control` · `calendar` · `chat` · `company-insights` · `composio` · `customer360` · `developer` · `docs` · `documents` · `email` · `federation` · `flowpilot` · `forms` · `global-blocks` · `growth` · `handbook` · `kb` · `live-support` · `media` · `newsletter` · `pages` · `river` · `sales-intelligence` · `site-migration` · `surveys` · `templates` · `webinars` · `wiki` · `workspace-chat`
+| Module | Description | Capabilities |
+|---|---|---|
+| **browser-control** | none (FlowWink differentiator) | 4 |
+| **company-insights** | none (FlowWink differentiator) | 4 |
+| **composio** | none (FlowWink differentiator) | 4 |
+| **developer** | none (FlowWink differentiator) | 4 |
+| **federation** | none (FlowWink differentiator) | 8 |
+| **flowpilot** | none (FlowWink differentiator) | 7 |
+| **river** | none (FlowWink differentiator) | 5 |
+| **site-migration** | none (FlowWink differentiator) | 4 |
 
 ## Foundational gaps (weight 3, still open)
 
