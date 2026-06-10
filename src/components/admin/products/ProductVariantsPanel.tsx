@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase as supabaseTyped } from '@/integrations/supabase/client';
+// New tables/RPCs not in generated types yet — bypass strict typing.
+const supabase = supabaseTyped as any;
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
