@@ -289,6 +289,17 @@ serve(async (req) => {
   try {
     const { messages, conversationId, sessionId, settings, customerEmail, customerName, mode, checkinId } = await req.json() as ChatRequest;
 
+    // Guard before any messages.filter()/spread below — a caller (e.g. the
+    // draft_candidate_outreach skill via edge:chat-completion) that omits
+    // messages would otherwise throw "messages is not iterable" mid-handler.
+    // Check-in mode builds its own messages, so let it through.
+    if (!(mode === 'checkin' && checkinId) && (!Array.isArray(messages) || messages.length === 0)) {
+      return new Response(
+        JSON.stringify({ error: 'messages is required (a non-empty array of {role, content}).' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Redirect check-in mode to dedicated function
     if (mode === 'checkin' && checkinId) {
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
