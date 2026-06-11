@@ -162,7 +162,7 @@ export async function createLeadFromForm(options: {
       // Trigger AI qualification
       qualifyLead(existingLead.id);
 
-      return { lead: { ...existingLead, ...updates } as Lead, isNew: false, error: null };
+      return { lead: { ...existingLead, ...updates } as unknown as Lead, isNew: false, error: null };
     }
 
     // Auto-match company by email domain (never auto-create)
@@ -210,7 +210,7 @@ export async function createLeadFromForm(options: {
     // Slack notification (fire-and-forget)
     notifyNewLead({ name: name || '', email, source: 'form', score: ACTIVITY_POINTS.form_submit, leadId: newLead.id });
 
-    return { lead: newLead as Lead, isNew: true, error: null };
+    return { lead: newLead as unknown as Lead, isNew: true, error: null };
   } catch (error) {
     logger.error('createLeadFromForm error:', error);
     return { lead: null, isNew: false, error: error instanceof Error ? error.message : 'Unknown error' };
@@ -262,7 +262,7 @@ export async function createLeadFromBooking(options: {
       // Trigger AI qualification
       qualifyLead(existingLead.id);
 
-      return { lead: existingLead as Lead, isNew: false, error: null };
+      return { lead: existingLead as unknown as Lead, isNew: false, error: null };
     }
 
     // Auto-match company by email domain (never auto-create)
@@ -309,7 +309,7 @@ export async function createLeadFromBooking(options: {
     // Slack notification (fire-and-forget)
     notifyNewLead({ name: name || '', email, source: 'booking', score: ACTIVITY_POINTS.booking, leadId: newLead.id });
 
-    return { lead: newLead as Lead, isNew: true, error: null };
+    return { lead: newLead as unknown as Lead, isNew: true, error: null };
   } catch (error) {
     logger.error('createLeadFromBooking error:', error);
     return { lead: null, isNew: false, error: error instanceof Error ? error.message : 'Unknown error' };
