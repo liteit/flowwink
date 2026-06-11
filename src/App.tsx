@@ -160,7 +160,7 @@ import ActivitiesPage from "./pages/admin/ActivitiesPage";
 import PricelistsPage from "./pages/admin/PricelistsPage";
 import ReturnsPage from "./pages/admin/ReturnsPage";
 import ShippingPage from "./pages/admin/ShippingPage";
-import PipelinesPage from "./pages/admin/PipelinesPage";
+
 import PipelineStagesPage from "./pages/admin/PipelineStagesPage";
 import UnitsOfMeasurePage from "./pages/admin/UnitsOfMeasurePage";
 import ApprovalChainsPage from "./pages/admin/ApprovalChainsPage";
@@ -288,10 +288,10 @@ const router = createBrowserRouter([
       { path: "/admin/products", element: <ProductsPage /> },
       { path: "/admin/products/units", element: <UnitsOfMeasurePage /> },
       { path: "/admin/orders", element: <OrdersPage /> },
-      { path: "/admin/pipelines", element: <PipelinesPage /> },
+      { path: "/admin/pipelines", element: <Navigate to="/admin/pipelines/stages" replace /> },
       { path: "/admin/pipelines/stages", element: <PipelineStagesPage /> },
-      { path: "/admin/approvals/chains", element: <ApprovalChainsPage /> },
-      { path: "/admin/approvals/inbox", element: <ApprovalInboxPage /> },
+      { path: "/admin/approvals/chains", element: <Navigate to="/admin/approvals?tab=chains" replace /> },
+      { path: "/admin/approvals/inbox", element: <Navigate to="/admin/approvals?tab=inbox" replace /> },
       { path: "/admin/customers", element: <CustomersPage /> },
       { path: "/admin/inventory", element: <InventoryPage /> },
       { path: "/admin/vendors", element: <VendorsPage /> },
