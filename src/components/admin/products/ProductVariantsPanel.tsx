@@ -46,7 +46,7 @@ export function ProductVariantsPanel({ productId }: Props) {
         p_product_id: productId,
       });
       if (error) throw error;
-      return ((data as { variants: Variant[] } | null)?.variants ?? []) as Variant[];
+      return ((data as unknown as { variants: Variant[] } | null)?.variants ?? []) as Variant[];
     },
   });
 

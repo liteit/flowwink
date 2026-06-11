@@ -2,6 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { TrendingUp, Hash, Calculator, Calendar } from 'lucide-react';
 import { formatPrice } from '@/hooks/useProducts';
 import type { Deal } from '@/hooks/useDeals';
+import { usePipelineStages } from '@/hooks/usePipelineStages';
 import { differenceInDays, parseISO } from 'date-fns';
 
 interface PipelineSummaryProps {
@@ -10,15 +11,18 @@ interface PipelineSummaryProps {
 
 /**
  * Pipeline summary bar (Pipedrive-style).
- * Shows totals across the OPEN pipeline (excludes closed_won / closed_lost).
+ * Uses pipeline_stages.is_won/is_lost to decide which deals are "open" so the
+ * forecast adapts to whatever pipeline an admin has configured.
  */
 export function PipelineSummary({ deals }: PipelineSummaryProps) {
-  const open = deals.filter(d => d.stage !== 'closed_won' && d.stage !== 'closed_lost');
+  const { data: stages = [] } = usePipelineStages('deal');
+  const closedKeys = new Set(stages.filter(s => s.is_won || s.is_lost).map(s => s.key));
+
+  const open = deals.filter(d => !closedKeys.has(d.stage as string));
   const totalValue = open.reduce((sum, d) => sum + (d.value_cents || 0), 0);
   const count = open.length;
   const avg = count > 0 ? Math.round(totalValue / count) : 0;
 
-  // Average age in days (created_at → today)
   const avgAgeDays = count > 0
     ? Math.round(
         open.reduce((sum, d) => {

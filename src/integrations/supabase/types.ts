@@ -7,30 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -537,8 +517,6 @@ export type Database = {
           error_message: string | null
           id: string
           input: Json | null
-          log_message: string | null
-          log_type: string | null
           outcome_data: Json | null
           outcome_evaluated_at: string | null
           outcome_status:
@@ -559,8 +537,6 @@ export type Database = {
           error_message?: string | null
           id?: string
           input?: Json | null
-          log_message?: string | null
-          log_type?: string | null
           outcome_data?: Json | null
           outcome_evaluated_at?: string | null
           outcome_status?:
@@ -581,8 +557,6 @@ export type Database = {
           error_message?: string | null
           id?: string
           input?: Json | null
-          log_message?: string | null
-          log_type?: string | null
           outcome_data?: Json | null
           outcome_evaluated_at?: string | null
           outcome_status?:
@@ -3094,6 +3068,88 @@ export type Database = {
           },
         ]
       }
+      clawable_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          response_id: string | null
+          role: string
+          session_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          response_id?: string | null
+          role: string
+          session_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          response_id?: string | null
+          role?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clawable_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "clawable_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clawable_sessions: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          last_response_id: string | null
+          model: string
+          peer_id: string | null
+          thread_key: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_response_id?: string | null
+          model?: string
+          peer_id?: string | null
+          thread_key?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_response_id?: string | null
+          model?: string
+          peer_id?: string | null
+          thread_key?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clawable_sessions_peer_id_fkey"
+            columns: ["peer_id"]
+            isOneToOne: false
+            referencedRelation: "a2a_peers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
@@ -3147,41 +3203,6 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
-      }
-      consultant_checkin_log: {
-        Row: {
-          created_at: string
-          fields_updated: Json
-          id: string
-          last_user_message: string | null
-          profile_id: string
-          source: string
-        }
-        Insert: {
-          created_at?: string
-          fields_updated?: Json
-          id?: string
-          last_user_message?: string | null
-          profile_id: string
-          source?: string
-        }
-        Update: {
-          created_at?: string
-          fields_updated?: Json
-          id?: string
-          last_user_message?: string | null
-          profile_id?: string
-          source?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "consultant_checkin_log_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "consultant_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       consultant_profiles: {
         Row: {
@@ -4983,50 +5004,6 @@ export type Database = {
             foreignKeyName: "federation_connections_peer_id_fkey"
             columns: ["peer_id"]
             isOneToOne: false
-            referencedRelation: "a2a_peers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      federation_peer_missions: {
-        Row: {
-          created_at: string | null
-          focus_resources: string[] | null
-          focus_tools: string[] | null
-          id: string
-          instructions: string
-          mission_id: string
-          mission_name: string
-          peer_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          focus_resources?: string[] | null
-          focus_tools?: string[] | null
-          id?: string
-          instructions: string
-          mission_id: string
-          mission_name: string
-          peer_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          focus_resources?: string[] | null
-          focus_tools?: string[] | null
-          id?: string
-          instructions?: string
-          mission_id?: string
-          mission_name?: string
-          peer_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "federation_peer_missions_peer_id_fkey"
-            columns: ["peer_id"]
-            isOneToOne: true
             referencedRelation: "a2a_peers"
             referencedColumns: ["id"]
           },
@@ -6896,63 +6873,6 @@ export type Database = {
           },
         ]
       }
-      outbound_communications: {
-        Row: {
-          body_html: string | null
-          body_text: string | null
-          channel: string
-          created_at: string
-          error_message: string | null
-          id: string
-          metadata: Json
-          provider: string | null
-          recipient: string
-          related_entity_id: string | null
-          related_entity_type: string | null
-          sent_at: string | null
-          simulated: boolean
-          source: string | null
-          status: string
-          subject: string | null
-        }
-        Insert: {
-          body_html?: string | null
-          body_text?: string | null
-          channel: string
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          metadata?: Json
-          provider?: string | null
-          recipient: string
-          related_entity_id?: string | null
-          related_entity_type?: string | null
-          sent_at?: string | null
-          simulated?: boolean
-          source?: string | null
-          status: string
-          subject?: string | null
-        }
-        Update: {
-          body_html?: string | null
-          body_text?: string | null
-          channel?: string
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          metadata?: Json
-          provider?: string | null
-          recipient?: string
-          related_entity_id?: string | null
-          related_entity_type?: string | null
-          sent_at?: string | null
-          simulated?: boolean
-          source?: string | null
-          status?: string
-          subject?: string | null
-        }
-        Relationships: []
-      }
       page_versions: {
         Row: {
           content_json: Json
@@ -8786,9 +8706,6 @@ export type Database = {
           bio: string | null
           created_at: string
           email: string
-          email_from_address: string | null
-          email_from_name: string | null
-          email_reply_to: string | null
           full_name: string | null
           id: string
           show_as_author: boolean | null
@@ -8800,9 +8717,6 @@ export type Database = {
           bio?: string | null
           created_at?: string
           email: string
-          email_from_address?: string | null
-          email_from_name?: string | null
-          email_reply_to?: string | null
           full_name?: string | null
           id: string
           show_as_author?: boolean | null
@@ -8814,9 +8728,6 @@ export type Database = {
           bio?: string | null
           created_at?: string
           email?: string
-          email_from_address?: string | null
-          email_from_name?: string | null
-          email_reply_to?: string | null
           full_name?: string | null
           id?: string
           show_as_author?: boolean | null
@@ -12774,24 +12685,6 @@ export type Database = {
         }
         Returns: Json
       }
-      book_invoice_issued: {
-        Args: {
-          p_ar_account?: string
-          p_invoice_id: string
-          p_revenue_account?: string
-          p_vat_account?: string
-        }
-        Returns: Json
-      }
-      book_invoice_paid: {
-        Args: {
-          p_ar_account?: string
-          p_bank_account?: string
-          p_invoice_id: string
-        }
-        Returns: Json
-      }
-      build_or_tsquery: { Args: { query_text: string }; Returns: unknown }
       bulk_invoice_from_timesheets: {
         Args: {
           p_due_days?: number
@@ -13076,8 +12969,6 @@ export type Database = {
       }
       create_payroll_run: { Args: { p_period_date: string }; Returns: Json }
       current_employee_id: { Args: never; Returns: string }
-      demo_cycle_cron_status: { Args: never; Returns: Json }
-      disable_demo_cycle_cron: { Args: never; Returns: Json }
       dispatch_automation_event: {
         Args: {
           entity_id?: string
@@ -13102,10 +12993,6 @@ export type Database = {
       emit_platform_event: {
         Args: { _event_name: string; _payload?: Json; _source?: string }
         Returns: string
-      }
-      enable_demo_cycle_cron: {
-        Args: { p_anon_key: string; p_function_url: string }
-        Returns: Json
       }
       evaluate_approval_required: {
         Args: {
@@ -13429,10 +13316,6 @@ export type Database = {
         Args: { p_all?: boolean; p_slug?: string }
         Returns: Json
       }
-      lookup_order_tracking: {
-        Args: { p_email: string; p_order_id: string }
-        Returns: Json
-      }
       manage_approval_chain: {
         Args: {
           p_action: string
@@ -13498,30 +13381,6 @@ export type Database = {
       mark_webinar_attendance: {
         Args: { p_attended?: boolean; p_registration_id: string }
         Returns: Json
-      }
-      match_consultants: {
-        Args: {
-          match_count?: number
-          only_active?: boolean
-          query_embedding: string
-          query_text?: string
-          rrf_k?: number
-          semantic_weight?: number
-        }
-        Returns: {
-          availability: string
-          experience_years: number
-          hybrid_score: number
-          id: string
-          name: string
-          semantic_rank: number
-          semantic_score: number
-          skills: string[]
-          summary: string
-          text_rank: number
-          text_score: number
-          title: string
-        }[]
       }
       match_invoice_to_receipt: {
         Args: { p_invoice_id: string; p_tolerance_pct?: number }
@@ -13907,7 +13766,6 @@ export type Database = {
           source: string
         }[]
       }
-      restock_demo_products: { Args: never; Returns: Json }
       revalue_open_balances: {
         Args: {
           p_ap_account?: string
@@ -14641,9 +14499,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       a2a_activity_status: ["success", "error", "pending", "dispatched"],
@@ -14862,4 +14717,3 @@ export const Constants = {
     },
   },
 } as const
-
