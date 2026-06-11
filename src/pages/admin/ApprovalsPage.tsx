@@ -17,6 +17,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useGatedSkills } from '@/hooks/useGatedSkills';
+import { InboxSection } from './ApprovalInboxPage';
+import { ChainsSection, GroupsSection } from './ApprovalChainsPage';
 
 function formatAmount(cents: number | null, currency: string) {
   if (cents == null) return '—';
@@ -98,11 +100,24 @@ export default function ApprovalsPage() {
       <Tabs defaultValue="pending" className="space-y-4">
         <TabsList>
           <TabsTrigger value="pending">
-            Pending {pending && pending.length > 0 && <Badge variant="secondary" className="ml-2">{pending.length}</Badge>}
+            Requests {pending && pending.length > 0 && <Badge variant="secondary" className="ml-2">{pending.length}</Badge>}
           </TabsTrigger>
+          <TabsTrigger value="inbox">Chain Inbox</TabsTrigger>
+          <TabsTrigger value="chains">Chains</TabsTrigger>
+          <TabsTrigger value="groups">Groups</TabsTrigger>
           <TabsTrigger value="rules">Rules</TabsTrigger>
           <TabsTrigger value="gated-skills">Gated Skills</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="inbox" className="space-y-4">
+          <InboxSection />
+        </TabsContent>
+        <TabsContent value="chains" className="space-y-4">
+          <ChainsSection />
+        </TabsContent>
+        <TabsContent value="groups" className="space-y-4">
+          <GroupsSection />
+        </TabsContent>
 
         <TabsContent value="pending" className="space-y-4">
           {pendingLoading && <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>}
