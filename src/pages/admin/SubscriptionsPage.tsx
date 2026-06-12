@@ -14,11 +14,12 @@ import {
   openCustomerPortal, type SubscriptionStatus, type Subscription,
 } from '@/hooks/useSubscriptions';
 import { format } from 'date-fns';
-import { ExternalLink, MoreHorizontal, RefreshCw, XCircle } from 'lucide-react';
+import { ExternalLink, MoreHorizontal, RefreshCw, XCircle, ArrowUpDown } from 'lucide-react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ChangePlanDialog } from '@/components/admin/subscriptions/ChangePlanDialog';
 
 const STATUS_LABEL: Record<SubscriptionStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   active: { label: 'Active', variant: 'default' },
@@ -197,6 +198,8 @@ function SubscriptionRow({
   const renews = sub.current_period_end
     ? format(new Date(sub.current_period_end), 'MMM d, yyyy')
     : '—';
+  const [changeOpen, setChangeOpen] = useState(false);
+  const canChangePlan = isManual && sub.status === 'active';
   return (
     <TableRow>
       <TableCell>
@@ -239,6 +242,11 @@ function SubscriptionRow({
             <DropdownMenuItem onClick={onPortal}>
               <ExternalLink className="h-4 w-4 mr-2" />Customer portal
             </DropdownMenuItem>
+            {canChangePlan && (
+              <DropdownMenuItem onClick={() => setChangeOpen(true)}>
+                <ArrowUpDown className="h-4 w-4 mr-2" />Change plan
+              </DropdownMenuItem>
+            )}
             {sub.cancel_at_period_end ? (
               <DropdownMenuItem onClick={onResume}>
                 <RefreshCw className="h-4 w-4 mr-2" />Resume
@@ -252,6 +260,9 @@ function SubscriptionRow({
             )}
           </DropdownMenuContent>
         </DropdownMenu>
+        {canChangePlan && (
+          <ChangePlanDialog open={changeOpen} onOpenChange={setChangeOpen} sub={sub} />
+        )}
       </TableCell>
     </TableRow>
   );
