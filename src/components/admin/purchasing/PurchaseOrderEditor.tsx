@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Plus, Trash2, Send, CheckCircle, PackageCheck } from 'lucide-react';
 import { GoodsReceiptDialog } from './GoodsReceiptDialog';
 import { PoInvoicesDrilldown } from './PoInvoicesDrilldown';
+import { LandedCostPanel } from './LandedCostDialog';
 
 interface POLine {
   id?: string;
