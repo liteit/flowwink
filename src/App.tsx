@@ -367,6 +367,7 @@ const router = createBrowserRouter([
       { path: "/admin/reconciliation", element: <ReconciliationPage /> },
       { path: "/admin/pricelists", element: <PricelistsPage /> },
       { path: "/admin/returns", element: <ReturnsPage /> },
+      { path: "/admin/maintenance", element: <MaintenancePage /> },
       { path: "/admin/shipping", element: <ShippingPage /> },
       { path: "/admin/api-keys", element: <Navigate to="/admin/developer?tab=mcp-keys" replace /> },
       { path: "/admin/autonomy-tests", element: <AutonomyTestSuitePage /> },
