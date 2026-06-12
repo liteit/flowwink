@@ -100,6 +100,7 @@ const defaultBrandingSettings: BrandingSettings = {
   borderRadius: 'md',
   shadowIntensity: 'subtle',
   heroOverlayOpacity: 'medium',
+  scrollAnimations: 'on',
   showLogoInHeader: true,
   showNameWithLogo: false,
   headerLogoSize: 'md',
