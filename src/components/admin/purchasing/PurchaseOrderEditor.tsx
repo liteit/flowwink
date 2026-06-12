@@ -351,6 +351,10 @@ export function PurchaseOrderEditor({ poId, onClose }: Props) {
         <PoInvoicesDrilldown purchaseOrderId={poId} currency={currency} />
       )}
 
+      {poId && (status === 'received' || status === 'partially_received') && (
+        <LandedCostPanel purchaseOrderId={poId} currency={currency} />
+      )}
+
       {poId && (
         <GoodsReceiptDialog
           open={receiptDialogOpen}
