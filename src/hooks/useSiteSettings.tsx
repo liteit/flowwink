@@ -73,6 +73,7 @@ export interface BrandingSettings {
   borderRadius?: 'none' | 'sm' | 'md' | 'lg';
   shadowIntensity?: 'none' | 'subtle' | 'medium';
   heroOverlayOpacity?: 'none' | 'light' | 'medium' | 'strong';
+  scrollAnimations?: 'on' | 'eager' | 'off';
   
   // Header display
   showLogoInHeader?: boolean;
