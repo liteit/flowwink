@@ -30,6 +30,7 @@ import {
   type CoworkAttachment,
 } from '@/components/admin/workspace/AttachmentChip';
 import { MessageBubble } from '@/components/admin/workspace/MessageBubble';
+import { AgentFeed } from '@/components/admin/workspace/AgentFeed';
 import {
   Send,
   Square,
