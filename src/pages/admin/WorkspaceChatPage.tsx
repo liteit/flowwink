@@ -491,6 +491,7 @@ export default function WorkspaceChatPage() {
             <>
               <ScrollArea className="flex-1 min-h-0" ref={scrollRef as any}>
                 <div className="px-4 py-6 max-w-3xl mx-auto w-full space-y-6">
+                  <AgentFeed />
                   {messages.map((m, idx) => {
                     const isLast = idx === messages.length - 1;
                     return (
