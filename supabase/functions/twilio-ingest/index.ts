@@ -2,22 +2,13 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getServiceClient } from '../_shared/supabase-clients.ts';
 
 /**
- * Twilio SMS channel adapter — inbound webhook + outbound send.
+ * Twilio SMS channel adapter — inbound webhook + outbound send + test.
  *
  * Modes (selected by `?action=` query param):
  *  - default (no query): INBOUND Twilio Messaging webhook (application/x-www-form-urlencoded).
- *    Normalizes into chat_conversations/chat_messages (channel='sms'). If no human
- *    agent owns the thread, FlowPilot replies via chat-completion. The reply is
- *    sent back via Twilio REST API (through the Lovable connector gateway).
  *  - ?action=send: OUTBOUND from the Live Support UI after an admin posts a
  *    chat_messages row. Requires an admin JWT.
- *
- * Configure the Twilio Messaging webhook to POST to this function's URL.
- * Deploy with --no-verify-jwt (Twilio cannot present a Supabase JWT).
- *
- * Required env: LOVABLE_API_KEY + TWILIO_API_KEY (auto-provisioned by connector).
- * Site setting `integrations.twilio.config.from_number` = the Twilio E.164
- * number messages are sent from. Falls back to env TWILIO_FROM_NUMBER.
+ *  - ?action=test: VERIFY credentials by calling Twilio API. Requires admin JWT.
  */
 
 const corsHeaders = {
@@ -35,8 +26,10 @@ serve(async (req) => {
   const url = new URL(req.url);
   const action = url.searchParams.get("action");
   if (action === "send") return handleSend(req);
+  if (action === "test") return handleTest(req);
   return handleIngest(req);
 });
+
 
 async function loadTwilioConfig(supabase: ReturnType<typeof getServiceClient>) {
   const { data: settingRow } = await supabase
