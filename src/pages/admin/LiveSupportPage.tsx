@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { useSupportPresence, AgentStatus } from '@/hooks/useSupportPresence';
@@ -9,14 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { 
-  Headphones, 
-  Circle, 
-  Send, 
-  User, 
-  Bot, 
-  Clock, 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Headphones,
+  Circle,
+  Send,
+  User,
+  Bot,
+  Clock,
   AlertTriangle,
   CheckCircle2,
   XCircle,
@@ -24,7 +24,11 @@ import {
   Loader2,
   UserCheck,
   Coffee,
-  Moon
+  Moon,
+  Inbox,
+  PhoneCall,
+  Voicemail as VoicemailIcon,
+  Plug,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -34,6 +38,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ChannelFilter } from '@/components/admin/live-support/ChannelFilter';
+import { ChannelToggleGroup } from '@/components/admin/live-support/ChannelToggleGroup';
+import { TelegramIntegrationCard, TwilioIntegrationPlaceholder } from '@/components/admin/live-support/TelegramIntegrationCard';
+import { CallbacksPanel } from '@/components/admin/live-support/CallbacksPanel';
+import { VoicemailPanel } from '@/components/admin/live-support/VoicemailPanel';
+import { ALL_CHANNELS, ChannelChip, ChannelIcon, channelMeta, getChannel, type SupportChannel } from '@/lib/support-channels';
 
 const statusConfig: Record<AgentStatus, { label: string; color: string; icon: React.ReactNode }> = {
   online: { label: 'Online', color: 'bg-green-500', icon: <Circle className="h-2 w-2 fill-green-500 text-green-500" /> },
@@ -50,16 +60,19 @@ const priorityConfig: Record<string, { label: string; variant: 'default' | 'seco
 };
 
 export default function LiveSupportPage() {
-  const { 
-    agentRecord, 
-    agentLoading, 
-    onlineAgents, 
+  const {
+    agentRecord,
+    agentLoading,
+    onlineAgents,
     isConnected,
-    goOnline, 
+    goOnline,
     goOffline,
     setAway,
     setBusy,
-    isUpdating 
+    isUpdating,
+    supportedChannels,
+    updateSupportedChannels,
+    isUpdatingChannels,
   } = useSupportPresence();
 
   const {
@@ -73,11 +86,34 @@ export default function LiveSupportPage() {
 
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState('');
+  const [channelFilter, setChannelFilter] = useState<SupportChannel | 'all'>('all');
+  const [tab, setTab] = useState<'inbox' | 'callbacks' | 'voicemail' | 'integrations'>('inbox');
 
   const { messages, isLoading: messagesLoading, sendMessage } = useConversationMessages(selectedConversationId);
 
   const currentStatus = agentRecord?.status || 'offline';
   const statusInfo = statusConfig[currentStatus as AgentStatus];
+  const activeChannels: SupportChannel[] = (supportedChannels?.length
+    ? supportedChannels.filter((c): c is SupportChannel => (ALL_CHANNELS as string[]).includes(c))
+    : (['web', 'telegram', 'sms', 'voice'] as SupportChannel[]));
+
+  const filterByChannel = <T extends { channel?: string | null }>(rows: T[]) =>
+    channelFilter === 'all' ? rows : rows.filter(r => getChannel(r.channel) === channelFilter);
+
+  const filteredAssigned   = useMemo(() => filterByChannel(assignedConversations),   [assignedConversations,   channelFilter]);
+  const filteredWaiting    = useMemo(() => filterByChannel(waitingConversations),    [waitingConversations,    channelFilter]);
+  const filteredEscalated  = useMemo(() => filterByChannel(escalatedConversations),  [escalatedConversations,  channelFilter]);
+
+  const counts = useMemo(() => {
+    const all = [...assignedConversations, ...waitingConversations, ...escalatedConversations];
+    const out: Partial<Record<SupportChannel | 'all', number>> = { all: all.length };
+    for (const c of ALL_CHANNELS) out[c] = 0;
+    for (const r of all) {
+      const c = getChannel((r as any).channel);
+      out[c] = (out[c] ?? 0) + 1;
+    }
+    return out;
+  }, [assignedConversations, waitingConversations, escalatedConversations]);
 
   const handleSendMessage = async () => {
     if (!messageInput.trim()) return;
@@ -94,6 +130,7 @@ export default function LiveSupportPage() {
 
   const selectedConversation = [...assignedConversations, ...waitingConversations, ...escalatedConversations]
     .find(c => c.id === selectedConversationId);
+  const selectedChannel = getChannel((selectedConversation as any)?.channel);
 
   if (agentLoading) {
     return (
@@ -168,7 +205,30 @@ export default function LiveSupportPage() {
             </Card>
           </div>
         ) : (
-          <div className="flex-1 grid grid-cols-12 gap-4 min-h-0 p-4">
+          <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="flex-1 flex flex-col min-h-0">
+            <div className="flex items-center justify-between gap-4 px-4 pt-3 flex-wrap">
+              <TabsList>
+                <TabsTrigger value="inbox" className="gap-1.5">
+                  <Inbox className="h-3.5 w-3.5" /> Inbox
+                </TabsTrigger>
+                <TabsTrigger value="callbacks" className="gap-1.5">
+                  <PhoneCall className="h-3.5 w-3.5" /> Callbacks
+                </TabsTrigger>
+                <TabsTrigger value="voicemail" className="gap-1.5">
+                  <VoicemailIcon className="h-3.5 w-3.5" /> Voicemail
+                </TabsTrigger>
+                <TabsTrigger value="integrations" className="gap-1.5">
+                  <Plug className="h-3.5 w-3.5" /> Channels
+                </TabsTrigger>
+              </TabsList>
+              {tab === 'inbox' && (
+                <ChannelFilter selected={channelFilter} counts={counts} onChange={setChannelFilter} />
+              )}
+            </div>
+
+            <TabsContent value="inbox" className="flex-1 min-h-0 mt-2">
+          <div className="flex-1 grid grid-cols-12 gap-4 min-h-0 p-4 h-full">
+
             {/* Conversation list */}
             <div className="col-span-3 flex flex-col gap-4 min-h-0">
               {/* Assigned conversations */}
@@ -176,13 +236,13 @@ export default function LiveSupportPage() {
                 <CardHeader className="py-3 px-4">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    Active ({assignedConversations.length})
+                    Active ({filteredAssigned.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1 min-h-0 p-0">
                   <ScrollArea className="h-full">
                     <div className="space-y-1 p-2">
-                      {assignedConversations.map(conv => (
+                      {filteredAssigned.map(conv => (
                         <ConversationItem
                           key={conv.id}
                           conversation={conv}
@@ -190,7 +250,7 @@ export default function LiveSupportPage() {
                           onClick={() => setSelectedConversationId(conv.id)}
                         />
                       ))}
-                      {assignedConversations.length === 0 && (
+                      {filteredAssigned.length === 0 && (
                         <p className="text-sm text-muted-foreground text-center py-4">
                           No active conversations
                         </p>
@@ -205,13 +265,13 @@ export default function LiveSupportPage() {
                 <CardHeader className="py-3 px-4">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <Clock className="h-4 w-4 text-yellow-500" />
-                    Waiting ({waitingConversations.length})
+                    Waiting ({filteredWaiting.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1 min-h-0 p-0">
                   <ScrollArea className="h-full">
                     <div className="space-y-1 p-2">
-                      {waitingConversations.map(conv => (
+                      {filteredWaiting.map(conv => (
                         <ConversationItem
                           key={conv.id}
                           conversation={conv}
@@ -221,7 +281,7 @@ export default function LiveSupportPage() {
                           onClaim={() => claimConversation.mutate(conv.id)}
                         />
                       ))}
-                      {waitingConversations.length === 0 && (
+                      {filteredWaiting.length === 0 && (
                         <p className="text-sm text-muted-foreground text-center py-4">
                           No waiting conversations
                         </p>
@@ -236,14 +296,14 @@ export default function LiveSupportPage() {
                 <CardHeader className="py-3 px-4">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4 text-red-500" />
-                    Escalated ({escalatedConversations.length})
+                    Escalated ({filteredEscalated.length})
                   </CardTitle>
                 </CardHeader>
-                {escalatedConversations.length > 0 && (
+                {filteredEscalated.length > 0 && (
                   <CardContent className="p-2">
                     <ScrollArea className="max-h-32">
                       <div className="space-y-1">
-                        {escalatedConversations.slice(0, 5).map(conv => (
+                        {filteredEscalated.slice(0, 5).map(conv => (
                           <ConversationItem
                             key={conv.id}
                             conversation={conv}
@@ -273,12 +333,16 @@ export default function LiveSupportPage() {
                               {(selectedConversation.customer_name || 'U')[0].toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
-                          <div>
-                            <CardTitle className="text-sm">
-                              {selectedConversation.customer_name || 'Anonymous User'}
+                          <div className="min-w-0">
+                            <CardTitle className="text-sm flex items-center gap-2">
+                              <span className="truncate">{selectedConversation.customer_name || 'Anonymous User'}</span>
+                              <ChannelChip channel={selectedChannel} />
                             </CardTitle>
-                            <CardDescription className="text-xs">
-                              {selectedConversation.customer_email || selectedConversation.session_id?.slice(0, 8)}
+                            <CardDescription className="text-xs truncate">
+                              {selectedConversation.customer_email
+                                || (selectedConversation as any).contact_phone
+                                || (selectedConversation as any).channel_thread_id
+                                || selectedConversation.session_id?.slice(0, 8)}
                             </CardDescription>
                           </div>
                         </div>
@@ -356,7 +420,7 @@ export default function LiveSupportPage() {
                         <Input
                           value={messageInput}
                           onChange={(e) => setMessageInput(e.target.value)}
-                          placeholder="Type your message..."
+                          placeholder={channelMeta[selectedChannel].composerPlaceholder}
                           disabled={sendMessage.isPending}
                         />
                         <Button type="submit" disabled={sendMessage.isPending || !messageInput.trim()}>
@@ -381,12 +445,28 @@ export default function LiveSupportPage() {
             </div>
 
             {/* Customer info panel */}
-            <div className="col-span-3 flex flex-col gap-4">
+            <div className="col-span-3 flex flex-col gap-4 overflow-auto">
+              <Card>
+                <CardHeader className="py-3 px-4">
+                  <CardTitle className="text-sm">My channels</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ChannelToggleGroup
+                    value={activeChannels}
+                    onChange={(next) => updateSupportedChannels(next)}
+                    isSaving={isUpdatingChannels}
+                  />
+                </CardContent>
+              </Card>
+
               {selectedConversation && (
                 <>
                   <Card>
                     <CardHeader className="py-3 px-4">
-                      <CardTitle className="text-sm">Customer Info</CardTitle>
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        Customer Info
+                        <ChannelIcon channel={selectedChannel} className="h-3.5 w-3.5 ml-auto" />
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3 text-sm">
                       <div>
@@ -397,6 +477,18 @@ export default function LiveSupportPage() {
                         <p className="text-muted-foreground text-xs">Email</p>
                         <p>{selectedConversation.customer_email || 'Not provided'}</p>
                       </div>
+                      {(selectedConversation as any).contact_phone && (
+                        <div>
+                          <p className="text-muted-foreground text-xs">Phone</p>
+                          <p>{(selectedConversation as any).contact_phone}</p>
+                        </div>
+                      )}
+                      {(selectedConversation as any).channel_thread_id && (
+                        <div>
+                          <p className="text-muted-foreground text-xs">Channel thread</p>
+                          <p className="font-mono text-xs truncate">{(selectedConversation as any).channel_thread_id}</p>
+                        </div>
+                      )}
                       <div>
                         <p className="text-muted-foreground text-xs">Started</p>
                         <p>{formatDistanceToNow(new Date(selectedConversation.created_at), { addSuffix: true })}</p>
@@ -452,6 +544,23 @@ export default function LiveSupportPage() {
               )}
             </div>
           </div>
+            </TabsContent>
+
+            <TabsContent value="callbacks" className="flex-1 min-h-0 mt-2 p-4 overflow-auto">
+              <CallbacksPanel />
+            </TabsContent>
+
+            <TabsContent value="voicemail" className="flex-1 min-h-0 mt-2 p-4 overflow-auto">
+              <VoicemailPanel />
+            </TabsContent>
+
+            <TabsContent value="integrations" className="flex-1 min-h-0 mt-2 p-4 overflow-auto">
+              <div className="grid gap-4 md:grid-cols-2 max-w-4xl">
+                <TelegramIntegrationCard />
+                <TwilioIntegrationPlaceholder />
+              </div>
+            </TabsContent>
+          </Tabs>
         )}
       </div>
     </AdminLayout>
@@ -484,15 +593,20 @@ function ConversationItem({
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <p className={cn('font-medium truncate', compact ? 'text-xs' : 'text-sm')}>
-            {conversation.customer_name || conversation.title || 'Anonymous'}
-          </p>
-          {!compact && (
-            <p className="text-xs text-muted-foreground truncate">
-              {conversation.customer_email || `Session: ${conversation.session_id?.slice(0, 8) || 'N/A'}`}
+        <div className="flex-1 min-w-0 flex items-center gap-2">
+          <ChannelIcon channel={getChannel(conversation.channel)} />
+          <div className="min-w-0">
+            <p className={cn('font-medium truncate', compact ? 'text-xs' : 'text-sm')}>
+              {conversation.customer_name || conversation.title || 'Anonymous'}
             </p>
-          )}
+            {!compact && (
+              <p className="text-xs text-muted-foreground truncate">
+                {conversation.customer_email
+                  || conversation.contact_phone
+                  || `Session: ${conversation.session_id?.slice(0, 8) || 'N/A'}`}
+              </p>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-1">
           {conversation.priority === 'urgent' && (

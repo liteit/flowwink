@@ -46,7 +46,7 @@ export function useDocsPages() {
         .order('sort_order', { ascending: true })
         .order('title', { ascending: true });
       if (error) throw error;
-      return (data ?? []) as DocsPage[];
+      return ((data ?? []) as unknown) as DocsPage[];
     },
     staleTime: 1000 * 60 * 5,
   });
@@ -64,7 +64,7 @@ export function useDocsPage(category?: string, slug?: string) {
         .eq('slug', slug!)
         .maybeSingle();
       if (error) throw error;
-      return data as DocsPage | null;
+      return (data as unknown) as DocsPage | null;
     },
     enabled: !!category && !!slug,
   });
