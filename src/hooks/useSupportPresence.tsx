@@ -180,6 +180,25 @@ export function useSupportPresence() {
 
   // Go offline
   const goOffline = useCallback(async () => {
+    // Release any active conversations (multi-channel) before flipping status.
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/telegram-ingest?action=offline`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+              'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+          },
+        );
+      }
+    } catch (e) {
+      logger.error('[goOffline] release failed', e);
+    }
     await updateStatus.mutateAsync('offline');
   }, [updateStatus]);
 
