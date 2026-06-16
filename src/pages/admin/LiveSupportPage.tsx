@@ -42,7 +42,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ChannelFilter } from '@/components/admin/live-support/ChannelFilter';
 import { ChannelToggleGroup } from '@/components/admin/live-support/ChannelToggleGroup';
-import { TelegramIntegrationCard, TwilioIntegrationPlaceholder } from '@/components/admin/live-support/TelegramIntegrationCard';
+import { TelegramChannelStatus } from '@/components/admin/live-support/TelegramChannelStatus';
 import { CallbacksPanel } from '@/components/admin/live-support/CallbacksPanel';
 import { VoicemailPanel } from '@/components/admin/live-support/VoicemailPanel';
 import { ALL_CHANNELS, ChannelChip, ChannelIcon, channelMeta, getChannel, type SupportChannel } from '@/lib/support-channels';
