@@ -30,6 +30,7 @@ interface IntegrationStatus {
     composio: boolean;
     telegram: boolean;
     twilio: boolean;
+    gatewayapi: boolean;
   };
 }
 

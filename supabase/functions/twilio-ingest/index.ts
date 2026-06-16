@@ -124,7 +124,7 @@ async function handleIngest(req: Request): Promise<Response> {
 
     await supabase.from("chat_messages").insert({
       conversation_id: conversationId, role: "user", source: "sms", content: text,
-      metadata: { twilio_message_sid: messageSid, from, to },
+      metadata: { twilio_message_sid: messageSid, from, to, sms_provider: "twilio" },
     });
 
     if (assignedAgent && (status === "with_agent" || status === "waiting_agent")) {

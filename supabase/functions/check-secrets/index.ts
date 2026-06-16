@@ -26,8 +26,9 @@ interface SecretsStatus {
     jina: boolean;
     composio: boolean;
     telegram: boolean;
-    twilio: boolean;
-  };
+        twilio: boolean;
+        gatewayapi: boolean;
+      };
 }
 
 
@@ -110,6 +111,7 @@ serve(async (req) => {
         composio: !!Deno.env.get('COMPOSIO_API_KEY'),
         telegram: !!Deno.env.get('TELEGRAM_BOT_TOKEN'),
         twilio: !!Deno.env.get('TWILIO_API_KEY'),
+        gatewayapi: !!Deno.env.get('GATEWAYAPI_API_KEY'),
       }
 
     };
