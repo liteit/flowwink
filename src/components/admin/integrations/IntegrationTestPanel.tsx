@@ -150,8 +150,7 @@ function useProviderActions(key: string): ProviderSpec | null {
               label: 'Test connection',
               run: async () => {
                 const { data, error } = await supabase.functions.invoke('twilio-ingest', {
-                  body: {},
-                  headers: { 'x-action': 'test' },
+                  body: { action: 'test' },
                 });
                 if (error) throw error;
                 const payload = data as any;
