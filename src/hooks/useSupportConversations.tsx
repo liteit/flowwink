@@ -329,7 +329,7 @@ export function useConversationMessages(conversationId: string | null) {
       try {
         const { data: conv } = await supabase
           .from('chat_conversations')
-          .select('channel')
+          .select('channel, metadata')
           .eq('id', conversationId)
           .maybeSingle();
         const { data: { session } } = await supabase.auth.getSession();
