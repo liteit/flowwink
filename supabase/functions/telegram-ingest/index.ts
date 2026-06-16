@@ -49,8 +49,15 @@ async function handleAgentOffline(req: Request): Promise<Response> {
     if (userErr || !userData?.user) return json({ error: "unauthorized" }, 401);
     const userId = userData.user.id;
 
+    // chat_conversations.assigned_agent_id stores support_agents.id (PK), NOT auth user_id.
+    const { data: agentRow } = await supabase
+      .from("support_agents").select("id").eq("user_id", userId).maybeSingle();
+    if (!agentRow?.id) {
+      return json({ ok: true, released_count: 0, note: "no support_agents row" });
+    }
+
     const { data: released, error: rpcErr } = await supabase
-      .rpc("release_agent_conversations", { p_user_id: userId });
+      .rpc("release_agent_conversations", { p_agent_id: agentRow.id });
     if (rpcErr) {
       console.error("[telegram-ingest:offline] rpc failed", rpcErr);
       return json({ error: rpcErr.message }, 500);
