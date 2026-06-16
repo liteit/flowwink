@@ -246,6 +246,58 @@ async function handleSend(req: Request): Promise<Response> {
   }
 }
 
+// ───────────────────────────────────────────── TEST (verify credentials)
+async function handleTest(req: Request): Promise<Response> {
+  if (req.method !== "POST") return json({ error: "method not allowed" }, 405);
+  try {
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ")) return json({ error: "missing bearer token" }, 401);
+
+    const supabase = getServiceClient();
+    const { data: userData, error: userErr } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+    if (userErr || !userData?.user) return json({ error: "unauthorized" }, 401);
+    const { data: hasAdmin } = await supabase.rpc("has_role", {
+      _user_id: userData.user.id, _role: "admin",
+    });
+    if (!hasAdmin) return json({ error: "forbidden" }, 403);
+
+    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+    const twilioKey = Deno.env.get("TWILIO_API_KEY");
+    if (!lovableKey || !twilioKey) {
+      return json({ error: "Twilio not configured (LOVABLE_API_KEY/TWILIO_API_KEY missing)" }, 400);
+    }
+
+    // Lightweight credential check: list incoming phone numbers (max 1)
+    const resp = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers.json?PageSize=1`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${lovableKey}`,
+        "X-Connection-Api-Key": twilioKey,
+      },
+    });
+
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      console.error("[twilio-ingest:test] Twilio API error", resp.status, data);
+      return json({
+        error: `Twilio API returned ${resp.status}`,
+        details: data?.message || data?.error || JSON.stringify(data),
+      }, 502);
+    }
+
+    const numbers = data?.incoming_phone_numbers ?? [];
+    return json({
+      ok: true,
+      connected: true,
+      numbers_found: numbers.length,
+      first_number: numbers[0]?.phone_number ?? null,
+    });
+  } catch (err: any) {
+    console.error("[twilio-ingest:test] error", err?.message ?? err);
+    return json({ error: err?.message ?? "internal error" }, 500);
+  }
+}
+
 function json(payload: unknown, status = 200) {
   return new Response(JSON.stringify(payload), {
     status, headers: { ...corsHeaders, "Content-Type": "application/json" },
