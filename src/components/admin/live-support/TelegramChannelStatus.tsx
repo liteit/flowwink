@@ -15,7 +15,7 @@ import { useIntegrationStatus } from '@/hooks/useIntegrationStatus';
  */
 export function TelegramChannelStatus() {
   const { data: status, isLoading } = useIntegrationStatus();
-  const hasKey = !!status?.telegram;
+  const hasKey = !!status?.integrations?.telegram;
 
   return (
     <Card>
