@@ -136,6 +136,32 @@ function useProviderActions(key: string): ProviderSpec | null {
           ],
         };
       }
+      case 'twilio': {
+        const base = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+        const webhookUrl = base ? `${base}/functions/v1/twilio-ingest` : '';
+        return {
+          derived: [{
+            label: 'Webhook URL (auto-derived)',
+            value: webhookUrl,
+            hint: 'Paste this into Twilio Console → Messaging → Request URL (POST).',
+          }],
+          actions: [
+            {
+              label: 'Test connection',
+              run: async () => {
+                const { data, error } = await supabase.functions.invoke('twilio-ingest', {
+                  body: {},
+                  headers: { 'x-action': 'test' },
+                });
+                if (error) throw error;
+                const payload = data as any;
+                if (payload?.error) throw new Error(payload.error + (payload.details ? ` — ${payload.details}` : ''));
+                toast.success(`Twilio connected — ${payload?.numbers_found ?? 0} number(s) found`);
+              },
+            },
+          ],
+        };
+      }
       default:
         return null;
     }
