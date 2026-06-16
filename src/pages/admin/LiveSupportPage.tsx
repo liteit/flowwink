@@ -333,12 +333,16 @@ export default function LiveSupportPage() {
                               {(selectedConversation.customer_name || 'U')[0].toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
-                          <div>
-                            <CardTitle className="text-sm">
-                              {selectedConversation.customer_name || 'Anonymous User'}
+                          <div className="min-w-0">
+                            <CardTitle className="text-sm flex items-center gap-2">
+                              <span className="truncate">{selectedConversation.customer_name || 'Anonymous User'}</span>
+                              <ChannelChip channel={selectedChannel} />
                             </CardTitle>
-                            <CardDescription className="text-xs">
-                              {selectedConversation.customer_email || selectedConversation.session_id?.slice(0, 8)}
+                            <CardDescription className="text-xs truncate">
+                              {selectedConversation.customer_email
+                                || (selectedConversation as any).contact_phone
+                                || (selectedConversation as any).channel_thread_id
+                                || selectedConversation.session_id?.slice(0, 8)}
                             </CardDescription>
                           </div>
                         </div>
