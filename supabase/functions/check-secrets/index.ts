@@ -26,6 +26,7 @@ interface SecretsStatus {
     jina: boolean;
     composio: boolean;
     telegram: boolean;
+    twilio: boolean;
   };
 }
 
