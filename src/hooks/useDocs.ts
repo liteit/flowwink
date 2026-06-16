@@ -64,7 +64,7 @@ export function useDocsPage(category?: string, slug?: string) {
         .eq('slug', slug!)
         .maybeSingle();
       if (error) throw error;
-      return data as DocsPage | null;
+      return (data as unknown) as DocsPage | null;
     },
     enabled: !!category && !!slug,
   });
