@@ -2,22 +2,13 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getServiceClient } from '../_shared/supabase-clients.ts';
 
 /**
- * Twilio SMS channel adapter — inbound webhook + outbound send.
+ * Twilio SMS channel adapter — inbound webhook + outbound send + test.
  *
  * Modes (selected by `?action=` query param):
  *  - default (no query): INBOUND Twilio Messaging webhook (application/x-www-form-urlencoded).
- *    Normalizes into chat_conversations/chat_messages (channel='sms'). If no human
- *    agent owns the thread, FlowPilot replies via chat-completion. The reply is
- *    sent back via Twilio REST API (through the Lovable connector gateway).
  *  - ?action=send: OUTBOUND from the Live Support UI after an admin posts a
  *    chat_messages row. Requires an admin JWT.
- *
- * Configure the Twilio Messaging webhook to POST to this function's URL.
- * Deploy with --no-verify-jwt (Twilio cannot present a Supabase JWT).
- *
- * Required env: LOVABLE_API_KEY + TWILIO_API_KEY (auto-provisioned by connector).
- * Site setting `integrations.twilio.config.from_number` = the Twilio E.164
- * number messages are sent from. Falls back to env TWILIO_FROM_NUMBER.
+ *  - ?action=test: VERIFY credentials by calling Twilio API. Requires admin JWT.
  */
 
 const corsHeaders = {
@@ -33,10 +24,19 @@ const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   const url = new URL(req.url);
-  const action = url.searchParams.get("action");
+  let action = url.searchParams.get("action");
+  // Fallback: read action from JSON body for supabase.functions.invoke compatibility
+  if (!action && req.method === "POST") {
+    try {
+      const body = await req.clone().json();
+      action = body?.action ?? null;
+    } catch { /* not JSON or no action field */ }
+  }
   if (action === "send") return handleSend(req);
+  if (action === "test") return handleTest(req);
   return handleIngest(req);
 });
+
 
 async function loadTwilioConfig(supabase: ReturnType<typeof getServiceClient>) {
   const { data: settingRow } = await supabase
@@ -249,6 +249,58 @@ async function handleSend(req: Request): Promise<Response> {
     return json({ ok: true, twilio_message_sid: data?.sid ?? null });
   } catch (err: any) {
     console.error("[twilio-ingest:send] error", err?.message ?? err);
+    return json({ error: err?.message ?? "internal error" }, 500);
+  }
+}
+
+// ───────────────────────────────────────────── TEST (verify credentials)
+async function handleTest(req: Request): Promise<Response> {
+  if (req.method !== "POST") return json({ error: "method not allowed" }, 405);
+  try {
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ")) return json({ error: "missing bearer token" }, 401);
+
+    const supabase = getServiceClient();
+    const { data: userData, error: userErr } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+    if (userErr || !userData?.user) return json({ error: "unauthorized" }, 401);
+    const { data: hasAdmin } = await supabase.rpc("has_role", {
+      _user_id: userData.user.id, _role: "admin",
+    });
+    if (!hasAdmin) return json({ error: "forbidden" }, 403);
+
+    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+    const twilioKey = Deno.env.get("TWILIO_API_KEY");
+    if (!lovableKey || !twilioKey) {
+      return json({ error: "Twilio not configured (LOVABLE_API_KEY/TWILIO_API_KEY missing)" }, 400);
+    }
+
+    // Lightweight credential check: list incoming phone numbers (max 1)
+    const resp = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers.json?PageSize=1`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${lovableKey}`,
+        "X-Connection-Api-Key": twilioKey,
+      },
+    });
+
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      console.error("[twilio-ingest:test] Twilio API error", resp.status, data);
+      return json({
+        error: `Twilio API returned ${resp.status}`,
+        details: data?.message || data?.error || JSON.stringify(data),
+      }, 502);
+    }
+
+    const numbers = data?.incoming_phone_numbers ?? [];
+    return json({
+      ok: true,
+      connected: true,
+      numbers_found: numbers.length,
+      first_number: numbers[0]?.phone_number ?? null,
+    });
+  } catch (err: any) {
+    console.error("[twilio-ingest:test] error", err?.message ?? err);
     return json({ error: err?.message ?? "internal error" }, 500);
   }
 }
