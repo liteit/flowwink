@@ -78,12 +78,22 @@ serve(async (req) => {
         .from("chat_conversations")
         .insert({
           channel: "telegram", channel_thread_id: threadId,
-          customer_name: fromName, scope: "visitor", conversation_status: "active",
+          customer_name: fromName, scope: "visitor", conversation_status: "waiting_agent",
           title: `Telegram · ${fromName}`,
         })
         .select("id").single();
       if (insErr) throw insErr;
       conversationId = created.id;
+      status = "waiting_agent";
+    } else if (status === "active") {
+      // Telegram is an operator-facing support channel, so keep existing Telegram threads
+      // visible in the Live Support queue even though web-widget AI conversations use "active".
+      const { error: updateErr } = await supabase
+        .from("chat_conversations")
+        .update({ conversation_status: "waiting_agent", updated_at: new Date().toISOString() })
+        .eq("id", conversationId);
+      if (updateErr) throw updateErr;
+      status = "waiting_agent";
     }
 
     // Persist the inbound message.
