@@ -333,15 +333,25 @@ export function useConversationMessages(conversationId: string | null) {
           .eq('id', conversationId)
           .maybeSingle();
         if (conv?.channel === 'telegram') {
-          const { error: relayError } = await supabase.functions.invoke('telegram-send', {
-            body: {
-              conversation_id: conversationId,
-              message_id: data?.[0]?.id,
-              content,
+          const { data: { session } } = await supabase.auth.getSession();
+          const relayResp = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/telegram-ingest?action=send`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session?.access_token ?? ''}`,
+                'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              },
+              body: JSON.stringify({
+                conversation_id: conversationId,
+                message_id: data?.[0]?.id,
+                content,
+              }),
             },
-          });
-          if (relayError) {
-            logger.error('sendMessage: telegram-send failed', relayError);
+          );
+          if (!relayResp.ok) {
+            logger.error('sendMessage: telegram relay failed', await relayResp.text());
           }
         }
       } catch (relayErr) {
