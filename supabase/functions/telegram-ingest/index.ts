@@ -33,8 +33,79 @@ serve(async (req) => {
   const action = url.searchParams.get("action");
 
   if (action === "send") return handleSend(req);
+  if (action === "offline") return handleAgentOffline(req);
   return handleIngest(req);
 });
+
+// ───────────────────────────────────────────── AGENT OFFLINE (multi-channel handoff)
+async function handleAgentOffline(req: Request): Promise<Response> {
+  if (req.method !== "POST") return json({ error: "method not allowed" }, 405);
+  try {
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ")) return json({ error: "missing bearer token" }, 401);
+
+    const supabase = getServiceClient();
+    const { data: userData, error: userErr } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+    if (userErr || !userData?.user) return json({ error: "unauthorized" }, 401);
+    const userId = userData.user.id;
+
+    const { data: released, error: rpcErr } = await supabase
+      .rpc("release_agent_conversations", { p_user_id: userId });
+    if (rpcErr) {
+      console.error("[telegram-ingest:offline] rpc failed", rpcErr);
+      return json({ error: rpcErr.message }, 500);
+    }
+
+    const conversations = (released ?? []) as Array<{
+      conversation_id: string;
+      channel: string | null;
+      channel_thread_id: string | null;
+      customer_name: string | null;
+    }>;
+
+    const { data: settingRow } = await supabase
+      .from("site_settings").select("value").eq("key", "integrations").maybeSingle();
+    const tgConfig = ((settingRow?.value as any)?.telegram?.config) ?? {};
+    const botToken: string = tgConfig.bot_token || Deno.env.get("TELEGRAM_BOT_TOKEN") || "";
+
+    const handoffText =
+      "Our support agent just stepped away — you're back in the queue. " +
+      "I'll keep an eye on this and the next available agent will jump in. " +
+      "If you'd prefer a callback at a specific time, just let me know.";
+
+    const dispatched: Array<{ id: string; channel: string | null; ok: boolean; note?: string }> = [];
+
+    for (const c of conversations) {
+      await supabase.from("chat_messages").insert({
+        conversation_id: c.conversation_id,
+        role: "assistant",
+        source: "system",
+        content: handoffText,
+        metadata: { event: "agent_offline_handoff", channel: c.channel },
+      });
+
+      if (c.channel === "telegram" && c.channel_thread_id && botToken) {
+        try {
+          await sendTelegram(botToken, c.channel_thread_id, handoffText);
+          dispatched.push({ id: c.conversation_id, channel: c.channel, ok: true });
+        } catch (e: any) {
+          dispatched.push({ id: c.conversation_id, channel: c.channel, ok: false, note: e?.message });
+        }
+      } else if (c.channel === "voice") {
+        // TODO: booking integration — offer a callback slot via booking module.
+        dispatched.push({ id: c.conversation_id, channel: c.channel, ok: true, note: "voice: callback TBD (booking)" });
+      } else {
+        dispatched.push({ id: c.conversation_id, channel: c.channel, ok: true, note: "web: surfaced via realtime" });
+      }
+    }
+
+    return json({ ok: true, released_count: conversations.length, dispatched });
+  } catch (err: any) {
+    console.error("[telegram-ingest:offline] error", err?.message ?? err);
+    return json({ error: err?.message ?? "internal error" }, 500);
+  }
+}
+
 
 // ───────────────────────────────────────────── INBOUND (Telegram webhook)
 async function handleIngest(req: Request): Promise<Response> {
