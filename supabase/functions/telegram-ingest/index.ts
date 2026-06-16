@@ -199,14 +199,48 @@ async function handleIngest(req: Request): Promise<Response> {
         conversationId, sessionId: `telegram:${threadId}`,
       }),
     });
-    const aiData = await aiResp.json().catch(() => ({}));
-    let reply: string | undefined = aiData?.message || aiData?.content || aiData?.reply;
+    const contentType = aiResp.headers.get('content-type') || '';
+    let reply: string | undefined;
+    let aiData: any = {};
+
+    if (contentType.includes('text/event-stream')) {
+      // Parse OpenAI-style SSE: accumulate delta.content tokens.
+      const raw = await aiResp.text();
+      let acc = '';
+      for (const line of raw.split('\n')) {
+        const t = line.trim();
+        if (!t.startsWith('data:')) continue;
+        const payload = t.slice(5).trim();
+        if (!payload || payload === '[DONE]') continue;
+        try {
+          const obj = JSON.parse(payload);
+          const delta = obj?.choices?.[0]?.delta?.content
+            ?? obj?.choices?.[0]?.message?.content
+            ?? '';
+          if (typeof delta === 'string') acc += delta;
+        } catch { /* ignore keepalives / non-JSON frames */ }
+      }
+      reply = acc.trim() || undefined;
+    } else {
+      aiData = await aiResp.json().catch(() => ({}));
+      reply = aiData?.message || aiData?.content || aiData?.reply;
+    }
 
     // If chat-completion skipped (routing_mode=human_*), surface the handoff note over Telegram
     if (!reply && aiData?.skipped) {
       reply = aiData?.agents_online
         ? 'Thanks — an agent will respond here shortly.'
         : 'Thanks for your message. Our team is currently offline; we\'ll get back to you as soon as we\'re back.';
+    }
+
+    // Mirror AI reply into chat_messages so the Live Support UI shows the assistant turn
+    if (reply && conversationId && !aiData?.skipped) {
+      await supabase.from('chat_messages').insert({
+        conversation_id: conversationId,
+        role: 'assistant',
+        source: 'ai',
+        content: reply,
+      });
     }
 
     if (reply && botToken) {
