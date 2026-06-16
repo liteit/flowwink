@@ -318,6 +318,7 @@ export const defaultChatSettings: ChatSettings = {
   allowedSkillNames: [],
   firecrawlSearchEnabled: false,
   humanHandoffEnabled: false,
+  routingMode: 'ai_first',
   sentimentDetectionEnabled: true,
   sentimentThreshold: 7,
   localSupportsToolCalling: false,
