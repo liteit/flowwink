@@ -205,7 +205,30 @@ export default function LiveSupportPage() {
             </Card>
           </div>
         ) : (
-          <div className="flex-1 grid grid-cols-12 gap-4 min-h-0 p-4">
+          <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="flex-1 flex flex-col min-h-0">
+            <div className="flex items-center justify-between gap-4 px-4 pt-3 flex-wrap">
+              <TabsList>
+                <TabsTrigger value="inbox" className="gap-1.5">
+                  <Inbox className="h-3.5 w-3.5" /> Inbox
+                </TabsTrigger>
+                <TabsTrigger value="callbacks" className="gap-1.5">
+                  <PhoneCall className="h-3.5 w-3.5" /> Callbacks
+                </TabsTrigger>
+                <TabsTrigger value="voicemail" className="gap-1.5">
+                  <VoicemailIcon className="h-3.5 w-3.5" /> Voicemail
+                </TabsTrigger>
+                <TabsTrigger value="integrations" className="gap-1.5">
+                  <Plug className="h-3.5 w-3.5" /> Channels
+                </TabsTrigger>
+              </TabsList>
+              {tab === 'inbox' && (
+                <ChannelFilter selected={channelFilter} counts={counts} onChange={setChannelFilter} />
+              )}
+            </div>
+
+            <TabsContent value="inbox" className="flex-1 min-h-0 mt-2">
+          <div className="flex-1 grid grid-cols-12 gap-4 min-h-0 p-4 h-full">
+
             {/* Conversation list */}
             <div className="col-span-3 flex flex-col gap-4 min-h-0">
               {/* Assigned conversations */}
