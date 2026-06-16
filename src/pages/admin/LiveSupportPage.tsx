@@ -445,12 +445,28 @@ export default function LiveSupportPage() {
             </div>
 
             {/* Customer info panel */}
-            <div className="col-span-3 flex flex-col gap-4">
+            <div className="col-span-3 flex flex-col gap-4 overflow-auto">
+              <Card>
+                <CardHeader className="py-3 px-4">
+                  <CardTitle className="text-sm">My channels</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ChannelToggleGroup
+                    value={activeChannels}
+                    onChange={(next) => updateSupportedChannels(next)}
+                    isSaving={isUpdatingChannels}
+                  />
+                </CardContent>
+              </Card>
+
               {selectedConversation && (
                 <>
                   <Card>
                     <CardHeader className="py-3 px-4">
-                      <CardTitle className="text-sm">Customer Info</CardTitle>
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        Customer Info
+                        <ChannelIcon channel={selectedChannel} className="h-3.5 w-3.5 ml-auto" />
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3 text-sm">
                       <div>
@@ -461,6 +477,18 @@ export default function LiveSupportPage() {
                         <p className="text-muted-foreground text-xs">Email</p>
                         <p>{selectedConversation.customer_email || 'Not provided'}</p>
                       </div>
+                      {(selectedConversation as any).contact_phone && (
+                        <div>
+                          <p className="text-muted-foreground text-xs">Phone</p>
+                          <p>{(selectedConversation as any).contact_phone}</p>
+                        </div>
+                      )}
+                      {(selectedConversation as any).channel_thread_id && (
+                        <div>
+                          <p className="text-muted-foreground text-xs">Channel thread</p>
+                          <p className="font-mono text-xs truncate">{(selectedConversation as any).channel_thread_id}</p>
+                        </div>
+                      )}
                       <div>
                         <p className="text-muted-foreground text-xs">Started</p>
                         <p>{formatDistanceToNow(new Date(selectedConversation.created_at), { addSuffix: true })}</p>
