@@ -25,8 +25,10 @@ interface SecretsStatus {
     hunter: boolean;
     jina: boolean;
     composio: boolean;
+    telegram: boolean;
   };
 }
+
 
 serve(async (req) => {
   // Handle CORS preflight requests
