@@ -25,6 +25,7 @@ interface SupportConversation {
   channel_thread_id?: string | null;
   contact_phone?: string | null;
   contact_id?: string | null;
+  visitor_profile?: any;
 }
 
 interface ChatMessage {
@@ -329,7 +330,7 @@ export function useConversationMessages(conversationId: string | null) {
       try {
         const { data: conv } = await supabase
           .from('chat_conversations')
-          .select('channel')
+          .select('channel, visitor_profile')
           .eq('id', conversationId)
           .maybeSingle();
         const { data: { session } } = await supabase.auth.getSession();
@@ -360,8 +361,11 @@ export function useConversationMessages(conversationId: string | null) {
         }
 
         if (conv?.channel === 'sms') {
+          // Determine which SMS provider to use based on conversation visitor_profile
+          const smsProvider = (conv?.visitor_profile as any)?.sms_provider ?? 'twilio';
+          const functionName = smsProvider === 'gatewayapi' ? 'gatewayapi-ingest' : 'twilio-ingest';
           const relayResp = await fetch(
-            `${baseUrl}/functions/v1/twilio-ingest?action=send`,
+            `${baseUrl}/functions/v1/${functionName}?action=send`,
             {
               method: 'POST',
               headers: {
@@ -377,7 +381,7 @@ export function useConversationMessages(conversationId: string | null) {
             },
           );
           if (!relayResp.ok) {
-            logger.error('sendMessage: sms relay failed', await relayResp.text());
+            logger.error(`sendMessage: ${smsProvider} relay failed`, await relayResp.text());
           }
         }
       } catch (relayErr) {
