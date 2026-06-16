@@ -65,6 +65,8 @@ export interface IntegrationProviderConfig {
   url?: string;
   // Web-data provider fallback order (firecrawl/searxng/jina). 1 = try first.
   priority?: number;
+  // Twilio — E.164 sender number for SMS replies (e.g. +46701234567)
+  from_number?: string;
 }
 
 // Integration configuration type
