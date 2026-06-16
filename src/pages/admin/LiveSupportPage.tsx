@@ -512,6 +512,23 @@ export default function LiveSupportPage() {
               )}
             </div>
           </div>
+            </TabsContent>
+
+            <TabsContent value="callbacks" className="flex-1 min-h-0 mt-2 p-4 overflow-auto">
+              <CallbacksPanel />
+            </TabsContent>
+
+            <TabsContent value="voicemail" className="flex-1 min-h-0 mt-2 p-4 overflow-auto">
+              <VoicemailPanel />
+            </TabsContent>
+
+            <TabsContent value="integrations" className="flex-1 min-h-0 mt-2 p-4 overflow-auto">
+              <div className="grid gap-4 md:grid-cols-2 max-w-4xl">
+                <TelegramIntegrationCard />
+                <TwilioIntegrationPlaceholder />
+              </div>
+            </TabsContent>
+          </Tabs>
         )}
       </div>
     </AdminLayout>
