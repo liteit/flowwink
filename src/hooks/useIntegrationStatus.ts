@@ -28,8 +28,10 @@ interface IntegrationStatus {
     hunter: boolean;
     jina: boolean;
     composio: boolean;
+    telegram: boolean;
   };
 }
+
 
 export function useIntegrationStatus() {
   const { user } = useAuth();
