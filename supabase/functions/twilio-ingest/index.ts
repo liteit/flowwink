@@ -24,7 +24,14 @@ const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   const url = new URL(req.url);
-  const action = url.searchParams.get("action");
+  let action = url.searchParams.get("action");
+  // Fallback: read action from JSON body for supabase.functions.invoke compatibility
+  if (!action && req.method === "POST") {
+    try {
+      const body = await req.clone().json();
+      action = body?.action ?? null;
+    } catch { /* not JSON or no action field */ }
+  }
   if (action === "send") return handleSend(req);
   if (action === "test") return handleTest(req);
   return handleIngest(req);
