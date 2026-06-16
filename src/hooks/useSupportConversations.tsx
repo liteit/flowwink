@@ -20,6 +20,11 @@ interface SupportConversation {
   escalated_at: string | null;
   created_at: string;
   updated_at: string;
+  // Omnichannel contract — may not yet exist on every row; treated as optional.
+  channel?: string | null;
+  channel_thread_id?: string | null;
+  contact_phone?: string | null;
+  contact_id?: string | null;
 }
 
 interface ChatMessage {
