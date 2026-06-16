@@ -65,6 +65,8 @@ export interface IntegrationProviderConfig {
   url?: string;
   // Web-data provider fallback order (firecrawl/searxng/jina). 1 = try first.
   priority?: number;
+  // Twilio — E.164 sender number for SMS replies (e.g. +46701234567)
+  from_number?: string;
 }
 
 // Integration configuration type
@@ -105,6 +107,7 @@ export interface IntegrationsSettings {
   composio: IntegrationConfig;
   searxng: IntegrationConfig;
   telegram: IntegrationConfig;
+  twilio: IntegrationConfig;
 }
 
 
@@ -389,6 +392,17 @@ export const defaultIntegrationsSettings: IntegrationsSettings = {
     secretName: 'TELEGRAM_BOT_TOKEN',
     docsUrl: 'https://core.telegram.org/bots#how-do-i-create-a-bot',
     docsLabel: 'Create bot in BotFather',
+  },
+  twilio: {
+    name: 'Twilio',
+    description: 'SMS (and voice) channel. Inbound webhook routes to FlowPilot via chat-completion; outbound replies sent through the Twilio gateway.',
+    icon: 'MessageSquare',
+    category: 'communication',
+    features: ['Inbound SMS', 'Outbound SMS', 'Agent takeover', 'Voice-ready'],
+    secretName: 'TWILIO_API_KEY',
+    docsUrl: 'https://console.twilio.com/',
+    docsLabel: 'Open Twilio Console',
+    config: { from_number: '' },
   },
 
 };

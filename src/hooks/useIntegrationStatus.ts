@@ -29,6 +29,7 @@ interface IntegrationStatus {
     jina: boolean;
     composio: boolean;
     telegram: boolean;
+    twilio: boolean;
   };
 }
 
