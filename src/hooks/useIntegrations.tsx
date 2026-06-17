@@ -108,6 +108,8 @@ export interface IntegrationsSettings {
   searxng: IntegrationConfig;
   telegram: IntegrationConfig;
   twilio: IntegrationConfig;
+  gatewayapi: IntegrationConfig;
+  elks46: IntegrationConfig;
 }
 
 
