@@ -1411,6 +1411,11 @@ export default function IntegrationsStatusPage() {
                               />
                             </div>
                           )}
+                          {key === 'elks46' && (
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <Elks46BalanceBadge hasKey={hasKey} />
+                            </div>
+                          )}
                           {/* Actions */}
                           <div className="flex items-center gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
                             {(key === 'openai' || key === 'gemini' || key === 'anthropic') && (
