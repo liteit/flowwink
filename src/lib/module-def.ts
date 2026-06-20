@@ -206,6 +206,8 @@ function normaliseModule<TInput, TOutput>(
   };
   const data: DataNamespace = {
     tables: def.data?.tables,
+    storageBuckets: def.data?.storageBuckets,
+    settingsKeys: def.data?.settingsKeys,
     seedData: def.data?.seedData ?? def.seedData,
   };
   return {
