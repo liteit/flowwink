@@ -34,7 +34,10 @@ import {
   ClipboardList,
   Truck,
   LifeBuoy,
+  Package,
 } from 'lucide-react';
+import { getAllModuleOwnership, wipeModuleData } from '@/lib/module-data-ownership';
+import type { ModulesSettings } from '@/hooks/useModules';
 
 interface ResetSiteDialogProps {
   open: boolean;
@@ -109,6 +112,13 @@ export function ResetSiteDialog({ open, onOpenChange }: ResetSiteDialogProps) {
   const [progress, setProgress] = useState<ProgressItem[]>([]);
   const [overallProgress, setOverallProgress] = useState(0);
 
+  // Dynamic modular wipe — modules that declare `data.tables` show up here
+  // automatically. No code change required when a new module is annotated.
+  const moduleOwnership = getAllModuleOwnership();
+  const [selectedModules, setSelectedModules] = useState<Set<string>>(
+    () => new Set(moduleOwnership.map(m => m.moduleId))
+  );
+
   const resetState = () => {
     setStep('warning');
     setOptions(defaultOptions);
@@ -118,6 +128,7 @@ export function ResetSiteDialog({ open, onOpenChange }: ResetSiteDialogProps) {
     setProgress([]);
     setOverallProgress(0);
     setIsResetting(false);
+    setSelectedModules(new Set(moduleOwnership.map(m => m.moduleId)));
   };
 
   const handleClose = () => {
@@ -682,6 +693,24 @@ export function ResetSiteDialog({ open, onOpenChange }: ResetSiteDialogProps) {
       });
     }
 
+    // -------------------- Dynamic module wipes (manifest-driven) --------------------
+    // Each module that declares `data.tables` in its manifest gets a task here
+    // automatically — no code change needed when a new module is annotated.
+    for (const ownership of moduleOwnership) {
+      if (!selectedModules.has(ownership.moduleId)) continue;
+      tasks.push({
+        key: 'pages', // placeholder — not used for module tasks
+        label: `Module: ${ownership.moduleName} (${ownership.tables.length} tables)`,
+        fn: async () => {
+          const results = await wipeModuleData(ownership.moduleId as keyof ModulesSettings);
+          const failed = results.filter(r => !r.ok && r.error !== 'protected');
+          if (failed.length > 0) {
+            throw new Error(`${failed.length}/${results.length} tables failed: ${failed.map(f => f.table).join(', ')}`);
+          }
+        },
+      });
+    }
+
     // Initialize progress items
     setProgress(tasks.map(t => ({ label: t.label, status: 'pending' as const })));
 
@@ -716,7 +745,7 @@ export function ResetSiteDialog({ open, onOpenChange }: ResetSiteDialogProps) {
     await executeReset();
   };
 
-  const selectedCount = Object.values(options).filter(Boolean).length;
+  const selectedCount = Object.values(options).filter(Boolean).length + selectedModules.size;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -921,6 +950,38 @@ export function ResetSiteDialog({ open, onOpenChange }: ResetSiteDialogProps) {
                   </label>
                 </div>
               </div>
+
+              {moduleOwnership.length > 0 && (
+                <div className="pt-3 border-t">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                    Modular (manifest-driven)
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mb-2">
+                    Modules that declare their own tables. New modules appear here automatically.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {moduleOwnership.map(m => (
+                      <label key={m.moduleId} className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={selectedModules.has(m.moduleId)}
+                          onCheckedChange={(c) => {
+                            setSelectedModules(prev => {
+                              const next = new Set(prev);
+                              if (c) next.add(m.moduleId); else next.delete(m.moduleId);
+                              return next;
+                            });
+                          }}
+                        />
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                        <span>{m.moduleName}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          ({m.tables.length}t)
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <DialogFooter className="mt-6">

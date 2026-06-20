@@ -111,6 +111,10 @@ export const docsModule = defineModule<DocsInput, DocsOutput>({
 
   skills: ['docs_search'],
   skillSeeds: DOCS_SKILLS,
+  data: {
+    tables: ['docs_pages'],
+  },
+
 
   async publish(input: DocsInput): Promise<DocsOutput> {
     const validated = docsInputSchema.parse(input);
