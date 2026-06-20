@@ -651,6 +651,10 @@ export const blogModule = defineModule<BlogModuleInput, BlogModuleOutput>({
     'research_content',
     'generate_content_proposal',
   ],
+  data: {
+    // children first (FK-safe order)
+    tables: ['blog_post_categories', 'blog_post_tags', 'blog_posts', 'blog_categories', 'blog_tags'],
+  },
   skillSeeds: BLOG_SKILLS,
 
   webhookEvents: [
