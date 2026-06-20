@@ -172,6 +172,9 @@ export const slaModule = defineModule<SlaInput, SlaOutput>({
   outputSchema: slaOutputSchema,
 
   skills: ['sla_check', 'manage_sla_policy', 'list_sla_violations', 'manage_business_hours'],
+  data: {
+    tables: ['sla_violations', 'sla_policies'],
+  },
   skillSeeds: SLA_SKILLS,
 
   async publish(input: SlaInput): Promise<SlaOutput> {
