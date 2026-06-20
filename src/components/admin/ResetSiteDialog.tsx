@@ -1,5 +1,6 @@
 import { logger } from '@/lib/logger';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
 import {
   Dialog,
   DialogContent,
@@ -36,7 +37,7 @@ import {
   LifeBuoy,
   Package,
 } from 'lucide-react';
-import { getAllModuleOwnership, wipeModuleData } from '@/lib/module-data-ownership';
+import { getAllModuleOwnership, wipeModuleData, countModuleRows } from '@/lib/module-data-ownership';
 import type { ModulesSettings } from '@/hooks/useModules';
 
 interface ResetSiteDialogProps {
@@ -118,6 +119,38 @@ export function ResetSiteDialog({ open, onOpenChange }: ResetSiteDialogProps) {
   const [selectedModules, setSelectedModules] = useState<Set<string>>(
     () => new Set(moduleOwnership.map(m => m.moduleId))
   );
+  const [moduleRowCounts, setModuleRowCounts] = useState<Record<string, number | null>>({});
+  const [countsLoading, setCountsLoading] = useState(false);
+
+  // Probe each module's tables when the dialog opens so admins can see
+  // leftover data — including from disabled modules.
+  useEffect(() => {
+    if (!open || step !== 'warning') return;
+    let cancelled = false;
+    setCountsLoading(true);
+    (async () => {
+      const entries = await Promise.all(
+        moduleOwnership.map(async (m) => {
+          const c = await countModuleRows(m.moduleId as keyof ModulesSettings);
+          return [m.moduleId, c] as const;
+        })
+      );
+      if (cancelled) return;
+      setModuleRowCounts(Object.fromEntries(entries));
+      setCountsLoading(false);
+      // Auto-deselect modules with 0 rows — no point wiping empty tables
+      setSelectedModules(prev => {
+        const next = new Set(prev);
+        for (const [id, count] of entries) {
+          if ((count ?? 0) === 0) next.delete(id);
+        }
+        return next;
+      });
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, step]);
+
 
   const resetState = () => {
     setStep('warning');
@@ -958,30 +991,43 @@ export function ResetSiteDialog({ open, onOpenChange }: ResetSiteDialogProps) {
                   </p>
                   <p className="text-[11px] text-muted-foreground mb-2">
                     Modules that declare their own tables. New modules appear here automatically.
+                    {countsLoading && ' Scanning row counts…'}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
-                    {moduleOwnership.map(m => (
-                      <label key={m.moduleId} className="flex items-center gap-2 text-sm">
-                        <Checkbox
-                          checked={selectedModules.has(m.moduleId)}
-                          onCheckedChange={(c) => {
-                            setSelectedModules(prev => {
-                              const next = new Set(prev);
-                              if (c) next.add(m.moduleId); else next.delete(m.moduleId);
-                              return next;
-                            });
-                          }}
-                        />
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                        <span>{m.moduleName}</span>
-                        <span className="text-[10px] text-muted-foreground">
-                          ({m.tables.length}t)
-                        </span>
-                      </label>
-                    ))}
+                    {moduleOwnership.map(m => {
+                      const count = moduleRowCounts[m.moduleId];
+                      const isEmpty = count === 0;
+                      return (
+                        <label
+                          key={m.moduleId}
+                          className={`flex items-center gap-2 text-sm ${isEmpty ? 'opacity-50' : ''}`}
+                        >
+                          <Checkbox
+                            checked={selectedModules.has(m.moduleId)}
+                            disabled={isEmpty}
+                            onCheckedChange={(c) => {
+                              setSelectedModules(prev => {
+                                const next = new Set(prev);
+                                if (c) next.add(m.moduleId); else next.delete(m.moduleId);
+                                return next;
+                              });
+                            }}
+                          />
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <span>{m.moduleName}</span>
+                          <span className="text-[10px] text-muted-foreground ml-auto">
+                            {count === undefined ? `${m.tables.length}t` :
+                             count === null ? '?' :
+                             count === 0 ? 'empty' :
+                             `${count} rows`}
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
               )}
+
             </div>
 
             <DialogFooter className="mt-6">
