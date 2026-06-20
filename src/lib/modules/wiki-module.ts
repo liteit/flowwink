@@ -160,6 +160,9 @@ export const wikiModule = defineModule<Input, Output>({
   inputSchema,
   outputSchema,
   skills: ['manage_wiki_page', 'search_wiki'],
+  data: {
+    tables: ['wiki_pages'],
+  },
   skillSeeds: WIKI_SKILLS,
   async publish(_input: Input): Promise<Output> {
     return { success: true };
