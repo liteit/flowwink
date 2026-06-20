@@ -782,7 +782,7 @@ export function ResetSiteDialog({ open, onOpenChange }: ResetSiteDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         {step === 'warning' && (
           <>
             <DialogHeader>
