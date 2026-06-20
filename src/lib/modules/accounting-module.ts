@@ -552,6 +552,24 @@ export const accountingModule = defineModule<AccountingInput, AccountingOutput>(
     'budget_vs_actual',
   ],
 
+  data: {
+    tables: [
+      'journal_entry_line_taxes',
+      'journal_entry_lines',
+      'journal_entries',
+      'analytic_lines',
+      'analytic_accounts',
+      'accounting_corrections',
+      'accounting_templates',
+      'accounting_periods',
+      'opening_balances',
+      'tax_code_grids',
+      'tax_codes',
+      'tax_grids',
+      'journals',
+      'chart_of_accounts',
+    ],
+  },
   skillSeeds: ACCOUNTING_SKILLS,
   automations: ACCOUNTING_AUTOMATIONS,
 
