@@ -287,6 +287,9 @@ export const growthModule = defineModule<GrowthCampaignInput, GrowthCampaignOutp
     'ad_performance_check',
     'ad_optimize',
   ],
+  data: {
+    tables: ['ad_creatives', 'ad_campaigns', 'content_proposals', 'content_research'],
+  },
   skillSeeds: GROWTH_SKILLS,
 
   async publish(input: GrowthCampaignInput): Promise<GrowthCampaignOutput> {
