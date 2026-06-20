@@ -389,6 +389,9 @@ export const manufacturingModule = defineModule<ManufacturingInput, Manufacturin
     'generate_mo_work_orders',
     'mrp_reorder_run',
   ],
+  data: {
+    tables: ['mo_components', 'manufacturing_orders', 'bom_lines', 'bom_headers'],
+  },
   skillSeeds: MANUFACTURING_SKILLS,
   automations: MANUFACTURING_AUTOMATIONS,
 
