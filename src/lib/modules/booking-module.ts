@@ -321,6 +321,9 @@ export const bookingModule = defineModule<BookingModuleInput, BookingModuleOutpu
     'manage_bookings',
     'book_appointment_slot',
   ],
+  data: {
+    tables: ['booking_availability', 'booking_blocked_dates', 'bookings', 'booking_services'],
+  },
   skillSeeds: BOOKING_SKILLS,
 
   webhookEvents: [
