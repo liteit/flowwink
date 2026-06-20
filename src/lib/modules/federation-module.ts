@@ -666,6 +666,17 @@ export const federationModule = defineModule<FederationPeerInput, FederationPeer
     'scan_beta_findings',
     'invite_peer_agent',
   ],
+  data: {
+    tables: [
+      'a2a_activity',
+      'beta_test_exchanges',
+      'beta_test_findings',
+      'beta_test_sessions',
+      'federation_connections',
+      'peer_invitations',
+      'a2a_peers',
+    ],
+  },
   skillSeeds: FEDERATION_SKILLS,
 
   async publish(input: FederationPeerInput): Promise<FederationPeerOutput> {
