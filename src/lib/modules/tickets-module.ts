@@ -67,6 +67,9 @@ export const ticketsModule = defineModule<TicketModuleInput, TicketModuleOutput>
   outputSchema: ticketModuleOutputSchema,
 
   skills: ['suggest_kb_for_ticket'],
+  data: {
+    tables: ['ticket_comments', 'support_escalations', 'tickets', 'support_agents'],
+  },
   skillSeeds: TICKETS_SKILLS,
 
   async publish(input: TicketModuleInput): Promise<TicketModuleOutput> {
