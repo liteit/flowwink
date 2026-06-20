@@ -664,6 +664,9 @@ export const pagesModule = defineModule<PageModuleInput, PageModuleOutput>({
     'landing_page_compose',
     'build_site_step',
   ],
+  data: {
+    tables: ['page_versions', 'page_views', 'pages'],
+  },
   skillSeeds: PAGES_SKILLS,
 
   webhookEvents: [
