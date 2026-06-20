@@ -297,6 +297,17 @@ export const approvalsModule = defineModule<ApprovalsInput, ApprovalsOutput>({
   inputSchema: approvalsInputSchema,
   outputSchema: approvalsOutputSchema,
   skills: ['manage_approvals', 'approve_pending_operation', 'list_pending_operations', 'reject_pending_operation', 'manage_approval_chain', 'advance_approval_step', 'request_entity_approval', 'manage_approval_delegation', 'check_approval_escalations', 'bulk_advance_approvals'],
+  data: {
+    tables: [
+      'approval_decisions',
+      'approval_steps',
+      'approval_requests',
+      'approval_chains',
+      'approval_group_members',
+      'approval_groups',
+      'approval_rules',
+    ],
+  },
   skillSeeds: APPROVAL_SKILLS,
   automations: APPROVAL_AUTOMATIONS,
 

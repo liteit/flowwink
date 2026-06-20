@@ -1126,50 +1126,72 @@ export function ResetSiteDialog({ open, onOpenChange }: ResetSiteDialogProps) {
           </>
         )}
 
-        {step === 'complete' && (
-          <>
-            <DialogHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10">
-                  <CheckCircle2 className="h-6 w-6 text-green-500" />
+        {step === 'complete' && (() => {
+          const doneCount = progress.filter(p => p.status === 'done').length;
+          const errorItems = progress.filter(p => p.status === 'error');
+          const hasErrors = errorItems.length > 0;
+          return (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-full ${hasErrors ? 'bg-destructive/10' : 'bg-green-500/10'}`}>
+                    {hasErrors
+                      ? <XCircle className="h-6 w-6 text-destructive" />
+                      : <CheckCircle2 className="h-6 w-6 text-green-500" />}
+                  </div>
+                  <div>
+                    <DialogTitle>{hasErrors ? 'Reset Completed with Errors' : 'Reset Complete'}</DialogTitle>
+                    <DialogDescription>
+                      {doneCount} area{doneCount === 1 ? '' : 's'} cleared
+                      {hasErrors && ` · ${errorItems.length} error${errorItems.length === 1 ? '' : 's'}`}
+                    </DialogDescription>
+                  </div>
                 </div>
-                <div>
-                  <DialogTitle>Reset Complete</DialogTitle>
-                  <DialogDescription>
-                    Your site has been reset successfully
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
+              </DialogHeader>
 
-            <div className="space-y-2 py-4 max-h-64 overflow-y-auto">
-              {progress.map((item) => (
-                <div key={item.label} className="flex items-center gap-2 text-sm">
-                  {item.status === 'done' && (
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  )}
-                  {item.status === 'error' && (
-                    <XCircle className="h-4 w-4 text-destructive" />
-                  )}
-                  <span className={item.status === 'error' ? 'text-destructive' : ''}>
-                    {item.label}
-                    {item.error && <span className="text-xs text-muted-foreground ml-2">({item.error})</span>}
-                  </span>
+              {hasErrors && (
+                <div className="space-y-2 py-2">
+                  {errorItems.map((item) => (
+                    <div key={item.label} className="flex items-start gap-2 text-sm">
+                      <XCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                      <span className="text-destructive">
+                        {item.label}
+                        {item.error && <span className="text-xs text-muted-foreground ml-2">({item.error})</span>}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              )}
 
-            <DialogFooter>
-              <Button onClick={() => {
-                handleClose();
-                toast.success('Site has been reset');
-                window.location.reload();
-              }}>
-                Done
-              </Button>
-            </DialogFooter>
-          </>
-        )}
+              <details className="py-2">
+                <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground select-none">
+                  Show details ({progress.length} steps)
+                </summary>
+                <div className="mt-3 space-y-1.5 max-h-64 overflow-y-auto pl-1">
+                  {progress.map((item) => (
+                    <div key={item.label} className="flex items-center gap-2 text-sm">
+                      {item.status === 'done' && <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />}
+                      {item.status === 'error' && <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />}
+                      <span className={item.status === 'error' ? 'text-destructive' : 'text-muted-foreground'}>
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </details>
+
+              <DialogFooter>
+                <Button onClick={() => {
+                  handleClose();
+                  toast.success('Site has been reset');
+                  window.location.reload();
+                }}>
+                  Done
+                </Button>
+              </DialogFooter>
+            </>
+          );
+        })()}
       </DialogContent>
     </Dialog>
   );

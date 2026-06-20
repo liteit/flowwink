@@ -289,6 +289,9 @@ export const posModule = defineModule<Input, Output>({
   outputSchema,
 
   skills: ['open_pos_session', 'close_pos_session', 'record_pos_sale', 'list_pos_sales', 'record_pos_sale_v2', 'close_pos_session_v2', 'add_tip', 'manage_gift_card', 'redeem_gift_card'],
+  data: {
+    tables: ['pos_payments', 'pos_sale_lines', 'pos_sales', 'pos_sessions', 'pos_registers'],
+  },
   skillSeeds: POS_SKILLS,
 
 

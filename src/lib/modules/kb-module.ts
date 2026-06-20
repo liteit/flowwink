@@ -102,6 +102,9 @@ export const kbModule = defineModule<KBArticleModuleInput, KBArticleModuleOutput
   skills: [
     'manage_kb_article',
   ],
+  data: {
+    tables: ['kb_articles', 'kb_categories'],
+  },
   skillSeeds: KB_SKILLS,
 
   webhookEvents: [
