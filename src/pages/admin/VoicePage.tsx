@@ -27,6 +27,8 @@ import {
   type VoiceCallRow,
   type VoiceCallStatus,
 } from '@/hooks/useVoice';
+import Softphone from '@/components/admin/voice/Softphone';
+import { AgentVoiceConfigCard } from '@/components/admin/voice/AgentVoiceConfigCard';
 
 const STATUS_VARIANT: Record<VoiceCallStatus, 'default' | 'secondary' | 'outline' | 'destructive'> = {
   ringing: 'outline',
