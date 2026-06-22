@@ -199,15 +199,16 @@ export function useUpdateMyAgentVoice() {
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
+      const patchObj = (patch ?? {}) as Record<string, unknown>;
       if (!existing) {
         const { error } = await supabase
           .from('support_agents')
-          .insert({ user_id: user.id, status: 'offline', ...(patch as never) });
+          .insert({ user_id: user.id, status: 'offline', ...patchObj } as never);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('support_agents')
-          .update({ ...(patch as never), updated_at: new Date().toISOString() })
+          .update({ ...patchObj, updated_at: new Date().toISOString() } as never)
           .eq('user_id', user.id);
         if (error) throw error;
       }
