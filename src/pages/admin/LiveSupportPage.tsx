@@ -451,6 +451,8 @@ export default function LiveSupportPage() {
 
             {/* Customer info panel */}
             <div className="col-span-3 flex flex-col gap-4 overflow-auto">
+              {activeChannels.includes('voice') && <Softphone />}
+
               <Card>
                 <CardHeader className="py-3 px-4">
                   <CardTitle className="text-sm">My channels</CardTitle>
