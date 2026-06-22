@@ -30,10 +30,14 @@ interface Props {
 function deriveWss(sipUri: string | null | undefined, override?: string): string | null {
   if (override) return override;
   if (!sipUri) return null;
-  // 46elks: SIP-URI is sip:user@sip.46elks.com -> WSS sip.46elks.com:443
   try {
     const host = sipUri.replace(/^sips?:/, '').split('@')[1]?.split(';')[0];
     if (!host) return null;
+    // 46elks WebRTC: official endpoint is wss://voip.46elks.com/w1/websocket
+    // Accept both voip.* and legacy sip.* hostnames in the SIP URI.
+    if (/(^|\.)46elks\.com$/i.test(host)) {
+      return 'wss://voip.46elks.com/w1/websocket';
+    }
     return `wss://${host}/ws`;
   } catch {
     return null;
