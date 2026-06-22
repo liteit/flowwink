@@ -82,15 +82,19 @@ Voice-modulen **importerar inte** live-support och vice versa. Kommunikation ske
 
 ## Fas-plan
 
-**Fas 1 (MVP — denna release):**
-- Schema, modul-registrering, edge function, 46elks-adapter, Twilio-stub
-- Admin-UI: provider-val, agent-konfiguration, samtalshistorik, missed-call-kö
-- Manuell callback-knapp
+**Fas 1 (klar):**
+- Schema (`voice_calls`, `support_agents.voice_*`), modul-registrering
+- Edge function `voice-ingest` (provider-agnostisk router)
+- 46elks-adapter (komplett), Twilio-stub
+- 3 MCP-skills (`list_voice_calls`, `schedule_voice_callback`, `mark_voice_callback_done`)
+- **Admin-UI `/admin/voice`** med 5 tabs: All / Missed / Voicemail / Callbacks / Settings
+- Provider-väljare, ring-timeout, voicemail-greeting, booking-IVR toggle
+- Call-detalj-dialog: lyssna på recording/transkript, schemalägg callback, markera klar, `tel:` call-back
 
 **Fas 2:**
-- Browser WebRTC-klient i admin (`jssip` mot 46elks WSS)
-- Voicemail-transkription via STT
-- UC4: booking-IVR
+- Browser WebRTC-klient i admin (`jssip` mot 46elks WSS) — knapp i sidebar för agent som är voice_enabled
+- Voicemail-transkription via STT (chat-completion / ai-call.ts)
+- UC4 booking-IVR end-to-end: DTMF-input → `booking_services` slot-lookup → auto-schedule callback
 
 **Fas 3:**
 - Realtime AI voice agents (WebSocket-stream → OpenAI Realtime / Gemini Live)
