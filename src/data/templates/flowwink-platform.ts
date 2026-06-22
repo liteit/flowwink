@@ -26,7 +26,25 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
   icon: 'Bot',
   tagline: 'The Business Operating System. CMS · CRM · ERP — run by an operator.',
   aiChatPosition: 'Embedded autonomous agent for site operations',
-  requiredModules: ['blog', 'knowledgeBase', 'docs', 'chat', 'liveSupport', 'newsletter', 'leads', 'deals', 'companies', 'forms', 'ecommerce', 'bookings', 'analytics', 'developer', 'webinars', 'resume', 'tickets', 'federation', 'salesIntelligence', 'paidGrowth'],
+  // Full BOS stack — content, CRM, commerce, finance, HR, operations, platform.
+  requiredModules: [
+    // Content & marketing
+    'pages', 'blog', 'knowledgeBase', 'docs', 'wiki', 'handbook', 'newsletter', 'mediaLibrary', 'forms',
+    // CRM & sales
+    'leads', 'deals', 'companies', 'quotes', 'customer360', 'salesIntelligence', 'paidGrowth',
+    // Commerce
+    'ecommerce', 'inventory', 'shipping', 'returns', 'subscriptions', 'pricelists',
+    // Finance
+    'invoicing', 'accounting', 'reconciliation', 'expenses', 'purchasing', 'fixedAssets', 'multiCurrency',
+    // HR & people
+    'hr', 'payroll', 'recruitment', 'timesheets', 'contracts', 'documents',
+    // Operations
+    'projects', 'tickets', 'sla', 'approvals', 'calendar', 'bookings', 'surveys',
+    // Communication
+    'chat', 'liveSupport', 'workspaceChat', 'webinars', 'river', 'email',
+    // Platform & agent
+    'flowpilot', 'federation', 'composio', 'browserControl', 'siteMigration', 'developer', 'analytics', 'resume',
+  ],
   pages: [
     // ═══════════════════════════════════════════════════════════
     // HOME — The Pitch + Pricing (convince & convert in one scroll)
@@ -101,8 +119,8 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
           type: 'stats',
           data: {
             items: [
-              { id: 's1', value: '40+', label: 'ERP Modules' },
-              { id: 's2', value: '150+', label: 'MCP-Exposed Skills' },
+              { id: 's1', value: '60+', label: 'Business Modules' },
+              { id: 's2', value: '300+', label: 'MCP-Exposed Skills' },
               { id: 's3', value: 'BYO', label: 'Agent (FlowPilot or external)' },
               { id: 's4', value: '100%', label: 'Self-Hostable & Open Source' },
             ],
@@ -176,17 +194,17 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
           type: 'bento-grid',
           data: {
             title: 'The Autonomous Loop',
-            subtitle: 'Most stacks bolt CMS, CRM and ERP together with humans as glue. FlowWink unifies all three under one operator with memory, goals, and 130+ skills — a single process engine that acts, not reacts.',
+            subtitle: 'Most stacks bolt CMS, CRM and ERP together with humans as glue. FlowWink unifies all three under one operator with memory, goals, and 300+ skills — a single process engine that acts, not reacts.',
             eyebrow: 'AGENTIC WEB',
             columns: 3,
             variant: 'glass',
             gap: 'md',
             staggeredReveal: true,
             items: [
-              { id: 'bg-skills', title: 'Skill Engine', description: 'Content creation, lead qualification, email campaigns, ticket triage, SEO analysis, invoicing, expense booking, timesheet reminders — 130+ skills that execute autonomously. FlowPilot doesn\'t suggest. It acts.', icon: 'Zap', span: 'wide', accentColor: '#3B82F6' },
+              { id: 'bg-skills', title: 'Skill Engine', description: 'Content creation, lead qualification, email campaigns, ticket triage, SEO analysis, invoicing, expense booking, timesheet reminders — 300+ skills that execute autonomously. FlowPilot doesn\'t suggest. It acts.', icon: 'Zap', span: 'wide', accentColor: '#3B82F6' },
               { id: 'bg-memory', title: 'Deep Organizational Memory', description: 'Every conversation, every lead interaction, every content decision — stored as persistent memory. FlowPilot learns your brand voice, remembers what converts, and gets sharper with every interaction.\n\n• Brand voice calibration from real conversations\n• Lead scoring refined by conversion outcomes\n• Content performance patterns across channels\n• Financial patterns and seasonal trends', icon: 'Brain', span: 'large', accentColor: '#8B5CF6' },
               { id: 'bg-objectives', title: 'Goal-Driven Execution', description: 'Define business objectives. FlowPilot decomposes them into tasks, prioritizes by impact, executes step-by-step, and reports progress. You set "where" — it figures out "how."', icon: 'Target', accentColor: '#10B981' },
-              { id: 'bg-federation', title: 'Agent Federation', description: 'Three communication channels for the agentic web: A2A for peer-to-peer collaboration, OpenResponses for structured boss-to-worker tasks, and MCP for universal tool access from Cursor, Claude Desktop, or any AI client.\n\n• Peer discovery and autonomous outreach\n• Structured QA audits via OpenResponses\n• 40+ skills exposed via MCP\n• Full audit trail on every interaction', icon: 'Network', span: 'large', accentColor: '#F97316' },
+              { id: 'bg-federation', title: 'Agent Federation', description: 'Three communication channels for the agentic web: A2A for peer-to-peer collaboration, OpenResponses for structured boss-to-worker tasks, and MCP for universal tool access from Cursor, Claude Desktop, or any AI client.\n\n• Peer discovery and autonomous outreach\n• Structured QA audits via OpenResponses\n• Every skill exposed via MCP\n• Full audit trail on every interaction', icon: 'Network', span: 'large', accentColor: '#F97316' },
               { id: 'bg-heartbeat', title: 'The 6-Hour Heartbeat', description: 'Four times daily, FlowPilot wakes up autonomously: evaluates objectives, plans next actions, advances goals, proposes new ones, checks automations, reflects on outcomes, and persists learnings. Morning briefing lands in your inbox.', icon: 'Activity', accentColor: '#F59E0B' },
               { id: 'bg-erp', title: 'Full ERP Stack', description: 'Invoicing from deals and timesheets. Double-entry accounting with chart of accounts. Expense reports with AI receipt scanning and automatic VAT calculation. Weekly timesheet reminders. Quote-to-Cash — fully autonomous.', icon: 'Calculator', accentColor: '#EC4899' },
               { id: 'bg-evolution', title: 'Self-Improving Intelligence', description: 'FlowPilot rewrites its own instructions based on outcomes. Skills that underperform get refined. New patterns get codified. The system doesn\'t just run — it evolves. Week over week, it becomes a better operator than the last version of itself.', icon: 'Sparkles', span: 'wide', accentColor: '#06B6D4' },
@@ -221,12 +239,12 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
             layout: 'split',
           },
         },
-        // ─── 40+ MODULES — The Full ERP Stack ───
+        // ─── 60+ MODULES — The Full BOS Stack ───
         {
           id: 'modules-overview',
           type: 'features',
           data: {
-            title: '40+ Modules. One Platform. Every Module Agent-Operable.',
+            title: '60+ Modules. One Platform. Every Module Agent-Operable.',
             subtitle: 'A complete ERP for mid-sized businesses — covering the core processes Odoo and NetSuite cover, plus a native agent layer no incumbent has. Every module exposed via MCP so any agent (built-in or external) can operate it.',
             features: [
               // ─ Quote-to-Cash ─
@@ -273,11 +291,67 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
               { id: 'mod-composio', icon: 'Workflow', title: 'App Integrations', description: '200+ apps via Composio — Gmail, Calendar, Slack via managed OAuth.' },
               { id: 'mod-developer', icon: 'Code2', title: 'Developer & API Keys', description: 'API keys, webhooks, edge function logs, MCP regression tests.' },
               { id: 'mod-analytics', icon: 'BarChart3', title: 'Analytics', description: 'Page views, conversion tracking, funnel analysis, agent performance.' },
+              // ─ Added: Operations & service ─
+              { id: 'mod-pos', icon: 'ScanLine', title: 'Point of Sale', description: 'Odoo-style POS on platform tables. Split tender, barcode, auto stock movements, batch journal per session.' },
+              { id: 'mod-manufacturing', icon: 'Factory', title: 'Manufacturing (MRP-light)', description: 'BOMs, work orders, MRP runs. Stock pulled automatically as orders complete.' },
+              { id: 'mod-fieldservice', icon: 'Wrench', title: 'Field Service', description: 'Work orders, technician scheduling, on-site time + parts capture.' },
+              { id: 'mod-maintenance', icon: 'Cog', title: 'Maintenance', description: 'Asset register, preventive maintenance plans, downtime tracking.' },
+              { id: 'mod-shipping', icon: 'Truck', title: 'Shipping & Carriers', description: 'Carrier rates, labels, tracking events, delivery confirmations.' },
+              { id: 'mod-returns', icon: 'Undo2', title: 'Returns & RMA', description: 'Partial refunds, restocking fees, QC inspection, autonomous resolution.' },
+              { id: 'mod-pricelists', icon: 'Tags', title: 'Pricelists', description: 'Customer/segment-specific pricing, auto-resolved on quote and order lines.' },
+              { id: 'mod-multicurrency', icon: 'DollarSign', title: 'Multi-currency & FX', description: 'Daily FX rates, realized/unrealized gains, multi-currency reporting.' },
+              { id: 'mod-fixedassets', icon: 'Landmark', title: 'Fixed Assets', description: 'Asset register, depreciation schedules, disposals — booked to ledger.' },
+              // ─ Added: Documents & calendar ─
+              { id: 'mod-documents', icon: 'FolderOpen', title: 'Documents Vault', description: 'Polymorphic document store linked to any record. Shadow-markdown for RAG searchability.' },
+              { id: 'mod-calendar', icon: 'Calendar', title: 'Calendar', description: 'Shared calendars, availability windows, meeting links across modules.' },
+              { id: 'mod-forms', icon: 'ClipboardList', title: 'Forms & Surveys', description: 'Drag-and-drop forms, NPS surveys, autonomous follow-up on submissions.' },
+              { id: 'mod-companies', icon: 'Building2', title: 'Companies (B2B)', description: 'Org numbers, VAT, subsidiary hierarchy, credit limits, account owners.' },
+              // ─ Added: Knowledge & internal ─
+              { id: 'mod-docs', icon: 'BookOpen', title: 'Public Docs', description: 'Developer-facing docs portal with category trees, search, deep-linking.' },
+              { id: 'mod-wiki', icon: 'BookText', title: 'Internal Wiki', description: 'Markdown wiki with slug routing, internal-only RLS, agent-editable.' },
+              { id: 'mod-handbook', icon: 'BookmarkCheck', title: 'Employee Handbook', description: 'Onboarding handbook, policies, acknowledgements per employee.' },
+              { id: 'mod-river', icon: 'Activity', title: 'River (internal feed)', description: 'Org-wide social feed of decisions, wins, agent activity.' },
+              { id: 'mod-workspacechat', icon: 'MessageSquare', title: 'Workspace Chat (RAG)', description: 'Authenticated chat over docs, contracts, KB, CRM, pages — with citations.' },
+              { id: 'mod-customer360', icon: 'Eye', title: 'Customer 360', description: 'Unified customer view across orders, tickets, invoices, conversations.' },
+              { id: 'mod-surveys', icon: 'ListChecks', title: 'Surveys', description: 'Public surveys with token links, response analytics, agent-driven follow-up.' },
+              // ─ Added: Comms & platform ─
+              { id: 'mod-chat', icon: 'MessageCircle', title: 'Visitor Chat', description: 'Public-facing FlowPilot chat with lead capture and live handover.' },
+              { id: 'mod-email', icon: 'Send', title: 'Email Transport', description: 'Provider-agnostic transactional + newsletter sending (Resend, Postmark, SMTP).' },
+              { id: 'mod-media', icon: 'Image', title: 'Media Library', description: 'Image bucket, transforms, gallery picker reused across blocks and editors.' },
+              { id: 'mod-templates', icon: 'LayoutTemplate', title: 'Site Templates', description: 'Install-ready starter sites — content, modules, soul, objectives in one click.' },
+              { id: 'mod-sitemigration', icon: 'Download', title: 'Site Migration', description: 'Crawl + extract any URL into pages/blog/KB. Firecrawl-powered.' },
+              { id: 'mod-browser', icon: 'MousePointer2', title: 'Browser Control', description: 'Agent operates a real browser for tasks beyond MCP reach — signed-in flows, scraping.' },
+              { id: 'mod-resume', icon: 'FileBadge2', title: 'Consultant Resume', description: 'Semantic resume search (pgvector + BM25) for consulting agencies.' },
             ],
             columns: 4,
             layout: 'grid',
             variant: 'minimal',
             iconStyle: 'circle',
+          },
+        },
+        // ─── WHAT'S NEW — Recent platform additions ───
+        {
+          id: 'whats-new',
+          type: 'bento-grid',
+          data: {
+            eyebrow: 'WHAT\'S NEW',
+            title: 'Shipped Recently',
+            subtitle: 'FlowWink ships fast. These capabilities landed in the last few cycles — each one rolled out across every module that needs it.',
+            columns: 3,
+            variant: 'glass',
+            gap: 'md',
+            staggeredReveal: true,
+            items: [
+              { id: 'wn-staged', title: 'Staged Operations Envelope', description: 'Sensitive skills (book_expense, close_accounting_period, reset_module_data) return a staged envelope. Human approves → re-invoked. Neutral MCP protocol, not locale-locked.', icon: 'ShieldCheck', span: 'wide', accentColor: '#3B82F6' },
+              { id: 'wn-yearend', title: 'Year-End & Voucher Integrity', description: '`year_end_readiness(year)` runs a 6-point checklist. `list_voucher_gaps` proves audit-grade numbering per (series, year). Locale-pluggable for SE dispositioner, DE Rückstellungen.', icon: 'CalendarCheck', accentColor: '#10B981' },
+              { id: 'wn-pos', title: 'POS v2 (Odoo-style)', description: 'POS as a UI on platform tables. Split tender via pos_payments. record_pos_sale_v2 emits stock.movement events → automatic warehouse drag. Batch journal per session close.', icon: 'Store', accentColor: '#F59E0B' },
+              { id: 'wn-eventbus', title: 'Platform Event Bus', description: 'agent_events + DB triggers for lead.created, order.paid, deal.won, stock.movement, pos.session.closed. event-dispatcher fans out to automations every minute.', icon: 'Radio', span: 'large', accentColor: '#8B5CF6' },
+              { id: 'wn-mcp-groups', title: 'Composite MCP Groups', description: 'External claws request ?groups=marketing|sales|operations and get a curated toolkit without needing FlowPilot. Tool-bloat solved with SEP-1300-style filtering.', icon: 'Plug', accentColor: '#06B6D4' },
+              { id: 'wn-rag', title: 'Workspace Chat RAG', description: 'Authenticated chat with CAG over docs, contracts, KB, pages, CRM, employees + citations. Document Shadow Markdown makes uploaded PDFs permanently searchable.', icon: 'MessageSquare', accentColor: '#EC4899' },
+              { id: 'wn-demo', title: 'Demo Data Platform', description: 'seed_module_demo tags every row in demo_run_items. reset_module_data removes only registered rows. Spelledar-loop for safe, reversible product tours.', icon: 'Sparkles', span: 'wide', accentColor: '#F97316' },
+              { id: 'wn-federation', title: 'Federation Directional Connections', description: 'federation_connections model: MCP=inbound, A2A=bidirectional, /v1/responses=outbound. One peer, multiple channels, single audit trail via beta_test_findings.reported_by.', icon: 'Network', accentColor: '#3B82F6' },
+              { id: 'wn-consultants', title: 'Semantic Consultant Search', description: 'Hybrid pgvector + BM25 on consultant_profiles. pg_cron auto-reindexes stale embeddings. OpenAI/Gemini/Local fallback chain.', icon: 'Search', accentColor: '#10B981' },
+            ],
           },
         },
         // ─── AGENT-PREPARED — The MCP layer ───
@@ -296,7 +370,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
               { id: 'ap-mcp', title: 'Universal MCP Server', description: 'Every module ships with a JSON-RPC contract. tools/list returns every skill across CRM, Accounting, HR, Payroll, P2P. Live-validated by a regression workflow on every release.', icon: 'Plug', span: 'wide', accentColor: '#3B82F6' },
               { id: 'ap-byo', title: 'Bring Your Own Agent', description: 'Admin chooses the operator: built-in FlowPilot, Claude Desktop, Cursor, OpenClaw, GPT — or run several in parallel. The platform is operator-agnostic.\n\n• MCP API keys per agent\n• Toolset groups for selective tool loading\n• Per-agent audit trails\n• Trust levels and approval gates', icon: 'Users', span: 'large', accentColor: '#8B5CF6' },
               { id: 'ap-flowpilot', title: 'FlowPilot Included', description: 'Self-hosted, OpenClaw-modeled agent: soul, memory, objectives, 6-hour heartbeat. Works out of the box, no external dependency.', icon: 'Bot', accentColor: '#10B981' },
-              { id: 'ap-multisaas', title: 'Cross-SaaS Operation', description: 'Connect an external agent to FlowWink + Gmail + Slack + Stripe + Linear and let it operate the whole stack. FlowWink contributes 40+ modules of business operations to whatever agent you already use.\n\n• MCP-native — no proprietary SDK\n• Federation via A2A and OpenResponses\n• Composio for 200+ third-party apps', icon: 'Network', span: 'large', accentColor: '#F97316' },
+              { id: 'ap-multisaas', title: 'Cross-SaaS Operation', description: 'Connect an external agent to FlowWink + Gmail + Slack + Stripe + Linear and let it operate the whole stack. FlowWink contributes 60+ modules of business operations to whatever agent you already use.\n\n• MCP-native — no proprietary SDK\n• Federation via A2A and OpenResponses\n• Composio for 200+ third-party apps', icon: 'Network', span: 'large', accentColor: '#F97316' },
               { id: 'ap-discovery', title: 'Discovery & Briefing', description: 'flowwink://briefing resource gives external agents instant context — active modules, current objectives, recent activity. Token-efficient onboarding without prompt-engineering hell.', icon: 'BookOpen', accentColor: '#F59E0B' },
               { id: 'ap-sovereignty', title: 'Self-Hosted Means Sovereign', description: 'Your data, your LLM, your audit trail. The agent runs against your own database — not a vendor\'s shared multi-tenant cloud. Healthcare, finance, defense-ready.', icon: 'Shield', span: 'wide', accentColor: '#06B6D4' },
             ],
@@ -412,7 +486,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
                 price: 'Free',
                 period: 'forever',
                 description: 'Full FlowPilot agent. Your servers. Your LLM. Complete data sovereignty.',
-                features: ['Full Business OS + FlowPilot', 'Unlimited autonomous operations', 'Private LLM support (Ollama)', '130+ agent skills', 'Persistent memory & objectives', 'Community support'],
+                features: ['Full Business OS + FlowPilot', 'Unlimited autonomous operations', 'Private LLM support (Ollama)', '300+ agent skills', 'Persistent memory & objectives', 'Community support'],
                 buttonText: 'View on GitHub',
                 buttonUrl: 'https://github.com/magnusfroste/flowwink',
               },
@@ -629,18 +703,24 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
           id: 'features-skills',
           type: 'features',
           data: {
-            title: '130+ Autonomous Skills',
-            subtitle: 'Each skill is a capability FlowPilot can execute independently — from content and CRM to invoicing, expense booking, and agent federation. Skills self-improve through outcome-based instruction refinement.',
+            title: '300+ Autonomous Skills',
+            subtitle: 'Each skill is a capability FlowPilot — or any external MCP agent — can execute independently. From content and CRM to year-end accounting, POS sessions, and federated agent coordination.',
             features: [
               { id: 'sk-blog', icon: 'FileText', title: 'blog_write', description: 'Research topics, write posts in brand voice, add SEO metadata, schedule for publishing.' },
-              { id: 'sk-lead', icon: 'UserPlus', title: 'lead_qualify', description: 'Score leads, enrich with company data, generate qualification summary and next steps.' },
-              { id: 'sk-email', icon: 'Mail', title: 'newsletter_create', description: 'Segment audiences, write copy, design layout, schedule send at optimal time.' },
-              { id: 'sk-invoice', icon: 'Receipt', title: 'invoice_create', description: 'Generate invoices from deals or timesheets, apply tax rules, send via email.' },
-              { id: 'sk-expense', icon: 'Camera', title: 'analyze_receipt', description: 'Extract data from receipt photos using AI vision, calculate VAT, draft expense reports.' },
-              { id: 'sk-timesheet', icon: 'Clock', title: 'timesheet_remind', description: 'Check logged hours weekly, remind team members, generate project summaries.' },
-              { id: 'sk-a2a', icon: 'Network', title: 'a2a_send', description: 'Initiate conversations with peer agents, share intelligence, request capabilities.' },
-              { id: 'sk-chain', icon: 'GitBranch', title: 'chain_skills', description: 'Compose multi-step recipes: Research → Write → SEO → Distribute. Up to 6 steps.' },
-              { id: 'sk-reflect', icon: 'Brain', title: 'reflect', description: 'Analyze recent activity, identify patterns, suggest improvements, update memory.' },
+              { id: 'sk-lead', icon: 'UserPlus', title: 'manage_leads', description: 'Status-aware lead lifecycle: new → qualified → opportunity → customer. Alias-tolerant for external agents.' },
+              { id: 'sk-expense', icon: 'Camera', title: 'analyze_receipt → book_expense', description: 'OCR receipt, draft expense, route through approve → book → mark_paid (full P2P loop).' },
+              { id: 'sk-bank', icon: 'ScanLine', title: 'import_bank_image', description: 'Vision-based bank statement import (OpenAI/Gemini). Two-step preview → commit, never auto-write.' },
+              { id: 'sk-pos', icon: 'Store', title: 'record_pos_sale_v2', description: 'Split-tender POS sale. Emits stock.movement event → automatic warehouse dragging. Batch journal at session close.' },
+              { id: 'sk-yearend', icon: 'CalendarCheck', title: 'year_end_readiness', description: '6-point year-end checklist: periods closed, no drafts, voucher integrity, reconciliations, invoices + expenses settled.' },
+              { id: 'sk-voucher', icon: 'ShieldCheck', title: 'list_voucher_gaps', description: 'Audit-grade voucher numbering integrity per (series, year). Universal SE/DE/IFRS/GAAP requirement.' },
+              { id: 'sk-contract', icon: 'FileSignature', title: 'create_contract_from_template', description: 'Token-rendered employment + customer contracts. DB guard prevents hallucinated empty bodies.' },
+              { id: 'sk-hire', icon: 'UserCheck', title: 'hire_application', description: 'One-call atomic: application → employee + draft contract + onboarding checklist.' },
+              { id: 'sk-rag', icon: 'BookOpen', title: 'workspace-chat (RAG)', description: 'Internal CAG over docs, contracts, KB, pages, CRM, employees — with citations.' },
+              { id: 'sk-consultants', icon: 'Search', title: 'match_consultants', description: 'Hybrid pgvector + BM25 semantic resume search. 60/40 semantic/text weighting.' },
+              { id: 'sk-federation', icon: 'Network', title: 'delegate_task', description: 'Federate work to peer agents (A2A / OpenResponses / MCP). Three transport directions, single audit trail.' },
+              { id: 'sk-migrate', icon: 'Download', title: 'migrate_url', description: 'Crawl any URL → pages/blog/KB. Firecrawl-powered, MCP-exposed for external site-migration claws.' },
+              { id: 'sk-demo', icon: 'Sparkles', title: 'seed_module_demo / reset_module_data', description: 'Spelledar-loop: seed tags every demo row, reset removes only registered rows. Staged op — human approval required.' },
+              { id: 'sk-lint', icon: 'CheckSquare', title: 'lint_skill', description: 'CLI + MCP skill that runs the Agent Contract Integrity checklist on any skill before release.' },
             ],
             columns: 3,
             layout: 'grid',
@@ -1681,7 +1761,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
   seoSettings: {
     siteTitle: 'FlowWink — The Business Operating System',
     titleTemplate: '%s | FlowWink',
-    defaultDescription: 'FlowWink is the first autonomous Business Operating System — self-hosted, open source, AI-native from line one. 200+ MCP skills across CRM, finance, ERP, and content.',
+    defaultDescription: 'FlowWink is the first autonomous Business Operating System — self-hosted, open source, AI-native from line one. 60+ modules and 300+ MCP skills across CRM, finance, ERP, HR, content and commerce.',
     robotsIndex: true,
     robotsFollow: true,
     developmentMode: false,
@@ -1690,7 +1770,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
   aeoSettings: {
     enabled: true,
     organizationName: 'FlowWink',
-    shortDescription: 'Open-source Business Operating System — CMS · CRM · ERP run by FlowPilot, an autonomous operator with persistent memory and 130+ skills. Or bring your own agent via MCP.',
+    shortDescription: 'Open-source Business Operating System — CMS · CRM · ERP run by FlowPilot, an autonomous operator with persistent memory and 300+ skills across 60+ modules. Or bring your own agent via MCP.',
     schemaOrgEnabled: true,
     schemaOrgType: 'Organization',
     faqSchemaEnabled: true,
