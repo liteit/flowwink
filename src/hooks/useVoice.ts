@@ -153,3 +153,87 @@ export function voiceProviderLabel(id: VoiceProviderId | string | null): string 
     default: return 'No provider selected';
   }
 }
+
+// ===== Agent voice config =====
+
+export interface SupportAgentVoice {
+  id: string;
+  user_id: string;
+  status: string;
+  voice_enabled: boolean | null;
+  voice_sip_username: string | null;
+  voice_sip_password: string | null;
+  voice_sip_uri: string | null;
+  voice_mobile_number: string | null;
+  voice_provider: string | null;
+}
+
+export function useMyAgentVoice() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['support-agent-voice', user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('support_agents')
+        .select('id,user_id,status,voice_enabled,voice_sip_username,voice_sip_password,voice_sip_uri,voice_mobile_number,voice_provider')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as SupportAgentVoice | null;
+    },
+  });
+}
+
+export function useUpdateMyAgentVoice() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (patch: Partial<SupportAgentVoice>) => {
+      if (!user?.id) throw new Error('not signed in');
+      // Upsert if missing
+      const { data: existing } = await supabase
+        .from('support_agents')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!existing) {
+        const { error } = await supabase
+          .from('support_agents')
+          .insert({ user_id: user.id, status: 'offline', ...(patch as never) });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('support_agents')
+          .update({ ...(patch as never), updated_at: new Date().toISOString() })
+          .eq('user_id', user.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['support-agent-voice', user?.id] });
+      toast({ title: 'Saved', description: 'Your voice settings were updated.' });
+    },
+    onError: (err) => {
+      logger.error('agent voice update failed', err);
+      toast({ title: 'Error', description: 'Could not save.', variant: 'destructive' });
+    },
+  });
+}
+
+/** Realtime: listen for new inbound voice_calls (status=ringing) targeting the current site. */
+export function useRingingCallSubscription(onRinging: (call: VoiceCallRow) => void) {
+  useEffect(() => {
+    const channel = supabase
+      .channel('voice-calls-ringing')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'voice_calls', filter: 'status=eq.ringing' },
+        (payload) => onRinging(payload.new as unknown as VoiceCallRow),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [onRinging]);
+}
