@@ -117,23 +117,34 @@ export function AgentVoiceConfigCard() {
           <div className="rounded-md border border-dashed p-3 space-y-3">
             <p className="text-xs text-muted-foreground">
               Only needed if you want calls to ring inside the browser via WebRTC.
-              Most setups skip this and use the mobile fallback above. Create a SIP
-              user in your 46elks dashboard first.
+              Most setups skip this and use the mobile fallback above.{' '}
+              <a
+                href="https://46elks.com/guides/find-webrtc-credentials"
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                Find your 46elks WebRTC credentials →
+              </a>
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="sip-uri" className="text-xs">SIP URI</Label>
                 <Input
                   id="sip-uri"
-                  placeholder="sip:user@sip.46elks.com"
+                  placeholder="sip:4612345678@voip.46elks.com"
                   value={merged.voice_sip_uri ?? ''}
                   onChange={(e) => set('voice_sip_uri', e.target.value)}
                 />
+                <p className="text-[10px] text-muted-foreground">
+                  Format: <code>sip:&lt;webrtc-number&gt;@voip.46elks.com</code> (no + sign).
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="sip-user" className="text-xs">SIP username</Label>
                 <Input
                   id="sip-user"
+                  placeholder="4612345678"
                   value={merged.voice_sip_username ?? ''}
                   onChange={(e) => set('voice_sip_username', e.target.value)}
                 />
