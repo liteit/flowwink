@@ -73,20 +73,6 @@ export function ActiveCallsPanel() {
                 } as never,
               })
             }
-            onSendSms={async () => {
-              try {
-                const { error } = await supabase.functions.invoke('elks46-ingest?action=send', {
-                  body: {
-                    to: call.from_number,
-                    message: 'Hej! Vi såg att du ringde – vi återkommer så snart vi kan.',
-                  },
-                });
-                if (error) throw error;
-                toast.success('SMS sent');
-              } catch (e: any) {
-                toast.error(e?.message ?? 'Could not send SMS');
-              }
-            }}
           />
         ))}
       </div>
