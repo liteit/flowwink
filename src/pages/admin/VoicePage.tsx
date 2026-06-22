@@ -341,7 +341,7 @@ function ProviderCapabilitiesCard() {
 }
 
 export default function VoicePage() {
-  const [tab, setTab] = useState<'all' | 'missed' | 'voicemail' | 'callbacks' | 'settings'>('all');
+  const [tab, setTab] = useState<'all' | 'missed' | 'voicemail' | 'callbacks' | 'softphone' | 'settings'>('all');
   const [selected, setSelected] = useState<VoiceCallRow | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -384,6 +384,7 @@ export default function VoicePage() {
             <TabsTrigger value="missed"><PhoneMissed className="h-3 w-3 mr-1" />Missed <Badge variant="secondary" className="ml-2">{counts.missed}</Badge></TabsTrigger>
             <TabsTrigger value="voicemail"><Voicemail className="h-3 w-3 mr-1" />Voicemail <Badge variant="secondary" className="ml-2">{counts.voicemail}</Badge></TabsTrigger>
             <TabsTrigger value="callbacks"><PhoneCall className="h-3 w-3 mr-1" />Callbacks <Badge variant="secondary" className="ml-2">{counts.callbacks}</Badge></TabsTrigger>
+            <TabsTrigger value="softphone"><Phone className="h-3 w-3 mr-1" />Softphone</TabsTrigger>
             <TabsTrigger value="settings"><SettingsIcon className="h-3 w-3 mr-1" />Settings</TabsTrigger>
           </TabsList>
 
