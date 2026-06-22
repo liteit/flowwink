@@ -27,14 +27,13 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
   tagline: 'The Business Operating System. CMS · CRM · ERP — run by an operator.',
   aiChatPosition: 'Embedded autonomous agent for site operations',
   // Full BOS stack — content, CRM, commerce, finance, HR, operations, platform.
-  // Optional modules (pos, manufacturing, field-service, etc.) stay opt-in.
   requiredModules: [
     // Content & marketing
-    'pages', 'blog', 'knowledgeBase', 'docs', 'wiki', 'handbook', 'newsletter', 'media', 'forms', 'globalBlocks',
+    'pages', 'blog', 'knowledgeBase', 'docs', 'wiki', 'handbook', 'newsletter', 'mediaLibrary', 'forms',
     // CRM & sales
     'leads', 'deals', 'companies', 'quotes', 'customer360', 'salesIntelligence', 'paidGrowth',
     // Commerce
-    'products', 'pricelists', 'ecommerce', 'inventory', 'shipping', 'returns', 'subscriptions',
+    'ecommerce', 'inventory', 'shipping', 'returns', 'subscriptions', 'pricelists',
     // Finance
     'invoicing', 'accounting', 'reconciliation', 'expenses', 'purchasing', 'fixedAssets', 'multiCurrency',
     // HR & people
