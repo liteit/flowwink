@@ -46,6 +46,7 @@ import { TelegramChannelStatus } from '@/components/admin/live-support/TelegramC
 import { CallbacksPanel } from '@/components/admin/live-support/CallbacksPanel';
 import { VoicemailPanel } from '@/components/admin/live-support/VoicemailPanel';
 import { ActiveCallsPanel } from '@/components/admin/live-support/ActiveCallsPanel';
+import Softphone from '@/components/admin/voice/Softphone';
 import { ALL_CHANNELS, ChannelChip, ChannelIcon, channelMeta, getChannel, type SupportChannel } from '@/lib/support-channels';
 
 const statusConfig: Record<AgentStatus, { label: string; color: string; icon: React.ReactNode }> = {
@@ -450,6 +451,8 @@ export default function LiveSupportPage() {
 
             {/* Customer info panel */}
             <div className="col-span-3 flex flex-col gap-4 overflow-auto">
+              {activeChannels.includes('voice') && <Softphone />}
+
               <Card>
                 <CardHeader className="py-3 px-4">
                   <CardTitle className="text-sm">My channels</CardTitle>
