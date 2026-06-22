@@ -395,6 +395,13 @@ export default function VoicePage() {
           <TabsContent value="voicemail" className="mt-4"><CallsTable calls={filtered} onAction={onAction} /></TabsContent>
           <TabsContent value="callbacks" className="mt-4"><CallsTable calls={filtered} onAction={onAction} /></TabsContent>
 
+          <TabsContent value="softphone" className="mt-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Softphone />
+              <AgentVoiceConfigCard />
+            </div>
+          </TabsContent>
+
           <TabsContent value="settings" className="mt-4 space-y-6">
             <VoiceSettingsCard />
             <ProviderCapabilitiesCard />
