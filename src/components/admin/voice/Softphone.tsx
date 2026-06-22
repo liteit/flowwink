@@ -43,7 +43,7 @@ function deriveWss(sipUri: string | null | undefined, override?: string): string
 export default function Softphone({ wssUrl }: Props) {
   const { data: agent, isLoading } = useMyAgentVoice();
   const uaRef = useRef<JsSIP.UA | null>(null);
-  const sessionRef = useRef<JsSIP.RTCSession | null>(null);
+  const sessionRef = useRef<RTCSession | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const [sipState, setSipState] = useState<SipState>('disabled');
@@ -91,7 +91,7 @@ export default function Softphone({ wssUrl }: Props) {
       setSipState('failed');
     });
 
-    ua.on('newRTCSession', (data: { session: JsSIP.RTCSession; originator: 'local' | 'remote' }) => {
+    ua.on('newRTCSession', (data: { session: RTCSession; originator: 'local' | 'remote' }) => {
       const session = data.session;
       const isIncoming = data.originator === 'remote';
       sessionRef.current = session;
