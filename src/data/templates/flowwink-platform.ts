@@ -329,6 +329,31 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
             iconStyle: 'circle',
           },
         },
+        // ─── WHAT'S NEW — Recent platform additions ───
+        {
+          id: 'whats-new',
+          type: 'bento-grid',
+          data: {
+            eyebrow: 'WHAT\'S NEW',
+            title: 'Shipped Recently',
+            subtitle: 'FlowWink ships fast. These capabilities landed in the last few cycles — each one rolled out across every module that needs it.',
+            columns: 3,
+            variant: 'glass',
+            gap: 'md',
+            staggeredReveal: true,
+            items: [
+              { id: 'wn-staged', title: 'Staged Operations Envelope', description: 'Sensitive skills (book_expense, close_accounting_period, reset_module_data) return a staged envelope. Human approves → re-invoked. Neutral MCP protocol, not locale-locked.', icon: 'ShieldCheck', span: 'wide', accentColor: '#3B82F6' },
+              { id: 'wn-yearend', title: 'Year-End & Voucher Integrity', description: '`year_end_readiness(year)` runs a 6-point checklist. `list_voucher_gaps` proves audit-grade numbering per (series, year). Locale-pluggable for SE dispositioner, DE Rückstellungen.', icon: 'CalendarCheck', accentColor: '#10B981' },
+              { id: 'wn-pos', title: 'POS v2 (Odoo-style)', description: 'POS as a UI on platform tables. Split tender via pos_payments. record_pos_sale_v2 emits stock.movement events → automatic warehouse drag. Batch journal per session close.', icon: 'Store', accentColor: '#F59E0B' },
+              { id: 'wn-eventbus', title: 'Platform Event Bus', description: 'agent_events + DB triggers for lead.created, order.paid, deal.won, stock.movement, pos.session.closed. event-dispatcher fans out to automations every minute.', icon: 'Radio', span: 'large', accentColor: '#8B5CF6' },
+              { id: 'wn-mcp-groups', title: 'Composite MCP Groups', description: 'External claws request ?groups=marketing|sales|operations and get a curated toolkit without needing FlowPilot. Tool-bloat solved with SEP-1300-style filtering.', icon: 'Plug', accentColor: '#06B6D4' },
+              { id: 'wn-rag', title: 'Workspace Chat RAG', description: 'Authenticated chat with CAG over docs, contracts, KB, pages, CRM, employees + citations. Document Shadow Markdown makes uploaded PDFs permanently searchable.', icon: 'MessageSquare', accentColor: '#EC4899' },
+              { id: 'wn-demo', title: 'Demo Data Platform', description: 'seed_module_demo tags every row in demo_run_items. reset_module_data removes only registered rows. Spelledar-loop for safe, reversible product tours.', icon: 'Sparkles', span: 'wide', accentColor: '#F97316' },
+              { id: 'wn-federation', title: 'Federation Directional Connections', description: 'federation_connections model: MCP=inbound, A2A=bidirectional, /v1/responses=outbound. One peer, multiple channels, single audit trail via beta_test_findings.reported_by.', icon: 'Network', accentColor: '#3B82F6' },
+              { id: 'wn-consultants', title: 'Semantic Consultant Search', description: 'Hybrid pgvector + BM25 on consultant_profiles. pg_cron auto-reindexes stale embeddings. OpenAI/Gemini/Local fallback chain.', icon: 'Search', accentColor: '#10B981' },
+            ],
+          },
+        },
         // ─── AGENT-PREPARED — The MCP layer ───
         {
           id: 'agent-prepared',
