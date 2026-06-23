@@ -321,6 +321,8 @@ const router = createBrowserRouter([
       { path: "/admin/developer-tools", element: <Navigate to="/admin/developer" replace /> },
       { path: "/admin/template-live-preview", element: <TemplateLivePreviewPage /> },
       { path: "/admin/webinars", element: <WebinarsPage /> },
+      { path: "/admin/webmeet", element: <WebmeetPage /> },
+      { path: "/meet/:slug", element: <MeetRoomPage /> },
       { path: "/admin/sales-intelligence", element: <SalesIntelligencePage /> },
       { path: "/admin/resume", element: <ConsultantProfilesPage /> },
       { path: "/admin/federation", element: <FederationPage /> },
