@@ -940,14 +940,16 @@ export default function ChatSettingsPage() {
                           <SelectItem value="browser">Browser (Web Speech API)</SelectItem>
                           <SelectItem value="openai">OpenAI Whisper</SelectItem>
                           <SelectItem value="gemini">Google Gemini</SelectItem>
+                          <SelectItem value="elevenlabs">ElevenLabs Scribe</SelectItem>
                           <SelectItem value="local">Private / Local Whisper</SelectItem>
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-muted-foreground">
-                        {formData.sttProvider === 'browser' && 'Uses the browser\'s built-in speech recognition. Free, but quality varies by browser.'}
-                        {formData.sttProvider === 'openai' && 'Uses OpenAI Whisper API. High quality, 50+ languages. Requires OPENAI_API_KEY.'}
-                        {formData.sttProvider === 'gemini' && 'Uses Google Gemini for transcription. Requires GEMINI_API_KEY.'}
-                        {formData.sttProvider === 'local' && 'Point to your own OpenAI-compatible Whisper endpoint for full data sovereignty.'}
+                        {formData.sttProvider === 'browser' && 'Uses the browser\'s built-in speech recognition. Free, no server round-trip, but Firefox has no mic and quality varies by browser.'}
+                        {formData.sttProvider === 'openai' && 'Records audio in-browser and transcribes via OpenAI Whisper. Works in every modern browser. Requires OPENAI_API_KEY.'}
+                        {formData.sttProvider === 'gemini' && 'Records audio in-browser and transcribes via Google Gemini. Requires GEMINI_API_KEY.'}
+                        {formData.sttProvider === 'elevenlabs' && 'Records audio in-browser and transcribes via ElevenLabs Scribe (scribe_v1). Requires ELEVENLABS_API_KEY.'}
+                        {formData.sttProvider === 'local' && 'Records audio in-browser and POSTs it to your own OpenAI-compatible Whisper endpoint for full data sovereignty.'}
                       </p>
                     </div>
                     {formData.sttProvider === 'local' && (
