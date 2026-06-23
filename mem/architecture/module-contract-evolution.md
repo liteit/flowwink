@@ -36,8 +36,21 @@ Risk: stor refaktor av Sidebar. Gör INTE isolerat — vänta tills Sidebar rör
 ## Long-term: ~90% declarative after step 2-3
 Remaining 10% (module-versioning, migration-deklaration, semver compat-checks) väntar tills third-party moduler är på bordet.
 
+## Views that wait (build when data exists, not before)
+
+### `/admin/event-bus` — producer→consumer graph
+**Right view, wrong timing today.** Datakällan finns (`agent_events`-tabellen + `getModuleWebhookEvents()` / `getModuleListenedEvents()`), komplexiteten är låg. Värde: felsökning av "varför triggade inte X?", dead-listener/dead-event detection, onboarding, sales-demo av event-driven arkitektur.
+
+**Bygg när minst 2 av 3 är sanna:**
+- ≥5 moduler har deklarerat `listens` (annars är grafen för gles att vara meningsfull)
+- ≥1 incident där "varför triggade inte X?" tog >30 min att felsöka
+- Sales-demo behöver visualisera event-driven arkitektur
+
+**Tills dess:** `docs/architecture/event-bus.md` räcker som textuell katalog. `listens` backfillas löpande via `mem://development/new-module-checklist` (punkt 2b) — när någon touchar en befintlig modul som reagerar på event, deklareras det då.
+
 ## Inspiration
 - Odoo `__manifest__.py` `depends` field
 - WordPress plugin requirements
 - VS Code `extensionDependencies`
 - npm `peerDependencies` (closest analog for `integrations.oneOf`)
+
