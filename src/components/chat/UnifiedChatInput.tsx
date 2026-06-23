@@ -6,6 +6,7 @@ import { CommandPalette } from './CommandPalette';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useChatSettings } from '@/hooks/useSiteSettings';
 import type { AgentSkill } from '@/types/agent';
 
 const ACCEPTED_TYPES = '.md,.txt,.pdf,.csv,.json,.xml,.html,.css,.js,.ts,.tsx,.jsx,.yaml,.yml,.log,.doc,.docx';
@@ -84,10 +85,23 @@ export function UnifiedChatInput({
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
   const [isReadingFile, setIsReadingFile] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
+  const { data: chatSettings } = useChatSettings();
+  const sttProvider = chatSettings?.sttProvider ?? 'browser';
+  const hasWebSpeech = typeof window !== 'undefined'
+    && Boolean((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+  const canRecordAudio = typeof window !== 'undefined'
+    && typeof navigator !== 'undefined'
+    && Boolean(navigator.mediaDevices?.getUserMedia)
+    && typeof MediaRecorder !== 'undefined';
+  const canShowMic = allowVoice && (sttProvider === 'browser' ? hasWebSpeech : canRecordAudio);
 
   // Auto-resize textarea
   useEffect(() => {
