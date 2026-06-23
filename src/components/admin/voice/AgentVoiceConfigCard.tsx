@@ -55,6 +55,38 @@ export function AgentVoiceConfigCard() {
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) =>
     setDraft({ ...(draft ?? {}), [k]: v });
 
+  const autofillFromElks = async () => {
+    setFetchingCreds(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('elks46-ingest', {
+        body: { action: 'get_webrtc_credentials' },
+      });
+      if (error) throw error;
+      const creds: WebrtcCred[] = (data as any)?.credentials ?? [];
+      if (!creds.length) {
+        toast.error('No SIP-capable numbers found in your 46elks account', {
+          description: 'Contact support@46elks.com and ask for WebRTC credentials on your number.',
+        });
+        return;
+      }
+      // Pick the first one (most accounts only have one WebRTC number)
+      const c = creds[0];
+      setDraft({
+        ...(draft ?? {}),
+        voice_sip_uri: c.sip_uri,
+        voice_sip_username: c.sip_username,
+        voice_sip_password: c.sip_password,
+      });
+      toast.success(`Filled credentials for ${c.number}`, {
+        description: creds.length > 1 ? `${creds.length} numbers found — using the first. Edit manually if needed.` : 'Click Save to apply.',
+      });
+    } catch (e: any) {
+      toast.error('Failed to fetch credentials', { description: e?.message ?? 'Check 46elks API keys.' });
+    } finally {
+      setFetchingCreds(false);
+    }
+  };
+
   const dirty = draft !== null;
 
   if (isLoading) {
