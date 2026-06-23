@@ -818,6 +818,7 @@ export const SIDEBAR_TO_MODULE: Record<string, keyof ModulesSettings> = {
   '/admin/global-blocks': 'pages',
   '/admin/media': 'mediaLibrary',
   '/admin/webinars': 'webinars',
+  '/admin/webmeet': 'webmeet',
   '/admin/sales-intelligence': 'salesIntelligence',
   '/admin/resume': 'resume',
   '/admin/federation': 'federation',
