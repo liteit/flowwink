@@ -386,7 +386,12 @@ export function UnifiedChat({
 
       {/* Closed-conversation banner (visitor) */}
       {!isAdmin && visitorChat?.isClosed && (
-        <div className="px-4 pb-2">
+        <div className="px-4 pb-2 space-y-2">
+          {conversationId && visitorSettings?.feedbackEnabled !== false && (
+            <div className="flex items-center justify-center bg-muted/40 rounded-lg px-3 py-2 border">
+              <ConversationCSAT conversationId={conversationId} />
+            </div>
+          )}
           <div className="flex items-center justify-between gap-3 text-sm bg-muted/60 text-muted-foreground rounded-lg px-3 py-2 border">
             <span>This conversation has ended.</span>
             {visitorChat.onStartNew && (
@@ -402,6 +407,7 @@ export function UnifiedChat({
           </div>
         </div>
       )}
+
 
       {/* Unified input */}
       <UnifiedChatInput
