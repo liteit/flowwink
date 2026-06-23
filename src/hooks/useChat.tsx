@@ -141,7 +141,7 @@ export function useChat(options?: UseChatOptions) {
         .order('created_at', { ascending: true });
 
       if (!error && data) {
-        setMessages(data.map(m => ({
+        setMessages(data.filter(m => m.role !== 'system').map(m => ({
           id: m.id,
           // Treat 'agent' role as 'assistant' for display
           role: (m.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
