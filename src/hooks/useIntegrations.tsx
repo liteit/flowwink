@@ -72,6 +72,10 @@ export interface IntegrationProviderConfig {
   keyword?: string;
   // 46elks voice
   voice_webhook_url?: string;
+  // ElevenLabs
+  sttModel?: string;     // e.g. scribe_v1
+  ttsModel?: string;     // e.g. eleven_multilingual_v2 / eleven_turbo_v2_5
+  ttsVoiceId?: string;   // ElevenLabs voice ID
 }
 
 // Integration configuration type
