@@ -46,6 +46,45 @@ Never hardcode provider choice. The module reads `ai_config` + per-inbox overrid
 - Both phone-voice and web-voice are sibling channel adapters under the UC-gateway umbrella
 - Shared provider abstraction in `src/lib/voice-providers/` — both adapters consume the same `VoiceProvider` interface
 
+## FlowPilot's effect on voice (vs chat)
+
+Voice är **per definition reaktivt** + lever på <500ms latensbudget. FlowPilots stora värde (heartbeat, proaktivitet, ReAct över många skills) gäller därför **mycket mindre** i samtalsögonblicket än i text-chat.
+
+| Capability | Chat → agent | Voice → agent |
+|---|---|---|
+| Soul + KB + skills + business context | Ja (via `chat-completion`) | Ja (samma endpoint) |
+| ReAct multi-step planning | Ja, gärna 3–5 steg | **Nej** — `maxSteps=1` (max 2) annars tysta pauser |
+| Heartbeat / proaktivitet | FlowPilot-värde | Inte i samtal (separat outbound-flöde) |
+| Long-term memory | FlowPilot-värde | Skrivs efter samtal, läses som context |
+| Objectives-bias i system-prompt | FlowPilot-värde | FlowPilot-värde (gratis, ingen latens) |
+
+**Regel för voice-adaptern:** tvinga `maxSteps=1` oavsett operator-läge. FlowPilot bidrar med memory + objectives-injection i prompten, INTE med djupare reasoning-loopar under pågående samtal. Voice utan FlowPilot fungerar fullt ut via FlowChat-loopen — samma soul, samma skills.
+
+## Lego, inte monolit — så här undviker vi UC-svällning
+
+UC-paraplyet växer lätt till en monolit. Bygg det som **lego** med tre lager per kanal:
+
+```
+Integration  →  Module  →  Page/Embed
+(credentials    (skills,    (visitor-facing
+ + transport)    config,     surface)
+                 routing)
+```
+
+**Regler för att hålla det modulärt:**
+
+1. **En adapter per kanal**, aldrig delade. Web-voice ≠ phone-voice ≠ chat ≠ email. Varje fil under `src/lib/modules/channels/<name>-module.ts` står på egna ben och kan disablas utan att UC går sönder.
+2. **Integrationer återanvänds över adaptrar.** ElevenLabs-integrationen är samma oavsett om den används av `voice-web` eller en framtida `voice-phone-tts`. Bind aldrig en integration till en specifik modul.
+3. **Pages är opt-in per kanal.** Push-to-talk-knapp = block, floating widget = block, embeddable per page. Ingen kanal får tvinga sin UI på andra moduler.
+4. **Skill-seeds per modul.** Voice-modulen seedar bara voice-specifika skills (`start_voice_session`, `transfer_to_human`); generiska skills (`send_message`, `mark_resolved`) ärvs från UC-platformlagret.
+5. **Config-schema per adapter.** JSON Schema → Control-UI byggs dynamiskt. Aldrig en `VoiceSettings.tsx`-sida som känner till alla providers.
+6. **Provider abstraction inne i modulen.** ElevenLabs/OpenAI/Whisper är NOT egna moduler — de är providers bakom `VoiceProvider`-interfacet inom `voice-web-module`. Annars sväller modullistan med pseudo-moduler.
+
+**Test för "är detta en egen modul?"**
+- Egen affärsförmåga + egen admin-yta + egna skills → ✅ modul
+- Bara en provider-implementation bakom en interface → ❌ inte modul, läggs under befintlig modul
+- Bara credentials till ett externt system → ❌ inte modul, det är en integration
+
 ## Docs
 - `docs/modules/voice.md` exists — extend with a "Web voice" section when implementing
 - New module entry: `docs/modules/voice-web.md` (or merge into `voice.md` as "Phone vs Web" subsections)
