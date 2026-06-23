@@ -368,6 +368,10 @@ export function useChat(options?: UseChatOptions) {
 
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isLoading) return;
+    if (isClosed) {
+      setError('This conversation has ended. Please start a new chat.');
+      return;
+    }
     
     setError(null);
     setIsLoading(true);
