@@ -299,18 +299,13 @@ export function UnifiedChat({
 
   // ─── Visitor empty state ──────────────────────────────────────────────
   const renderVisitorEmpty = () => (
-    <div className="flex flex-col h-full">
-      <ChatEmptyState
-        title={visitorSettings?.title}
-        welcomeMessage={visitorSettings?.welcomeMessage}
-        suggestedPrompts={visitorSettings?.suggestedPrompts}
-        onPromptClick={handleSend}
-        compact={compact}
-      />
-      <div className="flex justify-center pb-4">
-        <ChatContextIndicator variant="compact" />
-      </div>
-    </div>
+    <ChatEmptyState
+      title={visitorSettings?.title}
+      welcomeMessage={visitorSettings?.welcomeMessage}
+      suggestedPrompts={visitorSettings?.suggestedPrompts}
+      onPromptClick={handleSend}
+      compact={compact}
+    />
   );
 
   // ─── Render ───────────────────────────────────────────────────────────
