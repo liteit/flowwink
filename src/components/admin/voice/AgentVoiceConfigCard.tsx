@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { UserCircle, Loader2, ChevronDown, ChevronRight, Info } from 'lucide-react';
+import { UserCircle, Loader2, ChevronDown, ChevronRight, Info, Wand2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 import {
   useMyAgentVoice,
@@ -15,11 +17,20 @@ import {
 
 type Draft = Partial<SupportAgentVoice>;
 
+type WebrtcCred = {
+  id: string;
+  number: string;
+  sip_username: string;
+  sip_password: string;
+  sip_uri: string;
+};
+
 export function AgentVoiceConfigCard() {
   const { data: agent, isLoading } = useMyAgentVoice();
   const update = useUpdateMyAgentVoice();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [fetchingCreds, setFetchingCreds] = useState(false);
 
   useEffect(() => {
     setDraft(null);
@@ -43,6 +54,38 @@ export function AgentVoiceConfigCard() {
 
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) =>
     setDraft({ ...(draft ?? {}), [k]: v });
+
+  const autofillFromElks = async () => {
+    setFetchingCreds(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('elks46-ingest', {
+        body: { action: 'get_webrtc_credentials' },
+      });
+      if (error) throw error;
+      const creds: WebrtcCred[] = (data as any)?.credentials ?? [];
+      if (!creds.length) {
+        toast.error('No SIP-capable numbers found in your 46elks account', {
+          description: 'Contact support@46elks.com and ask for WebRTC credentials on your number.',
+        });
+        return;
+      }
+      // Pick the first one (most accounts only have one WebRTC number)
+      const c = creds[0];
+      setDraft({
+        ...(draft ?? {}),
+        voice_sip_uri: c.sip_uri,
+        voice_sip_username: c.sip_username,
+        voice_sip_password: c.sip_password,
+      });
+      toast.success(`Filled credentials for ${c.number}`, {
+        description: creds.length > 1 ? `${creds.length} numbers found — using the first. Edit manually if needed.` : 'Click Save to apply.',
+      });
+    } catch (e: any) {
+      toast.error('Failed to fetch credentials', { description: e?.message ?? 'Check 46elks API keys.' });
+    } finally {
+      setFetchingCreds(false);
+    }
+  };
 
   const dirty = draft !== null;
 
@@ -127,6 +170,20 @@ export function AgentVoiceConfigCard() {
                 Find your 46elks WebRTC credentials →
               </a>
             </p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={autofillFromElks}
+              disabled={fetchingCreds}
+              className="w-full"
+            >
+              {fetchingCreds ? (
+                <><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />Fetching from 46elks…</>
+              ) : (
+                <><Wand2 className="h-3.5 w-3.5 mr-2" />Auto-fill from 46elks</>
+              )}
+            </Button>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="sip-uri" className="text-xs">SIP URI</Label>
