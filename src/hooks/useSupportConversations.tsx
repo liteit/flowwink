@@ -100,22 +100,25 @@ export function useSupportConversations() {
     },
   });
 
-  // Realtime subscription for conversation updates
+  // Realtime subscription — invalidates list queries on any conversation OR new message
   useEffect(() => {
+    const invalidate = () => {
+      queryClient.invalidateQueries({ queryKey: ['support-assigned-conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['support-waiting-conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['support-escalated-conversations'] });
+    };
+
     const channel = supabase
-      .channel('support-conversations-realtime')
+      .channel('support-realtime')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'chat_conversations',
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['support-assigned-conversations'] });
-          queryClient.invalidateQueries({ queryKey: ['support-waiting-conversations'] });
-          queryClient.invalidateQueries({ queryKey: ['support-escalated-conversations'] });
-        }
+        { event: '*', schema: 'public', table: 'chat_conversations' },
+        invalidate,
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+        invalidate,
       )
       .subscribe();
 
@@ -361,12 +364,13 @@ export function useConversationMessages(conversationId: string | null) {
         }
 
         if (conv?.channel === 'sms') {
-          // Determine which SMS provider to use based on conversation visitor_profile
-          const smsProvider = (conv?.visitor_profile as any)?.sms_provider ?? 'twilio';
+          // Determine which SMS provider to use based on conversation visitor_profile.
+          // Default = 46elks (Twilio kept as fallback for legacy threads tagged 'twilio').
+          const smsProvider = (conv?.visitor_profile as any)?.sms_provider ?? 'elks46';
           const functionName =
             smsProvider === 'gatewayapi' ? 'gatewayapi-ingest'
-            : smsProvider === 'elks46' ? 'elks46-ingest'
-            : 'twilio-ingest';
+            : smsProvider === 'twilio' ? 'twilio-ingest'
+            : 'elks46-ingest';
           const relayResp = await fetch(
             `${baseUrl}/functions/v1/${functionName}?action=send`,
             {

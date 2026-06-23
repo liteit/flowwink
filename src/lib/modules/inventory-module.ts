@@ -441,6 +441,17 @@ export const inventoryModule = defineModule<InventoryInput, InventoryOutput>({
     'inventory_gl_reconciliation',
     'manage_inventory_count',
   ],
+  data: {
+    tables: [
+      'stock_reservations',
+      'stock_moves',
+      'stock_quants',
+      'stock_lots',
+      'stock_locations',
+      'uoms',
+      'uom_categories',
+    ],
+  },
   skillSeeds: INVENTORY_SKILLS,
   automations: INVENTORY_AUTOMATIONS,
 

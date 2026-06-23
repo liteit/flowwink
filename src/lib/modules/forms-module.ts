@@ -112,6 +112,9 @@ export const formsModule = defineModule<FormSubmissionModuleInput, FormSubmissio
   skills: [
     'manage_form_submissions',
   ],
+  data: {
+    tables: ['form_submissions'],
+  },
   skillSeeds: FORMS_SKILLS,
 
   webhookEvents: [

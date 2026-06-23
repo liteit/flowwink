@@ -152,6 +152,9 @@ export const companiesModule = defineModule<CompanyModuleInput, CompanyModuleOut
     // Polymorphic multi-address skill — primary owner is companies.
     'manage_addresses',
   ],
+  data: {
+    tables: ['companies'],
+  },
   skillSeeds: COMPANIES_SKILLS,
 
   webhookEvents: [

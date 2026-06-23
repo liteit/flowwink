@@ -210,6 +210,9 @@ export const returnsModule = defineModule<Input, Output>({
   inputSchema,
   outputSchema,
   skills: ['create_return', 'manage_return_item', 'approve_return', 'receive_return', 'refund_return', 'inspect_return', 'return_reason_report'],
+  data: {
+    tables: ['return_items', 'returns'],
+  },
   skillSeeds: SKILLS,
   async publish(input: Input): Promise<Output> {
     const v = inputSchema.parse(input);

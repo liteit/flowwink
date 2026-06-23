@@ -341,6 +341,22 @@ export const purchasingModule = defineModule<PurchasingInput, PurchasingOutput>(
     'register_vendor_invoice', 'match_po_to_invoice', 'flag_invoice_variance',
     'update_purchase_order', 'auto_generate_purchase_orders',
   ],
+  data: {
+    tables: [
+      'goods_receipt_lines',
+      'goods_receipts',
+      'purchase_order_lines',
+      'purchase_orders',
+      'rfq_bids',
+      'rfq_lines',
+      'rfqs',
+      'vendor_invoices',
+      'vendor_products',
+      'procurement_suggestions',
+      'tolerance_policies',
+      'vendors',
+    ],
+  },
   skillSeeds: PURCHASING_SKILLS,
   automations: PURCHASING_AUTOMATIONS,
 

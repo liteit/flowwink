@@ -9,7 +9,7 @@ category: reference
 > **GENERATED FILE.** Run `bun run scripts/parity-report.ts` to refresh.
 > Edit `docs/parity/capabilities/<module>.json` to change scores.
 
-**Benchmarked modules:** 54  ·  **Mean parity:** 59%  ·  **Differentiators (no Odoo benchmark):** 10  ·  **Unscored:** 0
+**Benchmarked modules:** 54  ·  **Mean parity:** 59%  ·  **Differentiators (no Odoo benchmark):** 10  ·  **Unscored:** 1
 
 ## Scored modules
 
@@ -84,6 +84,12 @@ category: reference
 | **river** | none (FlowWink differentiator) | 5 |
 | **site-migration** | none (FlowWink differentiator) | 4 |
 | **workspace-chat** | none (FlowWink differentiator) | 2 |
+
+## Unscored modules (breadth backlog)
+
+> Create `docs/parity/capabilities/<module>.json` for each — see `_schema.md`.
+
+`voice`
 
 ## Foundational gaps (weight 3, still open)
 

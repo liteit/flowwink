@@ -139,6 +139,10 @@ export const pricelistsModule = defineModule<Input, Output>({
   outputSchema,
   skills: ['manage_pricelist', 'manage_pricelist_item', 'resolve_pricelist_price'],
   skillSeeds: SKILLS,
+  data: {
+    // children first (FK-safe order)
+    tables: ['pricelist_items', 'pricelists'],
+  },
   async publish(input: Input): Promise<Output> {
     const v = inputSchema.parse(input);
     if (v.action === 'resolve_price' && v.product_id) {

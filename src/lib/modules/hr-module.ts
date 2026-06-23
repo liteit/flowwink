@@ -161,6 +161,24 @@ export const hrModule = defineModule<HrInput, HrOutput>({
   outputSchema: hrOutputSchema,
 
   skills: ['manage_employee', 'manage_leave', 'onboarding_checklist', 'auto_allocate_vacation'],
+  data: {
+    // children first (FK-safe order)
+    tables: [
+      'employee_documents',
+      'employee_skills',
+      'leave_requests',
+      'leave_allocations',
+      'vacation_policies',
+      'attendance_entries',
+      'certifications',
+      'onboarding_checklists',
+      'onboarding_templates',
+      'one_on_ones',
+      'performance_goals',
+      'performance_reviews',
+      'employees',
+    ],
+  },
   skillSeeds: HR_SKILLS,
   automations: HR_AUTOMATIONS,
 

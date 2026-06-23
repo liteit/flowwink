@@ -133,6 +133,9 @@ export const dealsModule = defineModule<DealModuleInput, DealModuleOutput>({
     'manage_deal',
     'deal_stale_check',
   ],
+  data: {
+    tables: ['deal_activities', 'deals', 'pipeline_stages'],
+  },
   skillSeeds: DEALS_SKILLS,
 
   webhookEvents: [
