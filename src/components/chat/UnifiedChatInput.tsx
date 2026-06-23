@@ -195,7 +195,7 @@ export function UnifiedChatInput({
     }
   };
 
-  const startVoice = useCallback(() => {
+  const startWebSpeech = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return;
 
@@ -224,6 +224,101 @@ export function UnifiedChatInput({
     recognition.start();
     setIsListening(true);
   }, [isListening]);
+
+  const stopServerRecording = useCallback(() => {
+    try { mediaRecorderRef.current?.stop(); } catch { /* noop */ }
+    mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+    mediaStreamRef.current = null;
+    setIsListening(false);
+  }, []);
+
+  const startServerRecording = useCallback(async () => {
+    if (isListening) { stopServerRecording(); return; }
+    if (!canRecordAudio) {
+      toast({ title: 'Recording unavailable', description: 'This browser cannot record audio.', variant: 'destructive' });
+      return;
+    }
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      toast({ title: 'Microphone access denied', description: 'Allow microphone access to use voice input.', variant: 'destructive' });
+      return;
+    }
+    const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/mpeg'];
+    const mimeType = candidates.find((t) => (MediaRecorder as any).isTypeSupported?.(t)) ?? '';
+    let recorder: MediaRecorder;
+    try {
+      recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+    } catch {
+      stream.getTracks().forEach((t) => t.stop());
+      toast({ title: 'Recording unavailable', description: 'Could not start the recorder.', variant: 'destructive' });
+      return;
+    }
+    audioChunksRef.current = [];
+    mediaRecorderRef.current = recorder;
+    mediaStreamRef.current = stream;
+    recorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+    recorder.onstop = async () => {
+      mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+      mediaStreamRef.current = null;
+      const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+      audioChunksRef.current = [];
+      if (blob.size < 1024) {
+        toast({ title: 'Recording too short', description: 'Try again and speak for a moment.', variant: 'destructive' });
+        return;
+      }
+      setIsTranscribing(true);
+      try {
+        const ext = (blob.type.split(';')[0].split('/')[1] || 'webm');
+        const fd = new FormData();
+        fd.append('file', blob, `recording.${ext}`);
+        fd.append('provider', sttProvider);
+        if (sttProvider === 'local') {
+          fd.append('endpoint', chatSettings?.sttLocalEndpoint ?? '');
+          fd.append('model', chatSettings?.sttLocalModel ?? 'whisper-1');
+        }
+        const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/chat-stt`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${(import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+          body: fd,
+        });
+        if (!res.ok) {
+          const errBody = await res.text().catch(() => '');
+          throw new Error(errBody || `HTTP ${res.status}`);
+        }
+        const json = await res.json();
+        const text = (json?.text ?? '').toString().trim();
+        if (text) {
+          setValue((prev) => (prev ? `${prev} ${text}` : text));
+          textareaRef.current?.focus();
+        } else {
+          toast({ title: 'No speech detected', description: 'The audio came back empty.', variant: 'destructive' });
+        }
+      } catch (e: any) {
+        toast({ title: 'Transcription failed', description: e?.message ?? 'Unknown error', variant: 'destructive' });
+      } finally {
+        setIsTranscribing(false);
+      }
+    };
+    recorder.start();
+    setIsListening(true);
+  }, [isListening, canRecordAudio, sttProvider, chatSettings?.sttLocalEndpoint, chatSettings?.sttLocalModel, toast, stopServerRecording]);
+
+  const startVoice = useCallback(() => {
+    if (sttProvider === 'browser') {
+      startWebSpeech();
+    } else {
+      void startServerRecording();
+    }
+  }, [sttProvider, startWebSpeech, startServerRecording]);
+
+  // Cleanup on unmount
+  useEffect(() => () => {
+    try { mediaRecorderRef.current?.stop(); } catch { /* noop */ }
+    mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+  }, []);
 
   return (
     <div className="relative border-t bg-background">
@@ -284,17 +379,17 @@ export function UnifiedChatInput({
                 />
               </>
             )}
-            {allowVoice && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) ? (
+            {canShowMic ? (
               <Button
                 variant="ghost"
                 size="icon"
                 type="button"
                 onClick={startVoice}
-                disabled={isLoading || disabled}
+                disabled={isLoading || disabled || isTranscribing}
                 className={cn('h-9 w-9 rounded-full', isListening && 'text-red-500 bg-red-50 dark:bg-red-950')}
-                title={isListening ? 'Stop recording' : 'Voice input'}
+                title={isTranscribing ? 'Transcribing…' : isListening ? 'Stop recording' : 'Voice input'}
               >
-                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                {isTranscribing ? <Loader2 className="h-4 w-4 animate-spin" /> : isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </Button>
             ) : null}
           </div>
