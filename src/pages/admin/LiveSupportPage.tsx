@@ -379,39 +379,55 @@ export default function LiveSupportPage() {
                     <CardContent className="flex-1 min-h-0 p-0">
                       <ScrollArea className="h-full p-4">
                         <div className="space-y-4">
-                          {messages.map(message => (
-                            <div
-                              key={message.id}
-                              className={cn(
-                                'flex gap-3',
-                                message.role === 'agent' && 'flex-row-reverse'
-                              )}
-                            >
-                              <Avatar className="h-8 w-8 shrink-0">
-                                <AvatarFallback>
-                                  {message.role === 'user' ? <User className="h-4 w-4" /> : 
-                                   message.role === 'assistant' ? <Bot className="h-4 w-4" /> :
-                                   <Headphones className="h-4 w-4" />}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className={cn(
-                                'rounded-lg px-3 py-2 max-w-[80%]',
-                                message.role === 'user' ? 'bg-muted' :
-                                message.role === 'agent' ? 'bg-primary text-primary-foreground' :
-                                'bg-blue-100 dark:bg-blue-900/30'
-                              )}>
-                                {message.role !== 'user' && message.role !== 'agent' && (
-                                  <p className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">
-                                    AI Assistant
-                                  </p>
+                          {messages.map(message => {
+                            if (message.role === 'system') {
+                              return (
+                                <div key={message.id} className="flex justify-center">
+                                  <div className="rounded-full bg-muted px-3 py-1.5 text-xs text-muted-foreground">
+                                    <span className="font-medium">Internal routing note:</span>{' '}
+                                    <span>{message.content}</span>{' '}
+                                    <time className="opacity-70">
+                                      {format(new Date(message.created_at), 'HH:mm')}
+                                    </time>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div
+                                key={message.id}
+                                className={cn(
+                                  'flex gap-3',
+                                  message.role === 'agent' && 'flex-row-reverse'
                                 )}
-                                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                                <time className="text-xs opacity-70 mt-1 block">
-                                  {format(new Date(message.created_at), 'HH:mm')}
-                                </time>
+                              >
+                                <Avatar className="h-8 w-8 shrink-0">
+                                  <AvatarFallback>
+                                    {message.role === 'user' ? <User className="h-4 w-4" /> : 
+                                     message.role === 'assistant' ? <Bot className="h-4 w-4" /> :
+                                     <Headphones className="h-4 w-4" />}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className={cn(
+                                  'rounded-lg px-3 py-2 max-w-[80%]',
+                                  message.role === 'user' ? 'bg-muted' :
+                                  message.role === 'agent' ? 'bg-primary text-primary-foreground' :
+                                  'bg-muted/60'
+                                )}>
+                                  {message.role === 'assistant' && (
+                                    <p className="text-xs font-medium text-primary mb-1">
+                                      AI Assistant
+                                    </p>
+                                  )}
+                                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                                  <time className="text-xs opacity-70 mt-1 block">
+                                    {format(new Date(message.created_at), 'HH:mm')}
+                                  </time>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </ScrollArea>
                     </CardContent>
