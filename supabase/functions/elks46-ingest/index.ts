@@ -47,6 +47,7 @@ serve(async (req) => {
   if (action === "call") return handleCall(req);
   if (action === "test") return handleTest(req);
   if (action === "set_voice_start") return handleSetVoiceStart(req);
+  if (action === "get_webrtc_credentials") return handleGetWebrtcCredentials(req);
   return handleIngest(req);
 });
 
