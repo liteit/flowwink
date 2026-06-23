@@ -782,6 +782,16 @@ export const defaultModulesSettings: ModulesSettings = {
     adminUI: true,
     enhancedByFlowPilot: true,
   },
+  webmeet: {
+    enabled: false,
+    name: 'WebMeet',
+    description:
+      'Quick 1-to-few video meetings with shareable URLs and screen sharing — peer-to-peer WebRTC, no install for guests. Use for internal huddles, customer consultations (e.g. psychologist sessions), and ad-hoc calls. For 50+ viewer broadcasts, use Webinars instead.',
+    icon: 'Video',
+    category: 'communication',
+    autonomy: 'agent-capable',
+    adminUI: true,
+  },
 };
 
 // Map sidebar items to module IDs
