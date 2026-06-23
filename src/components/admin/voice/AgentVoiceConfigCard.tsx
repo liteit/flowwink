@@ -170,6 +170,20 @@ export function AgentVoiceConfigCard() {
                 Find your 46elks WebRTC credentials →
               </a>
             </p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={autofillFromElks}
+              disabled={fetchingCreds}
+              className="w-full"
+            >
+              {fetchingCreds ? (
+                <><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />Fetching from 46elks…</>
+              ) : (
+                <><Wand2 className="h-3.5 w-3.5 mr-2" />Auto-fill from 46elks</>
+              )}
+            </Button>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="sip-uri" className="text-xs">SIP URI</Label>
