@@ -335,7 +335,87 @@ function FirecrawlCreditsBadge({ hasKey }: { hasKey: boolean }) {
   );
 }
 
-// 46elks live balance + number count — calls elks46-ingest?action=test
+// ElevenLabs live usage indicator — calls elevenlabs-account edge function.
+// Surfaces characters used / monthly quota + tier.
+function ElevenLabsUsageBadge({ hasKey }: { hasKey: boolean }) {
+  const [info, setInfo] = useState<{
+    used: number;
+    limit: number;
+    remaining: number;
+    tier: string | null;
+    resetUnix: number | null;
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!hasKey) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('elevenlabs-account');
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Failed to read usage');
+      setInfo({
+        used: data.characters_used ?? 0,
+        limit: data.character_limit ?? 0,
+        remaining: data.characters_remaining ?? 0,
+        tier: data.tier ?? null,
+        resetUnix: data.next_character_count_reset_unix ?? null,
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed');
+    } finally {
+      setLoading(false);
+    }
+  }, [hasKey]);
+
+  if (!hasKey) return null;
+
+  const pct = info && info.limit > 0 ? Math.min(100, Math.round((info.used / info.limit) * 100)) : 0;
+  const resetLabel = info?.resetUnix
+    ? new Date(info.resetUnix * 1000).toLocaleDateString()
+    : null;
+
+  return (
+    <div className="space-y-1.5 rounded-md border bg-muted/30 px-2.5 py-1.5 text-xs">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-muted-foreground">
+          ElevenLabs characters{info?.tier ? ` · ${info.tier}` : ''}
+        </span>
+        {info ? (
+          <span className="font-medium tabular-nums">
+            {info.used.toLocaleString()}
+            {info.limit > 0 && (
+              <span className="text-muted-foreground"> / {info.limit.toLocaleString()}</span>
+            )}
+          </span>
+        ) : error ? (
+          <span className="text-destructive">{error}</span>
+        ) : (
+          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" disabled={loading} onClick={load}>
+            {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Check'}
+          </Button>
+        )}
+      </div>
+      {info && info.limit > 0 && (
+        <>
+          <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className={`h-full transition-all ${
+                pct >= 90 ? 'bg-destructive' : pct >= 75 ? 'bg-amber-500' : 'bg-primary'
+              }`}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          {resetLabel && (
+            <div className="text-[10px] text-muted-foreground">Resets {resetLabel}</div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
 function Elks46BalanceBadge({ hasKey }: { hasKey: boolean }) {
   const [info, setInfo] = useState<{ balance: number; currency: string; numbers: number } | null>(null);
   const [loading, setLoading] = useState(false);
