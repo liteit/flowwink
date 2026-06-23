@@ -16,6 +16,7 @@ import { UnifiedChatInput } from './UnifiedChatInput';
 import { ChatTypingIndicator } from './ChatTypingIndicator';
 import { ChatEmptyState } from './ChatEmptyState';
 import { ChatMessage } from './ChatMessage';
+import { ConversationCSAT } from './ConversationCSAT';
 import { ProactiveMessageCard } from './ProactiveMessageCard';
 import type { ProactiveMessage } from '@/hooks/useProactiveMessages';
 import type { ActionButton } from './ProactiveMessageCard';
