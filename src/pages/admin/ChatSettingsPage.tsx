@@ -1144,7 +1144,7 @@ export default function ChatSettingsPage() {
                         <div>
                           <CardTitle className="text-base">Human Handoff</CardTitle>
                           <CardDescription>
-                            AI can transfer conversations to live support agents. Works independently of FlowPilot.
+                            AI can transfer conversations to live teammates. Works independently of FlowPilot.
                           </CardDescription>
                         </div>
                       </div>
@@ -1161,8 +1161,8 @@ export default function ChatSettingsPage() {
                       <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-900">
                         <Headphones className="h-4 w-4 text-green-600" />
                         <AlertDescription className="text-green-700 dark:text-green-300">
-                          When enabled, AI will route conversations to available agents when users need human support.
-                          If no agents are online, an escalation ticket will be created.
+                          When enabled, AI will route conversations to available teammates when users need human support.
+                          If no teammates are online, an escalation ticket will be created.
                         </AlertDescription>
                       </Alert>
                     </CardContent>
@@ -1235,7 +1235,7 @@ export default function ChatSettingsPage() {
                         <div>
                           <CardTitle>FlowPilot Action Skills</CardTitle>
                           <CardDescription>
-                            Let the chat agent perform actions: bookings, leads, orders, etc.
+                            Let the AI assistant perform actions: bookings, leads, orders, etc.
                           </CardDescription>
                         </div>
                       </div>
@@ -1780,7 +1780,7 @@ function AnalyticsTab({ saveConversations }: { saveConversations?: boolean }) {
                 ) : (
                   <p className="text-2xl font-bold text-amber-600">{analytics?.escalatedCount || 0}</p>
                 )}
-                <p className="text-xs text-muted-foreground">Escalated to agent</p>
+                <p className="text-xs text-muted-foreground">Escalated to teammate</p>
               </div>
             </div>
           </CardContent>
