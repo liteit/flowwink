@@ -100,6 +100,8 @@ export function ChatConversation({
           error,
           sendMessage,
           cancelRequest,
+          isClosed,
+          onStartNew: clearMessages,
         }}
         visitorSettings={{
           title: checkinId ? 'Profile Check-in' : settings?.title,
