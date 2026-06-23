@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { UserCircle, Loader2, ChevronDown, ChevronRight, Info } from 'lucide-react';
+import { UserCircle, Loader2, ChevronDown, ChevronRight, Info, Wand2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 import {
   useMyAgentVoice,
@@ -15,11 +17,20 @@ import {
 
 type Draft = Partial<SupportAgentVoice>;
 
+type WebrtcCred = {
+  id: string;
+  number: string;
+  sip_username: string;
+  sip_password: string;
+  sip_uri: string;
+};
+
 export function AgentVoiceConfigCard() {
   const { data: agent, isLoading } = useMyAgentVoice();
   const update = useUpdateMyAgentVoice();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [fetchingCreds, setFetchingCreds] = useState(false);
 
   useEffect(() => {
     setDraft(null);
