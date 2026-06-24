@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
 import { useModules } from '@/hooks/useModules';
 import { bootstrapModule } from '@/lib/module-bootstrap';
+import { bootstrapPlatform } from '@/lib/platform-seeds';
 
 /**
  * useFlowPilotBootstrap
