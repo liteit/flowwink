@@ -636,14 +636,9 @@ export const flowpilotModule = defineModule<Input, Output>({
       skill_name: 'weekly_business_digest',
       skill_arguments: {},
     },
-    {
-      name: 'Daily Briefing',
-      description: 'Platform automation. Generates the daily business briefing every morning at 07:00 UTC and posts it to admin FlowChat. Runs deterministically (no ReAct).',
-      trigger_type: 'cron',
-      trigger_config: { cron: '0 7 * * *', timezone: 'UTC' },
-      skill_name: 'run_daily_briefing',
-      skill_arguments: { source: 'automation' },
-    },
+    // 'Daily Briefing' lives in src/lib/platform-seeds.ts — it's a platform
+    // SaaS automation, not a FlowPilot-owned one.
+
   ],
 
   async publish(input: Input): Promise<Output> {
