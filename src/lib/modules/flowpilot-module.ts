@@ -407,6 +407,36 @@ Generates a cross-module business summary covering views, leads, bookings, order
 - Can be heavy on DB queries — avoid running more than once per hour.`,
   },
   {
+    name: 'run_daily_briefing',
+    description: 'Generate the daily business briefing: health score, key metrics (visitors, leads, orders, revenue), AI summary and action items. Writes to flowpilot_briefings + admin FlowChat. Use when: scheduled daily run; admin requests today\'s briefing. NOT for: weekly review (weekly_business_digest); ad-hoc analytics (analyze_analytics).',
+    category: 'analytics',
+    handler: 'edge:flowpilot-briefing',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'run_daily_briefing',
+        description: 'Generate the daily business briefing. Aggregates metrics, asks LLM for a summary, persists to flowpilot_briefings, posts to admin FlowChat as a system message, and emails the owner.',
+        parameters: {
+          type: 'object',
+          properties: {
+            source: { type: 'string', description: 'Trigger source label (cron, manual, automation).' },
+          },
+        },
+      },
+    },
+    instructions: `## run_daily_briefing
+### What
+Deterministic metric aggregation + a single LLM-call for narrative summary. NOT a ReAct loop — this is a SaaS automation, not an agent action.
+### When to use
+- Scheduled daily via the platform automation 'Daily Briefing' (07:00 UTC)
+- Admin asks for today's briefing on demand
+### Output
+- Inserts row in flowpilot_briefings (consumed by BusinessPulseWidget)
+- Posts a system message in the admin's today-session FlowChat
+- Emails the owner if Resend is configured`,
+  },
+  {
     name: 'learn_from_data',
     description: 'Analyze page views, chat feedback, and lead conversions to distill learnings into persistent memory. Use when: heartbeat learning cycle; extracting insights from operational data; building institutional knowledge. NOT for: analyzing analytics directly (analyze_analytics); generating business digests (weekly_business_digest).',
     category: 'analytics',
