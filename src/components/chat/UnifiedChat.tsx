@@ -16,6 +16,7 @@ import { UnifiedChatInput } from './UnifiedChatInput';
 import { ChatTypingIndicator } from './ChatTypingIndicator';
 import { ChatEmptyState } from './ChatEmptyState';
 import { ChatMessage } from './ChatMessage';
+import { ConversationCSAT } from './ConversationCSAT';
 import { ProactiveMessageCard } from './ProactiveMessageCard';
 import type { ProactiveMessage } from '@/hooks/useProactiveMessages';
 import type { ActionButton } from './ProactiveMessageCard';
@@ -205,6 +206,8 @@ interface UnifiedChatProps {
     error?: string | null;
     sendMessage: (msg: string) => void;
     cancelRequest?: () => void;
+    isClosed?: boolean;
+    onStartNew?: () => void;
   };
   visitorSettings?: {
     title?: string;
@@ -382,14 +385,43 @@ export function UnifiedChat({
         </div>
       )}
 
+      {/* Closed-conversation banner (visitor) */}
+      {!isAdmin && visitorChat?.isClosed && (
+        <div className="px-4 pb-2 space-y-2">
+          {conversationId && visitorSettings?.feedbackEnabled !== false && (
+            <div className="flex items-center justify-center bg-muted/40 rounded-lg px-3 py-2 border">
+              <ConversationCSAT conversationId={conversationId} />
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-3 text-sm bg-muted/60 text-muted-foreground rounded-lg px-3 py-2 border">
+            <span>This conversation has ended.</span>
+            {visitorChat.onStartNew && (
+              <Button
+                size="sm"
+                variant="default"
+                className="h-7"
+                onClick={visitorChat.onStartNew}
+              >
+                Start new chat
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+
       {/* Unified input */}
       <UnifiedChatInput
         onSend={handleSend}
         onCancel={loading ? handleCancel : undefined}
         onReset={isAdmin ? onReset : undefined}
         isLoading={loading}
-        placeholder={isAdmin ? 'Tell FlowPilot what to do…' : visitorSettings?.placeholder}
-        disabled={false}
+        placeholder={
+          !isAdmin && visitorChat?.isClosed
+            ? 'This conversation has ended — start a new chat to continue.'
+            : isAdmin ? 'Tell FlowPilot what to do…' : visitorSettings?.placeholder
+        }
+        disabled={!isAdmin && !!visitorChat?.isClosed}
         skills={skills}
         scope={scope}
       />

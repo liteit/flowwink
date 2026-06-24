@@ -323,7 +323,7 @@ serve(async (req) => {
     let effectiveSettings: any = settings;
     if (!effectiveSettings?.routingMode) {
       const { data: cs } = await supabase
-        .from('site_settings').select('value').eq('key', 'chat_settings').maybeSingle();
+        .from('site_settings').select('value').eq('key', 'chat').maybeSingle();
       effectiveSettings = { ...(cs?.value as any || {}), ...(settings || {}) };
     }
     const routingMode: string = effectiveSettings?.routingMode || 'ai_first';
@@ -362,7 +362,7 @@ serve(async (req) => {
             .update({ conversation_status: 'waiting_agent', updated_at: new Date().toISOString() })
             .eq('id', conversationId);
           const handoffMsg = agentsOnline
-            ? 'Thanks — an agent will respond shortly.'
+            ? 'Thanks — a teammate will respond shortly.'
             : 'Thanks for your message. Our team is currently offline; we\'ll get back to you as soon as we\'re back.';
           await supabase.from('chat_messages').insert({
             conversation_id: conversationId,

@@ -183,7 +183,7 @@ const defaultMaintenanceSettings: MaintenanceSettings = {
 
 // Chat settings
 export type ChatAiProvider = 'openai' | 'gemini' | 'local' | 'n8n';
-export type ChatSttProvider = 'browser' | 'openai' | 'gemini' | 'local';
+export type ChatSttProvider = 'browser' | 'openai' | 'gemini' | 'local' | 'elevenlabs';
 export type ChatTtsProvider = 'none' | 'openai' | 'gemini' | 'local';
 export type ChatWidgetStyle = 'floating' | 'pill' | 'expanded';
 export type ChatWidgetSize = 'sm' | 'md' | 'lg';
@@ -282,10 +282,8 @@ export interface ChatSettings {
   
   // Chat appearance
   showChatIcons: boolean;
-  
-  // FlowPilot integration
-  showEscalationsInCopilot: boolean;
-  showPublicChatsInCopilot: boolean;
+
+
   
   // Speech — STT & TTS
   sttProvider: ChatSttProvider;
@@ -350,8 +348,6 @@ export const defaultChatSettings: ChatSettings = {
   showLiveAgentBanner: true,
   liveAgentIconStyle: 'avatar',
   showChatIcons: true,
-  showEscalationsInCopilot: false,
-  showPublicChatsInCopilot: false,
   sttProvider: 'browser',
   sttLocalEndpoint: '',
   sttLocalModel: 'whisper-1',

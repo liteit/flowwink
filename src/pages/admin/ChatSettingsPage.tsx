@@ -832,7 +832,7 @@ export default function ChatSettingsPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="ai_first">AI first — AI answers, escalates on demand</SelectItem>
-                        <SelectItem value="human_first">Human first — straight to live-support, AI fallback if no agent online</SelectItem>
+                        <SelectItem value="human_first">Human first — straight to live-support, AI fallback if no teammate online</SelectItem>
                         <SelectItem value="ai_only">AI only — no escalation</SelectItem>
                         <SelectItem value="human_only">Human only — never AI, queues if offline</SelectItem>
                       </SelectContent>
@@ -842,9 +842,9 @@ export default function ChatSettingsPage() {
                   {/* Live Agent Banner setting */}
                   <div className="flex items-center justify-between p-4 rounded-lg border">
                     <div>
-                      <h4 className="font-medium">Show Live Agent Banner</h4>
+                      <h4 className="font-medium">Show Live Teammate Banner</h4>
                       <p className="text-sm text-muted-foreground">
-                        Display "You are now chatting with a live agent" banner
+                        Display "You are now chatting with a teammate" banner
                       </p>
                     </div>
                     <Switch
@@ -874,9 +874,9 @@ export default function ChatSettingsPage() {
                   {/* Live Agent Icon Style setting */}
                   <div className="space-y-2 p-4 rounded-lg border">
                     <div>
-                      <h4 className="font-medium">Live Agent Icon Style</h4>
+                      <h4 className="font-medium">Live Teammate Icon Style</h4>
                       <p className="text-sm text-muted-foreground">
-                        What to display instead of the robot icon when chatting with a live agent
+                        What to display instead of the robot icon when chatting with a teammate
                       </p>
                     </div>
                     <Select
@@ -896,21 +896,6 @@ export default function ChatSettingsPage() {
                     </Select>
                   </div>
 
-                  {/* Context indicator setting */}
-                  <div className="flex items-center justify-between p-4 rounded-lg border">
-                    <div>
-                      <h4 className="font-medium">Show Context Indicator</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Display "X pages • Y articles" badge in chat
-                      </p>
-                    </div>
-                    <Switch
-                      checked={formData.showContextIndicator ?? true}
-                      onCheckedChange={(showContextIndicator) => 
-                        setFormData({ ...formData, showContextIndicator })
-                      }
-                    />
-                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -940,14 +925,16 @@ export default function ChatSettingsPage() {
                           <SelectItem value="browser">Browser (Web Speech API)</SelectItem>
                           <SelectItem value="openai">OpenAI Whisper</SelectItem>
                           <SelectItem value="gemini">Google Gemini</SelectItem>
+                          <SelectItem value="elevenlabs">ElevenLabs Scribe</SelectItem>
                           <SelectItem value="local">Private / Local Whisper</SelectItem>
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-muted-foreground">
-                        {formData.sttProvider === 'browser' && 'Uses the browser\'s built-in speech recognition. Free, but quality varies by browser.'}
-                        {formData.sttProvider === 'openai' && 'Uses OpenAI Whisper API. High quality, 50+ languages. Requires OPENAI_API_KEY.'}
-                        {formData.sttProvider === 'gemini' && 'Uses Google Gemini for transcription. Requires GEMINI_API_KEY.'}
-                        {formData.sttProvider === 'local' && 'Point to your own OpenAI-compatible Whisper endpoint for full data sovereignty.'}
+                        {formData.sttProvider === 'browser' && 'Uses the browser\'s built-in speech recognition. Free, no server round-trip, but Firefox has no mic and quality varies by browser.'}
+                        {formData.sttProvider === 'openai' && 'Records audio in-browser and transcribes via OpenAI Whisper. Works in every modern browser. Requires OPENAI_API_KEY.'}
+                        {formData.sttProvider === 'gemini' && 'Records audio in-browser and transcribes via Google Gemini. Requires GEMINI_API_KEY.'}
+                        {formData.sttProvider === 'elevenlabs' && 'Records audio in-browser and transcribes via ElevenLabs Scribe (scribe_v1). Requires ELEVENLABS_API_KEY.'}
+                        {formData.sttProvider === 'local' && 'Records audio in-browser and POSTs it to your own OpenAI-compatible Whisper endpoint for full data sovereignty.'}
                       </p>
                     </div>
                     {formData.sttProvider === 'local' && (
@@ -1144,7 +1131,7 @@ export default function ChatSettingsPage() {
                         <div>
                           <CardTitle className="text-base">Human Handoff</CardTitle>
                           <CardDescription>
-                            AI can transfer conversations to live support agents. Works independently of FlowPilot.
+                            AI can transfer conversations to live teammates. Works independently of FlowPilot.
                           </CardDescription>
                         </div>
                       </div>
@@ -1161,8 +1148,8 @@ export default function ChatSettingsPage() {
                       <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-900">
                         <Headphones className="h-4 w-4 text-green-600" />
                         <AlertDescription className="text-green-700 dark:text-green-300">
-                          When enabled, AI will route conversations to available agents when users need human support.
-                          If no agents are online, an escalation ticket will be created.
+                          When enabled, AI will route conversations to available teammates when users need human support.
+                          If no teammates are online, an escalation ticket will be created.
                         </AlertDescription>
                       </Alert>
                     </CardContent>
@@ -1235,7 +1222,7 @@ export default function ChatSettingsPage() {
                         <div>
                           <CardTitle>FlowPilot Action Skills</CardTitle>
                           <CardDescription>
-                            Let the chat agent perform actions: bookings, leads, orders, etc.
+                            Let the AI assistant perform actions: bookings, leads, orders, etc.
                           </CardDescription>
                         </div>
                       </div>
@@ -1355,57 +1342,8 @@ export default function ChatSettingsPage() {
                     </CardContent>
                   </Card>
                 )}
-
-                {/* FlowPilot Escalation Feed */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-                          <Zap className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                        </div>
-                        <div>
-                          <CardTitle>Show Escalations in FlowPilot</CardTitle>
-                          <CardDescription>
-                            Surface escalated visitor chats directly in the FlowPilot sidebar for quick action
-                          </CardDescription>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={formData.showEscalationsInCopilot ?? false}
-                        onCheckedChange={(showEscalationsInCopilot) => 
-                          setFormData({ ...formData, showEscalationsInCopilot })
-                        }
-                      />
-                    </div>
-                  </CardHeader>
-                </Card>
-
-                {/* Show Public Chats in FlowPilot */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                          <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div>
-                          <CardTitle>Show Public Chats in FlowPilot</CardTitle>
-                          <CardDescription>
-                            Show active public visitor conversations in the FlowPilot sidebar
-                          </CardDescription>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={formData.showPublicChatsInCopilot ?? false}
-                        onCheckedChange={(showPublicChatsInCopilot) => 
-                          setFormData({ ...formData, showPublicChatsInCopilot })
-                        }
-                      />
-                    </div>
-                  </CardHeader>
-                </Card>
               </div>
+
             </TabsContent>
 
             {/* Analytics */}
@@ -1780,7 +1718,7 @@ function AnalyticsTab({ saveConversations }: { saveConversations?: boolean }) {
                 ) : (
                   <p className="text-2xl font-bold text-amber-600">{analytics?.escalatedCount || 0}</p>
                 )}
-                <p className="text-xs text-muted-foreground">Escalated to agent</p>
+                <p className="text-xs text-muted-foreground">Escalated to teammate</p>
               </div>
             </div>
           </CardContent>

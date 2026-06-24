@@ -47,6 +47,7 @@ serve(async (req) => {
   if (action === "call") return handleCall(req);
   if (action === "test") return handleTest(req);
   if (action === "set_voice_start") return handleSetVoiceStart(req);
+  if (action === "get_webrtc_credentials") return handleGetWebrtcCredentials(req);
   return handleIngest(req);
 });
 
@@ -559,6 +560,78 @@ async function handleSetVoiceStart(req: Request): Promise<Response> {
     });
   } catch (err: any) {
     console.error("[elks46-ingest:set_voice_start] error", err?.message ?? err);
+    return json({ error: err?.message ?? "internal error" }, 500);
+  }
+}
+
+// ───────────────────────────────────────────── Get WebRTC credentials (number + secret) from 46elks
+async function handleGetWebrtcCredentials(req: Request): Promise<Response> {
+  if (req.method !== "POST" && req.method !== "GET") return json({ error: "method not allowed" }, 405);
+  try {
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ")) return json({ error: "missing bearer token" }, 401);
+    const supabase = getServiceClient();
+    const { data: userData, error: userErr } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+    if (userErr || !userData?.user) return json({ error: "unauthorized" }, 401);
+    const { data: hasAdmin } = await supabase.rpc("has_role", {
+      _user_id: userData.user.id, _role: "admin",
+    });
+    if (!hasAdmin) return json({ error: "forbidden" }, 403);
+
+    let auth: string;
+    try { auth = basicAuthHeader(); }
+    catch (e: any) { return json({ error: e?.message ?? "not configured" }, 400); }
+
+    const resp = await fetch(`${ELKS_BASE}/Numbers?active=yes`, { headers: { Authorization: auth } });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      return json({ error: `46elks ${resp.status}`, details: (data as any)?.message || JSON.stringify(data) }, 502);
+    }
+    const numbers = Array.isArray((data as any)?.data) ? (data as any).data : [];
+
+    // The /Numbers list endpoint usually omits `secret`. Fetch each number individually.
+    const detailed = await Promise.all(
+      numbers.map(async (n: any) => {
+        if (typeof n?.secret === "string" && n.secret.length > 0) return n;
+        try {
+          const r = await fetch(`${ELKS_BASE}/Numbers/${n.id}`, { headers: { Authorization: auth } });
+          if (!r.ok) return n;
+          return await r.json();
+        } catch { return n; }
+      })
+    );
+
+    const sipCapable = detailed
+      .filter((n: any) => typeof n?.secret === "string" && n.secret.length > 0)
+      .map((n: any) => {
+        const num = String(n.number || "").replace(/^\+/, "");
+        return {
+          id: n.id,
+          number: num,
+          country: n.country,
+          capabilities: n.capabilities,
+          sip_username: num,
+          sip_password: n.secret,
+          sip_uri: `sip:${num}@voip.46elks.com`,
+        };
+      });
+
+    return json({
+      ok: true,
+      count: sipCapable.length,
+      credentials: sipCapable,
+      debug: {
+        total_numbers: numbers.length,
+        numbers: detailed.map((n: any) => ({
+          id: n?.id,
+          number: n?.number,
+          capabilities: n?.capabilities,
+          has_secret: typeof n?.secret === "string" && n.secret.length > 0,
+        })),
+      },
+    });
+  } catch (err: any) {
+    console.error("[elks46-ingest:get_webrtc_credentials] error", err?.message ?? err);
     return json({ error: err?.message ?? "internal error" }, 500);
   }
 }

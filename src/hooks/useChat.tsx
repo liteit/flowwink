@@ -34,6 +34,7 @@ export function useChat(options?: UseChatOptions) {
   const [conversationId, setConversationId] = useState<string | undefined>(options?.conversationId);
   const [initialized, setInitialized] = useState(false);
   const [isWithLiveAgent, setIsWithLiveAgent] = useState(false);
+  const [isClosed, setIsClosed] = useState(false);
   const [agentInfo, setAgentInfo] = useState<AgentInfo | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const locallyCreatedConvIdsRef = useRef<Set<string>>(new Set());
@@ -141,7 +142,7 @@ export function useChat(options?: UseChatOptions) {
         .order('created_at', { ascending: true });
 
       if (!error && data) {
-        setMessages(data.map(m => ({
+        setMessages(data.filter(m => m.role !== 'system').map(m => ({
           id: m.id,
           // Treat 'agent' role as 'assistant' for display
           role: (m.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
@@ -159,6 +160,7 @@ export function useChat(options?: UseChatOptions) {
   useEffect(() => {
     if (!conversationId) {
       setIsWithLiveAgent(false);
+      setIsClosed(false);
       setAgentInfo(null);
       return;
     }
@@ -174,6 +176,7 @@ export function useChat(options?: UseChatOptions) {
         (data.conversation_status === 'with_agent' || data.conversation_status === 'waiting_agent');
       
       setIsWithLiveAgent(isWithAgent);
+      setIsClosed(data?.conversation_status === 'closed');
       
       // Fetch agent info separately if agent is assigned
       if (isWithAgent && data?.assigned_agent_id) {
@@ -225,6 +228,7 @@ export function useChat(options?: UseChatOptions) {
             (updated.conversation_status === 'with_agent' || updated.conversation_status === 'waiting_agent');
           
           setIsWithLiveAgent(isWithAgent);
+          setIsClosed(updated.conversation_status === 'closed');
           
           // Fetch agent info when agent is assigned
           if (isWithAgent && updated.assigned_agent_id) {
@@ -364,6 +368,10 @@ export function useChat(options?: UseChatOptions) {
 
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isLoading) return;
+    if (isClosed) {
+      setError('This conversation has ended. Please start a new chat.');
+      return;
+    }
     
     setError(null);
     setIsLoading(true);
@@ -438,6 +446,8 @@ export function useChat(options?: UseChatOptions) {
               localSupportsToolCalling: settings?.localSupportsToolCalling || false,
               // General knowledge
               allowGeneralKnowledge: settings?.allowGeneralKnowledge || false,
+              // Routing mode (ai_first / human_first / ai_only / human_only)
+              routingMode: (settings as any)?.routingMode || 'ai_first',
             },
           }),
           signal: abortControllerRef.current.signal,
@@ -536,7 +546,7 @@ export function useChat(options?: UseChatOptions) {
       setIsLoading(false);
       abortControllerRef.current = null;
     }
-  }, [messages, conversationId, settings, getSessionId, createConversation, saveMessage, isLoading, updateConversationTitle]);
+  }, [messages, conversationId, settings, getSessionId, createConversation, saveMessage, isLoading, isClosed, updateConversationTitle]);
 
   const cancelRequest = useCallback(() => {
     abortControllerRef.current?.abort();
@@ -557,6 +567,7 @@ export function useChat(options?: UseChatOptions) {
     error,
     conversationId,
     isWithLiveAgent,
+    isClosed,
     agentInfo,
     sendMessage,
     cancelRequest,
