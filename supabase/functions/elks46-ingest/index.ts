@@ -312,7 +312,17 @@ async function handleIngest(req: Request): Promise<Response> {
       // callback (below) plays the greeting + records. No agent (phone off /
       // nobody online) → straight to greeting + voicemail.
       const reply = target
-        ? { connect: target, callerid: normalizedFrom || from, timeout: voice.ringTimeoutSeconds, next: selfUrl, whenhangup: selfUrl }
+        ? {
+            connect: target,
+            callerid: normalizedFrom || from,
+            timeout: voice.ringTimeoutSeconds,
+            // 46elks supports an inline `busy` fallback action (see receive-call
+            // docs). Busy → voicemail directly. No-answer/failed is handled by
+            // the `next` callback (→ terminal handler → voicemailReply).
+            busy: voicemailReply(voice.voicemailGreetingUrl, selfUrl),
+            next: selfUrl,
+            whenhangup: selfUrl,
+          }
         : voicemailReply(voice.voicemailGreetingUrl, selfUrl);
 
       const { error: callErr } = await supabase.from("voice_calls").upsert(
