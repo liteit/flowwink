@@ -60,7 +60,7 @@ export function useSupportConversations() {
         .select('*')
         .eq('assigned_agent_id', agent.id)
         .eq('scope', 'visitor')
-        .in('conversation_status', ['with_agent', 'waiting_agent', 'active'])
+        .in('conversation_status', ['with_agent', 'waiting_agent'])
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
@@ -69,7 +69,10 @@ export function useSupportConversations() {
     enabled: !!user?.id,
   });
 
-  // Get all waiting conversations (not assigned)
+  // Get all waiting conversations (not assigned).
+  // STRICT: only explicit 'waiting_agent' — never 'active' (which is the default
+  // status for every AI-handled visitor chat and would flood the queue with
+  // sessions where the visitor never actually asked for a human).
   const { data: waitingConversations, isLoading: waitingLoading } = useQuery({
     queryKey: ['support-waiting-conversations'],
     queryFn: async () => {
@@ -77,7 +80,7 @@ export function useSupportConversations() {
         .from('chat_conversations')
         .select('*')
         .eq('scope', 'visitor')
-        .in('conversation_status', ['waiting_agent', 'active'])
+        .eq('conversation_status', 'waiting_agent')
         .is('assigned_agent_id', null)
         .order('priority', { ascending: false })
         .order('updated_at', { ascending: false });
