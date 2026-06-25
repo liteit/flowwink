@@ -69,8 +69,12 @@ async function loadElks46Config(supabase: ReturnType<typeof getServiceClient>) {
 }
 
 // A reachable default greeting so callers always hear *something* before
-// recording. Admins override via Voice settings (voicemailGreetingUrl).
-const DEFAULT_GREETING_URL = "https://api.46elks.com/static/sounds/welcome-sv.mp3";
+// recording, even if Voice settings (voicemailGreetingUrl) is blank or points
+// at a dead URL. Hosted on the main branch (served at /audio on each site too),
+// so it survives feature-branch deletion — unlike the per-branch raw URL that
+// 404'd after PR #95 merged and left callers with silence.
+const DEFAULT_GREETING_URL =
+  "https://raw.githubusercontent.com/magnusfroste/flowwink/main/public/audio/voicemail-sv.mp3";
 
 async function loadVoiceSettings(supabase: ReturnType<typeof getServiceClient>) {
   const { data } = await supabase
@@ -79,7 +83,17 @@ async function loadVoiceSettings(supabase: ReturnType<typeof getServiceClient>) 
   return {
     voicemailGreetingUrl: (v.voicemailGreetingUrl as string) || DEFAULT_GREETING_URL,
     ringTimeoutSeconds: Number(v.ringTimeoutSeconds) > 0 ? Number(v.ringTimeoutSeconds) : 25,
+    smsReplyEnabled: v.smsReplyEnabled === true,
   };
+}
+
+// A Swedish mobile number is +46 7x; any other +46 prefix is a landline that
+// can't receive SMS. We only ever *block* confirmed Swedish landlines — foreign
+// numbers get the benefit of the doubt (likely mobile, and we can't classify
+// them cheaply). This is the guard that stops the silent-failure mode where an
+// agent texts a voicemail caller who phoned in from a fast telefon.
+function isLikelySwedishLandline(num: string): boolean {
+  return /^\+46(?!7)/.test(num);
 }
 
 // 46elks dial-plan: ANSWER the call, play the greeting, then record a voicemail.
@@ -180,22 +194,33 @@ async function transcribeWav(supabase: ReturnType<typeof getServiceClient>, wavU
 }
 
 // Store a captured voicemail, transcribe it, and drop the transcript into the
-// unified inbox as a text message on the call's voice conversation. Idempotent
-// per call via metadata.voicemail_transcribed so the wav-POST and the terminal
-// hangup callback don't double-post.
+// unified inbox as a text message on the call's voice conversation. Posts
+// EXACTLY ONCE per call: voicemail capture runs over two paths (the 46elks
+// wav-POST and the terminal hangup callback that pulls the recording from the
+// API), and those callbacks can race. We claim the call atomically by flipping
+// status → voicemail with a `status != voicemail` guard in the same UPDATE —
+// Postgres row-locking means only the first invocation matches and proceeds;
+// the loser sees zero rows and bails. (A read-then-write metadata flag wasn't
+// enough: both callbacks read the pre-write row before either wrote it.)
 async function recordVoicemail(
   supabase: ReturnType<typeof getServiceClient>,
   opts: { callid: string; existing: any; wavUrl: string; durationSeconds: number | null; fromNumber: string },
 ): Promise<void> {
-  const { callid, existing, wavUrl, durationSeconds, fromNumber } = opts;
-  const prevMeta = (existing?.metadata && typeof existing.metadata === "object") ? existing.metadata : {};
-  if ((prevMeta as any).voicemail_transcribed === true) return; // already handled
+  const { callid, wavUrl, durationSeconds, fromNumber } = opts;
+
+  const { data: claimed } = await supabase
+    .from("voice_calls")
+    .update({ status: "voicemail", voicemail: true })
+    .eq("provider", "elks46").eq("provider_call_id", callid)
+    .neq("status", "voicemail")
+    .select("id, conversation_id, metadata");
+  if (!claimed || claimed.length === 0) return; // a concurrent callback already claimed it
+  const row = claimed[0] as any;
+  const prevMeta = (row.metadata && typeof row.metadata === "object") ? row.metadata : {};
 
   const transcript = await transcribeWav(supabase, wavUrl);
 
   await supabase.from("voice_calls").update({
-    status: "voicemail",
-    voicemail: true,
     recording_url: wavUrl,
     transcript,
     ended_at: new Date().toISOString(),
@@ -205,7 +230,7 @@ async function recordVoicemail(
   }).eq("provider", "elks46").eq("provider_call_id", callid);
 
   // Ensure a voice conversation exists, then surface the voicemail as text.
-  let conversationId: string | null = existing?.conversation_id ?? null;
+  let conversationId: string | null = row.conversation_id ?? null;
   if (!conversationId) {
     const { data: conv } = await supabase.from("chat_conversations").insert({
       channel: "voice",
@@ -647,8 +672,31 @@ async function handleSend(req: Request): Promise<Response> {
       .select("id, channel, channel_thread_id, visitor_profile")
       .eq("id", conversationId).maybeSingle();
     if (convErr || !conv) return json({ error: "conversation not found" }, 404);
-    if (conv.channel !== "sms") return json({ ok: true, skipped: "not sms" });
-    if (!conv.channel_thread_id) return json({ error: "missing channel_thread_id" }, 400);
+
+    const isVoice = conv.channel === "voice";
+    if (conv.channel !== "sms" && !isVoice) return json({ ok: true, skipped: "unsupported channel" });
+
+    const profile = (conv.visitor_profile as any) || {};
+    // SMS thread → the thread id is the destination. Voice thread → the caller's
+    // number (visitor_profile.from), falling back to the thread id.
+    const destinationRaw = isVoice
+      ? (profile.from || conv.channel_thread_id || "")
+      : (conv.channel_thread_id || "");
+    if (!destinationRaw) return json({ error: "missing destination number" }, 400);
+    const destination = normalizePhone(String(destinationRaw));
+
+    // Voice replies go out as SMS — gated by a Voice setting and a landline
+    // guard so the agent is never misled into thinking an undeliverable reply
+    // was sent. Returns a clear reason the inbox surfaces to the agent.
+    if (isVoice) {
+      const voice = await loadVoiceSettings(supabase);
+      if (!voice.smsReplyEnabled) {
+        return json({ ok: true, sms_sent: false, reason: "sms_reply_disabled" });
+      }
+      if (isLikelySwedishLandline(destination)) {
+        return json({ ok: true, sms_sent: false, reason: "landline" });
+      }
+    }
 
     if (!content && body.message_id) {
       const { data: msg } = await supabase
@@ -658,10 +706,9 @@ async function handleSend(req: Request): Promise<Response> {
     if (!content || !content.trim()) return json({ error: "no content" }, 400);
 
     const { fromNumber } = await loadElks46Config(supabase);
-    const profile = (conv.visitor_profile as any) || {};
     const from = fromNumber || profile.to || "";
-    const data = await sendSms(conv.channel_thread_id, from, content);
-    return json({ ok: true, elks46_message_id: data?.id ?? null });
+    const data = await sendSms(destination, from, content);
+    return json({ ok: true, sms_sent: true, elks46_message_id: data?.id ?? null });
   } catch (err: any) {
     console.error("[elks46-ingest:send] error", err?.message ?? err);
     return json({ error: err?.message ?? "internal error" }, 500);

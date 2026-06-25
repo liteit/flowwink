@@ -95,8 +95,11 @@ function CallActionDialog({ call, open, onOpenChange }: { call: VoiceCallRow | n
   if (!call) return null;
 
   const handleSchedule = () => {
+    // `scheduledAt` holds the raw datetime-local value (local "YYYY-MM-DDTHH:mm").
+    // Convert to a UTC ISO string only when persisting — new Date() parses the
+    // local string in the browser's timezone, which is what the user picked.
     update.mutate(
-      { id: call.id, patch: { callback_status: 'scheduled', callback_scheduled_at: scheduledAt || new Date().toISOString() } },
+      { id: call.id, patch: { callback_status: 'scheduled', callback_scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : new Date().toISOString() } },
       { onSuccess: () => onOpenChange(false) }
     );
   };
@@ -126,8 +129,8 @@ function CallActionDialog({ call, open, onOpenChange }: { call: VoiceCallRow | n
             <audio src={call.recording_url} controls className="w-full" />
           )}
           <div className="border-t pt-3 space-y-2">
-            <Label htmlFor="schedule">Schedule callback (ISO)</Label>
-            <Input id="schedule" type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value ? new Date(e.target.value).toISOString() : '')} />
+            <Label htmlFor="schedule">Schedule callback</Label>
+            <Input id="schedule" type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} />
           </div>
         </div>
         <DialogFooter className="gap-2">
@@ -283,6 +286,20 @@ function VoiceSettingsCard() {
             />
           </div>
         )}
+
+        <div className="flex items-center justify-between rounded-md border p-3">
+          <div>
+            <Label className="text-sm font-medium">Reply to voicemail by SMS</Label>
+            <p className="text-xs text-muted-foreground">
+              Let an agent answer a voice message with an SMS to the caller (e.g. “I’ll call you back at 10:30”).
+              Sent only to mobile numbers — landlines are blocked with a note in the thread.
+            </p>
+          </div>
+          <Switch
+            checked={settings.smsReplyEnabled ?? false}
+            onCheckedChange={(v) => set('smsReplyEnabled', v)}
+          />
+        </div>
 
         <div className="flex items-center justify-end gap-2 border-t pt-4">
           {dirty && (
