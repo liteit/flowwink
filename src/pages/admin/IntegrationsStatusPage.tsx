@@ -1608,14 +1608,20 @@ export default function IntegrationsStatusPage() {
                 <SheetDescription>{integration.description}</SheetDescription>
               </SheetHeader>
               <div className="flex-1 py-4 space-y-4">
-                <IntegrationConfigPanel
-                  integrationKey={openDrawerKey}
-                  config={effectiveConfig}
-                  onConfigChange={setDrawerConfig}
-                  hasKey={hasKey}
-                  isEnabled={isEnabled}
-                />
-                <IntegrationTestPanel providerKey={openDrawerKey as string} hasKey={hasKey} />
+                {openDrawerKey === 'composio' ? (
+                  <ComposioPanel />
+                ) : (
+                  <>
+                    <IntegrationConfigPanel
+                      integrationKey={openDrawerKey}
+                      config={effectiveConfig}
+                      onConfigChange={setDrawerConfig}
+                      hasKey={hasKey}
+                      isEnabled={isEnabled}
+                    />
+                    <IntegrationTestPanel providerKey={openDrawerKey as string} hasKey={hasKey} />
+                  </>
+                )}
               </div>
               <SheetFooter className="flex gap-2 pt-4 border-t">
                 <Button variant="outline" onClick={closeDrawer} className="flex-1">
