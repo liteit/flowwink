@@ -53,6 +53,7 @@ export function TicketsTable({ tickets, isLoading }: TicketsTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Subject</TableHead>
+              <TableHead>Channel</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>Category</TableHead>
@@ -69,6 +70,11 @@ export function TicketsTable({ tickets, isLoading }: TicketsTableProps) {
               >
                 <TableCell className="font-medium max-w-[300px] truncate">
                   {ticket.subject}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary" className="text-[10px] capitalize">
+                    {ticket.source || 'manual'}
+                  </Badge>
                 </TableCell>
                 <TableCell>
                   <Badge variant="outline" className={`text-xs ${TICKET_STATUS_COLORS[ticket.status]}`}>

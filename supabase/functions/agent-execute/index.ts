@@ -369,6 +369,14 @@ serve(async (req) => {
       } else if (handler === 'internal:get_communication') {
         result = await executeGetCommunication(supabase, args);
 
+      } else if (handler === 'internal:email_to_ticket') {
+        result = await executeEmailToTicket(supabase, args);
+
+      } else if (handler === 'internal:reply_to_ticket_via_email') {
+        result = await executeReplyToTicketViaEmail(supabase, args);
+
+
+
       } else if (handler.startsWith('rpc:')) {
         const fnName = handler.replace('rpc:', '');
 
@@ -9263,3 +9271,233 @@ async function executeGetCommunication(
 
   return { success: true, communication: data };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// internal:email_to_ticket
+// Takes a normalized email payload (typically from composio-webhook via
+// event-dispatcher) and either creates a new ticket or appends a comment to
+// an existing one (threading by In-Reply-To / References).
+// Idempotent: dedupes on (source='email', source_id=message_id).
+// ─────────────────────────────────────────────────────────────────────────────
+async function executeEmailToTicket(
+  supabase: any,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  // Accept both flat args and nested `event` (event-dispatcher passes the full event).
+  const evt = (args.event as Record<string, unknown> | undefined) || args;
+  const messageId = String(evt.message_id || '').trim();
+  if (!messageId) return { success: false, error: 'message_id required' };
+
+  const fromEmail = String(evt.from || '').trim();
+  const subject = String(evt.subject || '(no subject)').trim();
+  const bodyText = String(evt.body_text || evt.snippet || '').trim();
+  const inReplyTo = evt.in_reply_to ? String(evt.in_reply_to).trim() : null;
+  const references = evt.references ? String(evt.references).trim() : null;
+  const threadId = evt.thread_id ? String(evt.thread_id).trim() : null;
+  const messageIdHeader = evt.message_id_header ? String(evt.message_id_header).trim() : null;
+  const mailbox = evt.mailbox ? String(evt.mailbox) : null;
+  const connectedAccountId = evt.connected_account_id ? String(evt.connected_account_id) : null;
+
+  // Parse "Name <email@x>" → { name, email }
+  const fromMatch = fromEmail.match(/^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/) || null;
+  const fromName = fromMatch ? fromMatch[1].trim() : null;
+  const fromAddr = (fromMatch ? fromMatch[2] : fromEmail).trim().toLowerCase();
+
+  // Idempotency: have we already ingested this exact gmail message?
+  const { data: existingBySource } = await supabase
+    .from('tickets')
+    .select('id')
+    .eq('source', 'email')
+    .eq('source_id', messageId)
+    .maybeSingle();
+  if (existingBySource?.id) {
+    return { success: true, ticket_id: existingBySource.id, deduped: true };
+  }
+
+  // Threading: try to find an existing ticket for this Gmail thread.
+  // We persist thread_id in metadata.gmail_thread_id when we create the ticket.
+  let parentTicket: any = null;
+  if (threadId) {
+    const { data } = await supabase
+      .from('tickets')
+      .select('id, status, subject, metadata')
+      .contains('metadata', { gmail_thread_id: threadId })
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    parentTicket = data;
+  }
+  // Fallback: match by In-Reply-To header → previous outgoing message_id we sent.
+  if (!parentTicket && inReplyTo) {
+    const { data } = await supabase
+      .from('tickets')
+      .select('id, status, subject, metadata')
+      .contains('metadata', { last_outgoing_message_id: inReplyTo })
+      .limit(1)
+      .maybeSingle();
+    parentTicket = data;
+  }
+
+  if (parentTicket?.id) {
+    // Append as ticket comment, reopen if closed.
+    const author = fromName || fromAddr || 'Email';
+    const { error: commentErr } = await supabase.from('ticket_comments').insert({
+      ticket_id: parentTicket.id,
+      content: bodyText || subject,
+      is_internal: false,
+      author_type: 'customer',
+      author_name: author,
+    });
+    if (commentErr) return { success: false, error: `comment insert failed: ${commentErr.message}` };
+
+    // Reopen on customer reply if previously resolved/closed.
+    const closedStates = new Set(['resolved', 'closed']);
+    const updates: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+      metadata: {
+        ...(parentTicket.metadata || {}),
+        last_inbound_message_id: messageId,
+        last_inbound_message_id_header: messageIdHeader,
+        last_inbound_at: new Date().toISOString(),
+      },
+    };
+    if (closedStates.has(String(parentTicket.status))) {
+      updates.status = 'open';
+      updates.resolved_at = null;
+      updates.closed_at = null;
+    }
+    await supabase.from('tickets').update(updates).eq('id', parentTicket.id);
+
+    return {
+      success: true,
+      ticket_id: parentTicket.id,
+      action: 'appended_comment',
+      reopened: closedStates.has(String(parentTicket.status)),
+    };
+  }
+
+  // Create new ticket.
+  const cleanSubject = subject.replace(/^(re:|fwd:|sv:|vs:)\s*/i, '').trim() || '(no subject)';
+  const { data: ticket, error: insertErr } = await supabase
+    .from('tickets')
+    .insert({
+      subject: cleanSubject,
+      description: bodyText || '(empty body)',
+      status: 'new',
+      priority: 'medium',
+      category: 'other',
+      source: 'email',
+      source_id: messageId,
+      contact_email: fromAddr || null,
+      contact_name: fromName,
+      metadata: {
+        gmail_thread_id: threadId,
+        gmail_message_id: messageId,
+        gmail_message_id_header: messageIdHeader,
+        composio_account_id: connectedAccountId,
+        mailbox,
+        from_email: fromAddr,
+        from_name: fromName,
+        in_reply_to: inReplyTo,
+        references,
+        last_inbound_at: new Date().toISOString(),
+      },
+    })
+    .select('id')
+    .single();
+
+  if (insertErr) return { success: false, error: `ticket insert failed: ${insertErr.message}` };
+  return { success: true, ticket_id: ticket.id, action: 'created_ticket' };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// internal:reply_to_ticket_via_email
+// Sends a reply on a ticket through Gmail (via composio-proxy), preserving
+// Gmail threading by setting In-Reply-To/References to the last inbound
+// message-id header and passing the gmail thread_id.
+// ─────────────────────────────────────────────────────────────────────────────
+async function executeReplyToTicketViaEmail(
+  supabase: any,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  const ticketId = String(args.ticket_id || '').trim();
+  const body = String(args.body || '').trim();
+  if (!ticketId || !body) {
+    return { success: false, error: 'ticket_id and body required' };
+  }
+
+  const { data: ticket, error: tErr } = await supabase
+    .from('tickets')
+    .select('id, subject, contact_email, source, metadata, status')
+    .eq('id', ticketId)
+    .maybeSingle();
+  if (tErr || !ticket) return { success: false, error: `ticket not found: ${tErr?.message ?? 'no row'}` };
+  if (ticket.source !== 'email') {
+    return { success: false, error: 'ticket was not opened via email — cannot reply via Gmail' };
+  }
+
+  const to = ticket.contact_email || ticket.metadata?.from_email;
+  if (!to) return { success: false, error: 'ticket has no contact_email to reply to' };
+
+  const subject = String(ticket.subject || '').match(/^re:/i) ? ticket.subject : `Re: ${ticket.subject}`;
+  const inReplyTo = ticket.metadata?.last_inbound_message_id_header || ticket.metadata?.gmail_message_id_header || null;
+  const references = ticket.metadata?.references
+    ? `${ticket.metadata.references} ${inReplyTo || ''}`.trim()
+    : inReplyTo;
+  const threadId = ticket.metadata?.gmail_thread_id || null;
+  const accountId = ticket.metadata?.composio_account_id || null;
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const res = await fetch(`${supabaseUrl}/functions/v1/composio-proxy`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${serviceKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      action: 'gmail_send',
+      params: {
+        to,
+        subject,
+        body,
+        in_reply_to: inReplyTo,
+        references,
+        thread_id: threadId,
+        account_id: accountId,
+      },
+      entity_id: 'default',
+    }),
+  });
+  const payload = await res.json();
+  if (!res.ok || payload?.error) {
+    return { success: false, error: payload?.error || `gmail send failed (${res.status})` };
+  }
+
+  // Persist the outgoing message_id so a future inbound In-Reply-To matches back.
+  const outMessageId = payload?.result?.data?.response_data?.id || null;
+  const outHeader = outMessageId ? `<${outMessageId}@mail.gmail.com>` : null;
+
+  await supabase.from('ticket_comments').insert({
+    ticket_id: ticketId,
+    content: body,
+    is_internal: false,
+    author_type: 'agent',
+  });
+
+  await supabase
+    .from('tickets')
+    .update({
+      status: ticket.status === 'new' ? 'open' : ticket.status,
+      updated_at: new Date().toISOString(),
+      metadata: {
+        ...(ticket.metadata || {}),
+        last_outgoing_message_id: outHeader,
+        last_outgoing_at: new Date().toISOString(),
+      },
+    })
+    .eq('id', ticketId);
+
+  return { success: true, ticket_id: ticketId, outgoing_message_id: outMessageId };
+}
+

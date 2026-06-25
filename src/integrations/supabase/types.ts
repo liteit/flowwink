@@ -5382,6 +5382,54 @@ export type Database = {
         }
         Relationships: []
       }
+      inbound_email_accounts: {
+        Row: {
+          composio_account_id: string | null
+          created_at: string
+          email_address: string
+          enabled: boolean
+          id: string
+          is_shared: boolean
+          last_history_id: string | null
+          last_received_at: string | null
+          metadata: Json
+          provider: string
+          updated_at: string
+          user_id: string | null
+          watch_expires_at: string | null
+        }
+        Insert: {
+          composio_account_id?: string | null
+          created_at?: string
+          email_address: string
+          enabled?: boolean
+          id?: string
+          is_shared?: boolean
+          last_history_id?: string | null
+          last_received_at?: string | null
+          metadata?: Json
+          provider?: string
+          updated_at?: string
+          user_id?: string | null
+          watch_expires_at?: string | null
+        }
+        Update: {
+          composio_account_id?: string | null
+          created_at?: string
+          email_address?: string
+          enabled?: boolean
+          id?: string
+          is_shared?: boolean
+          last_history_id?: string | null
+          last_received_at?: string | null
+          metadata?: Json
+          provider?: string
+          updated_at?: string
+          user_id?: string | null
+          watch_expires_at?: string | null
+        }
+        Relationships: []
+      }
       installed_template: {
         Row: {
           id: string
