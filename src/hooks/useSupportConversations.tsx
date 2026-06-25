@@ -59,7 +59,8 @@ export function useSupportConversations() {
         .from('chat_conversations')
         .select('*')
         .eq('assigned_agent_id', agent.id)
-        .in('conversation_status', ['with_agent', 'waiting_agent'])
+        .eq('scope', 'visitor')
+        .in('conversation_status', ['with_agent', 'waiting_agent', 'active'])
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
@@ -75,10 +76,11 @@ export function useSupportConversations() {
       const { data, error } = await supabase
         .from('chat_conversations')
         .select('*')
-        .eq('conversation_status', 'waiting_agent')
+        .eq('scope', 'visitor')
+        .in('conversation_status', ['waiting_agent', 'active'])
         .is('assigned_agent_id', null)
         .order('priority', { ascending: false })
-        .order('created_at', { ascending: true });
+        .order('updated_at', { ascending: false });
 
       if (error) throw error;
       return data as SupportConversation[];
@@ -92,6 +94,7 @@ export function useSupportConversations() {
       const { data, error } = await supabase
         .from('chat_conversations')
         .select('*')
+        .eq('scope', 'visitor')
         .eq('conversation_status', 'escalated')
         .order('escalated_at', { ascending: false });
 
