@@ -100,7 +100,10 @@ export function useSupportConversations() {
     },
   });
 
-  // Realtime subscription — invalidates list queries on any conversation OR new message
+  // Realtime subscription — invalidates list queries on any conversation OR new message.
+  // Also plays a global notification sound whenever a visitor user-message arrives in
+  // a conversation that's either waiting OR assigned to this operator, so the agent
+  // gets pinged even when the thread isn't currently open in the right pane.
   useEffect(() => {
     const invalidate = () => {
       queryClient.invalidateQueries({ queryKey: ['support-assigned-conversations'] });
@@ -118,14 +121,46 @@ export function useSupportConversations() {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'chat_messages' },
-        invalidate,
+        async (payload) => {
+          invalidate();
+          const msg = payload.new as { role?: string; conversation_id?: string };
+          if (msg?.role !== 'user' || !msg.conversation_id) return;
+
+          // Only ping for support-relevant conversations (waiting OR assigned to me).
+          try {
+            const { data: conv } = await supabase
+              .from('chat_conversations')
+              .select('conversation_status, assigned_agent_id, scope')
+              .eq('id', msg.conversation_id)
+              .maybeSingle();
+            if (!conv) return;
+            if ((conv as any).scope === 'internal') return;
+
+            const isWaiting =
+              conv.conversation_status === 'waiting_agent' && !conv.assigned_agent_id;
+            let isMine = false;
+            if (conv.assigned_agent_id && user?.id) {
+              const { data: agent } = await supabase
+                .from('support_agents')
+                .select('id')
+                .eq('user_id', user.id)
+                .maybeSingle();
+              isMine = !!agent && agent.id === conv.assigned_agent_id;
+            }
+            if (isWaiting || isMine) {
+              playNotificationSound();
+            }
+          } catch (err) {
+            logger.error('support-realtime ping check failed', err);
+          }
+        },
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, user?.id]);
 
   // Claim a conversation
   const claimConversation = useMutation({
