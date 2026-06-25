@@ -174,7 +174,6 @@ Returns one outbound_communications row in full — body_html, body_text, error_
     handler: 'internal:email_to_ticket',
     scope: 'both',
     trust_level: 'auto',
-    mcp_exposed: true,
     tool_definition: {
       type: 'function',
       function: {
@@ -219,7 +218,6 @@ The shipped automation 'inbound_email_to_ticket' calls this on every \`email.rec
     handler: 'internal:reply_to_ticket_via_email',
     scope: 'both',
     trust_level: 'approve',
-    mcp_exposed: true,
     tool_definition: {
       type: 'function',
       function: {
