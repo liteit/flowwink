@@ -369,6 +369,14 @@ serve(async (req) => {
       } else if (handler === 'internal:get_communication') {
         result = await executeGetCommunication(supabase, args);
 
+      } else if (handler === 'internal:email_to_ticket') {
+        result = await executeEmailToTicket(supabase, args);
+
+      } else if (handler === 'internal:reply_to_ticket_via_email') {
+        result = await executeReplyToTicketViaEmail(supabase, args);
+
+
+
       } else if (handler.startsWith('rpc:')) {
         const fnName = handler.replace('rpc:', '');
 
