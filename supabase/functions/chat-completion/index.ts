@@ -319,14 +319,18 @@ serve(async (req) => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = getServiceClient();
 
-    // Load chat_settings from DB if not provided (e.g. telegram-ingest path)
-    let effectiveSettings: any = settings;
-    if (!effectiveSettings?.routingMode) {
-      const { data: cs } = await supabase
-        .from('site_settings').select('value').eq('key', 'chat').maybeSingle();
-      effectiveSettings = { ...(cs?.value as any || {}), ...(settings || {}) };
-    }
-    const routingMode: string = effectiveSettings?.routingMode || 'ai_first';
+    // routingMode is an ADMIN policy, so the DB ('chat' key) is authoritative —
+    // ALWAYS load it and never let the request payload override it. A visitor's
+    // chat widget can send a default 'ai_first' before its settings query has
+    // resolved (or when the field is absent); trusting that silently disables
+    // human_first routing, so webchat never reaches live support even though the
+    // admin set human_first. (Telegram/SMS don't send routingMode at all, which
+    // is why they were unaffected.) Other chat settings still merge from the
+    // payload; only routingMode is pinned to the DB value.
+    const { data: cs } = await supabase
+      .from('site_settings').select('value').eq('key', 'chat').maybeSingle();
+    const dbChat = (cs?.value as any) || {};
+    const routingMode: string = dbChat.routingMode || (settings as any)?.routingMode || 'ai_first';
 
     // Check if conversation is handled by a live agent
     if (conversationId) {

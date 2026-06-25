@@ -52,7 +52,7 @@ export const ALL_EDGE_FUNCTIONS: readonly string[] = [
   'a2a', 'agent-card', 'agent-execute', 'agent-operate', 'agent-reason', 'ai-task',
   'analyze-brand', 'automation-dispatcher', 'blog-rss', 'browser-fetch',
   'chat-completion', 'chat-stt', 'check-secrets', 'company-profile', 'composio-proxy',
-  'consultant-checkin', 'contact-center', 'contact-finder', 'content-api',
+  'composio-webhook', 'consultant-checkin', 'contact-center', 'contact-finder', 'content-api',
   'contract-sign', 'copilot-action', 'create-checkout', 'create-invoice-payment',
   'create-user', 'csat-dispatch', 'customer-360', 'customer-signup', 'demo-cycle',
   'docs-chat', 'docs-sync', 'dunning-processor', 'elevenlabs-account', 'elks46-ingest',
@@ -141,7 +141,7 @@ export const MODULE_EDGE_FUNCTIONS: Partial<Record<ModuleId, readonly string[]>>
   federation: ['a2a', 'agent-card', 'federation-invite-peer', 'openclaw-responses'],
 
   // ── Integrations ─────────────────────────────────────────────────────────
-  composio: ['composio-proxy'],
+  composio: ['composio-proxy', 'composio-webhook'],
   browserControl: ['browser-fetch'],
 };
 
