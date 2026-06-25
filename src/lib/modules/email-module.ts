@@ -1,7 +1,8 @@
 import { z } from 'zod';
-import type { SkillSeed } from '@/lib/module-bootstrap';
+import type { SkillSeed, AutomationSeed } from '@/lib/module-bootstrap';
 import { defineModule } from '@/lib/module-def';
 import { supabase } from '@/integrations/supabase/client';
+
 
 const inputSchema = z.object({
   to: z.union([z.string(), z.array(z.string())]),
