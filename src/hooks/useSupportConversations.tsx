@@ -375,9 +375,22 @@ export function useConversationMessages(conversationId: string | null) {
       try {
         const inserted = data?.[0];
         if (inserted) {
-          const broadcastChannel = supabase.channel(`chat-broadcast-${conversationId}`);
-          await broadcastChannel.subscribe();
-          await broadcastChannel.send({
+          const broadcastChannel = supabase.channel(`chat-broadcast-${conversationId}`, {
+            config: { broadcast: { ack: true, self: false } },
+          });
+          await new Promise<void>((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error('subscribe timeout')), 5000);
+            broadcastChannel.subscribe((status) => {
+              if (status === 'SUBSCRIBED') {
+                clearTimeout(timer);
+                resolve();
+              } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                clearTimeout(timer);
+                reject(new Error(`subscribe ${status}`));
+              }
+            });
+          });
+          const sendResult = await broadcastChannel.send({
             type: 'broadcast',
             event: 'agent_message',
             payload: {
@@ -387,7 +400,8 @@ export function useConversationMessages(conversationId: string | null) {
               created_at: inserted.created_at,
             },
           });
-          supabase.removeChannel(broadcastChannel);
+          logger.log('sendMessage: broadcast result', sendResult);
+          setTimeout(() => supabase.removeChannel(broadcastChannel), 1000);
         }
       } catch (e) {
         logger.error('sendMessage: broadcast failed', e);
