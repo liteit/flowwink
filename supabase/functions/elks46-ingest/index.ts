@@ -654,12 +654,18 @@ async function handleIngest(req: Request): Promise<Response> {
 
       const { data: agents, error: agentErr } = await supabase
         .from("support_agents")
-        .select("id, voice_sip_uri, voice_sip_username, voice_mobile_number, voice_enabled, status")
+        .select("id, voice_sip_uri, voice_sip_username, voice_mobile_number, voice_enabled, voice_routing_mode, status")
         .eq("voice_enabled", true)
         .in("status", ["online", "away"])
         .limit(10);
       if (agentErr) console.warn("[elks46-ingest] voice agent lookup failed", agentErr.message);
-      const agent = (agents ?? []).find((a: any) => a.voice_sip_uri || a.voice_mobile_number) as any | undefined;
+      const agent = (agents ?? []).find((a: any) => {
+        const mode = a.voice_routing_mode || 'both';
+        if (mode === 'mobile') return !!a.voice_mobile_number;
+        if (mode === 'softphone') return !!(a.voice_sip_uri || a.voice_sip_username);
+        return a.voice_sip_uri || a.voice_sip_username || a.voice_mobile_number;
+      }) as any | undefined;
+
 
       // Log incoming call for visibility
       let conversationId: string | null = null;
