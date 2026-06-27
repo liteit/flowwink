@@ -464,24 +464,32 @@ function normalizePhone(value: string): string {
 function connectTargetForAgent(agent: any): string | null {
   if (!agent) return null;
 
+  const mode = (agent.voice_routing_mode as string) || 'both';
   const sipUri = String(agent.voice_sip_uri ?? "").trim();
   const username = String(agent.voice_sip_username ?? "").trim();
   const mobile = String(agent.voice_mobile_number ?? "").trim();
 
-  // 46elks WebRTC accounts are registered by JsSIP as
-  // `sip:<user>@voip.46elks.com`, but the 46elks call API must ring that
-  // browser client as a phone-like target: `+<user>`. Returning the SIP URI in
-  // a `connect` action makes 46elks treat it as an external SIP trunk; with
-  // `sip:4600120312` it errors "host is not a valid hostname", and with
-  // `sip:4600120312@voip.46elks.com` it errors "server not allowed".
-  if (username && /^\d{6,}$/.test(username)) return normalizePhone(username);
+  const sipTarget = (() => {
+    // 46elks WebRTC accounts are registered by JsSIP as
+    // `sip:<user>@voip.46elks.com`, but the 46elks call API must ring that
+    // browser client as a phone-like target: `+<user>`. Returning the SIP URI
+    // as `connect` makes 46elks treat it as an external SIP trunk and reject.
+    if (username && /^\d{6,}$/.test(username)) return normalizePhone(username);
+    const sipUser = sipUri.match(/^sips?:([^@;]+)(?:@([^;]+))?/i)?.[1];
+    if (sipUser && /^\d{6,}$/.test(sipUser)) return normalizePhone(sipUser);
+    if (sipUri) return sipUri.startsWith("sip:") || sipUri.startsWith("sips:") ? sipUri : `sip:${sipUri}`;
+    return null;
+  })();
+  const mobileTarget = mobile ? normalizePhone(mobile) : null;
 
-  const sipUser = sipUri.match(/^sips?:([^@;]+)(?:@([^;]+))?/i)?.[1];
-  if (sipUser && /^\d{6,}$/.test(sipUser)) return normalizePhone(sipUser);
-
-  if (sipUri) return sipUri.startsWith("sip:") || sipUri.startsWith("sips:") ? sipUri : `sip:${sipUri}`;
-  return mobile ? normalizePhone(mobile) : null;
+  // Mode controls the *first* leg only. For 'both' the no-answer handler
+  // falls through to mobile (see terminal handler / metadata.mobile_attempted).
+  if (mode === 'softphone') return sipTarget;
+  if (mode === 'mobile') return mobileTarget;
+  // 'both': prefer softphone, fall back to mobile if softphone not configured
+  return sipTarget ?? mobileTarget;
 }
+
 
 function paramsToRecord(params: URLSearchParams): Record<string, string> {
   const raw: Record<string, string> = {};
@@ -591,6 +599,32 @@ async function handleIngest(req: Request): Promise<Response> {
         if (failureSignal && !answeredAt && !alreadyOffered) {
           const selfUrl = `${supabaseUrl}/functions/v1/elks46-ingest`;
           const voice = await loadVoiceSettings(supabase);
+
+          // (B0) Routing mode = 'both' AND first leg was the softphone AND
+          // mobile is configured AND we haven't tried mobile yet → ring the
+          // agent's mobile before falling back to voicemail.
+          const meta = previousMetadata as any;
+          const routingMode = meta?.routing_mode as string | undefined;
+          const agentMobile = meta?.agent_mobile as string | undefined;
+          const firstLeg = meta?.first_leg as string | undefined;
+          const mobileAlreadyTried = meta?.mobile_attempted === true;
+          const firstLegWasSoftphone = !!firstLeg && !!agentMobile && firstLeg !== normalizePhone(agentMobile);
+          if (routingMode === 'both' && agentMobile && firstLegWasSoftphone && !mobileAlreadyTried) {
+            const mobileTarget = normalizePhone(agentMobile);
+            await supabase.from("voice_calls").update({
+              metadata: { ...previousMetadata, mobile_attempted: true, mobile_target: mobileTarget },
+            }).eq("provider", "elks46").eq("provider_call_id", callid);
+            return new Response(JSON.stringify({
+              connect: mobileTarget,
+              callerid: normalizedFrom || from,
+              timeout: voice.ringTimeoutSeconds,
+              busy: voicemailReply(voice.voicemailGreetingUrl, selfUrl),
+              next: selfUrl,
+              whenhangup: selfUrl,
+            }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+
+          // (B) Agent's phone didn't pick up → play greeting + record voicemail.
           await supabase.from("voice_calls").update({
             status: "missed",
             callback_status: "pending",
@@ -600,6 +634,7 @@ async function handleIngest(req: Request): Promise<Response> {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
+
 
         // (C) Voicemail was offered for this call → the recording (if the caller
         // spoke) now exists in the call's recordings[]. Pull it from the API and
@@ -646,12 +681,18 @@ async function handleIngest(req: Request): Promise<Response> {
 
       const { data: agents, error: agentErr } = await supabase
         .from("support_agents")
-        .select("id, voice_sip_uri, voice_sip_username, voice_mobile_number, voice_enabled, status")
+        .select("id, voice_sip_uri, voice_sip_username, voice_mobile_number, voice_enabled, voice_routing_mode, status")
         .eq("voice_enabled", true)
         .in("status", ["online", "away"])
         .limit(10);
       if (agentErr) console.warn("[elks46-ingest] voice agent lookup failed", agentErr.message);
-      const agent = (agents ?? []).find((a: any) => a.voice_sip_uri || a.voice_mobile_number) as any | undefined;
+      const agent = (agents ?? []).find((a: any) => {
+        const mode = a.voice_routing_mode || 'both';
+        if (mode === 'mobile') return !!a.voice_mobile_number;
+        if (mode === 'softphone') return !!(a.voice_sip_uri || a.voice_sip_username);
+        return a.voice_sip_uri || a.voice_sip_username || a.voice_mobile_number;
+      }) as any | undefined;
+
 
       // Log incoming call for visibility
       let conversationId: string | null = null;
@@ -672,6 +713,12 @@ async function handleIngest(req: Request): Promise<Response> {
       const selfUrl = `${supabaseUrl}/functions/v1/elks46-ingest`;
       const voice = await loadVoiceSettings(supabase);
       const status = target ? "ringing" : "missed";
+      // For 'both' mode: shorten first leg so the no-answer fallback to mobile
+      // happens within the caller's patience window. ~15s softphone → mobile.
+      const agentMode = (agent?.voice_routing_mode as string) || 'both';
+      const firstLegTimeout = (agentMode === 'both' && target && agent?.voice_mobile_number)
+        ? Math.min(voice.ringTimeoutSeconds, 15)
+        : voice.ringTimeoutSeconds;
       // Agent reachable → ring their phone; on no-answer the connect's `next`
       // callback (below) plays the greeting + records. No agent (phone off /
       // nobody online) → straight to greeting + voicemail.
@@ -679,7 +726,7 @@ async function handleIngest(req: Request): Promise<Response> {
         ? {
             connect: target,
             callerid: normalizedFrom || from,
-            timeout: voice.ringTimeoutSeconds,
+            timeout: firstLegTimeout,
             // 46elks supports an inline `busy` fallback action (see receive-call
             // docs). Busy → voicemail directly. No-answer/failed is handled by
             // the `next` callback (→ terminal handler → voicemailReply).
@@ -703,10 +750,18 @@ async function handleIngest(req: Request): Promise<Response> {
           callback_status: target ? "none" : "pending",
           // No agent → we go straight to greeting+record, so the voicemail was
           // already offered. With an agent, it's only offered later on no-answer.
-          metadata: { initial_action: reply, raw, voicemail_offered: !target },
+          metadata: {
+            initial_action: reply,
+            raw,
+            voicemail_offered: !target,
+            routing_mode: agentMode,
+            agent_mobile: agent?.voice_mobile_number ?? null,
+            first_leg: target,
+          },
         },
         { onConflict: "provider,provider_call_id" },
       );
+
       if (callErr) console.warn("[elks46-ingest] voice call upsert failed", callErr.message);
       return new Response(JSON.stringify(reply), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
