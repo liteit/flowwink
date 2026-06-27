@@ -720,7 +720,16 @@ export default function LiveSupportPage() {
 
 
             <TabsContent value="callbacks" className="flex-1 min-h-0 mt-0 p-2 overflow-auto">
-              <CallbacksPanel />
+              <div className="grid grid-cols-12 gap-4">
+                <div className="col-span-12 xl:col-span-8">
+                  <CallbacksPanel />
+                </div>
+                {activeChannels.includes('voice') && (
+                  <div className="col-span-12 xl:col-span-4">
+                    <Softphone />
+                  </div>
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="voicemail" className="flex-1 min-h-0 mt-0 p-2 overflow-auto">
