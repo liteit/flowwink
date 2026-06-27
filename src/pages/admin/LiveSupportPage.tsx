@@ -86,12 +86,19 @@ export default function LiveSupportPage() {
     isLoading: conversationsLoading,
     claimConversation,
     closeConversation,
+    reopenConversation,
   } = useSupportConversations();
 
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState('');
   const [channelFilter, setChannelFilter] = useState<SupportChannel | 'all'>('all');
-  const [tab, setTab] = useState<'inbox' | 'callbacks' | 'voicemail'>('inbox');
+  const [tab, setTab] = useState<'inbox' | 'closed' | 'callbacks' | 'voicemail'>('inbox');
+  const [closedSearch, setClosedSearch] = useState('');
+  const [selectedClosedId, setSelectedClosedId] = useState<string | null>(null);
+
+  const { data: closedConversations = [], isLoading: closedLoading } = useClosedConversations(closedSearch);
+  const { messages: closedMessages } = useConversationMessages(selectedClosedId);
+  const selectedClosed = closedConversations.find(c => c.id === selectedClosedId);
 
   const { messages, isLoading: messagesLoading, sendMessage } = useConversationMessages(selectedConversationId);
 
