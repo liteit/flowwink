@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { useSupportPresence, AgentStatus } from '@/hooks/useSupportPresence';
-import { useSupportConversations, useConversationMessages } from '@/hooks/useSupportConversations';
+import { useSupportConversations, useConversationMessages, useClosedConversations } from '@/hooks/useSupportConversations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
