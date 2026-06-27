@@ -46,7 +46,7 @@ import { ChannelToggleGroup } from '@/components/admin/live-support/ChannelToggl
 import { CallbacksPanel } from '@/components/admin/live-support/CallbacksPanel';
 import { VoicemailPanel } from '@/components/admin/live-support/VoicemailPanel';
 import { ActiveCallsPanel } from '@/components/admin/live-support/ActiveCallsPanel';
-import Softphone from '@/components/admin/voice/Softphone';
+
 import { ALL_CHANNELS, ChannelChip, ChannelIcon, channelMeta, getChannel, type SupportChannel } from '@/lib/support-channels';
 
 const statusConfig: Record<AgentStatus, { label: string; color: string; icon: React.ReactNode }> = {
@@ -474,7 +474,7 @@ export default function LiveSupportPage() {
 
             {/* Customer info panel */}
             <div className="col-span-3 flex flex-col gap-4 overflow-auto">
-              {activeChannels.includes('voice') && <Softphone />}
+
 
               <Card>
                 <CardHeader className="py-3 px-4">
@@ -720,17 +720,9 @@ export default function LiveSupportPage() {
 
 
             <TabsContent value="callbacks" className="flex-1 min-h-0 mt-0 p-2 overflow-auto">
-              <div className="grid grid-cols-12 gap-4">
-                <div className="col-span-12 xl:col-span-8">
-                  <CallbacksPanel />
-                </div>
-                {activeChannels.includes('voice') && (
-                  <div className="col-span-12 xl:col-span-4">
-                    <Softphone />
-                  </div>
-                )}
-              </div>
+              <CallbacksPanel />
             </TabsContent>
+
 
             <TabsContent value="voicemail" className="flex-1 min-h-0 mt-0 p-2 overflow-auto">
               <VoicemailPanel />

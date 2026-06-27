@@ -28,6 +28,8 @@ type SipState = 'disabled' | 'connecting' | 'registered' | 'failed' | 'disconnec
 interface Props {
   /** Optional override of WSS endpoint (else derived from voice_sip_uri). */
   wssUrl?: string;
+  /** Render as a fixed floating widget (bottom-right) instead of inline card. */
+  floating?: boolean;
 }
 
 function deriveWss(sipUri: string | null | undefined, override?: string): string | null {
@@ -47,7 +49,7 @@ function deriveWss(sipUri: string | null | undefined, override?: string): string
   }
 }
 
-export default function Softphone({ wssUrl }: Props) {
+export default function Softphone({ wssUrl, floating = false }: Props) {
   const { data: agent, isLoading } = useMyAgentVoice();
   const uaRef = useRef<JsSIP.UA | null>(null);
   const sessionRef = useRef<RTCSession | null>(null);
@@ -59,6 +61,14 @@ export default function Softphone({ wssUrl }: Props) {
   const [remoteParty, setRemoteParty] = useState<string>('');
   const [muted, setMuted] = useState(false);
   const [dialTarget, setDialTarget] = useState('');
+  const [minimized, setMinimized] = useState(true);
+
+  // Auto-expand floating widget on any active call activity.
+  useEffect(() => {
+    if (callState === 'ringing' || callState === 'dialing' || callState === 'in-call') {
+      setMinimized(false);
+    }
+  }, [callState]);
 
   const ready = useMemo(() => {
     if (!agent?.voice_enabled) return false;
@@ -231,6 +241,7 @@ export default function Softphone({ wssUrl }: Props) {
 
 
   if (isLoading) {
+    if (floating) return null;
     return (
       <Card>
         <CardContent className="py-6 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin inline mr-2" />Loading softphone…</CardContent>
@@ -239,6 +250,7 @@ export default function Softphone({ wssUrl }: Props) {
   }
 
   if (!ready) {
+    if (floating) return null;
     return (
       <Card>
         <CardHeader>
@@ -259,12 +271,44 @@ export default function Softphone({ wssUrl }: Props) {
     disconnected: 'destructive',
   };
 
-  return (
-    <Card>
+  const hasActiveCall = callState === 'ringing' || callState === 'dialing' || callState === 'in-call';
+
+  // Floating + minimized: render a small pill (or nothing if idle and registered).
+  if (floating && minimized) {
+    return (
+      <>
+        <audio ref={audioRef} autoPlay />
+        <button
+          type="button"
+          onClick={() => setMinimized(false)}
+          className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full bg-background border shadow-lg px-3 py-2 text-xs hover:bg-accent transition-colors"
+          aria-label="Open softphone"
+        >
+          <Phone className={`h-4 w-4 ${hasActiveCall ? 'text-primary animate-pulse' : sipState === 'registered' ? 'text-green-600' : 'text-muted-foreground'}`} />
+          <span className="font-medium">
+            {hasActiveCall ? (callState === 'in-call' ? 'In call' : callState === 'ringing' ? 'Incoming' : 'Calling') : 'Softphone'}
+          </span>
+          {hasActiveCall && remoteParty && (
+            <span className="font-mono text-muted-foreground truncate max-w-[140px]">{remoteParty.replace(/^sips?:/, '').split('@')[0]}</span>
+          )}
+        </button>
+      </>
+    );
+  }
+
+  const cardBody = (
+    <Card className={floating ? 'shadow-xl border-border' : ''}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base"><Phone className="h-4 w-4" />Softphone</CardTitle>
-          <Badge variant={stateColor[sipState]} className="capitalize">{sipState}</Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant={stateColor[sipState]} className="capitalize">{sipState}</Badge>
+            {floating && (
+              <Button size="sm" variant="ghost" onClick={() => setMinimized(true)} className="h-7 px-2 text-xs">
+                –
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -344,4 +388,14 @@ export default function Softphone({ wssUrl }: Props) {
       </CardContent>
     </Card>
   );
+
+  if (floating) {
+    return (
+      <div className="fixed bottom-4 right-4 z-50 w-80 max-w-[calc(100vw-2rem)] animate-fade-in">
+        {cardBody}
+      </div>
+    );
+  }
+
+  return cardBody;
 }

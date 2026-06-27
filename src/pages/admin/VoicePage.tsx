@@ -27,7 +27,7 @@ import {
   type VoiceCallRow,
   type VoiceCallStatus,
 } from '@/hooks/useVoice';
-import Softphone from '@/components/admin/voice/Softphone';
+
 import { AgentVoiceConfigCard } from '@/components/admin/voice/AgentVoiceConfigCard';
 
 const STATUS_VARIANT: Record<VoiceCallStatus, 'default' | 'secondary' | 'outline' | 'destructive'> = {
@@ -508,10 +508,6 @@ export default function VoicePage() {
             <ProviderCapabilitiesCard />
           </TabsContent>
         </Tabs>
-
-        <div className={tab === 'softphone' ? 'mt-6' : 'hidden'}>
-          <Softphone />
-        </div>
 
         <CallActionDialog call={selected} open={dialogOpen} onOpenChange={setDialogOpen} />
       </div>
