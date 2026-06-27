@@ -83,6 +83,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           )}
         </div>
         <IncomingCallToaster />
+        <Softphone floating />
+
       </div>
     </SidebarProvider>
   );
