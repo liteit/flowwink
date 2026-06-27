@@ -43,9 +43,11 @@ export function AgentVoiceConfigCard() {
     voice_sip_uri: '',
     voice_mobile_number: '',
     voice_provider: null,
+    voice_routing_mode: 'both',
     ...(agent ?? {}),
     ...(draft ?? {}),
   };
+
 
   // Auto-expand advanced if SIP credentials already configured
   useEffect(() => {
