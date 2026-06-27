@@ -461,6 +461,28 @@ function normalizePhone(value: string): string {
   return value.startsWith("+") ? value : `+${value}`;
 }
 
+function connectTargetForAgent(agent: any): string | null {
+  if (!agent) return null;
+
+  const sipUri = String(agent.voice_sip_uri ?? "").trim();
+  const username = String(agent.voice_sip_username ?? "").trim();
+  const mobile = String(agent.voice_mobile_number ?? "").trim();
+
+  // 46elks WebRTC accounts are registered by JsSIP as
+  // `sip:<user>@voip.46elks.com`, but the 46elks call API must ring that
+  // browser client as a phone-like target: `+<user>`. Returning the SIP URI in
+  // a `connect` action makes 46elks treat it as an external SIP trunk; with
+  // `sip:4600120312` it errors "host is not a valid hostname", and with
+  // `sip:4600120312@voip.46elks.com` it errors "server not allowed".
+  if (username && /^\d{6,}$/.test(username)) return normalizePhone(username);
+
+  const sipUser = sipUri.match(/^sips?:([^@;]+)(?:@([^;]+))?/i)?.[1];
+  if (sipUser && /^\d{6,}$/.test(sipUser)) return normalizePhone(sipUser);
+
+  if (sipUri) return sipUri.startsWith("sip:") || sipUri.startsWith("sips:") ? sipUri : `sip:${sipUri}`;
+  return mobile ? normalizePhone(mobile) : null;
+}
+
 function paramsToRecord(params: URLSearchParams): Record<string, string> {
   const raw: Record<string, string> = {};
   params.forEach((value, key) => { raw[key] = value; });
@@ -624,7 +646,7 @@ async function handleIngest(req: Request): Promise<Response> {
 
       const { data: agents, error: agentErr } = await supabase
         .from("support_agents")
-        .select("id, voice_sip_uri, voice_mobile_number, voice_enabled, status")
+        .select("id, voice_sip_uri, voice_sip_username, voice_mobile_number, voice_enabled, status")
         .eq("voice_enabled", true)
         .in("status", ["online", "away"])
         .limit(10);
@@ -646,9 +668,7 @@ async function handleIngest(req: Request): Promise<Response> {
         conversationId = conversation?.id ?? null;
       } catch (e) { console.warn("[elks46-ingest] voice log skipped", (e as Error)?.message); }
 
-      const target = agent?.voice_sip_uri
-        ? (String(agent.voice_sip_uri).startsWith("sip:") ? agent.voice_sip_uri : `sip:${agent.voice_sip_uri}`)
-        : agent?.voice_mobile_number;
+      const target = connectTargetForAgent(agent);
       const selfUrl = `${supabaseUrl}/functions/v1/elks46-ingest`;
       const voice = await loadVoiceSettings(supabase);
       const status = target ? "ringing" : "missed";
