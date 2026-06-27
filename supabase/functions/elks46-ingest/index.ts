@@ -686,6 +686,12 @@ async function handleIngest(req: Request): Promise<Response> {
       const selfUrl = `${supabaseUrl}/functions/v1/elks46-ingest`;
       const voice = await loadVoiceSettings(supabase);
       const status = target ? "ringing" : "missed";
+      // For 'both' mode: shorten first leg so the no-answer fallback to mobile
+      // happens within the caller's patience window. ~15s softphone → mobile.
+      const agentMode = (agent?.voice_routing_mode as string) || 'both';
+      const firstLegTimeout = (agentMode === 'both' && target && agent?.voice_mobile_number)
+        ? Math.min(voice.ringTimeoutSeconds, 15)
+        : voice.ringTimeoutSeconds;
       // Agent reachable → ring their phone; on no-answer the connect's `next`
       // callback (below) plays the greeting + records. No agent (phone off /
       // nobody online) → straight to greeting + voicemail.
@@ -693,7 +699,7 @@ async function handleIngest(req: Request): Promise<Response> {
         ? {
             connect: target,
             callerid: normalizedFrom || from,
-            timeout: voice.ringTimeoutSeconds,
+            timeout: firstLegTimeout,
             // 46elks supports an inline `busy` fallback action (see receive-call
             // docs). Busy → voicemail directly. No-answer/failed is handled by
             // the `next` callback (→ terminal handler → voicemailReply).
@@ -717,10 +723,18 @@ async function handleIngest(req: Request): Promise<Response> {
           callback_status: target ? "none" : "pending",
           // No agent → we go straight to greeting+record, so the voicemail was
           // already offered. With an agent, it's only offered later on no-answer.
-          metadata: { initial_action: reply, raw, voicemail_offered: !target },
+          metadata: {
+            initial_action: reply,
+            raw,
+            voicemail_offered: !target,
+            routing_mode: agentMode,
+            agent_mobile: agent?.voice_mobile_number ?? null,
+            first_leg: target,
+          },
         },
         { onConflict: "provider,provider_call_id" },
       );
+
       if (callErr) console.warn("[elks46-ingest] voice call upsert failed", callErr.message);
       return new Response(JSON.stringify(reply), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
