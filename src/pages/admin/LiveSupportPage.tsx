@@ -222,6 +222,9 @@ export default function LiveSupportPage() {
                 <TabsTrigger value="inbox" className="gap-1.5">
                   <Inbox className="h-3.5 w-3.5" /> Inbox
                 </TabsTrigger>
+                <TabsTrigger value="closed" className="gap-1.5">
+                  <Archive className="h-3.5 w-3.5" /> Closed
+                </TabsTrigger>
                 <TabsTrigger value="callbacks" className="gap-1.5">
                   <PhoneCall className="h-3.5 w-3.5" /> Callbacks
                 </TabsTrigger>
