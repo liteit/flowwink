@@ -61,6 +61,14 @@ export default function Softphone({ wssUrl, floating = false }: Props) {
   const [remoteParty, setRemoteParty] = useState<string>('');
   const [muted, setMuted] = useState(false);
   const [dialTarget, setDialTarget] = useState('');
+  const [minimized, setMinimized] = useState(true);
+
+  // Auto-expand floating widget on any active call activity.
+  useEffect(() => {
+    if (callState === 'ringing' || callState === 'dialing' || callState === 'in-call') {
+      setMinimized(false);
+    }
+  }, [callState]);
 
   const ready = useMemo(() => {
     if (!agent?.voice_enabled) return false;
