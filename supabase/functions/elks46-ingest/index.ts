@@ -464,24 +464,32 @@ function normalizePhone(value: string): string {
 function connectTargetForAgent(agent: any): string | null {
   if (!agent) return null;
 
+  const mode = (agent.voice_routing_mode as string) || 'both';
   const sipUri = String(agent.voice_sip_uri ?? "").trim();
   const username = String(agent.voice_sip_username ?? "").trim();
   const mobile = String(agent.voice_mobile_number ?? "").trim();
 
-  // 46elks WebRTC accounts are registered by JsSIP as
-  // `sip:<user>@voip.46elks.com`, but the 46elks call API must ring that
-  // browser client as a phone-like target: `+<user>`. Returning the SIP URI in
-  // a `connect` action makes 46elks treat it as an external SIP trunk; with
-  // `sip:4600120312` it errors "host is not a valid hostname", and with
-  // `sip:4600120312@voip.46elks.com` it errors "server not allowed".
-  if (username && /^\d{6,}$/.test(username)) return normalizePhone(username);
+  const sipTarget = (() => {
+    // 46elks WebRTC accounts are registered by JsSIP as
+    // `sip:<user>@voip.46elks.com`, but the 46elks call API must ring that
+    // browser client as a phone-like target: `+<user>`. Returning the SIP URI
+    // as `connect` makes 46elks treat it as an external SIP trunk and reject.
+    if (username && /^\d{6,}$/.test(username)) return normalizePhone(username);
+    const sipUser = sipUri.match(/^sips?:([^@;]+)(?:@([^;]+))?/i)?.[1];
+    if (sipUser && /^\d{6,}$/.test(sipUser)) return normalizePhone(sipUser);
+    if (sipUri) return sipUri.startsWith("sip:") || sipUri.startsWith("sips:") ? sipUri : `sip:${sipUri}`;
+    return null;
+  })();
+  const mobileTarget = mobile ? normalizePhone(mobile) : null;
 
-  const sipUser = sipUri.match(/^sips?:([^@;]+)(?:@([^;]+))?/i)?.[1];
-  if (sipUser && /^\d{6,}$/.test(sipUser)) return normalizePhone(sipUser);
-
-  if (sipUri) return sipUri.startsWith("sip:") || sipUri.startsWith("sips:") ? sipUri : `sip:${sipUri}`;
-  return mobile ? normalizePhone(mobile) : null;
+  // Mode controls the *first* leg only. For 'both' the no-answer handler
+  // falls through to mobile (see terminal handler / metadata.mobile_attempted).
+  if (mode === 'softphone') return sipTarget;
+  if (mode === 'mobile') return mobileTarget;
+  // 'both': prefer softphone, fall back to mobile if softphone not configured
+  return sipTarget ?? mobileTarget;
 }
+
 
 function paramsToRecord(params: URLSearchParams): Record<string, string> {
   const raw: Record<string, string> = {};
