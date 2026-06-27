@@ -26,6 +26,9 @@ import {
   Coffee,
   Moon,
   Inbox,
+  Archive,
+  Search,
+  RotateCcw,
   PhoneCall,
   Voicemail as VoicemailIcon,
 } from 'lucide-react';
