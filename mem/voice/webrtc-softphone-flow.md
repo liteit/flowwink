@@ -21,11 +21,17 @@ type: feature
 - Fallback: om ingen agent svarar/online → voicemail-flöde med inspelning och transkription.
 
 ## Agent-flöde (UX)
-1. Agent öppnar `/admin/live-support`, väntar på Softphone badge `registered`.
-2. Inkommande samtal → toast + ringsignal i Softphone-kortet (`ActiveCallsPanel` visar också ringing-card).
-3. Agent svarar i webbläsaren (jssip via 46elks WSS `wss://voip.46elks.com/w1/websocket`).
-4. När samtalet avslutas → raden i `voice_calls` flyttas från status `ringing`/`answered` → `completed` och visas i `/admin/voice` (call log + recording om voicemail).
-5. Recording-uppspelning går via `voice-recording` edge-proxyn (server-side Basic Auth mot 46elks), inte direkt mot 46elks URL.
+1. Agent öppnar valfri admin-vy. **Softphone är globalt monterad i `AdminLayout`** (single source of truth) — `wss://voip.46elks.com/w1/websocket` registrerar och visar pill nere till höger när `registered`.
+2. Inkommande samtal → toast med **Answer**-knapp + ringsignal i floating Softphone-widget (auto-expanderar från minimerat pill-läge). `ActiveCallsPanel` i `/admin/live-support` visar också ringing-kort.
+3. Agent svarar antingen i toasten (dispatchar `softphone:answer` CustomEvent → JsSIP `session.answer()`) eller direkt i widgeten. **Båda vägar accepterar samma SIP-session** — toasten navigerar inte längre.
+4. Utgående: `softphone:dial` CustomEvent från CallbacksPanel/VoicemailPanel/CRM → `elks46-ingest` action `call` ringer agenten först (auto-answer via `pendingOutboundRef`), sedan connectar till kund. Kräver `from_number` i `site_settings.integrations.elks46.config` (fallback till agentens WebRTC-nummer).
+5. Logg: `voice_calls` rad blir `completed` när samtalet avslutas och visas i `/admin/voice`. Outbound loggas med `direction='outbound'`.
+6. Recording-uppspelning går via `voice-recording` edge-proxyn (server-side Basic Auth mot 46elks), inte direkt mot 46elks URL.
+
+## Globala events (window CustomEvents)
+- `softphone:dial` `{ number: string }` — initiera utringning från valfri vy.
+- `softphone:answer` (ingen detail) — accepterar pågående ringande session. Används av `IncomingCallToaster`.
+
 
 ## Moduluppdelning
 - `voice` modulen äger: voice_calls, recordings, IVR, voicemail, Softphone-komponenten, /admin/voice.
