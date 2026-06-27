@@ -145,6 +145,27 @@ export default function Softphone({ wssUrl }: Props) {
     setMuted(!muted);
   };
 
+  const dial = () => {
+    if (!uaRef.current || sipState !== 'registered') return;
+    const target = dialTarget.trim();
+    if (!target) return;
+    // Build SIP target. Accept E.164 (+46...) or raw digits → route via 46elks host.
+    const host = agent?.voice_sip_uri?.split('@')[1]?.split(';')[0] ?? 'voip.46elks.com';
+    const cleaned = target.replace(/[^\d+]/g, '');
+    const sipTarget = cleaned.startsWith('sip:') ? cleaned : `sip:${cleaned.replace(/^\+/, '')}@${host}`;
+    try {
+      uaRef.current.call(sipTarget, {
+        mediaConstraints: { audio: true, video: false },
+        pcConfig: { iceServers: [{ urls: ['stun:stun.l.google.com:19302'] }] },
+      });
+      setCallState('in-call');
+      setRemoteParty(sipTarget);
+    } catch (err) {
+      logger.error('softphone dial failed', err);
+    }
+  };
+
+
   if (isLoading) {
     return (
       <Card>
