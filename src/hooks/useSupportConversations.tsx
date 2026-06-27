@@ -258,6 +258,26 @@ export function useSupportConversations() {
     },
   });
 
+  // Reopen a previously-closed conversation → back to waiting queue, unassigned.
+  const reopenConversation = useMutation({
+    mutationFn: async (conversationId: string) => {
+      const { error } = await supabase
+        .from('chat_conversations')
+        .update({
+          conversation_status: 'waiting_agent',
+          assigned_agent_id: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', conversationId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['support-assigned-conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['support-waiting-conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['support-closed-conversations'] });
+    },
+  });
+
   return {
     assignedConversations: assignedConversations || [],
     waitingConversations: waitingConversations || [],
@@ -265,8 +285,38 @@ export function useSupportConversations() {
     isLoading: assignedLoading || waitingLoading || escalatedLoading,
     claimConversation,
     closeConversation,
+    reopenConversation,
   };
 }
+
+// Closed/archived conversations with search.
+export function useClosedConversations(search: string) {
+  return useQuery({
+    queryKey: ['support-closed-conversations', search],
+    queryFn: async () => {
+      let q = supabase
+        .from('chat_conversations')
+        .select('*')
+        .eq('scope', 'visitor')
+        .eq('conversation_status', 'closed')
+        .order('updated_at', { ascending: false })
+        .limit(100);
+
+      const term = search.trim();
+      if (term.length > 0) {
+        const like = `%${term.replace(/[%_]/g, '\\$&')}%`;
+        q = q.or(
+          `customer_name.ilike.${like},customer_email.ilike.${like},title.ilike.${like},contact_phone.ilike.${like}`,
+        );
+      }
+
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+}
+
 
 // Hook to get messages for a conversation
 export function useConversationMessages(conversationId: string | null) {
