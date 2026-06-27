@@ -28,6 +28,8 @@ type SipState = 'disabled' | 'connecting' | 'registered' | 'failed' | 'disconnec
 interface Props {
   /** Optional override of WSS endpoint (else derived from voice_sip_uri). */
   wssUrl?: string;
+  /** Render as a fixed floating widget (bottom-right) instead of inline card. */
+  floating?: boolean;
 }
 
 function deriveWss(sipUri: string | null | undefined, override?: string): string | null {
