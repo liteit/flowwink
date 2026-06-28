@@ -116,6 +116,7 @@ import MySkillsPage from "./pages/account/MySkillsPage";
 import MyContractsPage from "./pages/account/MyContractsPage";
 import DeveloperToolsPage from "./pages/admin/DeveloperToolsPage";
 import MigrationAuditPage from "./pages/admin/MigrationAuditPage";
+import SystemHubPage from "./pages/admin/SystemHubPage";
 import WebinarsPage from "./pages/admin/WebinarsPage";
 import WebmeetPage from "./pages/admin/WebmeetPage";
 import MeetRoomPage from "./pages/MeetRoomPage";
