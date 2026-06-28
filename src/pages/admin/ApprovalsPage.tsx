@@ -517,9 +517,22 @@ function GatedSkillsPanel() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={s.trust_level === 'approve' ? 'default' : 'secondary'}>
-                        {s.trust_level}
-                      </Badge>
+                      <Select
+                        value={s.trust_level}
+                        onValueChange={(v) =>
+                          updateTrust.mutate({ name: s.name, trust_level: v as 'auto' | 'notify' | 'approve' })
+                        }
+                        disabled={updateTrust.isPending}
+                      >
+                        <SelectTrigger className="h-7 w-[110px] text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="auto">auto</SelectItem>
+                          <SelectItem value="notify">notify</SelectItem>
+                          <SelectItem value="approve">approve</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell>
                       {s.category && <Badge variant="outline" className="text-xs">{s.category}</Badge>}
