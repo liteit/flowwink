@@ -18,6 +18,8 @@ interface ChatConversationProps {
   initialMessage?: string;
   onInitialMessageSent?: () => void;
   checkinId?: string;
+  /** Hide the chat's internal title (use when the parent already renders a heading) */
+  hideInternalTitle?: boolean;
 }
 
 export function ChatConversation({
@@ -31,6 +33,7 @@ export function ChatConversation({
   initialMessage,
   onInitialMessageSent,
   checkinId,
+  hideInternalTitle = false,
 }: ChatConversationProps) {
   const initialMessageSentRef = useRef(false);
   const { data: settings } = useChatSettings();
