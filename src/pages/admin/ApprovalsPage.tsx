@@ -385,18 +385,6 @@ function GatedSkillsPanel() {
               <div className="text-muted-foreground">{hasActiveFilter ? 'matching' : 'gated total'}</div>
             </div>
 
-            <div>
-              <div className="text-2xl font-semibold">{approveCount}</div>
-              <div className="text-muted-foreground">require approval</div>
-            </div>
-            <div>
-              <div className="text-2xl font-semibold">{notifyCount}</div>
-              <div className="text-muted-foreground">notify on use</div>
-            </div>
-            <div>
-              <div className="text-2xl font-semibold">{skills.length}</div>
-              <div className="text-muted-foreground">gated total</div>
-            </div>
             {orphanCount > 0 && (
               <div className="ml-auto flex items-center gap-2 text-amber-600 dark:text-amber-400 max-w-md">
                 <AlertCircle className="h-4 w-4 shrink-0" />
@@ -406,8 +394,73 @@ function GatedSkillsPanel() {
               </div>
             )}
           </div>
+
+          <div className="flex flex-wrap items-end gap-3 border-t pt-4">
+            <div className="flex-1 min-w-[200px]">
+              <Label className="text-xs text-muted-foreground">Search</Label>
+              <Input
+                placeholder="Skill name or description…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-9"
+              />
+            </div>
+            <div className="w-40">
+              <Label className="text-xs text-muted-foreground">Trust level</Label>
+              <Select value={trustFilter} onValueChange={(v) => setTrustFilter(v as typeof trustFilter)}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="approve">Approve</SelectItem>
+                  <SelectItem value="notify">Notify</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-56">
+              <Label className="text-xs text-muted-foreground">Module</Label>
+              <Select value={moduleFilter} onValueChange={setModuleFilter}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All modules</SelectItem>
+                  {allModules.map((m) => (
+                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-40">
+              <Label className="text-xs text-muted-foreground">MCP</Label>
+              <Select value={mcpFilter} onValueChange={(v) => setMcpFilter(v as typeof mcpFilter)}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="exposed">Exposed</SelectItem>
+                  <SelectItem value="internal">Internal only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {hasActiveFilter && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { setSearch(''); setTrustFilter('all'); setModuleFilter('all'); setMcpFilter('all'); }}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
+
+      {filtered.length === 0 && (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground text-sm">
+            No skills match the current filters.
+          </CardContent>
+        </Card>
+      )}
+
+
 
       {Array.from(groups.entries())
         .sort(([a], [b]) => {
