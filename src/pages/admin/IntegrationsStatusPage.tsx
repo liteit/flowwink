@@ -17,10 +17,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { IntegrationTestPanel } from "@/components/admin/integrations/IntegrationTestPanel";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ComposioPanel } from "@/components/admin/modules/ComposioPanel";
 import { toast } from "sonner";
 import {
-  CheckCircle2,
   XCircle,
   Copy,
   Mail,
@@ -28,8 +27,6 @@ import {
   Image,
   Flame,
   Bot,
-  Database,
-  RefreshCw,
   ExternalLink,
   Key,
   Zap,
@@ -1041,6 +1038,54 @@ function IntegrationConfigPanel({
     );
   }
 
+  if (integrationKey === 'elks46') {
+    const fromNumber = config?.from_number || '';
+    const webhookBase = (import.meta as any).env?.VITE_SUPABASE_URL || '';
+    const webhookUrl = webhookBase ? `${webhookBase}/functions/v1/elks46-ingest` : '';
+    return (
+      <div className="space-y-4 pt-3 border-t">
+        <div className="space-y-2">
+          <Label htmlFor="elks46-from" className="text-xs">From number / Caller ID (E.164)</Label>
+          <Input
+            id="elks46-from"
+            value={fromNumber}
+            onChange={(e) => handleChange({ from_number: e.target.value })}
+            placeholder="+46766861000"
+            className="h-8 text-sm"
+          />
+          <p className="text-xs text-muted-foreground">
+            Ditt publika 46elks-nummer (med SMS + Voice). Används som avsändare för utgående SMS
+            och som caller ID när softphone ringer ut via PSTN. Utan detta misslyckas utringning med HTTP 500.
+          </p>
+        </div>
+        <div className="space-y-2">
+          <Label className="text-xs">Inbound webhook URL (SMS + Voice)</Label>
+          <div className="flex gap-2">
+            <Input value={webhookUrl} readOnly className="h-8 text-sm font-mono" />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={() => {
+                navigator.clipboard.writeText(webhookUrl);
+                toast.success('Webhook URL copied');
+              }}
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Klistra in i 46elks dashboard → ditt nummer → SMS URL och voice_start URL (POST).
+          </p>
+        </div>
+        {PriorityField}
+      </div>
+    );
+  }
+
+
+
   if (integrationKey === 'resend') {
     const emailConfig = config?.emailConfig || { fromEmail: 'onboarding@resend.dev', fromName: 'Newsletter' };
     const newsletterTracking = config?.newsletterTracking || { enableOpenTracking: false, enableClickTracking: false };
@@ -1136,7 +1181,6 @@ function IntegrationConfigPanel({
 }
 
 export default function IntegrationsStatusPage() {
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [openDrawerKey, setOpenDrawerKey] = useState<keyof IntegrationsSettings | null>(null);
   const [drawerConfig, setDrawerConfig] = useState<IntegrationProviderConfig | undefined>(undefined);
 
@@ -1152,14 +1196,6 @@ export default function IntegrationsStatusPage() {
   const integrationModuleMap = useIntegrationModuleMap();
 
   const isLoading = secretsLoading || settingsLoading;
-  const secretsErrorMessage = secretsError instanceof Error ? secretsError.message : 'Unknown backend error';
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await refetchSecrets();
-    setIsRefreshing(false);
-    toast.success("Status updated");
-  };
 
   const copyCommand = (secretName: string) => {
     const command = `supabase secrets set ${secretName}=your_api_key_here`;
@@ -1210,10 +1246,6 @@ export default function IntegrationsStatusPage() {
       toast.error("Failed to save settings");
     }
   };
-
-  const coreSecretsConfigured = secretsStatus?.core
-    ? Object.values(secretsStatus.core).every(Boolean)
-    : false;
 
   // Calculate active count — use shared resolver so we never drift from the hook logic
   const integrationKeys = Object.keys(defaultIntegrationsSettings) as (keyof IntegrationsSettings)[];
@@ -1267,65 +1299,6 @@ export default function IntegrationsStatusPage() {
           title="Integrations Hub"
           description="Manage external service integrations"
         />
-        {hasSecretsError && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Could not verify backend secrets</AlertTitle>
-            <AlertDescription>
-              The secret check failed, so "No API key" can be misleading here. This points more to an auth/admin-role/JWT problem than a missing provider key.
-              <span className="mt-2 block font-mono text-xs">{secretsErrorMessage}</span>
-            </AlertDescription>
-          </Alert>
-        )}
-        {/* System Status */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Database className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <CardTitle className="text-base">System Status</CardTitle>
-                  <CardDescription>Core backend configuration</CardDescription>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={isLoading || isRefreshing}
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
-                Refresh
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex gap-2">
-                <Skeleton className="h-6 w-24" />
-                <Skeleton className="h-6 w-24" />
-              </div>
-            ) : (
-              <div className="flex items-center gap-4">
-                {coreSecretsConfigured ? (
-                  <>
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    <span className="text-sm text-muted-foreground">
-                      All core secrets configured
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="h-5 w-5 text-destructive" />
-                    <span className="text-sm text-destructive">
-                      Missing core secrets
-                    </span>
-                  </>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         {/* Integrations Summary */}
         <div className="flex items-center justify-between">
@@ -1398,7 +1371,7 @@ export default function IntegrationsStatusPage() {
                     const requiresSecret = !CONFIG_BASED_KEYS.includes(key);
                     const IconComponent = iconMap[integration.icon as keyof typeof iconMap] || Bot;
                     const currentConfig = getDisplayConfig(key) || integration.config;
-                    const hasConfigSection = ['openai', 'gemini', 'local_llm', 'n8n', 'resend', 'google_analytics', 'meta_pixel', 'slack', 'jina', 'hunter', 'searxng', 'firecrawl', 'telegram', 'twilio', 'elks46', 'gatewayapi'].includes(key);
+                    const hasConfigSection = ['openai', 'gemini', 'local_llm', 'n8n', 'resend', 'google_analytics', 'meta_pixel', 'slack', 'jina', 'hunter', 'searxng', 'firecrawl', 'telegram', 'twilio', 'elks46', 'gatewayapi', 'composio'].includes(key);
                     // Web-data providers share a priority-ordered fallback chain.
                     const WEB_PROVIDER_DEFAULT_PRIORITY: Record<string, number> = { searxng: 1, firecrawl: 2, jina: 3 };
                     const webProviderPriority = key in WEB_PROVIDER_DEFAULT_PRIORITY
@@ -1607,14 +1580,20 @@ export default function IntegrationsStatusPage() {
                 <SheetDescription>{integration.description}</SheetDescription>
               </SheetHeader>
               <div className="flex-1 py-4 space-y-4">
-                <IntegrationConfigPanel
-                  integrationKey={openDrawerKey}
-                  config={effectiveConfig}
-                  onConfigChange={setDrawerConfig}
-                  hasKey={hasKey}
-                  isEnabled={isEnabled}
-                />
-                <IntegrationTestPanel providerKey={openDrawerKey as string} hasKey={hasKey} />
+                {openDrawerKey === 'composio' ? (
+                  <ComposioPanel />
+                ) : (
+                  <>
+                    <IntegrationConfigPanel
+                      integrationKey={openDrawerKey}
+                      config={effectiveConfig}
+                      onConfigChange={setDrawerConfig}
+                      hasKey={hasKey}
+                      isEnabled={isEnabled}
+                    />
+                    <IntegrationTestPanel providerKey={openDrawerKey as string} hasKey={hasKey} />
+                  </>
+                )}
               </div>
               <SheetFooter className="flex gap-2 pt-4 border-t">
                 <Button variant="outline" onClick={closeDrawer} className="flex-1">

@@ -90,7 +90,7 @@ cmd_help() {
     echo ""
     echo -e "  ${BOLD}── Update existing installation ──────────────────────${NC}"
     echo -e "  ${CYAN}/update-db${NC}       Push new database migrations to linked project"
-    echo -e "  ${CYAN}/update-funcs${NC}    Re-deploy all edge functions (picks up code changes)"
+    echo -e "  ${CYAN}/update-funcs${NC}    Deploy edge functions for enabled modules (--prune removes unused; FLOWWINK_DEPLOY_ALL=1 for all)"
     echo -e "  ${CYAN}/set-keys${NC}        Add or rotate API keys & Supabase secrets"
     echo -e "  ${CYAN}/create-admin${NC}    Create a new admin user account"
     echo -e "  ${CYAN}/patch-flowpilot${NC} (deprecated) FlowPilot is now seeded via /admin/modules"
@@ -283,6 +283,9 @@ cmd_update_funcs() {
     print_section "Deploy Edge Functions"
     require_link || return 1
 
+    local prune=0
+    [[ "${1:-}" == "--prune" || "${FLOWWINK_PRUNE:-0}" == "1" ]] && prune=1
+
     local functions_dir="supabase/functions"
     if [ ! -d "$functions_dir" ]; then
         echo -e "  ${RED}✗ No functions directory found${NC}"
@@ -290,14 +293,68 @@ cmd_update_funcs() {
         return 1
     fi
 
-    local functions total
-    functions=$(find "$functions_dir" -mindepth 1 -maxdepth 1 -type d | while read -r dir; do
+    local all_functions
+    all_functions=$(find "$functions_dir" -mindepth 1 -maxdepth 1 -type d | while read -r dir; do
         [ -f "$dir/index.ts" ] && basename "$dir"
     done | sort)
-    total=$(echo "$functions" | wc -l | tr -d ' ')
+
+    # ── Selective deploy ─────────────────────────────────────────────────────
+    # Deploy only functions the site's enabled modules need (Supabase Free caps
+    # at 100/project). Fail-open: any uncertainty → deploy everything.
+    # Override with FLOWWINK_DEPLOY_ALL=1.
+    local functions total skipped="" skipped_count=0
+    functions="$all_functions"
+    local map_file="supabase/seed/edge-function-map.json"
+
+    if [ "${FLOWWINK_DEPLOY_ALL:-0}" != "1" ] && [ -f "$map_file" ]; then
+        local token modules_json
+        token=$(cat "$HOME/.supabase/access-token" 2>/dev/null || true)
+        if [ -n "$token" ]; then
+            local resp
+            resp=$(curl -s -X POST "https://api.supabase.com/v1/projects/${PROJECT_REF}/database/query" \
+                -H "Authorization: Bearer ${token}" -H "Content-Type: application/json" \
+                -d "$(jq -n '{query:"select value from site_settings where key='"'"'modules'"'"' limit 1"}')" 2>/dev/null || echo "")
+            modules_json=$(echo "$resp" | jq -c '.[0].value // empty' 2>/dev/null || echo "")
+
+            if [ -n "$modules_json" ]; then
+                # Skip a function ONLY if EVERY owning module is explicitly
+                # { enabled: false }. Missing/unknown modules and core/new
+                # functions always deploy. (fail-open)
+                local disabled_arr
+                disabled_arr=$(echo "$modules_json" | jq -c '[to_entries[] | select(.value.enabled == false) | .key]' 2>/dev/null || echo "[]")
+                if [ -n "$disabled_arr" ] && [ "$disabled_arr" != "[]" ]; then
+                    local skip_set
+                    skip_set=$(jq -r --argjson dis "$disabled_arr" \
+                        '([.modules | to_entries[] | .key as $mod | .value[] | {fn:., mod:$mod}]
+                            | group_by(.fn)
+                            | map({fn:.[0].fn, owners:map(.mod)})) as $owned
+                         | $owned[] | select((.owners - $dis) | length == 0) | .fn' \
+                        "$map_file" 2>/dev/null || echo "")
+                    if [ -n "$skip_set" ]; then
+                        local keep="" f
+                        for f in $all_functions; do
+                            if grep -qxF "$f" <<<"$skip_set"; then
+                                skipped+="$f"$'\n'           # all owning modules disabled
+                                skipped_count=$((skipped_count + 1))
+                            else
+                                keep+="$f"$'\n'
+                            fi
+                        done
+                        functions=$(echo "$keep" | sed '/^$/d')
+                    fi
+                fi
+            fi
+        fi
+    fi
+
+    total=$(echo "$functions" | grep -c . | tr -d ' ')
 
     echo -e "  ${DIM}Project: ${PROJECT_NAME}${NC}"
-    echo -e "  Deploying ${total} functions..."
+    if [ "$skipped_count" -gt 0 ]; then
+        echo -e "  Deploying ${total} functions ${DIM}(${skipped_count} skipped — module disabled)${NC}..."
+    else
+        echo -e "  Deploying ${total} functions..."
+    fi
     echo ""
 
     local count=0 failed=0
@@ -336,7 +393,90 @@ cmd_update_funcs() {
             echo ""
         done
     fi
+
+    if [ "$skipped_count" -gt 0 ]; then
+        echo ""
+        echo -e "  ${DIM}Skipped ${skipped_count} function(s) for disabled modules (Free-tier friendly).${NC}"
+        echo -e "  ${DIM}Enable the module in admin, or set FLOWWINK_DEPLOY_ALL=1 to deploy all.${NC}"
+    fi
+
+    # ── Prune (deploy-then-prune) ────────────────────────────────────────────
+    # Remove functions deployed on the instance that this site no longer needs
+    # (disabled modules, or removed from the codebase). Runs AFTER deploy, so a
+    # required function is never missing. Only deletes the extras; never the
+    # keep-set. Skipped if the deploy had failures (safety).
+    if [ "$prune" = "1" ]; then
+        echo ""
+        print_divider
+        echo -e "  ${BOLD}Prune unused functions${NC}"
+        if [ "$failed" -ne 0 ]; then
+            echo -e "  ${YELLOW}⚠ Skipping prune — ${failed} function(s) failed to deploy.${NC}"
+            echo -e "  ${DIM}Fix the deploy first so prune can't remove something still needed.${NC}"
+        else
+            local pdeployed
+            pdeployed=$(supabase functions list --project-ref "$PROJECT_REF" --output json 2>/dev/null \
+                | jq -r '.[].slug // .[].name' 2>/dev/null || echo "")
+            if [ -z "$pdeployed" ]; then
+                echo -e "  ${YELLOW}⚠ Could not list deployed functions — skipping prune (nothing deleted).${NC}"
+            else
+                # extras = deployed − keep-set ($functions). Never touches the keep-set.
+                local extras="" e
+                for e in $pdeployed; do
+                    grep -qxF "$e" <<<"$functions" || extras+="$e"$'\n'
+                done
+                extras=$(echo "$extras" | sed '/^$/d')
+                local extra_count
+                extra_count=$(echo "$extras" | grep -c . | tr -d ' ')
+                if [ "$extra_count" -eq 0 ]; then
+                    echo -e "  ${GREEN}✓ Nothing to prune — deployed set already matches this site.${NC}"
+                else
+                    echo -e "  These ${extra_count} deployed function(s) are NOT needed by this site:"
+                    echo "$extras" | sed 's/^/    ✗ /'
+                    echo ""
+                    local do_prune=1
+                    if [ "${FLOWWINK_PRUNE_YES:-0}" != "1" ]; then
+                        local confirm
+                        read -e -p "  Type DELETE to remove them (anything else cancels): " confirm
+                        [ "$confirm" != "DELETE" ] && { echo -e "  ${DIM}Cancelled — nothing deleted.${NC}"; do_prune=0; }
+                    fi
+                    if [ "$do_prune" = "1" ]; then
+                        local pruned=0 prune_failed=0
+                        for e in $extras; do
+                            printf "  deleting %-42s" "$e"
+                            if supabase functions delete "$e" --project-ref "$PROJECT_REF" >/dev/null 2>&1; then
+                                echo -e "${GREEN}✓${NC}"; pruned=$((pruned + 1))
+                            else
+                                echo -e "${RED}✗${NC}"; prune_failed=$((prune_failed + 1))
+                            fi
+                        done
+                        echo ""
+                        echo -e "  ${GREEN}✓ Pruned ${pruned} function(s)${NC}$([ "$prune_failed" -gt 0 ] && echo -e " ${RED}(${prune_failed} failed)${NC}")"
+                    fi
+                fi
+            fi
+        fi
+    fi
+
+    record_deployed_functions
     echo ""
+}
+
+# Record the instance's deployed edge functions into site_settings so the admin
+# Modules page can flag "module enabled but its function isn't deployed".
+record_deployed_functions() {
+    local token deployed json
+    token=$(cat "$HOME/.supabase/access-token" 2>/dev/null || true)
+    [ -z "$token" ] && return 0
+    deployed=$(supabase functions list --project-ref "$PROJECT_REF" --output json 2>/dev/null \
+        | jq -r '.[].slug // .[].name' 2>/dev/null || echo "")
+    [ -z "$deployed" ] && return 0
+    json=$(echo "$deployed" | jq -R . | jq -s -c .)
+    local sql
+    sql="insert into public.site_settings(key, value) values('edge_functions_deployed', jsonb_build_object('functions', '${json}'::jsonb, 'updated_at', now()::text)) on conflict (key) do update set value = excluded.value;"
+    curl -s -o /dev/null -m 25 -X POST "https://api.supabase.com/v1/projects/${PROJECT_REF}/database/query" \
+        -H "Authorization: Bearer ${token}" -H "Content-Type: application/json" \
+        -d "$(jq -n --arg q "$sql" '{query:$q}')" \
+        && echo -e "  ${DIM}Recorded deployed function list for the admin UI.${NC}"
 }
 
 cmd_set_keys() {
@@ -916,7 +1056,7 @@ while true; do
         /link)                       cmd_link ;;
         /install)                    cmd_install ;;
         /update-db)                  cmd_update_db ;;
-        /update-funcs|/update-functions) cmd_update_funcs ;;
+        /update-funcs|/update-functions) cmd_update_funcs "$(echo "$input" | awk '{print $2}')" ;;
         /set-keys|/set-secrets)      cmd_set_keys ;;
         /create-admin)               cmd_create_admin ;;
         /patch-flowpilot|/setup-flowpilot) cmd_setup_flowpilot ;;

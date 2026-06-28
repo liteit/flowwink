@@ -3,6 +3,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useChatSettings } from './useSiteSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { applyVisitorChatSessionHeader } from '@/lib/visitor-chat-session';
 
 export interface ChatMessage {
   id: string;
@@ -61,8 +62,9 @@ export function useChat(options?: UseChatOptions) {
       sessionId = crypto.randomUUID();
       localStorage.setItem('chat-session-id', sessionId);
     }
-    // Ensure RLS header is bound to the current session id
-    import('@/lib/visitor-chat-session').then(m => m.applyVisitorChatSessionHeader(sessionId));
+    // Ensure RLS header is bound to the current session id BEFORE any
+    // downstream PostgREST call — must be synchronous, not a dynamic import.
+    applyVisitorChatSessionHeader(sessionId);
     return sessionId;
   }, []);
 
@@ -301,9 +303,33 @@ export function useChat(options?: UseChatOptions) {
       )
       .subscribe();
 
+    // Broadcast fallback: anon visitors can't receive postgres_changes for
+    // chat_messages because the RLS SELECT policy requires the x-chat-session
+    // header, which Supabase Realtime doesn't forward. The agent's send path
+    // emits an 'agent_message' broadcast on this channel — listen for it.
+    const broadcastChannel = supabase
+      .channel(`chat-broadcast-${conversationId}`)
+      .on('broadcast', { event: 'agent_message' }, ({ payload }) => {
+        const msg = payload as { id: string; role: string; content: string; created_at: string };
+        if (msg.role !== 'agent') return;
+        setMessages(prev => {
+          if (prev.some(m => m.id === msg.id)) return prev;
+          return [...prev, {
+            id: msg.id,
+            role: 'assistant' as const,
+            content: msg.content,
+            createdAt: new Date(msg.created_at),
+            isFromAgent: true,
+          }];
+        });
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(broadcastChannel);
     };
+
   }, [conversationId, settings?.saveConversations]);
 
   const saveMessage = useCallback(async (
@@ -314,11 +340,15 @@ export function useChat(options?: UseChatOptions) {
     if (!settings?.saveConversations) return;
 
     try {
-      await supabase.from('chat_messages').insert({
+      const { error } = await supabase.from('chat_messages').insert({
         conversation_id: convId,
         role,
         content,
       });
+
+      if (error) {
+        logger.error('Failed to save message:', error);
+      }
     } catch (err) {
       logger.error('Failed to save message:', err);
     }
@@ -326,28 +356,30 @@ export function useChat(options?: UseChatOptions) {
 
   const createConversation = useCallback(async () => {
     const sessionId = getSessionId();
+    const id = crypto.randomUUID();
     
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('chat_conversations')
       .insert({
+        id,
         user_id: user?.id || null,
         session_id: user?.id ? null : sessionId,
         title: 'New conversation',
-      })
-      .select('id')
-      .single();
+        scope: 'visitor',
+        channel: 'web',
+      });
 
     if (error) {
       logger.error('Failed to create conversation:', error);
       return null;
     }
 
-    locallyCreatedConvIdsRef.current.add(data.id);
-    setConversationId(data.id);
+    locallyCreatedConvIdsRef.current.add(id);
+    setConversationId(id);
     // Persist conversation ID to localStorage
-    localStorage.setItem(CONVERSATION_STORAGE_KEY, data.id);
-    options?.onNewConversation?.(data.id);
-    return data.id;
+    localStorage.setItem(CONVERSATION_STORAGE_KEY, id);
+    options?.onNewConversation?.(id);
+    return id;
   }, [user?.id, getSessionId, options]);
 
   const updateConversationTitle = useCallback(async (convId: string, content: string) => {

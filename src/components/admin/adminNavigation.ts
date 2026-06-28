@@ -1,14 +1,60 @@
 import {
-  LayoutDashboard, BarChart3, FileText, Users, Settings, BookOpen, Image, Mail,
-  Puzzle, UserCheck, Briefcase, Building2, Package, Library, ShoppingCart,
-  CalendarDays, Plug, Bot, Zap, MessageSquare, Headphones, Megaphone, Code2, FileText as FileQuote,
-  Video, Target, Inbox, UserCircle, FileUser, Receipt, Timer, Wallet, Shield, ShieldCheck,
-  Network, UserRound, BookMarked, Truck, FileSignature, FolderOpen, FolderKanban, Wrench,
-  RefreshCw, AlertTriangle, CheckSquare, Sparkles, Factory, UserSearch, Plus, FlaskConical,
-  LayoutTemplate, Phone,
-} from 'lucide-react';
+  LayoutDashboard,
+  BarChart3,
+  FileText,
+  Users,
+  Settings,
+  BookOpen,
+  Image,
+  Mail,
+  Puzzle,
+  UserCheck,
+  Briefcase,
+  Building2,
+  Package,
+  Library,
+  ShoppingCart,
+  CalendarDays,
+  Plug,
+  Bot,
+  Zap,
+  MessageSquare,
+  Headphones,
+  Megaphone,
+  Code2,
+  FileText as FileQuote,
+  Video,
+  Target,
+  Inbox,
+  UserCircle,
+  FileUser,
+  Receipt,
+  Timer,
+  Wallet,
+  Shield,
+  ShieldCheck,
+  Network,
+  UserRound,
+  BookMarked,
+  Truck,
+  FileSignature,
+  FolderOpen,
+  FolderKanban,
+  Wrench,
+  RefreshCw,
+  AlertTriangle,
+  CheckSquare,
+  Sparkles,
+  Factory,
+  UserSearch,
+  Plus,
+  FlaskConical,
+  LayoutTemplate,
+  Phone,
+  Database,
+} from "lucide-react";
 
-import type { AppRole } from '@/types/cms';
+import type { AppRole } from "@/types/cms";
 
 export type NavItem = {
   name: string;
@@ -43,7 +89,7 @@ export const navigationGroups: NavGroup[] = [
       { name: "FlowChat", href: "/admin/flowchat", icon: MessageSquare },
       { name: "FlowPilot", href: "/admin/flowpilot", icon: Zap, moduleId: "flowpilot" },
       { name: "Federation", href: "/admin/federation", icon: Network, moduleId: "federation" },
-      
+
       { name: "Analytics", href: "/admin/analytics", icon: BarChart3, moduleId: "analytics" },
       { name: "Growth", href: "/admin/growth", icon: Megaphone, moduleId: "paidGrowth" },
     ],
@@ -64,7 +110,7 @@ export const navigationGroups: NavGroup[] = [
   },
   {
     label: "Marketing",
-    allowedRoles: ['marketing'],
+    allowedRoles: ["marketing"],
     items: [
       { name: "Newsletter", href: "/admin/newsletter", icon: Mail, moduleId: "newsletter" },
       { name: "Webinars", href: "/admin/webinars", icon: Video, moduleId: "webinars" },
@@ -75,7 +121,7 @@ export const navigationGroups: NavGroup[] = [
   },
   {
     label: "Support",
-    allowedRoles: ['support'],
+    allowedRoles: ["support"],
     items: [
       { name: "Cowork Chat", href: "/admin/cowork", icon: Sparkles, moduleId: "workspaceChat" },
       { name: "Live Support", href: "/admin/live-support", icon: Headphones, moduleId: "liveSupport" },
@@ -85,7 +131,7 @@ export const navigationGroups: NavGroup[] = [
   },
   {
     label: "CRM",
-    allowedRoles: ['sales'],
+    allowedRoles: ["sales"],
     items: [
       { name: "Business Identity", href: "/admin/company-insights", icon: Building2, moduleId: "companyInsights" },
       { name: "Customer 360", href: "/admin/customer", icon: UserSearch, moduleId: "customer360" },
@@ -105,12 +151,18 @@ export const navigationGroups: NavGroup[] = [
   },
   {
     label: "Finance",
-    allowedRoles: ['accounting'],
+    allowedRoles: ["accounting"],
     items: [
       { name: "Quotes", href: "/admin/quotes", icon: FileQuote, moduleId: "invoicing" },
       { name: "Invoices", href: "/admin/invoices", icon: Receipt, moduleId: "invoicing" },
       { name: "Subscriptions", href: "/admin/subscriptions", icon: RefreshCw, moduleId: "subscriptions" },
-      { name: "Dunning", href: "/admin/subscriptions/dunning", icon: AlertTriangle, moduleId: "subscriptions", featureFlag: "dunning.enabled" },
+      {
+        name: "Dunning",
+        href: "/admin/subscriptions/dunning",
+        icon: AlertTriangle,
+        moduleId: "subscriptions",
+        featureFlag: "dunning.enabled",
+      },
       { name: "Point of Sale", href: "/admin/pos", icon: Receipt, moduleId: "pos" },
       { name: "Accounting", href: "/admin/accounting", icon: BookOpen, moduleId: "accounting" },
       { name: "Expenses", href: "/admin/expenses", icon: Wallet, moduleId: "expenses" },
@@ -121,26 +173,56 @@ export const navigationGroups: NavGroup[] = [
   },
   {
     label: "E-commerce",
-    allowedRoles: ['warehouse', 'purchasing'],
+    allowedRoles: ["warehouse", "purchasing"],
     items: [
       { name: "Customers", href: "/admin/customers", icon: UserRound, moduleId: "ecommerce" },
       { name: "Products", href: "/admin/products", icon: Package, moduleId: "ecommerce" },
       { name: "Units of Measure", href: "/admin/products/units", icon: Package, moduleId: "ecommerce" },
       { name: "Inventory", href: "/admin/inventory", icon: Package, moduleId: "inventory" },
-      { name: "Vendors", href: "/admin/vendors", icon: Building2, moduleId: "purchasing", allowedRoles: ['purchasing'] },
-      { name: "Purchase Orders", href: "/admin/purchase-orders", icon: Truck, moduleId: "purchasing", allowedRoles: ['purchasing'] },
+      {
+        name: "Vendors",
+        href: "/admin/vendors",
+        icon: Building2,
+        moduleId: "purchasing",
+        allowedRoles: ["purchasing"],
+      },
+      {
+        name: "Purchase Orders",
+        href: "/admin/purchase-orders",
+        icon: Truck,
+        moduleId: "purchasing",
+        allowedRoles: ["purchasing"],
+      },
       { name: "Orders", href: "/admin/orders", icon: ShoppingCart, moduleId: "ecommerce" },
-      { name: "Manufacturing", href: "/admin/manufacturing", icon: Factory, moduleId: "manufacturing", allowedRoles: ['warehouse'] },
+      {
+        name: "Manufacturing",
+        href: "/admin/manufacturing",
+        icon: Factory,
+        moduleId: "manufacturing",
+        allowedRoles: ["warehouse"],
+      },
     ],
   },
   {
     label: "Operations",
-    allowedRoles: ['hr', 'projects'],
+    allowedRoles: ["hr", "projects"],
     items: [
-      { name: "Projects", href: "/admin/projects", icon: FolderKanban, moduleId: "projects", allowedRoles: ['projects'] },
-      { name: "HR & Employees", href: "/admin/hr", icon: Users, moduleId: "hr", allowedRoles: ['hr'] },
-      { name: "Recruitment", href: "/admin/recruitment", icon: Briefcase, moduleId: "recruitment", allowedRoles: ['hr'] },
-      { name: "Contracts", href: "/admin/contracts", icon: FileSignature, moduleId: "contracts", allowedRoles: ['hr'] },
+      {
+        name: "Projects",
+        href: "/admin/projects",
+        icon: FolderKanban,
+        moduleId: "projects",
+        allowedRoles: ["projects"],
+      },
+      { name: "HR & Employees", href: "/admin/hr", icon: Users, moduleId: "hr", allowedRoles: ["hr"] },
+      {
+        name: "Recruitment",
+        href: "/admin/recruitment",
+        icon: Briefcase,
+        moduleId: "recruitment",
+        allowedRoles: ["hr"],
+      },
+      { name: "Contracts", href: "/admin/contracts", icon: FileSignature, moduleId: "contracts", allowedRoles: ["hr"] },
       { name: "Documents", href: "/admin/documents", icon: FolderOpen, moduleId: "documents" },
       { name: "Maintenance", href: "/admin/maintenance", icon: Wrench, moduleId: "maintenance" },
       { name: "SLA Monitor", href: "/admin/sla", icon: Shield, moduleId: "sla" },
@@ -151,8 +233,7 @@ export const navigationGroups: NavGroup[] = [
     adminOnly: true,
     collapsible: false,
     items: [
-      
-      { name: "Chat Widget", href: "/admin/chat", icon: MessageSquare, moduleId: "chat" },
+      { name: "Chat Module", href: "/admin/chat", icon: MessageSquare, moduleId: "chat" },
       { name: "Templates", href: "/admin/templates", icon: LayoutTemplate, moduleId: "templates" },
       { name: "Modules", href: "/admin/modules", icon: Puzzle },
       { name: "Automations", href: "/admin/automations", icon: Zap },
@@ -160,14 +241,14 @@ export const navigationGroups: NavGroup[] = [
       { name: "Branding", href: "/admin/branding", icon: Image },
       { name: "Developer", href: "/admin/developer", icon: Code2, moduleId: "developer" },
       { name: "Skills", href: "/admin/skills", icon: Sparkles },
-      { name: "Platform Tests", href: "/admin/platform-tests", icon: FlaskConical },
-      
+      { name: "System", href: "/admin/system", icon: Database },
+
       { name: "AI Usage", href: "/admin/ai-usage", icon: BarChart3 },
 
       { name: "Users", href: "/admin/users", icon: Users },
       { name: "Role Permissions", href: "/admin/roles", icon: Shield },
       { name: "Profile", href: "/admin/profile", icon: UserCircle },
-      { name: "Settings", href: "/admin/settings", icon: Settings },
+      { name: "Site Settings", href: "/admin/settings", icon: Settings },
     ],
   },
 ];

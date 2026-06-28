@@ -406,6 +406,10 @@ Generates a cross-module business summary covering views, leads, bookings, order
 - Returns zeros for modules that have no data — this is normal for new sites.
 - Can be heavy on DB queries — avoid running more than once per hour.`,
   },
+  // NOTE: `run_daily_briefing` was moved to src/lib/platform-seeds.ts.
+  // It is a platform SaaS automation (deterministic metrics + one LLM call),
+  // not a FlowPilot ReAct skill — it must exist on every instance regardless
+  // of whether the FlowPilot module is enabled.
   {
     name: 'learn_from_data',
     description: 'Analyze page views, chat feedback, and lead conversions to distill learnings into persistent memory. Use when: heartbeat learning cycle; extracting insights from operational data; building institutional knowledge. NOT for: analyzing analytics directly (analyze_analytics); generating business digests (weekly_business_digest).',
@@ -632,6 +636,9 @@ export const flowpilotModule = defineModule<Input, Output>({
       skill_name: 'weekly_business_digest',
       skill_arguments: {},
     },
+    // 'Daily Briefing' lives in src/lib/platform-seeds.ts — it's a platform
+    // SaaS automation, not a FlowPilot-owned one.
+
   ],
 
   async publish(input: Input): Promise<Output> {

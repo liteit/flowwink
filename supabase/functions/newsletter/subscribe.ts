@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getServiceClient } from '../_shared/supabase-clients.ts';
 
@@ -10,7 +9,7 @@ const getResend = async () => {
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-chat-session, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface SubscribeRequest {
@@ -18,7 +17,7 @@ interface SubscribeRequest {
   name?: string;
 }
 
-serve(async (req) => {
+export async function handle(req: Request): Promise<Response> {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -287,7 +286,7 @@ serve(async (req) => {
     // Send confirmation email if Resend is configured
     if (resendApiKey && subscriber?.confirmation_token) {
       try {
-        // Get email configuration from site_settings (same as newsletter-send)
+        // Get email configuration from site_settings (same as newsletter send)
         const { data: integrationSettings } = await supabase
           .from("site_settings")
           .select("value")
@@ -323,7 +322,7 @@ serve(async (req) => {
 
         const ResendClass = await getResend();
         const resendClient = new ResendClass(resendApiKey);
-        const confirmUrl = `${supabaseUrl}/functions/v1/newsletter-subscribe?action=confirm&token=${subscriber.confirmation_token}`;
+        const confirmUrl = `${supabaseUrl}/functions/v1/newsletter/subscribe?action=confirm&token=${subscriber.confirmation_token}`;
 
         await resendClient.emails.send({
           from: `${emailConfig.fromName} <${emailConfig.fromEmail}>`,
@@ -372,4 +371,4 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-});
+}

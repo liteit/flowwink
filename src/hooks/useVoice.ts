@@ -16,6 +16,13 @@ export const defaultVoiceSettings: VoiceSettings = {
   ringTimeoutSeconds: 20,
   bookingIvrEnabled: false,
   bookingServiceId: undefined,
+  smsReplyEnabled: false,
+  autoScheduleCallbacks: false,
+  autoScheduleSms: false,
+  callbackTimezone: 'Europe/Stockholm',
+  callbackWindowStart: '09:00',
+  callbackWindowEnd: '17:00',
+  callbackSlotMinutes: 15,
 };
 
 export function useVoiceSettings() {
@@ -166,6 +173,7 @@ export interface SupportAgentVoice {
   voice_sip_uri: string | null;
   voice_mobile_number: string | null;
   voice_provider: string | null;
+  voice_routing_mode: 'softphone' | 'mobile' | 'both' | null;
 }
 
 export function useMyAgentVoice() {
@@ -177,7 +185,7 @@ export function useMyAgentVoice() {
       if (!user?.id) return null;
       const { data, error } = await supabase
         .from('support_agents')
-        .select('id,user_id,status,voice_enabled,voice_sip_username,voice_sip_password,voice_sip_uri,voice_mobile_number,voice_provider')
+        .select('id,user_id,status,voice_enabled,voice_sip_username,voice_sip_password,voice_sip_uri,voice_mobile_number,voice_provider,voice_routing_mode')
         .eq('user_id', user.id)
         .maybeSingle();
       if (error) throw error;
@@ -185,6 +193,7 @@ export function useMyAgentVoice() {
     },
   });
 }
+
 
 export function useUpdateMyAgentVoice() {
   const { user } = useAuth();

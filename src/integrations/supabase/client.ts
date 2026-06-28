@@ -9,6 +9,29 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  global: {
+    fetch: (input, init) => {
+      const headers = new Headers(init?.headers);
+      const visitorChatSessionId = localStorage.getItem('chat-session-id');
+
+      // x-chat-session is only consumed by PostgREST/RLS on chat tables.
+      // Do NOT inject it into /functions/v1/ calls — edge functions don't
+      // read it and most don't allow it in CORS, causing preflight failures.
+      const url = typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.href
+          : (input as Request).url;
+      const isFunctionCall = url.includes('/functions/v1/');
+
+      if (visitorChatSessionId && !isFunctionCall && !headers.has('x-chat-session')) {
+        headers.set('x-chat-session', visitorChatSessionId);
+      }
+
+      return fetch(input, { ...init, headers });
+    },
+  },
+
   auth: {
     storage: localStorage,
     persistSession: true,

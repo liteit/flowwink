@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,7 @@ export function ChatLauncherBlock({ data }: ChatLauncherBlockProps) {
   const { data: chatSettings } = useChatSettings();
   const [inputValue, setInputValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const {
     title = chatSettings?.title || 'What can I help you with?',
@@ -35,20 +36,19 @@ export function ChatLauncherBlock({ data }: ChatLauncherBlockProps) {
     variant = 'card',
   } = data;
 
-  // Get quick actions from chat settings
   const quickActions = chatSettings?.suggestedPrompts?.slice(0, quickActionCount) || [];
 
-  // Check if chat landing page is enabled
   const chatModuleEnabled = useIsModuleEnabled('chat');
   const isEnabled = chatModuleEnabled && chatSettings?.landingPageEnabled;
 
   const handleSubmit = (message?: string) => {
-    const finalMessage = message || inputValue.trim();
+    const finalMessage = (message ?? inputValue).trim();
     if (!finalMessage) {
       navigate('/chat');
       return;
     }
-    navigate('/chat', { state: { initialMessage: finalMessage } });
+    // Use query param so the link is shareable / refresh-safe.
+    navigate(`/chat?q=${encodeURIComponent(finalMessage)}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -58,40 +58,42 @@ export function ChatLauncherBlock({ data }: ChatLauncherBlockProps) {
     }
   };
 
+  // Quick actions fill the input so the visitor can review/edit before sending.
   const handleQuickAction = (prompt: string) => {
-    handleSubmit(prompt);
+    setInputValue(prompt);
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      const len = prompt.length;
+      inputRef.current?.setSelectionRange(len, len);
+    });
   };
 
-  if (!isEnabled) {
-    return null;
-  }
+  if (!isEnabled) return null;
 
   const containerClasses = cn(
     'w-full max-w-3xl mx-auto',
-    variant === 'card' && 'bg-card rounded-2xl border shadow-lg p-8',
-    variant === 'hero-integrated' && 'py-12',
-    variant === 'minimal' && 'py-8'
+    variant === 'card' && 'bg-card rounded-2xl border shadow-lg p-6 md:p-8',
+    variant === 'hero-integrated' && 'py-8 md:py-12',
+    variant === 'minimal' && 'py-6 md:py-8'
   );
 
   return (
-    <section className="py-12 px-4">
+    <section className="py-8 md:py-12 px-4" aria-label="Start a chat">
       <div className={containerClasses}>
-        {/* Title */}
         <div className="text-center mb-6">
           <h2 className={cn(
             'font-serif tracking-tight',
-            variant === 'hero-integrated' ? 'text-4xl md:text-5xl' : 'text-2xl md:text-3xl'
+            variant === 'hero-integrated' ? 'text-3xl md:text-5xl' : 'text-2xl md:text-3xl'
           )}>
             {title}
           </h2>
           {subtitle && (
-            <p className="text-muted-foreground mt-2 text-lg">
+            <p className="text-muted-foreground mt-2 text-base md:text-lg">
               {subtitle}
             </p>
           )}
         </div>
 
-        {/* Input Field */}
         <div className={cn(
           'relative group transition-all duration-300',
           isFocused && 'scale-[1.01]'
@@ -101,8 +103,9 @@ export function ChatLauncherBlock({ data }: ChatLauncherBlockProps) {
             'hover:border-primary/50 hover:shadow-md',
             isFocused && 'border-primary shadow-lg ring-2 ring-primary/20'
           )}>
-            <Sparkles className="absolute left-4 h-5 w-5 text-muted-foreground" />
+            <Sparkles className="absolute left-4 h-5 w-5 text-muted-foreground pointer-events-none" />
             <Input
+              ref={inputRef}
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -110,11 +113,13 @@ export function ChatLauncherBlock({ data }: ChatLauncherBlockProps) {
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               placeholder={placeholder}
-              className="flex-1 border-0 bg-transparent pl-12 pr-4 py-6 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
+              aria-label="Your message"
+              className="flex-1 border-0 bg-transparent pl-12 pr-14 py-6 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <Button
               onClick={() => handleSubmit()}
               size="icon"
+              aria-label="Send message"
               className="absolute right-2 h-10 w-10 rounded-lg"
             >
               <ArrowRight className="h-5 w-5" />
@@ -122,7 +127,6 @@ export function ChatLauncherBlock({ data }: ChatLauncherBlockProps) {
           </div>
         </div>
 
-        {/* Quick Actions */}
         {showQuickActions && quickActions.length > 0 && (
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             {quickActions.map((prompt, index) => (

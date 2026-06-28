@@ -27,7 +27,7 @@ import {
   type VoiceCallRow,
   type VoiceCallStatus,
 } from '@/hooks/useVoice';
-import Softphone from '@/components/admin/voice/Softphone';
+
 import { AgentVoiceConfigCard } from '@/components/admin/voice/AgentVoiceConfigCard';
 
 const STATUS_VARIANT: Record<VoiceCallStatus, 'default' | 'secondary' | 'outline' | 'destructive'> = {
@@ -69,7 +69,12 @@ function CallRow({ call, onAction }: { call: VoiceCallRow; onAction: (c: VoiceCa
       </TableCell>
       <TableCell>
         {call.recording_url ? (
-          <a href={call.recording_url} target="_blank" rel="noreferrer" className="text-xs underline">
+          <a
+            href={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/voice-recording?id=${call.id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs underline"
+          >
             <Voicemail className="inline h-3 w-3 mr-1" />Recording
           </a>
         ) : <span className="text-xs text-muted-foreground">–</span>}
@@ -95,8 +100,11 @@ function CallActionDialog({ call, open, onOpenChange }: { call: VoiceCallRow | n
   if (!call) return null;
 
   const handleSchedule = () => {
+    // `scheduledAt` holds the raw datetime-local value (local "YYYY-MM-DDTHH:mm").
+    // Convert to a UTC ISO string only when persisting — new Date() parses the
+    // local string in the browser's timezone, which is what the user picked.
     update.mutate(
-      { id: call.id, patch: { callback_status: 'scheduled', callback_scheduled_at: scheduledAt || new Date().toISOString() } },
+      { id: call.id, patch: { callback_status: 'scheduled', callback_scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : new Date().toISOString() } },
       { onSuccess: () => onOpenChange(false) }
     );
   };
@@ -123,11 +131,15 @@ function CallActionDialog({ call, open, onOpenChange }: { call: VoiceCallRow | n
             <div className="rounded-md bg-muted p-3 text-xs whitespace-pre-wrap">{call.transcript}</div>
           )}
           {call.recording_url && (
-            <audio src={call.recording_url} controls className="w-full" />
+            <audio
+              src={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/voice-recording?id=${call.id}`}
+              controls
+              className="w-full"
+            />
           )}
           <div className="border-t pt-3 space-y-2">
-            <Label htmlFor="schedule">Schedule callback (ISO)</Label>
-            <Input id="schedule" type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value ? new Date(e.target.value).toISOString() : '')} />
+            <Label htmlFor="schedule">Schedule callback</Label>
+            <Input id="schedule" type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} />
           </div>
         </div>
         <DialogFooter className="gap-2">
@@ -137,9 +149,14 @@ function CallActionDialog({ call, open, onOpenChange }: { call: VoiceCallRow | n
           <Button onClick={handleSchedule} disabled={update.isPending}>
             {scheduledAt ? 'Schedule callback' : 'Mark pending'}
           </Button>
-          <a href={`tel:${call.from_number}`} className="inline-flex">
-            <Button variant="default"><PhoneCall className="h-4 w-4 mr-1" />Call back</Button>
-          </a>
+          <Button
+            variant="default"
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('softphone:dial', { detail: { number: call.from_number } }));
+            }}
+          >
+            <PhoneCall className="h-4 w-4 mr-1" />Call back
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -284,6 +301,92 @@ function VoiceSettingsCard() {
           </div>
         )}
 
+        <div className="flex items-center justify-between rounded-md border p-3">
+          <div>
+            <Label className="text-sm font-medium">Reply to voicemail by SMS</Label>
+            <p className="text-xs text-muted-foreground">
+              Let an agent answer a voice message with an SMS to the caller (e.g. “I’ll call you back at 10:30”).
+              Sent only to mobile numbers — landlines are blocked with a note in the thread.
+            </p>
+          </div>
+          <Switch
+            checked={settings.smsReplyEnabled ?? false}
+            onCheckedChange={(v) => set('smsReplyEnabled', v)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between rounded-md border p-3">
+          <div>
+            <Label className="text-sm font-medium">Auto-schedule callbacks</Label>
+            <p className="text-xs text-muted-foreground">
+              When a missed call or voicemail comes in, automatically book the next free, non-conflicting
+              callback time inside business hours. Off = staff schedule manually (today’s behaviour).
+            </p>
+          </div>
+          <Switch
+            checked={settings.autoScheduleCallbacks ?? false}
+            onCheckedChange={(v) => set('autoScheduleCallbacks', v)}
+          />
+        </div>
+
+        {settings.autoScheduleCallbacks && (
+          <div className="space-y-4 rounded-md border border-dashed p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Text the caller the booked time</Label>
+                <p className="text-xs text-muted-foreground">
+                  SMS the caller their callback time (mobile numbers only). Off = book silently; staff call at the time.
+                </p>
+              </div>
+              <Switch
+                checked={settings.autoScheduleSms ?? false}
+                onCheckedChange={(v) => set('autoScheduleSms', v)}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="space-y-1">
+                <Label htmlFor="cb-start" className="text-xs">Hours from</Label>
+                <Input
+                  id="cb-start"
+                  type="time"
+                  value={settings.callbackWindowStart ?? '09:00'}
+                  onChange={(e) => set('callbackWindowStart', e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="cb-end" className="text-xs">Hours to</Label>
+                <Input
+                  id="cb-end"
+                  type="time"
+                  value={settings.callbackWindowEnd ?? '17:00'}
+                  onChange={(e) => set('callbackWindowEnd', e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="cb-slot" className="text-xs">Slot (min)</Label>
+                <Input
+                  id="cb-slot"
+                  type="number"
+                  min={5}
+                  step={5}
+                  value={settings.callbackSlotMinutes ?? 15}
+                  onChange={(e) => set('callbackSlotMinutes', Number(e.target.value) || 15)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="cb-tz" className="text-xs">Timezone</Label>
+                <Input
+                  id="cb-tz"
+                  placeholder="Europe/Stockholm"
+                  value={settings.callbackTimezone ?? 'Europe/Stockholm'}
+                  onChange={(e) => set('callbackTimezone', e.target.value || undefined)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-end gap-2 border-t pt-4">
           {dirty && (
             <Button variant="ghost" onClick={() => setDraft(null)} disabled={update.isPending}>
@@ -396,10 +499,7 @@ export default function VoicePage() {
           <TabsContent value="callbacks" className="mt-4"><CallsTable calls={filtered} onAction={onAction} /></TabsContent>
 
           <TabsContent value="softphone" className="mt-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <AgentVoiceConfigCard />
-              <Softphone />
-            </div>
+            <AgentVoiceConfigCard />
           </TabsContent>
 
 

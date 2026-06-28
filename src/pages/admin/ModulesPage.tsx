@@ -33,60 +33,9 @@ import {
   FolderOpen,
   FolderKanban,
   Factory,
-  Rocket,
+  Zap,
 } from "lucide-react";
 
-// Roadmap — small/easy modules planned next. Pure presentation; no toggles.
-const PLANNED_MODULES: Array<{
-  id: string;
-  name: string;
-  description: string;
-  category: 'content' | 'data' | 'communication' | 'system' | 'insights';
-  effort: 'S' | 'M' | 'L';
-}> = [
-  {
-    id: 'vendor-portal',
-    name: 'Vendor Portal',
-    description: 'Self-service login for suppliers to view POs, upload invoices and track payments.',
-    category: 'data',
-    effort: 'M',
-  },
-  {
-    id: 'carrier-labels',
-    name: 'Carrier Labels (PostNord)',
-    description: 'Generate shipping labels and tracking numbers via PostNord API from the Shipping module.',
-    category: 'data',
-    effort: 'S',
-  },
-  {
-    id: 'performance-reviews',
-    name: 'Performance Reviews',
-    description: '1:1s, goals and appraisal cycles on top of the HR module.',
-    category: 'data',
-    effort: 'M',
-  },
-  {
-    id: 'budgets',
-    name: 'Budgets vs Actuals',
-    description: 'Yearly/quarterly budget per account and analytic dimension, compared with bookings.',
-    category: 'insights',
-    effort: 'M',
-  },
-  {
-    id: 'utm-attribution',
-    name: 'UTM Attribution',
-    description: 'Track UTM params through forms and orders to attribute revenue to campaigns.',
-    category: 'insights',
-    effort: 'S',
-  },
-  {
-    id: 'csat-survey',
-    name: 'CSAT Auto-Survey',
-    description: 'Auto-trigger short survey when a ticket is resolved; feeds into Surveys module.',
-    category: 'communication',
-    effort: 'S',
-  },
-];
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -95,8 +44,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useModules, useUpdateModules, defaultModulesSettings, type ModulesSettings } from "@/hooks/useModules";
 import { useModuleStats } from "@/hooks/useModuleStats";
 import { ModuleCard } from "@/components/admin/modules/ModuleCard";
+import { EdgeFunctionUsageCard } from "@/components/admin/modules/EdgeFunctionUsageCard";
+import { edgeFunctionUsage } from "@/lib/edge-function-registry";
 import { moduleRegistry } from "@/lib/module-registry";
 import { bootstrapModule, teardownModule } from "@/lib/module-bootstrap";
+import { bootstrapPlatform } from "@/lib/platform-seeds";
 import { runWithConcurrency } from "@/lib/run-with-concurrency";
 import { useToast } from "@/hooks/use-toast";
 import '@/lib/module-bootstraps'; // Register all module bootstraps
@@ -355,6 +307,11 @@ export default function ModulesPage() {
         .filter(([, config]) => config.enabled)
         .map(([id]) => id as keyof ModulesSettings);
       const results = await runWithConcurrency(targets, 5, (id) => bootstrapModule(id, localModules));
+      // Always re-seed platform-level skills & automations (Daily Briefing, etc).
+      // These aren't owned by any module and must exist on every instance.
+      await bootstrapPlatform().catch((err) => {
+        console.warn('[ModulesPage] Platform seed refresh failed (non-fatal):', err);
+      });
       const failed = results.filter((r) => !r.ok || r.value.errors.length > 0);
       if (failed.length > 0) {
         toast({
@@ -378,6 +335,17 @@ export default function ModulesPage() {
   const totalCount = Object.keys(defaultModulesSettings).length;
   const registeredModules = moduleRegistry.list();
 
+  const enabledModuleIds = localModules
+    ? (Object.entries(localModules)
+        .filter(([, m]) => m.enabled)
+        .map(([id]) => id) as (keyof ModulesSettings)[])
+    : [];
+  const moduleNames = localModules
+    ? (Object.fromEntries(
+        Object.entries(localModules).map(([id, m]) => [id, m.name]),
+      ) as Partial<Record<keyof ModulesSettings, string>>)
+    : {};
+
   return (
     <AdminLayout>
       <div className="space-y-8">
@@ -387,7 +355,7 @@ export default function ModulesPage() {
         />
 
         {/* Summary Cards */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
@@ -431,7 +399,39 @@ export default function ModulesPage() {
               </div>
             </CardContent>
           </Card>
+
+          {(() => {
+            const usage = edgeFunctionUsage(enabledModuleIds);
+            const accent = usage.withinFree
+              ? 'bg-muted text-muted-foreground'
+              : 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
+            return (
+              <a
+                href="#edge-functions-usage"
+                className="block"
+                title="Jump to Edge Functions Usage"
+              >
+                <Card className="border-muted hover:border-primary/30 transition-colors cursor-pointer">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-4">
+                      <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${accent}`}>
+                        <Zap className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold">
+                          {usage.required} / {usage.freeLimit}
+                        </p>
+                        <p className="text-sm text-muted-foreground">edge functions</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </a>
+            );
+          })()}
         </div>
+
+
 
         {/* Registry Info */}
         <div className="rounded-lg border border-dashed border-muted-foreground/30 bg-muted/20 p-4">
@@ -531,38 +531,9 @@ export default function ModulesPage() {
           </div>
         )}
 
-        {/* Roadmap — Planned modules (read-only) */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Rocket className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-              Roadmap — Coming soon
-            </h2>
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            Small, high-value modules planned next. Tackling the simplest first — vote or comment in GitHub Issues to influence priority.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {PLANNED_MODULES.map((m) => (
-              <Card key={m.id} className="border-dashed bg-muted/20">
-                <CardContent className="pt-6 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-sm">{m.name}</h3>
-                    <div className="flex gap-1.5 shrink-0">
-                      <Badge variant="outline" className="text-[10px]">Planned</Badge>
-                      <Badge variant="secondary" className="text-[10px]">{m.effort}</Badge>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {m.description}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                    {CATEGORY_LABELS[m.category]}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        {/* Edge function footprint vs Supabase Free tier — detailed breakdown */}
+        <div id="edge-functions-usage" className="scroll-mt-20">
+          <EdgeFunctionUsageCard enabledModuleIds={enabledModuleIds} moduleNames={moduleNames} />
         </div>
       </div>
     </AdminLayout>

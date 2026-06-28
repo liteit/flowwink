@@ -1,7 +1,8 @@
 import { z } from 'zod';
-import type { SkillSeed } from '@/lib/module-bootstrap';
+import type { SkillSeed, AutomationSeed } from '@/lib/module-bootstrap';
 import { defineModule } from '@/lib/module-def';
 import { supabase } from '@/integrations/supabase/client';
+
 
 const inputSchema = z.object({
   to: z.union([z.string(), z.array(z.string())]),
@@ -166,7 +167,100 @@ Returns one outbound_communications row in full — body_html, body_text, error_
 - When asked "what did we actually send to <recipient>?".
 - When diagnosing a failed send — error_message and metadata.provider_response often hold the root cause.`,
   },
+  {
+    name: 'email_to_ticket',
+    description: 'Convert an inbound email into a support ticket — creates a new ticket or appends a comment if the email is a reply to an existing thread. Idempotent on Gmail message_id. Use when: an `email.received` event fires (typically wired as an automation); manually replaying a stuck inbound email. NOT for: outbound replies (use reply_to_ticket_via_email); classifying email type (this assumes ticket — add a classifier upstream if needed).',
+    category: 'communication',
+    handler: 'internal:email_to_ticket',
+    scope: 'both',
+    trust_level: 'auto',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'email_to_ticket',
+        description: 'Convert an inbound email into a support ticket (or comment on an existing thread). Idempotent on message_id.',
+        parameters: {
+          type: 'object',
+          properties: {
+            message_id: { type: 'string', description: 'Gmail message id (REQUIRED). Used for idempotency.' },
+            thread_id: { type: 'string', description: 'Gmail thread id — used to match replies back to existing tickets.' },
+            from: { type: 'string', description: 'From header (Name <email@example.com>).' },
+            to: { type: 'string', description: 'To header.' },
+            subject: { type: 'string', description: 'Subject line.' },
+            body_text: { type: 'string', description: 'Plain text body of the email.' },
+            snippet: { type: 'string', description: 'Short snippet fallback if body_text is empty.' },
+            in_reply_to: { type: 'string', description: 'In-Reply-To header — alternate threading path.' },
+            references: { type: 'string', description: 'References header.' },
+            message_id_header: { type: 'string', description: 'RFC822 Message-ID header value (used later for outbound In-Reply-To).' },
+            connected_account_id: { type: 'string', description: 'Composio connected_account_id this email came from.' },
+            mailbox: { type: 'string', description: 'The mailbox email address that received this email.' },
+            event: { type: 'object', description: 'Alternative: full event payload from event-dispatcher (any of the fields above can live here instead).' },
+          },
+        },
+      },
+    },
+    instructions: `## email_to_ticket
+### What
+Ingests an inbound email and produces a ticket. Either creates a new ticket OR appends a customer comment on an existing one (and reopens it if it was closed).
+### Threading rules
+1. Match on \`tickets.metadata.gmail_thread_id\` first (same Gmail conversation).
+2. Fallback: match \`in_reply_to\` header to a previous outgoing message-id we logged in \`metadata.last_outgoing_message_id\`.
+3. Otherwise → create a new ticket.
+### Idempotency
+A second call with the same \`message_id\` returns \`{ deduped: true }\` without writing.
+### Wired via automation
+The shipped automation 'inbound_email_to_ticket' calls this on every \`email.received\` event.`,
+  },
+  {
+    name: 'reply_to_ticket_via_email',
+    description: 'Send an email reply on a ticket that was opened from Gmail. Preserves threading via In-Reply-To/References + Gmail thread_id, sends from the same Composio-connected mailbox, logs a public ticket comment. Use when: an agent or admin wants to respond to a customer ticket whose source is email. NOT for: tickets from other channels (web/telegram/etc — those channels have their own reply paths); transactional one-off emails (use send_email/email-send).',
+    category: 'communication',
+    handler: 'internal:reply_to_ticket_via_email',
+    scope: 'both',
+    trust_level: 'approve',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'reply_to_ticket_via_email',
+        description: 'Send a Gmail reply on a ticket, preserving threading and from-address.',
+        parameters: {
+          type: 'object',
+          properties: {
+            ticket_id: { type: 'string', description: 'UUID of the ticket to reply on.' },
+            body: { type: 'string', description: 'Plain-text reply body.' },
+          },
+          required: ['ticket_id', 'body'],
+        },
+      },
+    },
+    instructions: `## reply_to_ticket_via_email
+### What
+Replies to a ticket via Gmail (Composio). Threads the reply correctly in the recipient's inbox so it lands in the same Gmail conversation.
+### Pre-conditions
+- Ticket must have \`source = 'email'\`.
+- Ticket must have a \`contact_email\` (or metadata.from_email).
+- A Composio Gmail account must be connected for the originating mailbox.
+### Side effects
+- Logs a non-internal \`ticket_comments\` row with author_type='agent'.
+- Updates \`metadata.last_outgoing_message_id\` + \`last_outgoing_at\` so future inbound replies match back.
+- Moves ticket from 'new' to 'open' on first reply.`,
+  },
 ];
+
+// ── Automations ─────────────────────────────────────────────────────────────
+const EMAIL_AUTOMATIONS: AutomationSeed[] = [
+  {
+    name: 'inbound_email_to_ticket',
+    description: 'On every email.received event (from composio-webhook), convert the email into a ticket or append it to an existing thread.',
+    trigger_type: 'event',
+    trigger_config: { event: 'email.received' },
+    skill_name: 'email_to_ticket',
+    // event-dispatcher passes the event payload under arguments.event — handler accepts either flat or nested.
+    skill_arguments: {},
+    executor: 'platform',
+  },
+];
+
 
 export const emailModule = defineModule<Input, Output>({
   id: 'email' as any,
@@ -183,8 +277,9 @@ export const emailModule = defineModule<Input, Output>({
 
   // send_email/configure_email_provider/preview_email_template were declared
   // but never had SkillSeed entries. Removed to align manifest with reality.
-  skills: ['scan_gmail_inbox', 'list_communications', 'get_communication'],
+  skills: ['scan_gmail_inbox', 'list_communications', 'get_communication', 'email_to_ticket', 'reply_to_ticket_via_email'],
   skillSeeds: EMAIL_SKILLS,
+  automations: EMAIL_AUTOMATIONS,
 
   async publish(input: Input): Promise<Output> {
     try {

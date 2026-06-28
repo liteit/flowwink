@@ -377,14 +377,10 @@ export default function SiteSettingsPage() {
         </AdminPageHeader>
 
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8 max-w-6xl">
+          <TabsList className="grid w-full grid-cols-7 max-w-6xl">
             <TabsTrigger value="general" className="flex items-center gap-2">
               <Home className="h-4 w-4" />
               <span className="hidden sm:inline">General</span>
-            </TabsTrigger>
-            <TabsTrigger value="system-ai" className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              <span className="hidden sm:inline">System AI</span>
             </TabsTrigger>
             <TabsTrigger value="seo" className="flex items-center gap-2">
               <Globe className="h-4 w-4" />
@@ -464,50 +460,6 @@ export default function SiteSettingsPage() {
             </Card>
             {/* Customer Portal — self-signup policy for end-customers */}
             <CustomerPortalCard />
-
-            {/* Environment Info */}
-            <EnvironmentInfoCard />
-
-            {/* Demo Mode (hourly reset on demo instance) */}
-            <DemoModeCard />
-
-            {/* Danger Zone */}
-            <Card className="border-destructive/50">
-              <CardHeader>
-                <CardTitle className="font-serif text-destructive flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5" />
-                  Danger Zone
-                </CardTitle>
-                <CardDescription>Irreversible actions that affect your entire site</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between p-4 rounded-lg border border-destructive/30 bg-destructive/5">
-                  <div>
-                    <h4 className="font-medium">Reset Site</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Delete all content, CRM data, media files, and reset settings to defaults.
-                    </p>
-                  </div>
-                  <Button 
-                    variant="destructive" 
-                    onClick={() => setShowResetDialog(true)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Reset Site
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <ResetSiteDialog open={showResetDialog} onOpenChange={setShowResetDialog} />
-
-          {/* System AI Tab */}
-          <TabsContent value="system-ai" className="space-y-6">
-            <SystemAiSettingsTab
-              data={systemAiData}
-              onChange={setSystemAiData}
-            />
           </TabsContent>
 
           {/* SEO Tab */}

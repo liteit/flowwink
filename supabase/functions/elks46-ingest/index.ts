@@ -68,6 +68,359 @@ async function loadElks46Config(supabase: ReturnType<typeof getServiceClient>) {
   };
 }
 
+// A reachable default greeting so callers always hear *something* before
+// recording, even if Voice settings (voicemailGreetingUrl) is blank or points
+// at a dead URL. Hosted on the main branch (served at /audio on each site too),
+// so it survives feature-branch deletion — unlike the per-branch raw URL that
+// 404'd after PR #95 merged and left callers with silence.
+const DEFAULT_GREETING_URL =
+  "https://raw.githubusercontent.com/magnusfroste/flowwink/main/public/audio/voicemail-sv.mp3";
+
+async function loadVoiceSettings(supabase: ReturnType<typeof getServiceClient>) {
+  const { data } = await supabase
+    .from("site_settings").select("value").eq("key", "voice").maybeSingle();
+  const v = (data?.value as any) || {};
+  return {
+    voicemailGreetingUrl: (v.voicemailGreetingUrl as string) || DEFAULT_GREETING_URL,
+    ringTimeoutSeconds: Number(v.ringTimeoutSeconds) > 0 ? Number(v.ringTimeoutSeconds) : 25,
+    smsReplyEnabled: v.smsReplyEnabled === true,
+    // Callback auto-scheduler (opt-in). When off, missed calls/voicemails stay
+    // `pending` for a human to schedule manually — exactly today's behaviour.
+    autoScheduleCallbacks: v.autoScheduleCallbacks === true,
+    autoScheduleSms: v.autoScheduleSms === true,
+    callbackTimezone: (v.callbackTimezone as string) || "Europe/Stockholm",
+    callbackWindowStart: (v.callbackWindowStart as string) || "09:00",
+    callbackWindowEnd: (v.callbackWindowEnd as string) || "17:00",
+    callbackSlotMinutes: Number(v.callbackSlotMinutes) > 0 ? Number(v.callbackSlotMinutes) : 15,
+  };
+}
+
+type VoiceSettingsResolved = Awaited<ReturnType<typeof loadVoiceSettings>>;
+
+// ── Timezone-aware callback slot finder ──────────────────────────────────────
+// Business hours live in the site's wall-clock timezone, but the edge runtime is
+// UTC, so we convert through Intl. DST-safe.
+
+function tzOffsetMs(instant: Date, timeZone: string): number {
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone, hour12: false,
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+  });
+  const map: Record<string, string> = {};
+  for (const p of dtf.formatToParts(instant)) map[p.type] = p.value;
+  const asUTC = Date.UTC(+map.year, +map.month - 1, +map.day, +map.hour, +map.minute, +map.second);
+  return asUTC - instant.getTime();
+}
+
+// Local wall-clock minutes-since-midnight for a UTC instant, in the given zone.
+function localMinutes(instant: Date, timeZone: string): number {
+  const local = new Date(instant.getTime() + tzOffsetMs(instant, timeZone));
+  return local.getUTCHours() * 60 + local.getUTCMinutes();
+}
+
+// The UTC instant matching a local wall-clock time (same calendar day as `ref`
+// in the zone, optionally +dayOffset days), for `minutesOfDay` past midnight.
+function zonedWallTimeToUtc(ref: Date, timeZone: string, minutesOfDay: number, dayOffset = 0): Date {
+  const local = new Date(ref.getTime() + tzOffsetMs(ref, timeZone));
+  const y = local.getUTCFullYear(), mo = local.getUTCMonth(), d = local.getUTCDate();
+  const guess = Date.UTC(y, mo, d + dayOffset, Math.floor(minutesOfDay / 60), minutesOfDay % 60);
+  // Correct for the offset at the guessed instant (handles DST boundaries).
+  const corrected = guess - tzOffsetMs(new Date(guess), timeZone);
+  return new Date(corrected);
+}
+
+function parseHHMM(s: string, fallback: number): number {
+  const m = /^(\d{1,2}):(\d{2})$/.exec((s || "").trim());
+  if (!m) return fallback;
+  const mins = (+m[1]) * 60 + (+m[2]);
+  return Number.isFinite(mins) && mins >= 0 && mins < 24 * 60 ? mins : fallback;
+}
+
+// Pick the next free callback slot inside business hours that no other scheduled
+// callback already occupies. Returns an ISO string, or null if none found within
+// a week (degrades to leaving the call `pending`).
+async function findNextFreeCallbackSlot(
+  supabase: ReturnType<typeof getServiceClient>,
+  s: VoiceSettingsResolved,
+  now: Date,
+): Promise<string | null> {
+  const tz = s.callbackTimezone;
+  const slotMin = s.callbackSlotMinutes;
+  const slotMs = slotMin * 60_000;
+  const startMin = parseHHMM(s.callbackWindowStart, 9 * 60);
+  const endMin = parseHHMM(s.callbackWindowEnd, 17 * 60);
+  const LEAD_MIN = 20; // never propose a time sooner than ~20 min from now
+
+  // Slots already taken by other scheduled callbacks (rounded to the slot grid).
+  const { data: scheduled } = await supabase
+    .from("voice_calls")
+    .select("callback_scheduled_at")
+    .eq("callback_status", "scheduled")
+    .gte("callback_scheduled_at", new Date(now.getTime() - slotMs).toISOString());
+  const taken = new Set<number>();
+  for (const r of scheduled ?? []) {
+    const t = Date.parse((r as any).callback_scheduled_at);
+    if (Number.isFinite(t)) taken.add(Math.round(t / slotMs) * slotMs);
+  }
+
+  // Start at the next slot boundary at least LEAD_MIN out.
+  let cand = new Date(Math.ceil((now.getTime() + LEAD_MIN * 60_000) / slotMs) * slotMs);
+  for (let i = 0; i < 24 * 60 / slotMin * 7; i++) { // up to ~7 days of slots
+    const mins = localMinutes(cand, tz);
+    if (mins < startMin || mins >= endMin) {
+      // Outside hours → jump to the next window start (today if still before it,
+      // otherwise tomorrow).
+      const dayOffset = mins < startMin ? 0 : 1;
+      cand = zonedWallTimeToUtc(cand, tz, startMin, dayOffset);
+      continue;
+    }
+    const key = Math.round(cand.getTime() / slotMs) * slotMs;
+    if (!taken.has(key)) return cand.toISOString();
+    cand = new Date(cand.getTime() + slotMs);
+  }
+  return null;
+}
+
+// A Swedish mobile number is +46 7x; any other +46 prefix is a landline that
+// can't receive SMS. We only ever *block* confirmed Swedish landlines — foreign
+// numbers get the benefit of the doubt (likely mobile, and we can't classify
+// them cheaply). This is the guard that stops the silent-failure mode where an
+// agent texts a voicemail caller who phoned in from a fast telefon.
+function isLikelySwedishLandline(num: string): boolean {
+  return /^\+46(?!7)/.test(num);
+}
+
+// 46elks dial-plan: ANSWER the call, play the greeting, then record a voicemail.
+// Per the 46elks docs (/docs/voice-record) the `record` value is the URL the
+// recording is POSTed to (delivered as the `wav` param) — NOT "true".
+//
+// CRITICAL: the `record` action must NOT carry an inner `next`. We previously
+// had `next: { record: selfUrl, next: selfUrl }`, which made 46elks CONTINUE
+// the dial-plan after each recording — it re-fetched selfUrl, got a fresh
+// greeting, and replayed it in a loop. The call actions log proved it:
+//   play(ok) → record(failed,tooshort) → play(ok) → record(ok) → play(hangup)
+// Without an inner `next`, the call ends after the recording. The recording is
+// still captured (it appears in the call's `recordings[]`, fetched via the API
+// in the terminal handler) and, if 46elks POSTs a `wav`, handled directly.
+//
+// Never combine `play` with `hangup: "reject"` — reject means "don't answer",
+// so the audio never plays. That was the earlier "nothing played" bug.
+function voicemailReply(greetingUrl: string, selfUrl: string) {
+  return {
+    play: greetingUrl,
+    next: { record: selfUrl, silencedetection: "yes" },
+    whenhangup: selfUrl,
+  };
+}
+
+function hangupResponse(): Response {
+  return new Response(JSON.stringify({ hangup: true }), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+// Ask 46elks for a call's recordings. 46elks does not reliably POST the audio
+// back to our webhook, but the finished call object lists recording ids in
+// `recordings[]` (e.g. "c76c…-r0"), retrievable at /a1/Recordings/{id}.wav
+// behind Basic auth. Returns the recording ids (newest last).
+async function fetchCallRecordings(callid: string): Promise<string[]> {
+  try {
+    const resp = await fetch(`${ELKS_BASE}/calls/${encodeURIComponent(callid)}`, {
+      headers: { Authorization: basicAuthHeader() },
+    });
+    if (!resp.ok) {
+      console.warn("[elks46-ingest] fetchCallRecordings", resp.status);
+      return [];
+    }
+    const data = await resp.json().catch(() => ({}));
+    const recs = (data as any)?.recordings;
+    return Array.isArray(recs) ? recs.filter((r: unknown): r is string => typeof r === "string") : [];
+  } catch (e) {
+    console.warn("[elks46-ingest] fetchCallRecordings error", (e as Error)?.message);
+    return [];
+  }
+}
+
+// Fetch the (Basic-auth-protected) recording wav and run it through chat-stt,
+// reusing the site's configured STT provider. Returns the transcript or null.
+async function transcribeWav(supabase: ReturnType<typeof getServiceClient>, wavUrl: string): Promise<string | null> {
+  try {
+    const audioResp = await fetch(wavUrl, { headers: { Authorization: basicAuthHeader() } });
+    if (!audioResp.ok) {
+      console.warn("[elks46-ingest] recording fetch failed", audioResp.status);
+      return null;
+    }
+    const buf = await audioResp.arrayBuffer();
+    if (buf.byteLength === 0) return null;
+
+    // Use the same STT provider the chat widget uses (site_settings key 'chat').
+    // 'browser' STT only runs client-side, so fall back to OpenAI Whisper here.
+    const { data: cs } = await supabase
+      .from("site_settings").select("value").eq("key", "chat").maybeSingle();
+    const chat = ((cs?.value as any) || {}) as Record<string, unknown>;
+    let provider = (chat.sttProvider as string) || "openai";
+    if (provider === "browser") provider = "openai";
+
+    const fd = new FormData();
+    fd.append("file", new File([buf], "voicemail.wav", { type: "audio/wav" }));
+    fd.append("provider", provider);
+    if (provider === "local") {
+      if (chat.sttLocalEndpoint) fd.append("endpoint", String(chat.sttLocalEndpoint));
+      if (chat.sttLocalModel) fd.append("model", String(chat.sttLocalModel));
+    }
+
+    const sttResp = await fetch(`${supabaseUrl}/functions/v1/chat-stt`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey },
+      body: fd,
+    });
+    if (!sttResp.ok) {
+      console.warn("[elks46-ingest] chat-stt failed", sttResp.status, await sttResp.text().catch(() => ""));
+      return null;
+    }
+    const out = await sttResp.json().catch(() => ({}));
+    const text = typeof (out as any)?.text === "string" ? (out as any).text.trim() : "";
+    return text || null;
+  } catch (e) {
+    console.warn("[elks46-ingest] transcribeWav error", (e as Error)?.message);
+    return null;
+  }
+}
+
+// Store a captured voicemail, transcribe it, and drop the transcript into the
+// unified inbox as a text message on the call's voice conversation. Posts
+// EXACTLY ONCE per call: voicemail capture runs over two paths (the 46elks
+// wav-POST and the terminal hangup callback that pulls the recording from the
+// API), and those callbacks can race. We claim the call atomically by flipping
+// status → voicemail with a `status != voicemail` guard in the same UPDATE —
+// Postgres row-locking means only the first invocation matches and proceeds;
+// the loser sees zero rows and bails. (A read-then-write metadata flag wasn't
+// enough: both callbacks read the pre-write row before either wrote it.)
+async function recordVoicemail(
+  supabase: ReturnType<typeof getServiceClient>,
+  opts: { callid: string; existing: any; wavUrl: string; durationSeconds: number | null; fromNumber: string },
+): Promise<void> {
+  const { callid, wavUrl, durationSeconds, fromNumber } = opts;
+
+  const { data: claimed } = await supabase
+    .from("voice_calls")
+    .update({ status: "voicemail", voicemail: true })
+    .eq("provider", "elks46").eq("provider_call_id", callid)
+    .neq("status", "voicemail")
+    .select("id, conversation_id, metadata");
+  if (!claimed || claimed.length === 0) return; // a concurrent callback already claimed it
+  const row = claimed[0] as any;
+  const prevMeta = (row.metadata && typeof row.metadata === "object") ? row.metadata : {};
+
+  const transcript = await transcribeWav(supabase, wavUrl);
+
+  await supabase.from("voice_calls").update({
+    recording_url: wavUrl,
+    transcript,
+    ended_at: new Date().toISOString(),
+    duration_seconds: durationSeconds,
+    callback_status: "pending",
+    metadata: { ...prevMeta, voicemail_transcribed: true, voicemail: { recording_url: wavUrl } },
+  }).eq("provider", "elks46").eq("provider_call_id", callid);
+
+  // Ensure a voice conversation exists, then surface the voicemail as text.
+  let conversationId: string | null = row.conversation_id ?? null;
+  if (!conversationId) {
+    const { data: conv } = await supabase.from("chat_conversations").insert({
+      channel: "voice",
+      channel_thread_id: fromNumber || callid,
+      customer_name: fromNumber || "Unknown caller",
+      scope: "visitor",
+      conversation_status: "waiting_agent",
+      title: `Voice · ${fromNumber || callid}`,
+      visitor_profile: { sms_provider: "elks46", elks46_callid: callid, from: fromNumber },
+    }).select("id").maybeSingle();
+    conversationId = conv?.id ?? null;
+    if (conversationId) {
+      await supabase.from("voice_calls").update({ conversation_id: conversationId })
+        .eq("provider", "elks46").eq("provider_call_id", callid);
+    }
+  }
+
+  if (conversationId) {
+    await supabase.from("chat_messages").insert({
+      conversation_id: conversationId,
+      role: "user",
+      source: "voice",
+      content: transcript
+        ? `🎙️ Voicemail: ${transcript}`
+        : `🎙️ Voicemail received (transcription unavailable).`,
+      metadata: { elks46_callid: callid, recording_url: wavUrl, channel: "voice", voicemail: true },
+    });
+    // Move it into the queue so it shows up as an unhandled inbox item.
+    await supabase.from("chat_conversations").update({
+      conversation_status: "waiting_agent",
+      updated_at: new Date().toISOString(),
+    }).eq("id", conversationId);
+  }
+
+  await maybeAutoScheduleCallback(supabase, { callid, fromNumber, conversationId });
+}
+
+// If the callback auto-scheduler is enabled, pick a non-conflicting slot inside
+// business hours, book it on the (still-pending) call, and — when configured —
+// SMS the caller their callback time. Fully opt-in: with the toggle off this is
+// a no-op and the call stays `pending` for manual handling. Best-effort: any
+// failure is logged, never throws into the webhook path.
+async function maybeAutoScheduleCallback(
+  supabase: ReturnType<typeof getServiceClient>,
+  opts: { callid: string; fromNumber: string; conversationId: string | null },
+): Promise<void> {
+  try {
+    const s = await loadVoiceSettings(supabase);
+    if (!s.autoScheduleCallbacks) return;
+
+    const slotIso = await findNextFreeCallbackSlot(supabase, s, new Date());
+    if (!slotIso) return; // no free slot this week → leave pending for a human
+
+    // Only book if still pending — never override a time a human already set.
+    const { data: booked } = await supabase
+      .from("voice_calls")
+      .update({ callback_status: "scheduled", callback_scheduled_at: slotIso })
+      .eq("provider", "elks46").eq("provider_call_id", opts.callid)
+      .eq("callback_status", "pending")
+      .select("id");
+    if (!booked || booked.length === 0) return;
+
+    const when = new Intl.DateTimeFormat("sv-SE", {
+      timeZone: s.callbackTimezone, weekday: "short", hour: "2-digit", minute: "2-digit",
+    }).format(new Date(slotIso));
+
+    let smsNote = "";
+    const dest = normalizePhone(opts.fromNumber || "");
+    if (s.autoScheduleSms && dest) {
+      if (isLikelySwedishLandline(dest)) {
+        smsNote = " · fast nummer, inget SMS";
+      } else {
+        try {
+          const { fromNumber } = await loadElks46Config(supabase);
+          await sendSms(dest, fromNumber, `Tack för ditt samtal! Vi ringer upp dig ${when}.`);
+          smsNote = ` · SMS skickat till ${dest}`;
+        } catch (e) {
+          console.warn("[elks46-ingest] auto-schedule SMS failed", (e as Error)?.message);
+          smsNote = " · SMS kunde inte skickas";
+        }
+      }
+    }
+
+    if (opts.conversationId) {
+      await supabase.from("chat_messages").insert({
+        conversation_id: opts.conversationId,
+        role: "system",
+        content: `🗓️ Återuppringning inbokad ${when}${smsNote}.`,
+      });
+    }
+  } catch (e) {
+    console.warn("[elks46-ingest] maybeAutoScheduleCallback error", (e as Error)?.message);
+  }
+}
+
 async function sendSms(to: string, from: string, message: string) {
   const auth = basicAuthHeader();
   if (!from) throw new Error("Missing sender (configure from_number in site_settings.elks46.config)");
@@ -93,7 +446,7 @@ async function startCall(to: string, from: string, voiceStart: string) {
   if (!from) throw new Error("Missing caller number (configure from_number)");
   if (!voiceStart) throw new Error("Missing voice_start URL");
   const body = new URLSearchParams({ from, to, voice_start: voiceStart });
-  const resp = await fetch(`${ELKS_BASE}/Calls`, {
+  const resp = await fetch(`${ELKS_BASE}/calls`, {
     method: "POST",
     headers: { "Authorization": auth, "Content-Type": "application/x-www-form-urlencoded" },
     body,
@@ -107,6 +460,36 @@ function normalizePhone(value: string): string {
   if (!value) return "";
   return value.startsWith("+") ? value : `+${value}`;
 }
+
+function connectTargetForAgent(agent: any): string | null {
+  if (!agent) return null;
+
+  const mode = (agent.voice_routing_mode as string) || 'both';
+  const sipUri = String(agent.voice_sip_uri ?? "").trim();
+  const username = String(agent.voice_sip_username ?? "").trim();
+  const mobile = String(agent.voice_mobile_number ?? "").trim();
+
+  const sipTarget = (() => {
+    // 46elks WebRTC accounts are registered by JsSIP as
+    // `sip:<user>@voip.46elks.com`, but the 46elks call API must ring that
+    // browser client as a phone-like target: `+<user>`. Returning the SIP URI
+    // as `connect` makes 46elks treat it as an external SIP trunk and reject.
+    if (username && /^\d{6,}$/.test(username)) return normalizePhone(username);
+    const sipUser = sipUri.match(/^sips?:([^@;]+)(?:@([^;]+))?/i)?.[1];
+    if (sipUser && /^\d{6,}$/.test(sipUser)) return normalizePhone(sipUser);
+    if (sipUri) return sipUri.startsWith("sip:") || sipUri.startsWith("sips:") ? sipUri : `sip:${sipUri}`;
+    return null;
+  })();
+  const mobileTarget = mobile ? normalizePhone(mobile) : null;
+
+  // Mode controls the *first* leg only. For 'both' the no-answer handler
+  // falls through to mobile (see terminal handler / metadata.mobile_attempted).
+  if (mode === 'softphone') return sipTarget;
+  if (mode === 'mobile') return mobileTarget;
+  // 'both': prefer softphone, fall back to mobile if softphone not configured
+  return sipTarget ?? mobileTarget;
+}
+
 
 function paramsToRecord(params: URLSearchParams): Record<string, string> {
   const raw: Record<string, string> = {};
@@ -167,28 +550,111 @@ async function handleIngest(req: Request): Promise<Response> {
       const state = params.get("state");
       const actionResult = parseActionsResult(params.get("actions"));
       const durationSeconds = parseIntParam(params.get("duration"));
+      const wavParam = params.get("wav") ?? params.get("recording_url") ?? params.get("recording");
       const terminalSignal = Boolean(state || params.get("actions") || params.get("start") || params.get("duration"))
         || ["hangup", "failed", "busy", "noanswer", "no_answer", "success", "answered"].includes(result ?? "");
 
-      if (terminalSignal && result !== "newincoming") {
-        const { data: existing } = await supabase
-          .from("voice_calls")
-          .select("status, started_at, answered_at, metadata")
-          .eq("provider", "elks46")
-          .eq("provider_call_id", callid)
-          .maybeSingle();
+      // Load the call row once — used by the recording, guard, and terminal paths.
+      const { data: existingCall } = await supabase
+        .from("voice_calls")
+        .select("status, started_at, answered_at, conversation_id, metadata")
+        .eq("provider", "elks46")
+        .eq("provider_call_id", callid)
+        .maybeSingle();
+      const existingMeta = (existingCall?.metadata && typeof existingCall.metadata === "object")
+        ? existingCall.metadata : {};
+      const alreadyOffered = (existingMeta as any)?.voicemail_offered === true;
 
+      // (A) 46elks POSTed the recording directly (wav param) → transcribe + post
+      // to the inbox, then end the call. (Belt-and-braces: the terminal handler
+      // below also pulls recordings from the API in case no wav is delivered.)
+      if (wavParam) {
+        await recordVoicemail(supabase, {
+          callid, existing: existingCall, wavUrl: wavParam, durationSeconds, fromNumber: normalizedFrom || from,
+        });
+        return hangupResponse();
+      }
+
+      // Double-play guard: if we've already played the greeting for this call
+      // and this callback carries neither a recording nor a terminal signal,
+      // it's a stray continuation — hang up instead of replaying the greeting.
+      if (alreadyOffered && !terminalSignal && result !== "newincoming") {
+        return hangupResponse();
+      }
+
+      if (terminalSignal && result !== "newincoming") {
         const now = new Date().toISOString();
-        const answeredAt = existing?.answered_at
+        const answeredAt = existingCall?.answered_at
           ?? params.get("start")
           ?? (["answered", "success"].includes(result ?? "") || state === "success" || actionResult === "success" ? now : null);
         const failureSignal = state === "busy" || state === "failed" || ["busy", "failed", "noanswer", "no_answer"].includes(result ?? "")
           || ["busy", "failed", "noanswer", "no_answer"].includes(actionResult ?? "");
+        const previousMetadata = existingMeta;
+
+        // (B) Agent's phone didn't pick up (no-answer/busy/failed) and the call
+        // was never answered → play the greeting + record a voicemail instead of
+        // just dropping. The original inbound leg is still live here, so 46elks
+        // continues it with this dial-plan. Guarded by voicemail_offered so the
+        // follow-up hangup callback finalizes instead of looping.
+        if (failureSignal && !answeredAt && !alreadyOffered) {
+          const selfUrl = `${supabaseUrl}/functions/v1/elks46-ingest`;
+          const voice = await loadVoiceSettings(supabase);
+
+          // (B0) Routing mode = 'both' AND first leg was the softphone AND
+          // mobile is configured AND we haven't tried mobile yet → ring the
+          // agent's mobile before falling back to voicemail.
+          const meta = previousMetadata as any;
+          const routingMode = meta?.routing_mode as string | undefined;
+          const agentMobile = meta?.agent_mobile as string | undefined;
+          const firstLeg = meta?.first_leg as string | undefined;
+          const mobileAlreadyTried = meta?.mobile_attempted === true;
+          const firstLegWasSoftphone = !!firstLeg && !!agentMobile && firstLeg !== normalizePhone(agentMobile);
+          if (routingMode === 'both' && agentMobile && firstLegWasSoftphone && !mobileAlreadyTried) {
+            const mobileTarget = normalizePhone(agentMobile);
+            await supabase.from("voice_calls").update({
+              metadata: { ...previousMetadata, mobile_attempted: true, mobile_target: mobileTarget },
+            }).eq("provider", "elks46").eq("provider_call_id", callid);
+            return new Response(JSON.stringify({
+              connect: mobileTarget,
+              callerid: normalizedFrom || from,
+              timeout: voice.ringTimeoutSeconds,
+              busy: voicemailReply(voice.voicemailGreetingUrl, selfUrl),
+              next: selfUrl,
+              whenhangup: selfUrl,
+            }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+
+          // (B) Agent's phone didn't pick up → play greeting + record voicemail.
+          await supabase.from("voice_calls").update({
+            status: "missed",
+            callback_status: "pending",
+            metadata: { ...previousMetadata, voicemail_offered: true, no_answer_event: { result, state } },
+          }).eq("provider", "elks46").eq("provider_call_id", callid);
+          return new Response(JSON.stringify(voicemailReply(voice.voicemailGreetingUrl, selfUrl)), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+
+        // (C) Voicemail was offered for this call → the recording (if the caller
+        // spoke) now exists in the call's recordings[]. Pull it from the API and
+        // transcribe into the inbox. If the caller hung up without speaking,
+        // there's no recording and we just finalize as missed below.
+        if (alreadyOffered) {
+          const recordings = await fetchCallRecordings(callid);
+          if (recordings.length > 0) {
+            const wavUrl = `${ELKS_BASE}/Recordings/${recordings[recordings.length - 1]}.wav`;
+            await recordVoicemail(supabase, {
+              callid, existing: existingCall, wavUrl, durationSeconds, fromNumber: normalizedFrom || from,
+            });
+            return hangupResponse();
+          }
+        }
+
         const finalStatus = failureSignal
           ? (state === "busy" || result === "busy" || actionResult === "busy" ? "busy" : "missed")
           : (answeredAt ? "completed" : "missed");
 
-        const previousMetadata = (existing?.metadata && typeof existing.metadata === "object") ? existing.metadata : {};
         const { error: updateErr } = await supabase
           .from("voice_calls")
           .update({
@@ -202,19 +668,31 @@ async function handleIngest(req: Request): Promise<Response> {
           .eq("provider", "elks46")
           .eq("provider_call_id", callid);
         if (updateErr) console.warn("[elks46-ingest] voice status update failed", updateErr.message);
-        return new Response(JSON.stringify({ hangup: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        // Missed/busy with no voicemail → still a callback owed. Auto-schedule it
+        // if enabled (the caller hung up before recording, so there's no inbox
+        // thread yet — pass the call's conversation_id if one exists).
+        if (finalStatus !== "completed") {
+          await maybeAutoScheduleCallback(supabase, {
+            callid, fromNumber: normalizedFrom || from, conversationId: existingCall?.conversation_id ?? null,
+          });
+        }
+        return hangupResponse();
       }
 
       const { data: agents, error: agentErr } = await supabase
         .from("support_agents")
-        .select("id, voice_sip_uri, voice_mobile_number, voice_enabled, status")
+        .select("id, voice_sip_uri, voice_sip_username, voice_mobile_number, voice_enabled, voice_routing_mode, status")
         .eq("voice_enabled", true)
         .in("status", ["online", "away"])
         .limit(10);
       if (agentErr) console.warn("[elks46-ingest] voice agent lookup failed", agentErr.message);
-      const agent = (agents ?? []).find((a: any) => a.voice_sip_uri || a.voice_mobile_number) as any | undefined;
+      const agent = (agents ?? []).find((a: any) => {
+        const mode = a.voice_routing_mode || 'both';
+        if (mode === 'mobile') return !!a.voice_mobile_number;
+        if (mode === 'softphone') return !!(a.voice_sip_uri || a.voice_sip_username);
+        return a.voice_sip_uri || a.voice_sip_username || a.voice_mobile_number;
+      }) as any | undefined;
+
 
       // Log incoming call for visibility
       let conversationId: string | null = null;
@@ -231,14 +709,32 @@ async function handleIngest(req: Request): Promise<Response> {
         conversationId = conversation?.id ?? null;
       } catch (e) { console.warn("[elks46-ingest] voice log skipped", (e as Error)?.message); }
 
-      const target = agent?.voice_sip_uri
-        ? (String(agent.voice_sip_uri).startsWith("sip:") ? agent.voice_sip_uri : `sip:${agent.voice_sip_uri}`)
-        : agent?.voice_mobile_number;
+      const target = connectTargetForAgent(agent);
       const selfUrl = `${supabaseUrl}/functions/v1/elks46-ingest`;
+      const voice = await loadVoiceSettings(supabase);
       const status = target ? "ringing" : "missed";
+      // For 'both' mode: shorten first leg so the no-answer fallback to mobile
+      // happens within the caller's patience window. ~15s softphone → mobile.
+      const agentMode = (agent?.voice_routing_mode as string) || 'both';
+      const firstLegTimeout = (agentMode === 'both' && target && agent?.voice_mobile_number)
+        ? Math.min(voice.ringTimeoutSeconds, 15)
+        : voice.ringTimeoutSeconds;
+      // Agent reachable → ring their phone; on no-answer the connect's `next`
+      // callback (below) plays the greeting + records. No agent (phone off /
+      // nobody online) → straight to greeting + voicemail.
       const reply = target
-        ? { connect: target, callerid: normalizedFrom || from, timeout: 25, next: selfUrl, whenhangup: selfUrl }
-        : { play: "https://api.46elks.com/static/sounds/welcome-sv.mp3", next: { hangup: "reject" }, whenhangup: selfUrl };
+        ? {
+            connect: target,
+            callerid: normalizedFrom || from,
+            timeout: firstLegTimeout,
+            // 46elks supports an inline `busy` fallback action (see receive-call
+            // docs). Busy → voicemail directly. No-answer/failed is handled by
+            // the `next` callback (→ terminal handler → voicemailReply).
+            busy: voicemailReply(voice.voicemailGreetingUrl, selfUrl),
+            next: selfUrl,
+            whenhangup: selfUrl,
+          }
+        : voicemailReply(voice.voicemailGreetingUrl, selfUrl);
 
       const { error: callErr } = await supabase.from("voice_calls").upsert(
         {
@@ -252,10 +748,20 @@ async function handleIngest(req: Request): Promise<Response> {
           conversation_id: conversationId,
           started_at: new Date().toISOString(),
           callback_status: target ? "none" : "pending",
-          metadata: { initial_action: reply, raw },
+          // No agent → we go straight to greeting+record, so the voicemail was
+          // already offered. With an agent, it's only offered later on no-answer.
+          metadata: {
+            initial_action: reply,
+            raw,
+            voicemail_offered: !target,
+            routing_mode: agentMode,
+            agent_mobile: agent?.voice_mobile_number ?? null,
+            first_leg: target,
+          },
         },
         { onConflict: "provider,provider_call_id" },
       );
+
       if (callErr) console.warn("[elks46-ingest] voice call upsert failed", callErr.message);
       return new Response(JSON.stringify(reply), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -404,8 +910,31 @@ async function handleSend(req: Request): Promise<Response> {
       .select("id, channel, channel_thread_id, visitor_profile")
       .eq("id", conversationId).maybeSingle();
     if (convErr || !conv) return json({ error: "conversation not found" }, 404);
-    if (conv.channel !== "sms") return json({ ok: true, skipped: "not sms" });
-    if (!conv.channel_thread_id) return json({ error: "missing channel_thread_id" }, 400);
+
+    const isVoice = conv.channel === "voice";
+    if (conv.channel !== "sms" && !isVoice) return json({ ok: true, skipped: "unsupported channel" });
+
+    const profile = (conv.visitor_profile as any) || {};
+    // SMS thread → the thread id is the destination. Voice thread → the caller's
+    // number (visitor_profile.from), falling back to the thread id.
+    const destinationRaw = isVoice
+      ? (profile.from || conv.channel_thread_id || "")
+      : (conv.channel_thread_id || "");
+    if (!destinationRaw) return json({ error: "missing destination number" }, 400);
+    const destination = normalizePhone(String(destinationRaw));
+
+    // Voice replies go out as SMS — gated by a Voice setting and a landline
+    // guard so the agent is never misled into thinking an undeliverable reply
+    // was sent. Returns a clear reason the inbox surfaces to the agent.
+    if (isVoice) {
+      const voice = await loadVoiceSettings(supabase);
+      if (!voice.smsReplyEnabled) {
+        return json({ ok: true, sms_sent: false, reason: "sms_reply_disabled" });
+      }
+      if (isLikelySwedishLandline(destination)) {
+        return json({ ok: true, sms_sent: false, reason: "landline" });
+      }
+    }
 
     if (!content && body.message_id) {
       const { data: msg } = await supabase
@@ -415,10 +944,9 @@ async function handleSend(req: Request): Promise<Response> {
     if (!content || !content.trim()) return json({ error: "no content" }, 400);
 
     const { fromNumber } = await loadElks46Config(supabase);
-    const profile = (conv.visitor_profile as any) || {};
     const from = fromNumber || profile.to || "";
-    const data = await sendSms(conv.channel_thread_id, from, content);
-    return json({ ok: true, elks46_message_id: data?.id ?? null });
+    const data = await sendSms(destination, from, content);
+    return json({ ok: true, sms_sent: true, elks46_message_id: data?.id ?? null });
   } catch (err: any) {
     console.error("[elks46-ingest:send] error", err?.message ?? err);
     return json({ error: err?.message ?? "internal error" }, 500);
@@ -440,11 +968,64 @@ async function handleCall(req: Request): Promise<Response> {
     if (!hasAdmin) return json({ error: "forbidden" }, 403);
 
     const body = (await req.json().catch(() => ({}))) as {
-      to?: string; voice_start?: string;
+      to?: string; voice_start?: string; mode?: string;
     };
     if (!body.to) return json({ error: "to required" }, 400);
 
     const { fromNumber, voiceWebhookUrl } = await loadElks46Config(supabase);
+    if (body.mode === "webrtc") {
+      const { data: agent, error: agentErr } = await supabase
+        .from("support_agents")
+        .select("id, voice_sip_uri, voice_sip_username, voice_enabled")
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+      if (agentErr) throw agentErr;
+      if (!agent?.voice_enabled) return json({ error: "softphone not enabled for this agent" }, 400);
+
+      const sipUsername = String(agent.voice_sip_username ?? "").trim();
+      const sipUriUser = String(agent.voice_sip_uri ?? "").match(/^sips?:?([^@;]+)(?:@([^;]+))?/i)?.[1] ?? "";
+      const webRtcUser = (sipUsername || sipUriUser).replace(/^\+/, "");
+      if (!/^\d{6,}$/.test(webRtcUser)) return json({ error: "missing valid 46elks WebRTC number on agent" }, 400);
+
+      const destination = normalizePhone(body.to);
+      const webRtcNumber = normalizePhone(webRtcUser);
+      // Fall back to the agent's WebRTC number as caller-ID when no public DID
+      // is configured in site_settings.integrations.elks46.config.from_number.
+      const callerId = fromNumber || webRtcNumber;
+      const voiceStart = body.voice_start || JSON.stringify({
+        connect: destination,
+        callerid: callerId,
+      });
+      const data = await startCall(webRtcNumber, callerId, voiceStart);
+      const callid = data?.callid ?? data?.id ?? null;
+
+      // Log outbound call so agents see it in /admin/voice even if they forget
+      // to mark a callback as done.
+      if (callid) {
+        const { error: logErr } = await supabase.from("voice_calls").insert({
+          provider: "elks46",
+          provider_call_id: String(callid),
+          direction: "outbound",
+          status: "ringing",
+          from_number: callerId,
+          to_number: destination,
+          agent_id: agent.id,
+          metadata: { mode: "webrtc", initiated_by: userData.user.id },
+        });
+        if (logErr) console.error("[elks46-ingest:call] log insert failed", logErr.message);
+      }
+
+      return json({
+        ok: true,
+        mode: "webrtc",
+        callid,
+        destination,
+        webrtc_number: webRtcNumber,
+        raw: data,
+      });
+
+    }
+
     const voiceStart = body.voice_start || voiceWebhookUrl
       || `${supabaseUrl}/functions/v1/elks46-ingest`;
     const data = await startCall(body.to, fromNumber, voiceStart);
