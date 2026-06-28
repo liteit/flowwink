@@ -102,10 +102,17 @@ export default function SkillsCatalogPage() {
         </AdminPageHeader>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <StatCard label="Total skills" value={stats.total} />
           <StatCard label="Enabled" value={stats.enabled} accent="text-green-600" />
           <StatCard label="Exposed via MCP" value={stats.exposed} accent="text-primary" />
+          <StatCard
+            label="Missing instructions"
+            value={stats.noInstructions}
+            accent={stats.noInstructions > 0 ? 'text-amber-600' : undefined}
+            onClick={() => setStatusFilter(statusFilter === 'no-instructions' ? 'all' : 'no-instructions')}
+            active={statusFilter === 'no-instructions'}
+          />
           <StatCard label="Modules with skills" value={stats.modules} />
         </div>
 
