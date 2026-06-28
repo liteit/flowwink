@@ -152,15 +152,14 @@ function SkillAuditCard() {
     queryKey: ['system-skill-audit'],
     queryFn: async () => {
       const [skillsRes, failuresRes] = await Promise.all([
-        supabase.from('agent_skills').select('id, enabled, mcp_exposed, requires_staging'),
-        supabase
-          .from('agent_audit_trail')
+        (supabase.from('agent_skills') as any).select('id, enabled, mcp_exposed, requires_staging'),
+        (supabase.from('agent_audit_trail') as any)
           .select('id, skill_name, status, created_at')
           .eq('status', 'error')
           .order('created_at', { ascending: false })
           .limit(5),
       ]);
-      const skills = skillsRes.data ?? [];
+      const skills = (skillsRes.data ?? []) as any[];
       return {
         total: skills.length,
         enabled: skills.filter((s: any) => s.enabled).length,
