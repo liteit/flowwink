@@ -116,6 +116,7 @@ import MySkillsPage from "./pages/account/MySkillsPage";
 import MyContractsPage from "./pages/account/MyContractsPage";
 import DeveloperToolsPage from "./pages/admin/DeveloperToolsPage";
 import MigrationAuditPage from "./pages/admin/MigrationAuditPage";
+import SystemHubPage from "./pages/admin/SystemHubPage";
 import WebinarsPage from "./pages/admin/WebinarsPage";
 import WebmeetPage from "./pages/admin/WebmeetPage";
 import MeetRoomPage from "./pages/MeetRoomPage";
@@ -270,6 +271,7 @@ const router = createBrowserRouter([
       { path: "/admin/content-api", element: <Navigate to="/admin/developer" replace /> },
       { path: "/admin/developer", element: <DeveloperPage /> },
       { path: "/admin/migration-audit", element: <MigrationAuditPage /> },
+      { path: "/admin/system", element: <SystemHubPage /> },
       { path: "/admin/process-coverage", element: <ProcessCoveragePage /> },
       { path: "/admin/ai-usage", element: <AiUsagePage /> },
       { path: "/admin/campaigns", element: <ContentCampaignsPage /> },
