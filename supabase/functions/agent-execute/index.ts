@@ -6976,7 +6976,10 @@ async function executeDbAction(
           quantity: l.quantity || 1,
           unit_price_cents: l.unit_price_cents || 0,
           tax_rate: l.tax_rate ?? 25,
-          line_total_cents: (l.quantity || 1) * (l.unit_price_cents || 0),
+          // purchase_order_lines stores the line amount in `total_cents`
+          // (not `line_total_cents` — that column belongs to quote_items /
+          // pos_sale_lines). Reported by OpenClaw finding 30913d98.
+          total_cents: (l.quantity || 1) * (l.unit_price_cents || 0),
         }));
         const { error: linesErr } = await supabase.from('purchase_order_lines').insert(lineInserts);
         if (linesErr) throw new Error(`Insert PO lines failed: ${linesErr.message}`);
