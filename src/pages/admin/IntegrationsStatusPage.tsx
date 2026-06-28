@@ -1196,14 +1196,6 @@ export default function IntegrationsStatusPage() {
   const integrationModuleMap = useIntegrationModuleMap();
 
   const isLoading = secretsLoading || settingsLoading;
-  const secretsErrorMessage = secretsError instanceof Error ? secretsError.message : 'Unknown backend error';
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await refetchSecrets();
-    setIsRefreshing(false);
-    toast.success("Status updated");
-  };
 
   const copyCommand = (secretName: string) => {
     const command = `supabase secrets set ${secretName}=your_api_key_here`;
