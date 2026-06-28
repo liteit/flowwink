@@ -304,6 +304,11 @@ export default function ApprovalsPage() {
 // approval or notify. Built from agent_skills + the unified module registry.
 // ─────────────────────────────────────────────────────────────────────────────
 function GatedSkillsPanel() {
+  const [search, setSearch] = useState('');
+  const [trustFilter, setTrustFilter] = useState<'all' | 'approve' | 'notify'>('all');
+  const [moduleFilter, setModuleFilter] = useState<string>('all');
+  const [mcpFilter, setMcpFilter] = useState<'all' | 'exposed' | 'internal'>('all');
+
   const { data: skills, isLoading } = useGatedSkills();
 
   if (isLoading) {
