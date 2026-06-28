@@ -110,12 +110,21 @@ export default function ApprovalsPage() {
         </TabsList>
 
         <TabsContent value="inbox" className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Pending approval requests that follow a multi-step chain. Review and approve/reject items currently waiting on you or other reviewers.
+          </p>
           <InboxSection />
         </TabsContent>
         <TabsContent value="chains" className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Define multi-step approval workflows. Each chain specifies an entity type, roles/groups, and step order. These templates are used when a request needs sign-off.
+          </p>
           <ChainsSection />
         </TabsContent>
         <TabsContent value="groups" className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Approval groups are named sets of users. Use them in chains where any member of the group can approve.
+          </p>
           <GroupsSection />
         </TabsContent>
 
