@@ -82,6 +82,12 @@ function CheckRow({ check, onFix, isFixing }: { check: CheckResult; onFix: (acti
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">{check.label}</span>
           <Badge variant="outline" className="text-[10px] px-1.5">{check.category}</Badge>
+          {hasDetails && (
+            <Badge variant="secondary" className="text-[10px] px-1.5 gap-1">
+              <ChevronDown className="h-3 w-3" />
+              {check.details!.length} item{check.details!.length === 1 ? '' : 's'}
+            </Badge>
+          )}
         </div>
         <p className="text-xs text-muted-foreground mt-0.5">{check.message}</p>
       </div>
