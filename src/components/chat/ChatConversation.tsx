@@ -18,6 +18,8 @@ interface ChatConversationProps {
   initialMessage?: string;
   onInitialMessageSent?: () => void;
   checkinId?: string;
+  /** Hide the chat's internal title (use when the parent already renders a heading) */
+  hideInternalTitle?: boolean;
 }
 
 export function ChatConversation({
@@ -31,6 +33,7 @@ export function ChatConversation({
   initialMessage,
   onInitialMessageSent,
   checkinId,
+  hideInternalTitle = false,
 }: ChatConversationProps) {
   const initialMessageSentRef = useRef(false);
   const { data: settings } = useChatSettings();
@@ -104,7 +107,7 @@ export function ChatConversation({
           onStartNew: clearMessages,
         }}
         visitorSettings={{
-          title: checkinId ? 'Profile Check-in' : settings?.title,
+          title: hideInternalTitle ? '' : (checkinId ? 'Profile Check-in' : settings?.title),
           welcomeMessage: checkinId
             ? 'Hi! Tell me about your latest project and I\'ll update your profile. You can also use voice input 🎙️'
             : settings?.welcomeMessage,
