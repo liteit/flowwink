@@ -530,6 +530,11 @@ export default function ModulesPage() {
             ))}
           </div>
         )}
+
+        {/* Edge function footprint vs Supabase Free tier — detailed breakdown */}
+        <div id="edge-functions-usage" className="scroll-mt-20">
+          <EdgeFunctionUsageCard enabledModuleIds={enabledModuleIds} moduleNames={moduleNames} />
+        </div>
       </div>
     </AdminLayout>
   );
