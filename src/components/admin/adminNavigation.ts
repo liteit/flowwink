@@ -5,7 +5,7 @@ import {
   Video, Target, Inbox, UserCircle, FileUser, Receipt, Timer, Wallet, Shield, ShieldCheck,
   Network, UserRound, BookMarked, Truck, FileSignature, FolderOpen, FolderKanban, Wrench,
   RefreshCw, AlertTriangle, CheckSquare, Sparkles, Factory, UserSearch, Plus, FlaskConical,
-  LayoutTemplate, Phone,
+  LayoutTemplate, Phone, Database,
 } from 'lucide-react';
 
 import type { AppRole } from '@/types/cms';
