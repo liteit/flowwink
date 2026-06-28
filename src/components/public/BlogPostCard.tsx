@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { stripHtml } from "@/lib/utils";
 import { Calendar, User, Clock } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
@@ -76,7 +77,7 @@ export function BlogPostCard({
             
             {showExcerpt && post.excerpt && (
               <p className="text-muted-foreground line-clamp-3 mb-4">
-                {post.excerpt}
+                {stripHtml(post.excerpt)}
               </p>
             )}
             
@@ -135,7 +136,7 @@ export function BlogPostCard({
             
             {showExcerpt && post.excerpt && (
               <p className="text-sm text-muted-foreground line-clamp-2 mb-3 flex-1">
-                {post.excerpt}
+                {stripHtml(post.excerpt)}
               </p>
             )}
             

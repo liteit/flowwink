@@ -1,4 +1,5 @@
 import { ArticleGridBlockData } from '@/types/cms';
+import { stripHtml } from '@/lib/utils';
 import { ArrowRight } from 'lucide-react';
 
 interface ArticleGridBlockProps {
@@ -42,7 +43,7 @@ export function ArticleGridBlock({ data }: ArticleGridBlockProps) {
                 </h3>
                 {article.excerpt && (
                   <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
-                    {article.excerpt}
+                    {stripHtml(article.excerpt)}
                   </p>
                 )}
                 <span className="inline-flex items-center gap-1 text-sm text-primary font-medium">
