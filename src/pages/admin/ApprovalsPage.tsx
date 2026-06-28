@@ -309,7 +309,23 @@ function GatedSkillsPanel() {
   const [moduleFilter, setModuleFilter] = useState<string>('all');
   const [mcpFilter, setMcpFilter] = useState<'all' | 'exposed' | 'internal'>('all');
 
+  const qc = useQueryClient();
   const { data: skills, isLoading } = useGatedSkills();
+
+  const updateTrust = useMutation({
+    mutationFn: async ({ name, trust_level }: { name: string; trust_level: 'auto' | 'notify' | 'approve' }) => {
+      const { error } = await supabase
+        .from('agent_skills')
+        .update({ trust_level })
+        .eq('name', name);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      toast.success(`${vars.name} → ${vars.trust_level}`);
+      qc.invalidateQueries({ queryKey: ['approvals', 'gated-skills'] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? 'Failed to update trust level'),
+  });
 
   if (isLoading) {
     return (
