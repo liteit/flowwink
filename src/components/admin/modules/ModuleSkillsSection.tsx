@@ -13,7 +13,7 @@
 
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, ChevronRight, ExternalLink, Cpu, Play, Lock, FlaskConical } from 'lucide-react';
+import { Sparkles, ChevronRight, ExternalLink, Cpu, Play, Lock, FlaskConical, FileWarning } from 'lucide-react';
 import { SkillTesterSheet } from '@/components/admin/skills/SkillTesterSheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -177,6 +177,15 @@ function SkillRow({ skill, moduleEnabled = true }: { skill: AgentSkill; moduleEn
           {skill.trust_level && skill.trust_level !== 'auto' && (
             <Badge variant="outline" className="text-[9px] h-4">
               {skill.trust_level}
+            </Badge>
+          )}
+          {!(skill.instructions ?? '').trim() && (
+            <Badge
+              variant="outline"
+              className="text-[9px] h-4 gap-0.5 text-amber-600 border-amber-300"
+              title="No instructions — description still drives selection, but extra guidance helps the agent"
+            >
+              <FileWarning className="h-2 w-2" /> No instructions
             </Badge>
           )}
         </div>

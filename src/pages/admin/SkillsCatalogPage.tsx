@@ -12,7 +12,7 @@
 
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Sparkles, Cpu, ExternalLink, Filter } from 'lucide-react';
+import { Search, Sparkles, Cpu, ExternalLink, Filter, FileWarning } from 'lucide-react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { Input } from '@/components/ui/input';
@@ -27,7 +27,7 @@ import { useModules } from '@/hooks/useModules';
 import { ModuleSkillsSection } from '@/components/admin/modules/ModuleSkillsSection';
 import type { ModulesSettings } from '@/hooks/useModules';
 
-type StatusFilter = 'all' | 'enabled' | 'disabled' | 'mcp' | 'ai-task';
+type StatusFilter = 'all' | 'enabled' | 'disabled' | 'mcp' | 'ai-task' | 'no-instructions';
 
 export default function SkillsCatalogPage() {
   const [search, setSearch] = useState('');
@@ -64,6 +64,7 @@ export default function SkillsCatalogPage() {
           if (statusFilter === 'disabled' && s.enabled) return false;
           if (statusFilter === 'mcp' && !s.mcp_exposed) return false;
           if (statusFilter === 'ai-task' && !s.handler?.startsWith('ai-task:')) return false;
+          if (statusFilter === 'no-instructions' && (s.instructions ?? '').trim() !== '') return false;
           // Search filter (name, description, module name)
           if (q) {
             const hay = `${s.name} ${s.description ?? ''} ${mod.name}`.toLowerCase();
@@ -80,7 +81,8 @@ export default function SkillsCatalogPage() {
     const total = allSkills.length;
     const enabled = allSkills.filter(s => s.enabled).length;
     const exposed = allSkills.filter(s => s.mcp_exposed).length;
-    return { total, enabled, exposed, modules: modules.length };
+    const noInstructions = allSkills.filter(s => !(s.instructions ?? '').trim()).length;
+    return { total, enabled, exposed, noInstructions, modules: modules.length };
   }, [allSkills, modules]);
 
   return (
@@ -100,10 +102,17 @@ export default function SkillsCatalogPage() {
         </AdminPageHeader>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <StatCard label="Total skills" value={stats.total} />
           <StatCard label="Enabled" value={stats.enabled} accent="text-green-600" />
           <StatCard label="Exposed via MCP" value={stats.exposed} accent="text-primary" />
+          <StatCard
+            label="Missing instructions"
+            value={stats.noInstructions}
+            accent={stats.noInstructions > 0 ? 'text-amber-600' : undefined}
+            onClick={() => setStatusFilter(statusFilter === 'no-instructions' ? 'all' : 'no-instructions')}
+            active={statusFilter === 'no-instructions'}
+          />
           <StatCard label="Modules with skills" value={stats.modules} />
         </div>
 
@@ -131,6 +140,10 @@ export default function SkillsCatalogPage() {
                 MCP
               </TabsTrigger>
               <TabsTrigger value="ai-task" className="text-xs">ai-task</TabsTrigger>
+              <TabsTrigger value="no-instructions" className="text-xs gap-1 data-[state=active]:text-amber-600">
+                <FileWarning className="h-3 w-3" />
+                Missing instructions
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -186,11 +199,30 @@ export default function SkillsCatalogPage() {
   );
 }
 
-function StatCard({ label, value, accent }: { label: string; value: number; accent?: string }) {
+function StatCard({
+  label,
+  value,
+  accent,
+  onClick,
+  active,
+}: {
+  label: string;
+  value: number;
+  accent?: string;
+  onClick?: () => void;
+  active?: boolean;
+}) {
+  const Wrapper: any = onClick ? 'button' : 'div';
   return (
-    <div className="rounded-lg border bg-card p-3">
+    <Wrapper
+      onClick={onClick}
+      type={onClick ? 'button' : undefined}
+      className={`rounded-lg border bg-card p-3 text-left transition-colors ${
+        onClick ? 'hover:bg-accent/40 cursor-pointer' : ''
+      } ${active ? 'ring-2 ring-amber-500/60' : ''}`}
+    >
       <div className={`text-2xl font-bold ${accent ?? ''}`}>{value}</div>
       <div className="text-xs text-muted-foreground">{label}</div>
-    </div>
+    </Wrapper>
   );
 }
