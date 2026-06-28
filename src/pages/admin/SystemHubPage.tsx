@@ -24,6 +24,85 @@ import { ObservabilityTab } from '@/components/admin/system/ObservabilityTab';
 import { toast } from 'sonner';
 
 
+function CoreBackendStatusCard() {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const {
+    data: secretsStatus,
+    isLoading,
+    refetch,
+    error: secretsError,
+    isError: hasSecretsError,
+  } = useIntegrationStatus();
+  const secretsErrorMessage = secretsError instanceof Error ? secretsError.message : 'Unknown backend error';
+  const coreSecretsConfigured = secretsStatus?.core
+    ? Object.values(secretsStatus.core).every(Boolean)
+    : false;
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
+    toast.success('Status updated');
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Database className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <CardTitle className="text-base">System Status</CardTitle>
+              <CardDescription>Core backend configuration</CardDescription>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading || isRefreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {hasSecretsError && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Could not verify backend secrets</AlertTitle>
+            <AlertDescription>
+              The secret check failed, so status values here can be misleading. This points more to an auth/admin-role/JWT problem than a missing provider key.
+              <span className="mt-2 block font-mono text-xs">{secretsErrorMessage}</span>
+            </AlertDescription>
+          </Alert>
+        )}
+        {isLoading ? (
+          <div className="flex gap-2">
+            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-6 w-24" />
+          </div>
+        ) : (
+          <div className="flex items-center gap-4">
+            {coreSecretsConfigured ? (
+              <>
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
+                <span className="text-sm text-muted-foreground">All core secrets configured</span>
+              </>
+            ) : (
+              <>
+                <XCircle className="h-5 w-5 text-destructive" />
+                <span className="text-sm text-destructive">Missing core secrets</span>
+              </>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function EnvironmentInfoCard() {
   const [copied, setCopied] = useState<string | null>(null);
 
