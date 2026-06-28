@@ -187,7 +187,7 @@ serve(async (req: Request) => {
           sandbox: true,
           orderId: order.id,
           status: orderStatus,
-          redirectUrl: `${successUrl}?order_id=${order.id}&sandbox=true`,
+          redirectUrl: `${resolvedSuccessUrl}?order_id=${order.id}&sandbox=true`,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -371,7 +371,7 @@ serve(async (req: Request) => {
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: mode,
-      success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${resolvedSuccessUrl}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl,
       metadata: {
         order_id: order.id,
