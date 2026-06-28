@@ -45,6 +45,7 @@ import { useModules, useUpdateModules, defaultModulesSettings, type ModulesSetti
 import { useModuleStats } from "@/hooks/useModuleStats";
 import { ModuleCard } from "@/components/admin/modules/ModuleCard";
 import { EdgeFunctionUsageCard } from "@/components/admin/modules/EdgeFunctionUsageCard";
+import { edgeFunctionUsage } from "@/lib/edge-function-registry";
 import { moduleRegistry } from "@/lib/module-registry";
 import { bootstrapModule, teardownModule } from "@/lib/module-bootstrap";
 import { bootstrapPlatform } from "@/lib/platform-seeds";
