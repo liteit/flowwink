@@ -140,6 +140,10 @@ export default function SkillsCatalogPage() {
                 MCP
               </TabsTrigger>
               <TabsTrigger value="ai-task" className="text-xs">ai-task</TabsTrigger>
+              <TabsTrigger value="no-instructions" className="text-xs gap-1 data-[state=active]:text-amber-600">
+                <FileWarning className="h-3 w-3" />
+                Missing instructions
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
