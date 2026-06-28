@@ -33,9 +33,6 @@ export default function DeveloperPage() {
                 <KeyRound className="h-3.5 w-3.5" />
                 MCP Keys
               </TabsTrigger>
-                <KeyRound className="h-3.5 w-3.5" />
-                MCP Keys
-              </TabsTrigger>
               <TabsTrigger value="api" className="gap-1.5">
                 <Code2 className="h-3.5 w-3.5" />
                 API Explorer
@@ -55,13 +52,10 @@ export default function DeveloperPage() {
             <McpSkillsPanel />
           </TabsContent>
 
-          <TabsContent value="mcp-activity" className="mt-0">
-            <McpActivityPanel />
-          </TabsContent>
-
           <TabsContent value="mcp-keys" className="mt-0">
             <ApiKeysContent />
           </TabsContent>
+
 
           <TabsContent value="api" className="mt-0">
             <ContentApiContent />
