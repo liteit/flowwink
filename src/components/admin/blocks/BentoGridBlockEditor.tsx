@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Trash2, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
 import type { BentoGridBlockData, BentoGridItem } from '@/components/public/blocks/BentoGridBlock';
 import { BentoGridBlock } from '@/components/public/blocks/BentoGridBlock';
 
@@ -40,6 +40,14 @@ export function BentoGridBlockEditor({ data, onChange, isEditing }: BentoGridBlo
   const removeItem = (index: number) => {
     const newItems = [...(data.items || [])];
     newItems.splice(index, 1);
+    onChange({ ...data, items: newItems });
+  };
+
+  const moveItem = (index: number, direction: -1 | 1) => {
+    const newItems = [...(data.items || [])];
+    const target = index + direction;
+    if (target < 0 || target >= newItems.length) return;
+    [newItems[index], newItems[target]] = [newItems[target], newItems[index]];
     onChange({ ...data, items: newItems });
   };
 
@@ -154,13 +162,35 @@ export function BentoGridBlockEditor({ data, onChange, isEditing }: BentoGridBlo
         <Accordion type="single" collapsible className="space-y-2">
           {(data.items || []).map((item, index) => (
             <AccordionItem key={item.id} value={item.id} className="border rounded-lg px-3">
-              <AccordionTrigger className="py-2 text-sm hover:no-underline">
-                <div className="flex items-center gap-2">
-                  <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="font-medium">{item.title || `Item ${index + 1}`}</span>
-                  <span className="text-xs text-muted-foreground">({item.span || 'normal'})</span>
-                </div>
-              </AccordionTrigger>
+              <div className="flex items-center gap-1">
+                <AccordionTrigger className="flex-1 py-2 text-sm hover:no-underline">
+                  <div className="flex items-center gap-2">
+                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="font-medium">{item.title || `Item ${index + 1}`}</span>
+                    <span className="text-xs text-muted-foreground">({item.span || 'normal'})</span>
+                  </div>
+                </AccordionTrigger>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  disabled={index === 0}
+                  onClick={(e) => { e.stopPropagation(); moveItem(index, -1); }}
+                  aria-label="Move up"
+                >
+                  <ArrowUp className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  disabled={index === (data.items || []).length - 1}
+                  onClick={(e) => { e.stopPropagation(); moveItem(index, 1); }}
+                  aria-label="Move down"
+                >
+                  <ArrowDown className="h-3.5 w-3.5" />
+                </Button>
+              </div>
               <AccordionContent className="space-y-3 pb-3">
                 <div>
                   <Label className="text-xs">Title</Label>
