@@ -11,8 +11,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { useSkills, useToggleSkill, useToggleMcpExposed, useBulkToggleSkills } from '@/hooks/useSkillHub';
+import { useSkills, useToggleSkill, useToggleMcpExposed, useBulkToggleSkills, useUpsertSkill, useDeleteSkill } from '@/hooks/useSkillHub';
 import type { AgentSkill } from '@/types/agent';
+import { SkillEditorSheet } from '@/components/admin/skills/SkillEditorSheet';
 
 const CATEGORY_TO_MODULES: Record<string, string[]> = {
   content: ['pages', 'blog', 'knowledgeBase', 'handbook', 'resume', 'mediaLibrary', 'siteMigration'],
@@ -41,10 +42,13 @@ export function McpSkillsPanel() {
   const toggleEnabled = useToggleSkill();
   const toggleMcp = useToggleMcpExposed();
   const bulkToggle = useBulkToggleSkills();
+  const upsertSkill = useUpsertSkill();
+  const deleteSkill = useDeleteSkill();
 
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [exposureFilter, setExposureFilter] = useState<'all' | 'exposed' | 'hidden'>('all');
+  const [editing, setEditing] = useState<AgentSkill | null>(null);
 
   const filtered = useMemo(() => {
     return skills.filter((s) => {
@@ -190,7 +194,11 @@ export function McpSkillsPanel() {
                         </TableCell>
                       </TableRow>
                       {list.map((s) => (
-                        <TableRow key={s.id}>
+                        <TableRow
+                          key={s.id}
+                          className="cursor-pointer hover:bg-muted/40"
+                          onClick={() => setEditing(s)}
+                        >
                           <TableCell>
                             <div className="font-medium text-sm">{s.name}</div>
                             {s.description && (
@@ -202,7 +210,7 @@ export function McpSkillsPanel() {
                           <TableCell><Badge variant="secondary" className="text-[10px]">{s.category}</Badge></TableCell>
                           <TableCell><Badge variant="outline" className="text-[10px]">{s.scope}</Badge></TableCell>
                           <TableCell><span className="text-xs text-muted-foreground">{s.handler.split(':')[0]}</span></TableCell>
-                          <TableCell className="text-center">
+                          <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
@@ -218,7 +226,7 @@ export function McpSkillsPanel() {
                               </TooltipContent>
                             </Tooltip>
                           </TableCell>
-                          <TableCell className="text-center">
+                          <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                             <Switch
                               checked={s.enabled}
                               onCheckedChange={(v) => toggleEnabled.mutate({ id: s.id, enabled: v })}
@@ -234,6 +242,20 @@ export function McpSkillsPanel() {
           )}
         </CardContent>
       </Card>
+
+      <SkillEditorSheet
+        skill={editing}
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        onSave={(data) => {
+          upsertSkill.mutate(editing ? { ...data, id: editing.id } as any : data, {
+            onSuccess: () => setEditing(null),
+          });
+        }}
+        onDelete={(id) => {
+          deleteSkill.mutate(id, { onSuccess: () => setEditing(null) });
+        }}
+      />
     </div>
   );
 }
