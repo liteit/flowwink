@@ -149,7 +149,9 @@ Deep AI research on a topic — audience insights, content angles, hooks, compet
     name: 'generate_content_proposal',
     description: 'Generate multi-channel content (blog, newsletter, LinkedIn, X) from a topic with brand voice and tone control. Use when: a user requests new content for multiple platforms; needing a content strategy for a given topic; planning a campaign that spans several channels. NOT for: writing a single blog post draft (write_blog_post); performing deep research on a topic (research_content).',
     category: 'content',
-    handler: 'db:content_proposals',
+    // Generative — runs through the ai-task hub (content_proposal task). Was
+    // wired to db:content_proposals (CRUD list) which always returned 0 items.
+    handler: 'ai-task:content_proposal',
     scope: 'internal',
     tool_definition: {
       type: 'function',

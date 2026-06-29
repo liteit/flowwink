@@ -585,6 +585,82 @@ const contentResearchTask: TaskSpec<z.infer<typeof contentResearchInput>, any> =
   options: { temperature: 0.7, max_tokens: 4096 },
 };
 
+// ─── content_proposal ─────────────────────────────────────────────────────
+// Generative multi-channel content proposal. Like content_research, the
+// `generate_content_proposal` skill was wired to a `db:content_proposals` CRUD
+// list, so it always returned the (empty) table → {items:[],count:0}. It is a
+// GENERATIVE skill (its description: "Generate multi-channel content from a
+// topic"), so it must produce a pillar piece + per-channel variants. The tool
+// schema matches the content_proposals shape consumed by the content hub
+// (pillar_content + channel_variants keyed by channel).
+const contentProposalInput = z.object({
+  topic: z.string(),
+  target_channels: z.array(z.string()).default(["blog", "newsletter", "linkedin"]),
+  brand_voice: z.string().optional(),
+  target_audience: z.string().optional(),
+  tone_level: z.string().optional(),
+  industry: z.string().optional(),
+});
+
+const contentProposalTask: TaskSpec<z.infer<typeof contentProposalInput>, any> = {
+  name: "content_proposal",
+  description:
+    "Generate a multi-channel content proposal from a topic — a pillar piece plus channel-adapted variants (blog, newsletter, linkedin, x). Returns pillar_content + channel_variants.",
+  tier: "reasoning",
+  inputSchema: contentProposalInput,
+  system: (input) =>
+    `You are an expert multi-channel content strategist. From the brief, write ONE strong pillar piece and adapt it into native variants for ONLY the requested channels, returning everything via the submit_content_proposal tool. Match the brand voice and tone. Per channel shape: blog = {title, excerpt, body (markdown), seo_keywords[]}; newsletter = {subject, preview_text, content}; linkedin = {text, hashtags[]}; x = {thread[] (each item one tweet)}. Requested channels: ${JSON.stringify((input as any).target_channels ?? [])}. No filler or platitudes.`,
+  user: (input) =>
+    `## Brief\n${JSON.stringify({
+      topic: (input as any).topic,
+      target_channels: (input as any).target_channels ?? [],
+      brand_voice: (input as any).brand_voice ?? null,
+      target_audience: (input as any).target_audience ?? null,
+      tone_level: (input as any).tone_level ?? null,
+      industry: (input as any).industry ?? null,
+    }, null, 2)}`,
+  tool: {
+    name: "submit_content_proposal",
+    description: "Return a multi-channel content proposal",
+    parameters: {
+      type: "object",
+      properties: {
+        topic: { type: "string" },
+        pillar_content: { type: "string", description: "The main long-form content piece (markdown)" },
+        channel_variants: {
+          type: "object",
+          description: "Per-channel adaptations, keyed by channel name (only the requested channels)",
+          properties: {
+            blog: {
+              type: "object",
+              properties: {
+                title: { type: "string" }, excerpt: { type: "string" },
+                body: { type: "string" }, seo_keywords: strList,
+              },
+            },
+            newsletter: {
+              type: "object",
+              properties: {
+                subject: { type: "string" }, preview_text: { type: "string" }, content: { type: "string" },
+              },
+            },
+            linkedin: {
+              type: "object",
+              properties: { text: { type: "string" }, hashtags: strList },
+            },
+            x: {
+              type: "object",
+              properties: { thread: strList },
+            },
+          },
+        },
+      },
+      required: ["topic", "pillar_content", "channel_variants"],
+    },
+  },
+  options: { temperature: 0.7, max_tokens: 4096 },
+};
+
 // ─── Registry ───────────────────────────────────────────────────────────────
 export const TASKS: Record<string, TaskSpec<any, any>> = {
   score_candidate: scoreCandidateTask,
@@ -593,6 +669,7 @@ export const TASKS: Record<string, TaskSpec<any, any>> = {
   generate_blog_from_webinar: generateBlogFromWebinarTask,
   ticket_triage: ticketTriageTask,
   content_research: contentResearchTask,
+  content_proposal: contentProposalTask,
 };
 
 export function listTasks() {
