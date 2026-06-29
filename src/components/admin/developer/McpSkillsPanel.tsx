@@ -55,6 +55,30 @@ export function McpSkillsPanel() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [exposureFilter, setExposureFilter] = useState<'all' | 'exposed' | 'hidden'>('all');
   const [editing, setEditing] = useState<AgentSkill | null>(null);
+  const [resyncing, setResyncing] = useState(false);
+  const { data: modulesSettings } = useModules();
+  const qc = useQueryClient();
+
+  const handleResyncFromCode = async () => {
+    if (!modulesSettings) return;
+    setResyncing(true);
+    try {
+      const targets = Object.entries(modulesSettings)
+        .filter(([, c]: any) => c.enabled)
+        .map(([id]) => id as any);
+      const results = await runWithConcurrency(targets, 5, (id: any) => bootstrapModule(id, modulesSettings));
+      await bootstrapPlatform().catch((err) => console.warn('[McpSkillsPanel] platform seed:', err));
+      const failed = results.filter((r: any) => !r.ok || r.value?.errors?.length > 0);
+      if (failed.length) {
+        toast.error(`Synced ${targets.length - failed.length}/${targets.length} — ${failed.length} had issues`);
+      } else {
+        toast.success(`Synced skills from code (${targets.length} modules)`);
+      }
+      qc.invalidateQueries({ queryKey: ['agent-skills'] });
+    } finally {
+      setResyncing(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     return skills.filter((s) => {
