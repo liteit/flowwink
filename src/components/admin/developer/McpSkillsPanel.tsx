@@ -242,6 +242,20 @@ export function McpSkillsPanel() {
           )}
         </CardContent>
       </Card>
+
+      <SkillEditorSheet
+        skill={editing}
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        onSave={(data) => {
+          upsertSkill.mutate(editing ? { ...data, id: editing.id } as any : data, {
+            onSuccess: () => setEditing(null),
+          });
+        }}
+        onDelete={(id) => {
+          deleteSkill.mutate(id, { onSuccess: () => setEditing(null) });
+        }}
+      />
     </div>
   );
 }
