@@ -1092,8 +1092,34 @@ function IntegrationConfigPanel({
     
     return (
       <div className="space-y-4 pt-3 border-t">
+        {/* Outbound Provider Router */}
+        <div className="space-y-2">
+          <Label className="text-xs">Outbound Email Provider</Label>
+          <Select
+            value={emailConfig.provider || 'auto'}
+            onValueChange={(value) => handleChange({
+              emailConfig: { ...emailConfig, provider: value === 'auto' ? undefined : (value as 'resend' | 'composio' | 'smtp') },
+              newsletterTracking,
+            })}
+          >
+            <SelectTrigger className="h-8 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto">Auto (Resend → SMTP → Composio)</SelectItem>
+              <SelectItem value="resend">Resend (transactional/newsletter)</SelectItem>
+              <SelectItem value="composio">Composio / Gmail (personal sender)</SelectItem>
+              <SelectItem value="smtp">SMTP</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Routes all outbound mail from <code>email-send</code>. Composio sends from the connected Gmail account so recipients can reply directly.
+          </p>
+        </div>
+
         {/* Email Config */}
         <div className="space-y-3">
+
           <div className="space-y-2">
             <Label htmlFor="resend-from-name" className="text-xs">From Name</Label>
             <Input
