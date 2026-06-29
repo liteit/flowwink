@@ -3638,8 +3638,12 @@ async function executeProductsAction(
   }
 
   if (action === 'update') {
-    const { product_id, ...updateData } = args as any;
+    const { product_id, ...rest } = args as any;
     if (!product_id) throw new Error('product_id is required');
+    // Strip agent-internal fields (_caller_api_key_id, _caller_user_id, …) and
+    // the routing `action` so they never reach the products update — otherwise
+    // PostgREST rejects with "Could not find the '_caller_api_key_id' column".
+    const updateData = stripInternalFields(rest);
     delete updateData.action;
     const { data, error } = await supabase.from('products')
       .update({ ...updateData, updated_at: new Date().toISOString() })
@@ -8035,6 +8039,17 @@ async function executeGenericCrud(
   }
 
   let { action = 'list', id, ...fields } = args as any;
+
+  // Infer the action from the skill-name verb when the caller passed none.
+  // Skills like create_manufacturing_order use a generic db: handler but declare
+  // no `action` field in their schema, so without this they fall through to the
+  // default 'list' and silently return rows instead of inserting (finding
+  // 8e9fbd31). Only overrides when the caller did NOT pass an explicit action.
+  if ((args as any).action === undefined) {
+    if (skillName.startsWith('create_')) action = 'create';
+    else if (skillName.startsWith('update_')) action = 'update';
+    else if (skillName.startsWith('delete_')) action = 'delete';
+  }
 
   // Action aliases — common natural variants like "list_pending" → list + filter
   const ACTION_ALIASES: Record<string, { action: string; extraFilters?: Record<string, any> }> = {
