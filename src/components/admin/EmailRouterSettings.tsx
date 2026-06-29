@@ -74,37 +74,45 @@ export function EmailRouterSettings() {
         <Mail className="h-4 w-4" />
         <AlertTitle>Email Router — the control plane</AlertTitle>
         <AlertDescription>
-          All outbound mail flows through <code>email-send</code>. The router decides
-          which connected provider actually delivers each message: Resend for
-          transactional/newsletter (no reply expected), Composio/Gmail when a thread is
-          expected (lead replies, agent follow-ups), SMTP for self-hosted servers.
+          All outbound mail flows through <code>email-send</code>. By default,
+          system mail (newsletters, receipts, auth, order confirmations) goes
+          via <strong>Resend</strong> — it's transactional and no reply is
+          expected. Individual callers can <strong>override per send</strong>:
+          the <code>send_email_to_lead</code> skill, for example, asks for
+          Composio/Gmail so the lead's reply lands in the agent's inbox and
+          threads naturally. Leave the default on Resend unless you have a
+          reason to change it.
         </AlertDescription>
       </Alert>
 
       {/* Provider routing */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Outbound provider</CardTitle>
+          <CardTitle className="text-base">Default outbound provider</CardTitle>
           <CardDescription>
-            Default delivery channel for system mail. Individual senders (e.g. agent
-            replying to a lead) may override per call.
+            Used only when a caller does <em>not</em> specify a provider.
+            Agent-driven lead replies always override this and use Composio.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Provider</Label>
+            <Label>Default provider</Label>
             <Select
               value={local.provider ?? "auto"}
               onValueChange={(v) => update("provider", v === "auto" ? undefined : (v as "resend" | "composio" | "smtp"))}
             >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="auto">Auto (Resend → SMTP → Composio)</SelectItem>
+                <SelectItem value="auto">Auto — Resend, then SMTP, then Composio (recommended)</SelectItem>
                 <SelectItem value="resend">Resend — transactional / newsletter</SelectItem>
-                <SelectItem value="composio">Composio / Gmail — personal sender (replies expected)</SelectItem>
-                <SelectItem value="smtp">SMTP — self-hosted</SelectItem>
+                <SelectItem value="smtp">SMTP — self-hosted server</SelectItem>
+                <SelectItem value="composio">Composio / Gmail — force all mail through personal account</SelectItem>
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground">
+              Composio as default is unusual — it routes <em>every</em> system
+              mail through one Gmail account and can hit sending limits.
+            </p>
           </div>
 
           <div className="grid sm:grid-cols-3 gap-3">
