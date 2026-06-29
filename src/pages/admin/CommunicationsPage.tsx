@@ -224,8 +224,10 @@ export default function CommunicationsPage() {
           {selected && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <Field label="To" value={selected.recipient} />
+                <Field label="Direction" value={selected.direction} />
                 <Field label="Channel" value={selected.channel} />
+                <Field label="From" value={selected.sender ?? (selected.direction === "outbound" ? "(this mailbox)" : "—")} />
+                <Field label="To" value={selected.recipient} />
                 <Field label="Status" value={selected.status} />
                 <Field label="Provider" value={selected.simulated ? "simulated" : (selected.provider ?? "—")} />
                 <Field label="Source" value={selected.source ?? "—"} />
