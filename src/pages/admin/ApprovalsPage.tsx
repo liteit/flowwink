@@ -395,10 +395,10 @@ function GatedSkillsPanel() {
           <div className="space-y-1">
             <p className="font-medium text-amber-700 dark:text-amber-300">Runtime override</p>
             <p className="text-muted-foreground">
-              Trust levels changed here are stored in the database but are not the source of truth. They will be reset when a module is reseeded or upgraded, because skills are bootstrapped from the module manifests in code.
+              Trust levels changed here are stored in the database and survive a reseed or upgrade. Only skill definition fields (description, instructions, tool_definition, handler) are overwritten from code.
             </p>
             <p className="text-xs text-muted-foreground">
-              To make a change permanent, update the skill's <code className="font-mono text-amber-700 dark:text-amber-300">trust_level</code> in the module's <code className="font-mono text-amber-700 dark:text-amber-300">skillSeeds</code> and run <code className="font-mono text-amber-700 dark:text-amber-300">npm run sync:skills -- --apply</code>.
+              To make a trust-level change permanent in code, update the skill's <code className="font-mono text-amber-700 dark:text-amber-300">trust_level</code> in the module's <code className="font-mono text-amber-700 dark:text-amber-300">skillSeeds</code> and run <code className="font-mono text-amber-700 dark:text-amber-300">npm run sync:skills -- --apply</code>.
             </p>
           </div>
         </CardContent>
