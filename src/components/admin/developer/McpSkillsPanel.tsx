@@ -175,6 +175,15 @@ export function McpSkillsPanel() {
             <div className="flex-1" />
             <Button
               variant="outline" size="sm"
+              onClick={handleResyncFromCode}
+              disabled={resyncing || !modulesSettings}
+              title="Re-bootstrap every enabled module from code — refreshes descriptions, tool definitions and handlers (trust_level overrides preserved)."
+            >
+              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${resyncing ? 'animate-spin' : ''}`} />
+              {resyncing ? 'Syncing…' : 'Sync from code'}
+            </Button>
+            <Button
+              variant="outline" size="sm"
               onClick={() => bulkToggle.mutate({ ids: filtered.map((s) => s.id), enabled: true })}
               disabled={!filtered.length || bulkToggle.isPending}
             >
