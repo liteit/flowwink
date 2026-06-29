@@ -352,7 +352,22 @@ export function ComposioPanel() {
                     </div>
                   </div>
                 </div>
-                {!isGmailConnected && (
+                {isGmailConnected ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleDisconnectGmail}
+                    disabled={isDisconnectingGmail}
+                    className="text-xs border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    {isDisconnectingGmail ? (
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    ) : (
+                      <Unplug className="h-3 w-3 mr-1" />
+                    )}
+                    Disconnect Gmail
+                  </Button>
+                ) : (
                   <Button size="sm" onClick={() => handleConnectApp('gmail')} className="text-xs">
                     <Plug className="h-3 w-3 mr-1" />
                     Connect
