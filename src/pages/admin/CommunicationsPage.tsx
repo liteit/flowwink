@@ -53,10 +53,11 @@ const STATUS_META: Record<string, { label: string; variant: any; icon: any }> = 
 export default function CommunicationsPage() {
   const [channel, setChannel] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
+  const [direction, setDirection] = useState<string>("all");
   const [selected, setSelected] = useState<Comm | null>(null);
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["outbound-communications", channel, status],
+    queryKey: ["outbound-communications", channel, status, direction],
     queryFn: async () => {
       let q = supabase
         .from("outbound_communications" as any)
@@ -65,6 +66,7 @@ export default function CommunicationsPage() {
         .limit(200);
       if (channel !== "all") q = q.eq("channel", channel);
       if (status !== "all") q = q.eq("status", status);
+      if (direction !== "all") q = q.eq("direction", direction);
       const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as unknown as Comm[];
