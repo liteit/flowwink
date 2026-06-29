@@ -1153,6 +1153,14 @@ export function BlockEditor({ blocks, onChange, canEdit }: BlockEditorProps) {
             isEditing={isEditing}
           />
         );
+      case 'quick-links':
+        return (
+          <QuickLinksBlockEditor
+            data={block.data as unknown as QuickLinksBlockData}
+            onChange={(data) => handleUpdateBlock(block.id, data as unknown as Record<string, unknown>)}
+            isEditing={isEditing}
+          />
+        );
       default:
         return <div className="p-4 text-muted-foreground">Unknown block type</div>;
     }
