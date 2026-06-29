@@ -1098,7 +1098,7 @@ function IntegrationConfigPanel({
           <Select
             value={emailConfig.provider || 'auto'}
             onValueChange={(value) => handleChange({
-              emailConfig: { ...emailConfig, provider: value === 'auto' ? undefined : value },
+              emailConfig: { ...emailConfig, provider: value === 'auto' ? undefined : (value as 'resend' | 'composio' | 'smtp') },
               newsletterTracking,
             })}
           >
