@@ -7709,54 +7709,69 @@ export type Database = {
           body_text: string | null
           channel: string
           created_at: string
+          direction: string
           error_message: string | null
           id: string
+          in_reply_to: string | null
+          message_id_header: string | null
           metadata: Json
           provider: string | null
           recipient: string
           related_entity_id: string | null
           related_entity_type: string | null
+          sender: string | null
           sent_at: string | null
           simulated: boolean
           source: string | null
           status: string
           subject: string | null
+          thread_id: string | null
         }
         Insert: {
           body_html?: string | null
           body_text?: string | null
           channel: string
           created_at?: string
+          direction?: string
           error_message?: string | null
           id?: string
+          in_reply_to?: string | null
+          message_id_header?: string | null
           metadata?: Json
           provider?: string | null
           recipient: string
           related_entity_id?: string | null
           related_entity_type?: string | null
+          sender?: string | null
           sent_at?: string | null
           simulated?: boolean
           source?: string | null
           status: string
           subject?: string | null
+          thread_id?: string | null
         }
         Update: {
           body_html?: string | null
           body_text?: string | null
           channel?: string
           created_at?: string
+          direction?: string
           error_message?: string | null
           id?: string
+          in_reply_to?: string | null
+          message_id_header?: string | null
           metadata?: Json
           provider?: string | null
           recipient?: string
           related_entity_id?: string | null
           related_entity_type?: string | null
+          sender?: string | null
           sent_at?: string | null
           simulated?: boolean
           source?: string | null
           status?: string
           subject?: string | null
+          thread_id?: string | null
         }
         Relationships: []
       }
