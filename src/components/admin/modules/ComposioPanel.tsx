@@ -21,6 +21,7 @@ import {
   Mail,
   Send,
   Inbox,
+  Unplug,
 } from "lucide-react";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
@@ -78,6 +79,7 @@ export function ComposioPanel() {
   const [testSubject, setTestSubject] = useState("");
   const [testBody, setTestBody] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isDisconnectingGmail, setIsDisconnectingGmail] = useState(false);
 
   // Fetch connected apps
   const { data: connectedApps, isLoading: appsLoading, refetch: refetchApps } = useQuery({
@@ -95,9 +97,13 @@ export function ComposioPanel() {
     retry: 1,
   });
 
-  const isGmailConnected = Array.isArray(connectedApps) && connectedApps.some(
-    app => (app.toolkit?.slug || app.appName || app.name || '').toLowerCase().includes('gmail')
-  );
+  const gmailAccount = Array.isArray(connectedApps)
+    ? connectedApps.find(
+        app => (app.toolkit?.slug || app.appName || app.name || '').toLowerCase().includes('gmail')
+      )
+    : null;
+
+  const isGmailConnected = Boolean(gmailAccount);
 
   const handleSearch = async () => {
     if (!searchIntent.trim()) return;
@@ -199,6 +205,35 @@ export function ComposioPanel() {
       toast.error(err instanceof Error ? err.message : 'Failed to send email');
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const handleDisconnectGmail = async () => {
+    if (!gmailAccount?.id) {
+      toast.error('No Gmail account to disconnect');
+      return;
+    }
+    setIsDisconnectingGmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('composio-proxy', {
+        body: {
+          action: 'disconnect_account',
+          params: { account_id: gmailAccount.id },
+          entity_id: 'default',
+        },
+      });
+      if (error) throw new Error(await getFunctionErrorMessage(error));
+      if (data?.result?.disconnected) {
+        toast.success('Gmail account disconnected from Composio');
+        await refetchApps();
+      } else {
+        throw new Error(data?.result?.error || data?.error || 'Disconnect failed');
+      }
+    } catch (err) {
+      logger.error('[ComposioPanel] Disconnect Gmail failed:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to disconnect Gmail');
+    } finally {
+      setIsDisconnectingGmail(false);
     }
   };
 
@@ -317,7 +352,22 @@ export function ComposioPanel() {
                     </div>
                   </div>
                 </div>
-                {!isGmailConnected && (
+                {isGmailConnected ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleDisconnectGmail}
+                    disabled={isDisconnectingGmail}
+                    className="text-xs border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    {isDisconnectingGmail ? (
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    ) : (
+                      <Unplug className="h-3 w-3 mr-1" />
+                    )}
+                    Disconnect Gmail
+                  </Button>
+                ) : (
                   <Button size="sm" onClick={() => handleConnectApp('gmail')} className="text-xs">
                     <Plug className="h-3 w-3 mr-1" />
                     Connect
