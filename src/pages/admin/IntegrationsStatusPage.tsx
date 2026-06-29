@@ -1484,6 +1484,22 @@ export default function IntegrationsStatusPage() {
                             {(key === 'local_llm' || key === 'n8n') && (
                               <TestConfigConnectionButton provider={key} config={currentConfig} isEnabled={isEnabled} />
                             )}
+                            {hasKey && requiresSecret && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs h-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={(e) => { e.stopPropagation(); handleDisconnect(key, integration.secretName, integration.name); }}
+                                disabled={updateIntegrations.isPending}
+                              >
+                                {updateIntegrations.isPending ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                                ) : (
+                                  <XCircle className="h-3.5 w-3.5 mr-1" />
+                                )}
+                                Disconnect
+                              </Button>
+                            )}
                             {INTEGRATION_TO_MODULE[key] && isEnabled && (
                               <Link
                                 to={`/admin/modules?module=${INTEGRATION_TO_MODULE[key]!.moduleId}`}
