@@ -42,6 +42,10 @@ const CRM_SKILLS: SkillSeed[] = [
               type: 'string',
               description: 'Lead source (chat, form, manual)',
             },
+            company_id: {
+              type: 'string',
+              description: 'Optional. UUID of the company (B2B) to link this lead to — use manage_company to find/create it first.',
+            },
           },
           required: [
             'email',
