@@ -1471,6 +1471,11 @@ export default function IntegrationsStatusPage() {
                               <ElevenLabsUsageBadge hasKey={hasKey} />
                             </div>
                           )}
+                          {key === 'resend' && (
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <ResendUsageBadge hasKey={hasKey} />
+                            </div>
+                          )}
                           {/* Actions */}
                           <div className="flex items-center gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
                             {(key === 'openai' || key === 'gemini' || key === 'anthropic') && (
