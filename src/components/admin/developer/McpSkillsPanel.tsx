@@ -1,5 +1,11 @@
 import { useState, useMemo } from 'react';
-import { Search, Shield, ShieldOff, Loader2, ExternalLink } from 'lucide-react';
+import { Search, Shield, ShieldOff, Loader2, ExternalLink, RefreshCw } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { bootstrapModule } from '@/lib/module-bootstrap';
+import { bootstrapPlatform } from '@/lib/platform-seeds';
+import { useModules } from '@/hooks/useModules';
+import { runWithConcurrency } from '@/lib/run-with-concurrency';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -49,6 +55,30 @@ export function McpSkillsPanel() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [exposureFilter, setExposureFilter] = useState<'all' | 'exposed' | 'hidden'>('all');
   const [editing, setEditing] = useState<AgentSkill | null>(null);
+  const [resyncing, setResyncing] = useState(false);
+  const { data: modulesSettings } = useModules();
+  const qc = useQueryClient();
+
+  const handleResyncFromCode = async () => {
+    if (!modulesSettings) return;
+    setResyncing(true);
+    try {
+      const targets = Object.entries(modulesSettings)
+        .filter(([, c]: any) => c.enabled)
+        .map(([id]) => id as any);
+      const results = await runWithConcurrency(targets, 5, (id: any) => bootstrapModule(id, modulesSettings));
+      await bootstrapPlatform().catch((err) => console.warn('[McpSkillsPanel] platform seed:', err));
+      const failed = results.filter((r: any) => !r.ok || r.value?.errors?.length > 0);
+      if (failed.length) {
+        toast.error(`Synced ${targets.length - failed.length}/${targets.length} — ${failed.length} had issues`);
+      } else {
+        toast.success(`Synced skills from code (${targets.length} modules)`);
+      }
+      qc.invalidateQueries({ queryKey: ['agent-skills'] });
+    } finally {
+      setResyncing(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     return skills.filter((s) => {
@@ -143,6 +173,15 @@ export function McpSkillsPanel() {
               </SelectContent>
             </Select>
             <div className="flex-1" />
+            <Button
+              variant="outline" size="sm"
+              onClick={handleResyncFromCode}
+              disabled={resyncing || !modulesSettings}
+              title="Re-bootstrap every enabled module from code — refreshes descriptions, tool definitions and handlers (trust_level overrides preserved)."
+            >
+              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${resyncing ? 'animate-spin' : ''}`} />
+              {resyncing ? 'Syncing…' : 'Sync from code'}
+            </Button>
             <Button
               variant="outline" size="sm"
               onClick={() => bulkToggle.mutate({ ids: filtered.map((s) => s.id), enabled: true })}
