@@ -729,7 +729,19 @@ function InboundEmailSection({ isGmailConnected }: { isGmailConnected: boolean }
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-1 shrink-0">
+                    <div className="flex gap-1 shrink-0 flex-wrap justify-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7"
+                        onClick={() => handleEnableTrigger(acc.id, acc.composio_account_id)}
+                        disabled={enablingTrigger === acc.id || !isGmailConnected}
+                        title="Enable Composio GMAIL_NEW_GMAIL_MESSAGE trigger so replies are pushed to FlowWink"
+                      >
+                        {enablingTrigger === acc.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : 'Enable trigger'}
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
