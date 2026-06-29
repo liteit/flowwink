@@ -199,9 +199,9 @@ serve(async (req: Request) => {
     if (explicit === "composio" && composioEnabled) provider = "composio";
     else if (explicit === "smtp" && smtpEnabled) provider = "smtp";
     else if (explicit === "resend" && resendEnabled) provider = "resend";
-    else if (composioEnabled) provider = "composio";
     else if (resendEnabled) provider = "resend";
     else if (smtpEnabled) provider = "smtp";
+    else if (composioEnabled) provider = "composio";
 
     // SIMULATE MODE — no provider configured.
     // Mirrors the Stripe pattern: if no integration is wired up, we still
