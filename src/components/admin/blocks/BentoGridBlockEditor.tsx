@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Trash2, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
 import type { BentoGridBlockData, BentoGridItem } from '@/components/public/blocks/BentoGridBlock';
 import { BentoGridBlock } from '@/components/public/blocks/BentoGridBlock';
 
