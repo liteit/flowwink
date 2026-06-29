@@ -188,7 +188,8 @@ export default function CommunicationsPage() {
               </Table>
             </CardContent>
           </Card>
-        </div>
+          </TabsContent>
+        </Tabs>
       </AdminPageContainer>
 
       <Dialog open={!!selected} onOpenChange={(v) => !v && setSelected(null)}>
