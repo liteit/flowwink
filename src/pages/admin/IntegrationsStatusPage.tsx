@@ -332,6 +332,69 @@ function FirecrawlCreditsBadge({ hasKey }: { hasKey: boolean }) {
   );
 }
 
+// Resend usage indicator — counts emails routed via Resend this calendar month
+// from our own outbound_communications log. Resend has no public usage endpoint,
+// so we surface what *we* sent + the free-tier reference (3 000/mo, 100/day).
+function ResendUsageBadge({ hasKey }: { hasKey: boolean }) {
+  const [info, setInfo] = useState<{ month: number; today: number } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!hasKey) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+
+      const [{ count: monthCount, error: mErr }, { count: todayCount, error: tErr }] = await Promise.all([
+        supabase
+          .from('outbound_communications')
+          .select('id', { count: 'exact', head: true })
+          .eq('provider', 'resend')
+          .eq('direction', 'outbound')
+          .gte('created_at', monthStart),
+        supabase
+          .from('outbound_communications')
+          .select('id', { count: 'exact', head: true })
+          .eq('provider', 'resend')
+          .eq('direction', 'outbound')
+          .gte('created_at', dayStart),
+      ]);
+      if (mErr) throw mErr;
+      if (tErr) throw tErr;
+      setInfo({ month: monthCount ?? 0, today: todayCount ?? 0 });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed');
+    } finally {
+      setLoading(false);
+    }
+  }, [hasKey]);
+
+  if (!hasKey) return null;
+
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-md border bg-muted/30 px-2.5 py-1.5 text-xs">
+      <span className="text-muted-foreground">Resend sent</span>
+      {info ? (
+        <span className="font-medium tabular-nums">
+          {info.month.toLocaleString()}
+          <span className="text-muted-foreground"> this month</span>
+          <span className="text-muted-foreground"> · {info.today.toLocaleString()} today</span>
+        </span>
+      ) : error ? (
+        <span className="text-destructive">{error}</span>
+      ) : (
+        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" disabled={loading} onClick={load}>
+          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Check'}
+        </Button>
+      )}
+    </div>
+  );
+}
+
 // ElevenLabs live usage indicator — calls elevenlabs-account edge function.
 // Surfaces characters used / monthly quota + tier.
 function ElevenLabsUsageBadge({ hasKey }: { hasKey: boolean }) {
