@@ -48,16 +48,21 @@ migrations. Lovable added a deploy-banner reminding admins: toggling a module ON
 needs an edge deploy + a sync-skills. Forks (autoversio…) need per-ref
 `supabase functions deploy` + `sync:skills --apply`.
 
+## Shipped & verified
+- **Email-router (option A) + reply capture — DONE.** `email-send` is now a
+  provider router (`smtp | resend | composio`), driven by
+  `site_settings.integrations.email.provider`, logging both directions to
+  `outbound_communications` (direction, thread_id, in_reply_to, message_id).
+  `send_email_to_lead` schema unchanged (channel chosen by site-setting, no
+  resync needed). Verified live on dev: 2 outbound composio sends + 14 inbound
+  composio rows incl. 8 threaded replies ("Re: …" from froste@liteit.se →
+  liteitdev@gmail.com). The Composio reply-webhook fires correctly. Personal
+  1:1 outreach now goes From the real inbox and replies thread back — single
+  audited timeline. (Backlog: per-user Composio accounts.)
+
 ## Pending (sync when Lovable deploys)
 - `ai-task` redeploy + sync-skills for the `content_proposal` handler flip
 - sync-skills for the 8+ instruction blocks + add_lead company_id
-- **Email-router (Lovable building, option A):** `send_email_to_lead` currently
-  routes only Resend/SMTP via `email-send`, so 1:1 outreach goes From
-  info@flowwink.com (looks like newsletter, not repliable) and Composio Gmail
-  bypasses `outbound_communications` logging. Desired: `email-send` becomes a
-  provider router (resend | smtp | composio | gmail-oauth) so personal outreach
-  goes From the real inbox (liteitdev@gmail.com), replies thread in Gmail, and
-  everything logs on the lead's timeline. **When Lovable finishes A → sync.**
 
 ## Remaining untested surfaces
 communication (newsletter/webinars/chat), automation, HR/recruitment depth
