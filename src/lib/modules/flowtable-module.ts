@@ -37,7 +37,6 @@ const FLOWTABLE_SKILLS: SkillSeed[] = [
     category: 'crm',
     handler: 'db:flowtable_bases',
     scope: 'internal',
-    mcp_exposed: true,
     tool_definition: {
       type: 'function',
       function: {
@@ -62,7 +61,6 @@ const FLOWTABLE_SKILLS: SkillSeed[] = [
     category: 'crm',
     handler: 'db:flowtable_records',
     scope: 'internal',
-    mcp_exposed: true,
     tool_definition: {
       type: 'function',
       function: {
