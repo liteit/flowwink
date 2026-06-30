@@ -70,10 +70,7 @@ export default function ProductsPage() {
   return (
     <AdminLayout>
       <AdminPageContainer>
-        <AdminPageHeader
-          title="Products"
-          description="Manage products and services for your deals"
-        >
+        <AdminPageHeader title="Products">
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
               <Upload className="h-4 w-4 mr-2" />

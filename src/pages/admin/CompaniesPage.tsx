@@ -65,10 +65,7 @@ export default function CompaniesPage() {
   return (
     <AdminLayout>
       <AdminPageContainer>
-        <AdminPageHeader
-          title="Companies"
-          description="Manage companies and organizations in your CRM"
-        >
+        <AdminPageHeader title="Companies">
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

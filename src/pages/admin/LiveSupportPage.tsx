@@ -156,10 +156,7 @@ export default function LiveSupportPage() {
   return (
     <AdminLayout>
       <div className="flex flex-col h-[calc(100vh-4rem)]">
-        <AdminPageHeader 
-          title="Live Support"
-          description="Manage real-time customer conversations"
-        >
+        <AdminPageHeader title="Live Support">
           <div className="flex items-center gap-3">
             {/* Online teammates count */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">

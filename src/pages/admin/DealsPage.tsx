@@ -78,10 +78,7 @@ export default function DealsPage() {
   return (
     <AdminLayout>
       <AdminPageContainer>
-        <AdminPageHeader
-          title="Deals"
-          description="Manage your sales pipeline and opportunities"
-        >
+        <AdminPageHeader title="Deals">
           <div className="flex items-center gap-2">
             <ToggleGroup 
               type="single" 
