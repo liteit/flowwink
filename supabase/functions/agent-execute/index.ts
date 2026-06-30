@@ -387,6 +387,9 @@ serve(async (req) => {
       } else if (handler === 'internal:competitor_monitor') {
         result = await executeCompetitorMonitor(supabase, args, supabaseUrl, serviceKey);
 
+      } else if (handler === 'internal:invoice_from_timesheets') {
+        result = await executeInvoiceFromTimesheets(supabase, args);
+
       } else if (handler.startsWith('rpc:')) {
         const fnName = handler.replace('rpc:', '');
 
@@ -9652,6 +9655,49 @@ async function executeCompetitorMonitor(
   } catch { /* non-fatal */ }
 
   return { company_name: companyName, domain, ...analysis };
+}
+
+// invoice_from_timesheets — resolve project + period, then call the
+// bulk_invoice_from_timesheets RPC. Was db:invoices (dead — listed invoices
+// instead of generating one). The bulk_ variant is the real engine.
+async function executeInvoiceFromTimesheets(
+  supabase: any,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  const a = args as any;
+  // Resolve project_id (accept project_name).
+  let projectId = String(a.project_id || '').trim();
+  if (!projectId && a.project_name) {
+    const { data: p } = await supabase.from('projects')
+      .select('id').ilike('name', String(a.project_name)).limit(1).maybeSingle();
+    projectId = p?.id || '';
+  }
+  if (!projectId) return { error: 'project_id (or a matching project_name) is required', status: 'failed' };
+
+  // Resolve the period to start/end dates.
+  const iso = (dt: Date) => dt.toISOString().split('T')[0];
+  let start = a.start_date, end = a.end_date;
+  const period = String(a.period || (start && end ? 'custom' : 'this_month'));
+  if (period !== 'custom') {
+    const now = new Date();
+    if (period === 'last_month') {
+      start = iso(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+      end = iso(new Date(now.getFullYear(), now.getMonth(), 0));
+    } else { // this_month
+      start = iso(new Date(now.getFullYear(), now.getMonth(), 1));
+      end = iso(now);
+    }
+  }
+  if (!start || !end) return { error: 'start_date and end_date required for period=custom', status: 'failed' };
+
+  const { data, error } = await supabase.rpc('bulk_invoice_from_timesheets', {
+    p_project_id: projectId, p_start_date: start, p_end_date: end,
+    p_group_by: a.group_by || 'entry', p_due_days: a.due_days ?? 30,
+  });
+  if (error) return { error: `Invoice from timesheets failed: ${error.message}`, status: 'failed' };
+  const rows = data || [];
+  return { project_id: projectId, period, start_date: start, end_date: end,
+    invoices_created: rows.length, invoices: rows };
 }
 
 async function executeReplyToTicketViaEmail(

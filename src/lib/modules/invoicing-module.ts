@@ -83,7 +83,7 @@ Locale-specific: ${getActivePack().ai_instructions.invoicing}`,
     name: 'invoice_from_timesheets',
     description: 'Generate invoice draft from billable time entries. Use when: user wants to invoice a client for logged hours, "fakturera timmar", "invoice project X for last month". NOT for: manual invoices (use manage_invoice), logging time (use log_time).',
     category: 'commerce',
-    handler: 'db:invoices',
+    handler: 'internal:invoice_from_timesheets',
     scope: 'internal',
     tool_definition: {
       type: 'function',
