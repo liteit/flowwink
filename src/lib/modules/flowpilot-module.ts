@@ -361,7 +361,9 @@ Creates a new high-level objective for FlowPilot's autonomous operation.
     name: 'weekly_business_digest',
     description: 'Generate a cross-module business summary covering views, leads, bookings, orders, posts, newsletters. Use when: weekly business review; executive summary needed; monitoring overall business health. NOT for: analyzing specific analytics (analyze_analytics); learning from data (learn_from_data).',
     category: 'analytics',
-    handler: 'db:agent_activity',
+    // Aggregation RPC (was db:agent_activity CRUD list which returned raw rows
+    // instead of a digest). Computes period counts/revenue across modules.
+    handler: 'rpc:weekly_business_digest',
     scope: 'internal',
     tool_definition: {
       type: 'function',
