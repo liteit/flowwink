@@ -122,7 +122,7 @@ export default function DocumentsPage() {
         </Tabs>
 
         <AddDocumentDialog open={addOpen} onOpenChange={setAddOpen} />
-      </div>
+      </AdminPageContainer>
     </AdminLayout>
   );
 }
