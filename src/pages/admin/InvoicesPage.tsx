@@ -37,17 +37,15 @@ export default function InvoicesPage() {
 
   return (
     <AdminLayout>
-      <AdminPageHeader title="Invoices" description="Manage invoices, track payments, and generate from timesheets">
-        <div className="flex gap-2">
+      <AdminPageContainer>
+        <AdminPageHeader title="Invoices">
           <Button variant="outline" size="sm" onClick={() => setTimesheetOpen(true)}>
             <Clock className="h-4 w-4 mr-1" /> From Timesheets
           </Button>
           <Button size="sm" onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4 mr-1" /> New Invoice
           </Button>
-        </div>
-      </AdminPageHeader>
-      <AdminPageContainer>
+        </AdminPageHeader>
         <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
           <TabsList>
             <TabsTrigger value="all">All</TabsTrigger>

@@ -52,12 +52,12 @@ export default function QuotesPage() {
 
   return (
     <AdminLayout>
-      <AdminPageHeader title="Quotes" description="Create and manage sales quotes">
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" /> New Quote
-        </Button>
-      </AdminPageHeader>
       <AdminPageContainer>
+        <AdminPageHeader title="Quotes">
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" /> New Quote
+          </Button>
+        </AdminPageHeader>
         <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
           <TabsList>
             <TabsTrigger value="all">All</TabsTrigger>
