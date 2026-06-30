@@ -60,9 +60,16 @@ needs an edge deploy + a sync-skills. Forks (autoversio…) need per-ref
   1:1 outreach now goes From the real inbox and replies thread back — single
   audited timeline. (Backlog: per-user Composio accounts.)
 
-## Pending (sync when Lovable deploys)
-- `ai-task` redeploy + sync-skills for the `content_proposal` handler flip
-- sync-skills for the 8+ instruction blocks + add_lead company_id
+## Release deployed & verified (2026-06-30)
+Edge redeploy (agent-execute, create-checkout, ai-task) + "Sync skills from
+code" done. Verified live on dev:
+- `generate_content_proposal` → generates real pillar/channel content ✅
+- `summarize_candidate_pipeline` → real aggregation ✅
+- `weekly_business_digest` → real digest (re-homed to analytics so it syncs
+  even with FlowPilot off) ✅
+- `manage_survey_template` → `create_survey_campaign` orphan flow end-to-end ✅
+- self-correcting RPC errors, action-inference, NOT-NULL autogen, alias
+  tolerance — all live.
 
 ## Surfaces swept in the autonomous stretch (mostly solo smoke — OpenClaw's
 ## glm-5.2 model kept dropping mid-run, so adversarial coverage was limited)
