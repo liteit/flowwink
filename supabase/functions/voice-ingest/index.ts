@@ -283,72 +283,8 @@ async function persistCall(
 // caller audio as raw PCM16 16 kHz (exactly what Gemini Live wants) and tell
 // 46elks that we will send Gemini's native PCM16 24 kHz audio back.
 
-const GEMINI_LIVE_MODEL = "models/gemini-2.0-flash-live-001";
+const GEMINI_LIVE_MODEL = Deno.env.get("GEMINI_LIVE_MODEL") ?? "models/gemini-2.5-flash-native-audio-latest";
 const GEMINI_LIVE_WS = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
-
-// µ-law decode table → PCM16
-function mulawToPcm16(byte: number): number {
-  byte = ~byte & 0xff;
-  const sign = byte & 0x80;
-  const exponent = (byte >> 4) & 0x07;
-  const mantissa = byte & 0x0f;
-  let sample = ((mantissa << 3) + 0x84) << exponent;
-  sample -= 0x84;
-  return sign ? -sample : sample;
-}
-
-function pcm16ToMulaw(sample: number): number {
-  const BIAS = 0x84;
-  const CLIP = 32635;
-  let sign = (sample >> 8) & 0x80;
-  if (sign) sample = -sample;
-  if (sample > CLIP) sample = CLIP;
-  sample += BIAS;
-  let exponent = 7;
-  for (let mask = 0x4000; (sample & mask) === 0 && exponent > 0; mask >>= 1) exponent--;
-  const mantissa = (sample >> (exponent + 3)) & 0x0f;
-  return (~(sign | (exponent << 4) | mantissa)) & 0xff;
-}
-
-function decodeBase64(b64: string): Uint8Array {
-  const bin = atob(b64);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
-}
-
-function encodeBase64(bytes: Uint8Array): string {
-  let s = "";
-  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
-  return btoa(s);
-}
-
-// µ-law 8kHz bytes → PCM16 16kHz bytes (LE). Naive linear upsample x2.
-function mulaw8kToPcm16k(mulaw: Uint8Array): Uint8Array {
-  const pcm8 = new Int16Array(mulaw.length);
-  for (let i = 0; i < mulaw.length; i++) pcm8[i] = mulawToPcm16(mulaw[i]);
-  const pcm16 = new Int16Array(pcm8.length * 2);
-  for (let i = 0; i < pcm8.length; i++) {
-    const a = pcm8[i];
-    const b = i + 1 < pcm8.length ? pcm8[i + 1] : a;
-    pcm16[i * 2] = a;
-    pcm16[i * 2 + 1] = (a + b) >> 1;
-  }
-  const out = new Uint8Array(pcm16.length * 2);
-  const view = new DataView(out.buffer);
-  for (let i = 0; i < pcm16.length; i++) view.setInt16(i * 2, pcm16[i], true);
-  return out;
-}
-
-// PCM16 24kHz LE (Gemini default output) → µ-law 8kHz (decimate by 3).
-function pcm16k24ToMulaw8k(pcm: Uint8Array): Uint8Array {
-  const view = new DataView(pcm.buffer, pcm.byteOffset, pcm.byteLength);
-  const sampleCount = Math.floor(pcm.byteLength / 2);
-  const outLen = Math.floor(sampleCount / 3);
-  const out = new Uint8Array(outLen);
-  for (let i = 0; i < outLen; i++) out[i] = pcm16ToMulaw(view.getInt16(i * 3 * 2, true));
-  return out;
-}
 
 async function buildSystemPrompt(
   supabase: ReturnType<typeof createClient>,
