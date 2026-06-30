@@ -36,6 +36,7 @@ import {
   Network,
   UserRound,
   BookMarked,
+  Table2,
   Truck,
   FileSignature,
   FolderOpen,
@@ -106,6 +107,7 @@ export const navigationGroups: NavGroup[] = [
       { name: "Docs", href: "/admin/docs", icon: BookOpen, moduleId: "docs" },
       { name: "Wiki", href: "/admin/wiki", icon: BookMarked, moduleId: "wiki" },
       { name: "River", href: "/admin/river", icon: MessageSquare, moduleId: "river" },
+      { name: "Flowtable", href: "/admin/flowtable", icon: Table2, moduleId: "flowtable" },
     ],
   },
   {

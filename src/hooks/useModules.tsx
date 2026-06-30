@@ -119,6 +119,7 @@ export interface ModulesSettings {
   river: ModuleConfig;
   voice: ModuleConfig;
   webmeet: ModuleConfig;
+  flowtable: ModuleConfig;
 }
 
 export const defaultModulesSettings: ModulesSettings = {
@@ -791,6 +792,17 @@ export const defaultModulesSettings: ModulesSettings = {
     category: 'communication',
     autonomy: 'agent-capable',
     adminUI: true,
+  },
+  flowtable: {
+    enabled: false,
+    name: 'Flowtable',
+    description:
+      'Airtable-style flexible tables for lists, prospect sheets, call lists and content backlogs. Define fields on the fly, import/export CSV (comma/semi/tab), and push cleaned rows to CRM as leads. Per-user by default — prepared for workspace sharing.',
+    icon: 'Table2',
+    category: 'data',
+    autonomy: 'agent-capable',
+    adminUI: true,
+    enhancedByFlowPilot: false,
   },
 };
 

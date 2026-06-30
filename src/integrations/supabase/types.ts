@@ -5598,6 +5598,168 @@ export type Database = {
         }
         Relationships: []
       }
+      flowtable_bases: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          owner_id: string
+          slug: string
+          updated_at: string
+          workspace_shared: boolean
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          slug: string
+          updated_at?: string
+          workspace_shared?: boolean
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          slug?: string
+          updated_at?: string
+          workspace_shared?: boolean
+        }
+        Relationships: []
+      }
+      flowtable_fields: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          name: string
+          options: Json
+          position: number
+          table_id: string
+          type: string
+          width: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          name: string
+          options?: Json
+          position?: number
+          table_id: string
+          type?: string
+          width?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          name?: string
+          options?: Json
+          position?: number
+          table_id?: string
+          type?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flowtable_fields_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "flowtable_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flowtable_records: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          position: number
+          table_id: string
+          updated_at: string
+          values: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          position?: number
+          table_id: string
+          updated_at?: string
+          values?: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          position?: number
+          table_id?: string
+          updated_at?: string
+          values?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flowtable_records_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "flowtable_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flowtable_tables: {
+        Row: {
+          base_id: string
+          created_at: string
+          id: string
+          name: string
+          position: number
+          slug: string
+          updated_at: string
+          view_mode: string
+        }
+        Insert: {
+          base_id: string
+          created_at?: string
+          id?: string
+          name: string
+          position?: number
+          slug: string
+          updated_at?: string
+          view_mode?: string
+        }
+        Update: {
+          base_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          position?: number
+          slug?: string
+          updated_at?: string
+          view_mode?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flowtable_tables_base_id_fkey"
+            columns: ["base_id"]
+            isOneToOne: false
+            referencedRelation: "flowtable_bases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       form_submissions: {
         Row: {
           block_id: string
@@ -14267,6 +14429,10 @@ export type Database = {
           grid_code: string
           grid_name: string
         }[]
+      }
+      can_access_flowtable_base: {
+        Args: { _base_id: string }
+        Returns: boolean
       }
       cancel_manual_subscription: {
         Args: {
