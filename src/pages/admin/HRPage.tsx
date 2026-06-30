@@ -1,4 +1,5 @@
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,11 +28,8 @@ export default function HRPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <AdminPageHeader
-          title="HR & Employees"
-          description="Manage team members, leave requests, and onboarding"
-        >
+      <AdminPageContainer>
+        <AdminPageHeader title="HR & Employees">
           <NewEmployeeDialog />
         </AdminPageHeader>
 
@@ -137,7 +135,7 @@ export default function HRPage() {
             <ContractsPanel />
           </TabsContent>
         </Tabs>
-      </div>
+      </AdminPageContainer>
     </AdminLayout>
   );
 }

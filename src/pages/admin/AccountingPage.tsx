@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { AdminPageContainer } from '@/components/admin/AdminPageContainer';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { JournalTab } from '@/components/admin/accounting/JournalTab';
@@ -23,10 +24,10 @@ export default function AccountingPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <AdminPageContainer>
         <AdminPageHeader
           title="Accounting"
-          description="Double-entry bookkeeping — journal entries, general ledger, and financial reports"
+          description="Double-entry bookkeeping, ledgers and financial reports"
         />
 
         <Tabs value={tab} onValueChange={setTab}>
