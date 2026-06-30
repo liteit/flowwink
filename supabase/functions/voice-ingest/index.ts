@@ -286,6 +286,14 @@ async function persistCall(
 const GEMINI_LIVE_MODEL = Deno.env.get("GEMINI_LIVE_MODEL") ?? "models/gemini-2.5-flash-native-audio-latest";
 const GEMINI_LIVE_WS = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
 
+async function websocketDataToString(data: unknown): Promise<string> {
+  if (typeof data === "string") return data;
+  if (data instanceof Blob) return await data.text();
+  if (data instanceof ArrayBuffer) return new TextDecoder().decode(data);
+  if (ArrayBuffer.isView(data)) return new TextDecoder().decode(data);
+  return String(data ?? "");
+}
+
 async function buildSystemPrompt(
   supabase: ReturnType<typeof createClient>,
   settings: VoiceSettings,
@@ -512,7 +520,7 @@ async function handleStreamSession(req: Request): Promise<Response> {
 
     gemini.onmessage = async (ev) => {
       try {
-        const msg = JSON.parse(typeof ev.data === "string" ? ev.data : new TextDecoder().decode(ev.data as ArrayBuffer));
+        const msg = JSON.parse(await websocketDataToString(ev.data));
 
         if (msg.setupComplete) {
           geminiSetupComplete = true;
