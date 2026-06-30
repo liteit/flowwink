@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { AdminPageContainer } from '@/components/admin/AdminPageContainer';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PurchaseOrdersList } from '@/components/admin/purchasing/PurchaseOrdersList';
@@ -27,12 +28,12 @@ export default function PurchaseOrdersPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <AdminPageContainer>
         <AdminPageHeader
           title="Purchase Orders"
           description={fpEnabled
-            ? "Automated procurement — FlowPilot monitors stock and creates POs from preferred vendors"
-            : "Manage procurement — enable FlowPilot to auto-monitor stock and create POs automatically"}
+            ? "Automated procurement — FlowPilot monitors stock and creates POs"
+            : "Manage procurement and vendor orders"}
         />
 
         <Tabs value={tab} onValueChange={setTab}>

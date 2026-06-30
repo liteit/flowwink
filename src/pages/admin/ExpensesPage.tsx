@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { AdminPageContainer } from '@/components/admin/AdminPageContainer';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ExpensesListTab } from '@/components/admin/expenses/ExpensesListTab';
@@ -10,10 +11,10 @@ export default function ExpensesPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <AdminPageContainer>
         <AdminPageHeader
-          title="Expense Reporting"
-          description="Employee expenses, receipt scanning, monthly reports and approval workflow"
+          title="Expenses"
+          description="Employee expenses, receipts and monthly reports"
         />
 
         <Tabs value={tab} onValueChange={setTab}>
@@ -29,7 +30,7 @@ export default function ExpensesPage() {
             <ExpenseReportsTab />
           </TabsContent>
         </Tabs>
-      </div>
+      </AdminPageContainer>
     </AdminLayout>
   );
 }

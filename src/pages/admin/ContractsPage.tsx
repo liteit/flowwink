@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { AdminPageContainer } from '@/components/admin/AdminPageContainer';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -13,18 +14,14 @@ export default function ContractsPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex items-start justify-between gap-4">
-          <AdminPageHeader
-            title="Contracts & Documents"
-            description="Manage contracts, track renewals, and store documents"
-          />
+      <AdminPageContainer>
+        <AdminPageHeader title="Contracts">
           <Button variant="outline" asChild>
             <Link to="/admin/contracts/templates">
               <FileText className="h-4 w-4 mr-2" /> Templates
             </Link>
           </Button>
-        </div>
+        </AdminPageHeader>
 
         <ContractAlerts />
 
@@ -42,7 +39,7 @@ export default function ContractsPage() {
             <ContractsList statusFilter={statusFilter} />
           </TabsContent>
         </Tabs>
-      </div>
+      </AdminPageContainer>
     </AdminLayout>
   );
 }
