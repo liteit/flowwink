@@ -101,21 +101,12 @@ serve(async (req) => {
       results.heartbeat = "disabled";
     }
 
-    // 3. Briefing
-    if (settings.briefingEnabled) {
-      const utcHour = localHourToUtc(settings.briefingHour, tz);
-      const { error } = await supabase.rpc("schedule_cron_job", {
-        p_jobname: "flowpilot-daily-briefing",
-        p_schedule: `0 ${utcHour} * * *`,
-        p_url: `${supabaseUrl}/functions/v1/flowpilot-briefing`,
-        p_headers: authHeader,
-        p_body: JSON.stringify({ source: "cron" }),
-      });
-      results.briefing = error ? `error: ${error.message}` : `0 ${utcHour} * * * (local ${settings.briefingHour}:00 ${tz})`;
-    } else {
-      await supabase.rpc("unschedule_cron_job", { p_jobname: "flowpilot-daily-briefing" });
-      results.briefing = "disabled";
-    }
+    // 3. Briefing — handled by the platform automation "Daily Briefing"
+    //    (executor=platform, trigger_type=cron) via automation-dispatcher.
+    //    pg_cron path is intentionally removed to prevent duplicate posts.
+    await supabase.rpc("unschedule_cron_job", { p_jobname: "flowpilot-daily-briefing" });
+    results.briefing = "managed by automation-dispatcher";
+
 
     // 4. Learn
     if (settings.learnEnabled) {
