@@ -165,7 +165,7 @@ export default function SubscriptionsPage() {
           <RenewalsPanel />
         </TabsContent>
       </Tabs>
-    </div>
+    </AdminPageContainer>
     </AdminLayout>
   );
 }
