@@ -171,7 +171,7 @@ export const surveysModule = defineModule<Input, Output>({
   tier: 'standard',
   inputSchema,
   outputSchema,
-  skills: ['create_survey_campaign', 'send_survey', 'list_survey_responses'],
+  skills: ['manage_survey_template', 'create_survey_campaign', 'send_survey', 'list_survey_responses'],
   data: {
     tables: ['survey_responses', 'survey_sends', 'survey_campaigns', 'survey_templates'],
   },
