@@ -20,6 +20,57 @@ type Output = z.infer<typeof outputSchema>;
 // ── Bundled skill definitions (migrated from setup-flowpilot) ──
 const ANALYTICS_SKILLS: SkillSeed[] = [
   {
+    name: 'weekly_business_digest',
+    description: 'Generate a cross-module business summary covering views, leads, bookings, orders, posts, newsletters. Use when: weekly business review; executive summary needed; monitoring overall business health. NOT for: analyzing specific analytics (analyze_analytics); learning from data (learn_from_data).',
+    category: 'analytics',
+    // Aggregation RPC (was db:agent_activity CRUD list which returned raw rows
+    // instead of a digest). Computes period counts/revenue across modules.
+    handler: 'rpc:weekly_business_digest',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'weekly_business_digest',
+        description: 'Generate a cross-module business summary covering views, leads, bookings, orders, posts, newsletters. Use when: weekly business review; executive summary needed; monitoring overall business health. NOT for: analyzing specific analytics (analyze_analytics); learning from data (learn_from_data).',
+        parameters: {
+          type: 'object',
+          properties: {
+            period: {
+              type: 'string',
+              enum: [
+                'day',
+                'week',
+                'month',
+              ],
+              description: 'Report period',
+            },
+            format: {
+              type: 'string',
+              enum: [
+                'structured',
+                'markdown',
+              ],
+              description: 'Output format',
+            },
+          },
+        },
+      },
+    },
+    instructions: `## weekly_business_digest
+### What
+Generates a cross-module business summary covering views, leads, bookings, orders, posts, and newsletters.
+### When to use
+- Automated: runs via cron every Friday at 16:00 UTC
+- Admin asks for a business summary or report
+- Heartbeat needs performance context
+### Parameters
+- **period**: 'day', 'week', 'month'. Default 'week'.
+- **format**: 'structured' (JSON) or 'markdown'. Default 'structured'.
+### Edge cases
+- Returns zeros for modules that have no data — this is normal for new sites.
+- Can be heavy on DB queries — avoid running more than once per hour.`,
+  },
+  {
     name: 'analyze_analytics',
     description: 'Get page view analytics for a given period. Use when: reviewing website traffic; analyzing page performance; generating traffic reports. NOT for: analyzing chat feedback (analyze_chat_feedback); generating business digests (weekly_business_digest).',
     category: 'analytics',
