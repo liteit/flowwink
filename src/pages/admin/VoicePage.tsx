@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { format } from 'date-fns';
-import { Phone, PhoneIncoming, PhoneMissed, PhoneOutgoing, Voicemail, PhoneCall, Settings as SettingsIcon, Headphones } from 'lucide-react';
+import { Phone, PhoneIncoming, PhoneMissed, PhoneOutgoing, Voicemail, PhoneCall, Settings as SettingsIcon, Headphones, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useIsGeminiConfigured } from '@/hooks/useIntegrationStatus';
 
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
