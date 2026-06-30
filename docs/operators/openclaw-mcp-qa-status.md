@@ -172,6 +172,44 @@ business domain. Bug-classes fixed at the engine level + guarded in CI (56
 guardrail tests). Remaining: 8 frontend/UX findings (separate visitor-facing
 scope); the one pending agent-execute redeploy for the ad_creative coercion.
 
+## Fleet sync via Management API — all 4 instances (2026-06-30)
+A drift check (live DB is authoritative) found **every** instance — incl. demo —
+was behind: old `db:` handlers on 11 skills, missing RPCs, stale edge functions
+(ai-task was a **June-07 build with none of the session's tasks**). "Lovable
+deployed" shipped Lovable's stale sandbox copy — function timestamps proved
+ai-task/agent-execute/newsletter were untouched.
+
+Fixed from the sandbox over HTTPS via the **Supabase Management API** (no CLI, no
+direct Postgres — those are blocked here), against www/demo/liteit/autoversio:
+- **Migrations** (`database/query`): job-posting-slug, summarize-candidate-pipeline,
+  weekly-business-digest — applied to all 4 (idempotent). RPCs live-verified.
+- **Skill handlers** (11): flipped `db:` → `ai-task:`/`internal:`/`edge:newsletter/*`
+  via `jsonb_to_recordset` UPDATE (mirrors bootstrap; preserves `trust_level`).
+  11/11 correct on all 4.
+- **Edge functions** (`/functions/deploy`, multipart bundle of each function's
+  local dep closure): `ai-task`, `agent-execute`, `newsletter` — deployed to all 4.
+  New tool: **`scripts/deploy-edge-via-api.sh`** (bundles closure, deploys via API
+  — bypasses Lovable staleness, reaches forks the CLI doesn't manage).
+
+Live-verified end-to-end on demo: `weekly_business_digest`, `summarize_candidate_pipeline`,
+`ai-task:social_post`, `ad_creative_generate` (object `target_audience` — the
+OpenClaw 🔴 crash, now generates), `seo_content_brief`, `content_proposal`
+(`tone_level` — the OpenClaw 🟡, now works).
+
+### OpenClaw dev sweep (2026-06-30) — disposition
+- 🔴 `ad_creative_generate` object audience → **FIXED** (asText coerce + deploy, live-verified).
+- 🟡 `generate_content_proposal` tone_level, `social_post_batch`, `seo_content_brief`,
+  `generate_social_post`, `research_content` → **drift, now deployed** (handler flip + edge).
+- 🟢 `log_time`, `create_objective`, `book_appointment` → **false positives**: the
+  required params ARE in the deployed schema (deployed `required` == code exactly);
+  the agent just didn't pass them.
+- 🟢 `manage_bom` "action not passed" → **agent error**: neither the skill nor the
+  `create_bom` RPC has an `action` param (the `manage_` name misled it). Metadata-only.
+- 🟠 `register_fixed_asset` journal `account_name NULL` → narrow real-ish (journal
+  fails when chart-of-accounts empty); workaround `create_journal_entry:false`. Open.
+- Known/expected: `create_manual_subscription`/`create_payroll_run` (admin),
+  `scan_gmail_inbox` (Composio not configured).
+
 ## Frontend/UX findings triage (2026-06-30)
 Swept the remaining visitor-facing findings. Summary: 5 of 6 are NOT code bugs
 (false positives from headless QA, or external config); 1 was a real
