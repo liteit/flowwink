@@ -95,6 +95,13 @@ export default function FlowtablePage() {
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pushOpen, setPushOpen] = useState(false);
+  const [basesMinimized, setBasesMinimized] = useState(() => {
+    try {
+      return localStorage.getItem('flowtable-bases-minimized') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => setSelected(new Set()), [activeTable?.id]);
