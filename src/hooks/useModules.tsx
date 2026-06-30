@@ -119,6 +119,7 @@ export interface ModulesSettings {
   river: ModuleConfig;
   voice: ModuleConfig;
   webmeet: ModuleConfig;
+  flowtable: ModuleConfig;
 }
 
 export const defaultModulesSettings: ModulesSettings = {

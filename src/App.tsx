@@ -126,6 +126,7 @@ import FederationPage from "./pages/admin/FederationPage";
 
 import WikiPage from "./pages/admin/WikiPage";
 import RiverPage from "./pages/admin/RiverPage";
+import FlowtablePage from "./pages/admin/FlowtablePage";
 import SkillsCatalogPage from "./pages/admin/SkillsCatalogPage";
 import CompanyInsightsPage from "./pages/admin/CompanyInsightsPage";
 import AutonomyTestSuitePage from "./pages/admin/AutonomyTestSuitePage";
@@ -334,6 +335,9 @@ const router = createBrowserRouter([
       { path: "/admin/wiki", element: <WikiPage /> },
       { path: "/admin/wiki/:slug", element: <WikiPage /> },
       { path: "/admin/river", element: <RiverPage /> },
+      { path: "/admin/flowtable", element: <FlowtablePage /> },
+      { path: "/admin/flowtable/:baseSlug", element: <FlowtablePage /> },
+      { path: "/admin/flowtable/:baseSlug/:tableSlug", element: <FlowtablePage /> },
       { path: "/admin/company-insights", element: <CompanyInsightsPage /> },
       { path: "/admin/growth", element: <GrowthDashboardPage /> },
       

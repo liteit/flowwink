@@ -27,6 +27,7 @@ export { formsModule } from './forms-module';
 export { bookingModule } from './booking-module';
 export { productsModule } from './products-module';
 export { inventoryModule } from './inventory-module';
+export { flowtableModule } from './flowtable-module';
 
 // ── Communication ──
 export { chatModule } from './chat-module';
