@@ -99,7 +99,7 @@ Creates a new ad campaign with objective, budget, target audience, and platform.
     name: 'ad_creative_generate',
     description: 'Generate ad creative (headline, body, CTA) using AI based on campaign objective and target audience. Use when: creating ad copy for a campaign; generating variations for A/B testing; needing creative inspiration. NOT for: creating campaigns (ad_campaign_create); checking ad performance (ad_performance_check).',
     category: 'automation',
-    handler: 'db:ad_creatives',
+    handler: 'internal:ad_creative_generate',
     scope: 'internal',
     tool_definition: {
       type: 'function',
@@ -214,7 +214,7 @@ Checks ad campaign performance metrics: spend, impressions, clicks, CTR, CPC, co
     name: 'ad_optimize',
     description: 'Analyze campaign performance and recommend optimizations: pause underperformers, scale winners, adjust budgets. Requires approval. Use when: reviewing campaign results; optimizing ad spend; identifying underperforming ads. NOT for: creating campaigns (ad_campaign_create); generating creatives (ad_creative_generate).',
     category: 'automation',
-    handler: 'db:ad_campaigns',
+    handler: 'internal:ad_optimize',
     scope: 'internal',
     // Budget-affecting actions (pause/scale/rebalance) must be human-approved before execution.
     trust_level: 'approve',

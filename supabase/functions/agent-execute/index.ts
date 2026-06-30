@@ -378,6 +378,15 @@ serve(async (req) => {
       } else if (handler === 'internal:social_post_batch') {
         result = await executeSocialPostBatch(supabase, args, supabaseUrl, serviceKey);
 
+      } else if (handler === 'internal:ad_creative_generate') {
+        result = await executeAdCreativeGenerate(supabase, args, supabaseUrl, serviceKey);
+
+      } else if (handler === 'internal:ad_optimize') {
+        result = await executeAdOptimize(supabase, args);
+
+      } else if (handler === 'internal:competitor_monitor') {
+        result = await executeCompetitorMonitor(supabase, args, supabaseUrl, serviceKey);
+
       } else if (handler.startsWith('rpc:')) {
         const fnName = handler.replace('rpc:', '');
 
@@ -9516,6 +9525,131 @@ async function executeSocialPostBatch(
   const taskResult = await resp.json();
   if (!resp.ok && !taskResult.error) taskResult.error = `ai-task 'social_post' returned HTTP ${resp.status}`;
   return { source: { blog_post_id: blogPostId, title: post.title, slug: post.slug }, ...taskResult };
+}
+
+// ad_creative_generate — fetch the campaign context, then generate creative via
+// the ad_creative ai-task and store it. Replaces the dead db:ad_creatives wiring.
+async function executeAdCreativeGenerate(
+  supabase: any,
+  args: Record<string, unknown>,
+  supabaseUrl: string,
+  serviceKey: string,
+): Promise<unknown> {
+  const a = args as any;
+  const campaignId = String(a.campaign_id || '').trim();
+  if (!campaignId) return { error: 'campaign_id is required', status: 'failed' };
+  const { data: c, error } = await supabase.from('ad_campaigns')
+    .select('name, platform, objective, target_audience').eq('id', campaignId).maybeSingle();
+  if (error) return { error: `Lookup campaign failed: ${error.message}`, status: 'failed' };
+  if (!c) return { error: `Campaign ${campaignId} not found`, status: 'failed' };
+
+  const resp = await fetch(`${supabaseUrl}/functions/v1/ai-task`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
+    body: JSON.stringify({ task: 'ad_creative', input: {
+      objective: c.objective, target_audience: c.target_audience, platform: c.platform,
+      type: a.type || 'text', tone: a.tone, key_message: a.key_message, cta: a.cta,
+    } }),
+  });
+  const taskResult = await resp.json();
+  if (taskResult?.error) return { error: taskResult.error, status: 'failed' };
+  const creative = taskResult?.result ?? taskResult;
+
+  // Persist as a draft creative (best-effort)
+  let creativeId: string | undefined;
+  try {
+    const { data: ins } = await supabase.from('ad_creatives').insert({
+      campaign_id: campaignId, type: a.type || 'text',
+      headline: creative.headline, body: creative.body, cta_text: creative.cta_text,
+      status: 'draft',
+    }).select('id').single();
+    creativeId = ins?.id;
+  } catch { /* table/columns may vary — return the generated copy regardless */ }
+
+  return { campaign: { id: campaignId, name: c.name }, creative_id: creativeId, ...creative };
+}
+
+// ad_optimize — rule-based campaign optimisation recommendations. Reads metrics
+// (impressions/clicks/conversions/ctr/cpc) + budget/spend, flags pause/scale/
+// maintain. Read-only. Replaces the dead db:ad_campaigns wiring.
+async function executeAdOptimize(
+  supabase: any,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  const a = args as any;
+  const minCtr = a.threshold_ctr !== undefined ? Number(a.threshold_ctr) : 1.0; // percent
+  const maxCpc = a.threshold_cpc_cents !== undefined ? Number(a.threshold_cpc_cents) : 500;
+  let q = supabase.from('ad_campaigns')
+    .select('id, name, platform, status, budget_cents, spent_cents, metrics')
+    .neq('status', 'archived');
+  if (a.campaign_id) q = q.eq('id', a.campaign_id);
+  const { data: rows, error } = await q;
+  if (error) return { error: `List campaigns failed: ${error.message}`, status: 'failed' };
+
+  const recommendations = (rows || []).map((r: any) => {
+    const m = r.metrics || {};
+    const impressions = Number(m.impressions || 0);
+    const clicks = Number(m.clicks || 0);
+    const ctr = m.ctr !== undefined ? Number(m.ctr) : (impressions > 0 ? (clicks / impressions) * 100 : 0);
+    const cpc = m.cpc !== undefined ? Number(m.cpc) : (clicks > 0 ? Number(r.spent_cents || 0) / clicks : 0);
+    const conversions = Number(m.conversions || 0);
+    const spendRatio = r.budget_cents ? Number(r.spent_cents || 0) / Number(r.budget_cents) : 0;
+    let action = 'maintain'; let reason = 'Performing within thresholds.';
+    if (impressions < 100) { action = 'monitor'; reason = 'Not enough data yet.'; }
+    else if (ctr < minCtr) { action = 'pause'; reason = `CTR ${ctr.toFixed(2)}% below ${minCtr}%.`; }
+    else if (cpc > maxCpc) { action = 'pause'; reason = `CPC ${Math.round(cpc)} above ${maxCpc} cents.`; }
+    else if (conversions > 0 && ctr >= minCtr && spendRatio > 0.8) { action = 'scale'; reason = 'Strong CTR + converting, near budget cap.'; }
+    return { campaign_id: r.id, name: r.name, platform: r.platform, status: r.status,
+      ctr: Number(ctr.toFixed(2)), cpc_cents: Math.round(cpc), conversions,
+      spend_ratio: Number(spendRatio.toFixed(2)), recommendation: action, reason };
+  });
+  return { success: true, thresholds: { min_ctr: minCtr, max_cpc_cents: maxCpc },
+    campaigns_analyzed: recommendations.length, recommendations };
+}
+
+// competitor_monitor — scrape the competitor domain (web-scrape) then analyze it
+// via the competitor_analysis ai-task. Replaces the dead db:agent_memory wiring.
+async function executeCompetitorMonitor(
+  supabase: any,
+  args: Record<string, unknown>,
+  supabaseUrl: string,
+  serviceKey: string,
+): Promise<unknown> {
+  const a = args as any;
+  const domain = String(a.domain || '').trim();
+  const companyName = String(a.company_name || '').trim();
+  if (!domain || !companyName) return { error: 'domain and company_name are required', status: 'failed' };
+  const url = domain.startsWith('http') ? domain : `https://${domain}`;
+
+  const scrapeResp = await fetch(`${supabaseUrl}/functions/v1/web-scrape`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
+    body: JSON.stringify({ url, maxLength: 12000 }),
+  });
+  const scraped = await scrapeResp.json().catch(() => ({}));
+  const content = scraped?.content || '';
+  if (!content) return { error: `Could not scrape ${url} (${scraped?.error || 'no content'})`, status: 'failed' };
+
+  const aiResp = await fetch(`${supabaseUrl}/functions/v1/ai-task`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
+    body: JSON.stringify({ task: 'competitor_analysis', input: {
+      company_name: companyName, domain, content, focus_areas: a.focus_areas || [],
+    } }),
+  });
+  const taskResult = await aiResp.json();
+  if (taskResult?.error) return { error: taskResult.error, status: 'failed' };
+  const analysis = taskResult?.result ?? taskResult;
+
+  // Store as a 'fact' memory (best-effort)
+  try {
+    await supabase.from('agent_memory').insert({
+      key: `competitor:${domain}`, value: { company_name: companyName, domain, analysis, scanned_at: new Date().toISOString() },
+      category: 'fact', created_by: 'competitor_monitor',
+    });
+  } catch { /* non-fatal */ }
+
+  return { company_name: companyName, domain, ...analysis };
 }
 
 async function executeReplyToTicketViaEmail(

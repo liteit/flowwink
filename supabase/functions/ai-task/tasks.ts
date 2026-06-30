@@ -783,6 +783,101 @@ const socialPostTask: TaskSpec<z.infer<typeof socialPostInput>, any> = {
   options: { temperature: 0.7, max_tokens: 2048 },
 };
 
+// ─── ad_creative ────────────────────────────────────────────────────────────
+// Generative ad copy. ad_creative_generate was wired to db:ad_creatives (list).
+// The dedicated internal:ad_creative_generate handler fetches the campaign
+// (objective, audience, platform) and calls this task; output matches the
+// ad_creatives columns (headline, body, cta_text).
+const adCreativeInput = z.object({
+  objective: z.string().optional(),
+  target_audience: z.string().optional(),
+  platform: z.string().optional(),
+  type: z.string().optional(),
+  tone: z.string().optional(),
+  key_message: z.string().optional(),
+  cta: z.string().optional(),
+});
+const adCreativeTask: TaskSpec<z.infer<typeof adCreativeInput>, any> = {
+  name: "ad_creative",
+  description: "Generate ad creative (headline, body, CTA) for a campaign.",
+  tier: "reasoning",
+  inputSchema: adCreativeInput,
+  system: (input) =>
+    `You are an expert performance-marketing copywriter. Write one ad creative for the given campaign, returning it via the submit_ad_creative tool. Headline ≤ 40 chars where the platform demands it; body benefit-led and specific; a clear CTA. Tone "${(input as any).tone ?? "professional"}". Platform: ${(input as any).platform ?? "generic"}.`,
+  user: (input) =>
+    `## Campaign\n${JSON.stringify({
+      objective: (input as any).objective ?? null,
+      target_audience: (input as any).target_audience ?? null,
+      platform: (input as any).platform ?? null,
+      type: (input as any).type ?? "text",
+      key_message: (input as any).key_message ?? null,
+      cta: (input as any).cta ?? null,
+    }, null, 2)}`,
+  tool: {
+    name: "submit_ad_creative",
+    description: "Return the ad creative",
+    parameters: {
+      type: "object",
+      properties: {
+        headline: { type: "string" },
+        body: { type: "string" },
+        cta_text: { type: "string" },
+        variants: {
+          type: "array",
+          description: "Optional 1-2 alternate headlines",
+          items: { type: "string" },
+        },
+      },
+      required: ["headline", "body", "cta_text"],
+    },
+  },
+  options: { temperature: 0.8, max_tokens: 1024 },
+};
+
+// ─── competitor_analysis ────────────────────────────────────────────────────
+// competitor_monitor was wired to db:agent_memory (list). The dedicated
+// internal:competitor_monitor handler scrapes the domain (web-scrape) and calls
+// this task with the page content.
+const competitorAnalysisInput = z.object({
+  company_name: z.string(),
+  domain: z.string().optional(),
+  content: z.string().optional(),
+  focus_areas: z.array(z.string()).optional(),
+});
+const competitorAnalysisTask: TaskSpec<z.infer<typeof competitorAnalysisInput>, any> = {
+  name: "competitor_analysis",
+  description: "Analyze a competitor's website content for positioning and content strategy.",
+  tier: "reasoning",
+  inputSchema: competitorAnalysisInput,
+  system: () =>
+    `You are a competitive intelligence analyst. From the scraped competitor website content, extract positioning and content strategy, returning it via the submit_competitor_analysis tool. Be specific and evidence-based — cite phrases from their copy. If content is thin, say so in the relevant fields rather than inventing.`,
+  user: (input) =>
+    `## Competitor\n${JSON.stringify({
+      company_name: (input as any).company_name,
+      domain: (input as any).domain ?? null,
+      focus_areas: (input as any).focus_areas ?? [],
+    }, null, 2)}\n\n## Scraped content\n${String((input as any).content ?? "").slice(0, 12000)}`,
+  tool: {
+    name: "submit_competitor_analysis",
+    description: "Return the competitor analysis",
+    parameters: {
+      type: "object",
+      properties: {
+        positioning: { type: "string" },
+        value_proposition: { type: "string" },
+        target_audience: { type: "string" },
+        content_themes: strList,
+        tone_of_voice: { type: "string" },
+        strengths: strList,
+        gaps: strList,
+        opportunities: strList,
+      },
+      required: ["positioning", "content_themes", "strengths", "gaps", "opportunities"],
+    },
+  },
+  options: { temperature: 0.5, max_tokens: 2048 },
+};
+
 // ─── Registry ───────────────────────────────────────────────────────────────
 export const TASKS: Record<string, TaskSpec<any, any>> = {
   score_candidate: scoreCandidateTask,
@@ -794,6 +889,8 @@ export const TASKS: Record<string, TaskSpec<any, any>> = {
   content_proposal: contentProposalTask,
   seo_content_brief: seoContentBriefTask,
   social_post: socialPostTask,
+  ad_creative: adCreativeTask,
+  competitor_analysis: competitorAnalysisTask,
 };
 
 export function listTasks() {

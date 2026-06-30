@@ -413,7 +413,7 @@ Updates an existing CRM task — change title, priority, due date, or mark as co
     name: 'competitor_monitor',
     description: 'Scan a competitor website and analyze their content strategy and positioning. Use when: user wants competitive analysis, studying competitor content. NOT for: migrating competitor sites (use migrate_url), general web search (use search_web).',
     category: 'analytics',
-    handler: 'db:agent_memory',
+    handler: 'internal:competitor_monitor',
     scope: 'internal',
     tool_definition: {
       type: 'function',
