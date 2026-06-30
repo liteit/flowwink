@@ -661,6 +661,77 @@ const contentProposalTask: TaskSpec<z.infer<typeof contentProposalInput>, any> =
   options: { temperature: 0.7, max_tokens: 4096 },
 };
 
+// ─── seo_content_brief ──────────────────────────────────────────────────────
+// Generative SEO brief. The seo_content_brief skill was wired to
+// db:content_research (CRUD list) → always {items:[],count:0}. It must produce
+// a keyword/intent/outline brief, not list rows. Output matches the skill's
+// documented promise: keywords, questions, competitor gaps, and an outline.
+const seoBriefInput = z.object({
+  topic: z.string(),
+  content_type: z.string().optional(),
+  target_audience: z.string().optional(),
+});
+
+const seoContentBriefTask: TaskSpec<z.infer<typeof seoBriefInput>, any> = {
+  name: "seo_content_brief",
+  description:
+    "SEO content brief for a topic — primary/secondary keywords, search intent, title options, meta description, a heading outline, People-Also-Ask questions, competitor gaps, and a word-count target.",
+  tier: "reasoning",
+  inputSchema: seoBriefInput,
+  system: () =>
+    `You are an expert SEO content strategist. From the topic, produce an actionable, specific content brief a writer can execute against, returning it via the submit_seo_content_brief tool. Ground keywords and questions in real search behavior; the outline must be logically ordered H2/H3s; competitor_gaps are angles competitors miss. No filler.`,
+  user: (input) =>
+    `## Brief request\n${JSON.stringify({
+      topic: (input as any).topic,
+      content_type: (input as any).content_type ?? "blog_post",
+      target_audience: (input as any).target_audience ?? null,
+    }, null, 2)}`,
+  tool: {
+    name: "submit_seo_content_brief",
+    description: "Return a structured SEO content brief",
+    parameters: {
+      type: "object",
+      properties: {
+        topic: { type: "string" },
+        primary_keyword: { type: "string" },
+        secondary_keywords: strList,
+        search_intent: {
+          type: "string",
+          description: "informational | commercial | transactional | navigational",
+        },
+        suggested_titles: strList,
+        meta_description: { type: "string", description: "≤ 155 chars" },
+        outline: {
+          type: "array",
+          description: "Ordered sections",
+          items: {
+            type: "object",
+            properties: {
+              heading: { type: "string" },
+              subpoints: strList,
+            },
+            required: ["heading"],
+          },
+        },
+        questions_to_answer: strList,
+        competitor_gaps: strList,
+        internal_link_ideas: strList,
+        word_count_target: { type: "integer" },
+      },
+      required: [
+        "topic",
+        "primary_keyword",
+        "secondary_keywords",
+        "search_intent",
+        "suggested_titles",
+        "outline",
+        "questions_to_answer",
+      ],
+    },
+  },
+  options: { temperature: 0.6, max_tokens: 3072 },
+};
+
 // ─── Registry ───────────────────────────────────────────────────────────────
 export const TASKS: Record<string, TaskSpec<any, any>> = {
   score_candidate: scoreCandidateTask,
@@ -670,6 +741,7 @@ export const TASKS: Record<string, TaskSpec<any, any>> = {
   ticket_triage: ticketTriageTask,
   content_research: contentResearchTask,
   content_proposal: contentProposalTask,
+  seo_content_brief: seoContentBriefTask,
 };
 
 export function listTasks() {
