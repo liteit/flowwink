@@ -391,6 +391,20 @@ function VoiceSettingsCard() {
 
         {/* AI Receptionist (MVP) */}
         <AiReceptionistSection settings={settings} set={set} />
+
+        <div className="flex items-center justify-end gap-2 border-t pt-4">
+          {dirty && (
+            <Button variant="ghost" onClick={() => setDraft(null)} disabled={update.isPending}>
+              Reset
+            </Button>
+          )}
+          <Button
+            onClick={() => draft && update.mutate(draft, { onSuccess: () => setDraft(null) })}
+            disabled={!dirty || update.isPending || isLoading}
+          >
+            Save settings
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -435,78 +449,61 @@ function AiReceptionistSection({
         />
       </label>
 
-
-          {settings.aiReceptionistEnabled && (
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="ai-greeting">First greeting (optional)</Label>
-                <Input
-                  id="ai-greeting"
-                  placeholder="Hej, du har ringt … hur kan jag hjälpa dig?"
-                  value={settings.aiReceptionistGreeting ?? ''}
-                  onChange={(e) => set('aiReceptionistGreeting', e.target.value || undefined)}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Empty = generated from business identity.
-                </p>
-              </div>
-              <div>
-                <Label htmlFor="ai-prompt">Extra system instructions (optional)</Label>
-                <textarea
-                  id="ai-prompt"
-                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"
-                  placeholder="E.g. Always offer a callback if the caller mentions invoicing."
-                  value={settings.aiReceptionistSystemPromptExtra ?? ''}
-                  onChange={(e) => set('aiReceptionistSystemPromptExtra', e.target.value || undefined)}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="ai-voice">Voice</Label>
-                  <Input
-                    id="ai-voice"
-                    placeholder="Aoede"
-                    value={settings.aiReceptionistVoice ?? 'Aoede'}
-                    onChange={(e) => set('aiReceptionistVoice', e.target.value || undefined)}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Aoede · Charon · Fenrir · Kore · Puck
-                  </p>
-                </div>
-                <label className="flex items-center gap-2 mt-7">
-                  <Switch
-                    checked={settings.aiReceptionistUseFlowpilotContext ?? false}
-                    onCheckedChange={(v) => set('aiReceptionistUseFlowpilotContext', v)}
-                  />
-                  <span className="text-sm">Use FlowPilot objectives if module is on</span>
-                </label>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                The AI calls MCP skills (bookings, lookup_customer_by_phone, escalate_to_human) filtered by enabled modules.
-                Full transcript + summary is saved on the call afterwards.
+      {settings.aiReceptionistEnabled && (
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="ai-greeting">First greeting (optional)</Label>
+            <Input
+              id="ai-greeting"
+              placeholder="Hej, du har ringt … hur kan jag hjälpa dig?"
+              value={settings.aiReceptionistGreeting ?? ''}
+              onChange={(e) => set('aiReceptionistGreeting', e.target.value || undefined)}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Empty = generated from business identity.
+            </p>
+          </div>
+          <div>
+            <Label htmlFor="ai-prompt">Extra system instructions (optional)</Label>
+            <textarea
+              id="ai-prompt"
+              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"
+              placeholder="E.g. Always offer a callback if the caller mentions invoicing."
+              value={settings.aiReceptionistSystemPromptExtra ?? ''}
+              onChange={(e) => set('aiReceptionistSystemPromptExtra', e.target.value || undefined)}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="ai-voice">Voice</Label>
+              <Input
+                id="ai-voice"
+                placeholder="Aoede"
+                value={settings.aiReceptionistVoice ?? 'Aoede'}
+                onChange={(e) => set('aiReceptionistVoice', e.target.value || undefined)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Aoede · Charon · Fenrir · Kore · Puck
               </p>
             </div>
-          )}
+            <label className="flex items-center gap-2 mt-7">
+              <Switch
+                checked={settings.aiReceptionistUseFlowpilotContext ?? false}
+                onCheckedChange={(v) => set('aiReceptionistUseFlowpilotContext', v)}
+              />
+              <span className="text-sm">Use FlowPilot objectives if module is on</span>
+            </label>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            The AI calls MCP skills (bookings, lookup_customer_by_phone, escalate_to_human) filtered by enabled modules.
+            Full transcript + summary is saved on the call afterwards.
+          </p>
         </div>
-
-
-        <div className="flex items-center justify-end gap-2 border-t pt-4">
-          {dirty && (
-            <Button variant="ghost" onClick={() => setDraft(null)} disabled={update.isPending}>
-              Reset
-            </Button>
-          )}
-          <Button
-            onClick={() => draft && update.mutate(draft, { onSuccess: () => setDraft(null) })}
-            disabled={!dirty || update.isPending || isLoading}
-          >
-            Save settings
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }
+
 
 function ProviderCapabilitiesCard() {
   const providers = listVoiceProviders();
