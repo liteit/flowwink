@@ -23,7 +23,7 @@ const SURVEY_SKILLS: SkillSeed[] = [
   {
     name: 'create_survey_campaign',
     description:
-      'Create a new survey campaign attached to a template. Use when: launching a new NPS/CSAT program, automating feedback after an event (order delivered, ticket closed, contract renewed). NOT for: editing an existing campaign (use generic update via manage_record).',
+      'Create a new survey campaign attached to a template. Requires an existing template_id — if none exists, call `manage_survey_template` with action=list first, and if empty, action=create to make one. Use when: launching a new NPS/CSAT program, automating feedback after an event (order delivered, ticket closed, contract renewed). NOT for: editing an existing campaign (use generic update via manage_record).',
     category: 'crm',
     handler: 'db:survey_campaigns',
     scope: 'internal',
@@ -171,7 +171,7 @@ export const surveysModule = defineModule<Input, Output>({
   tier: 'standard',
   inputSchema,
   outputSchema,
-  skills: ['create_survey_campaign', 'send_survey', 'list_survey_responses'],
+  skills: ['manage_survey_template', 'create_survey_campaign', 'send_survey', 'list_survey_responses'],
   data: {
     tables: ['survey_responses', 'survey_sends', 'survey_campaigns', 'survey_templates'],
   },
