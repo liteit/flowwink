@@ -16074,6 +16074,10 @@ export type Database = {
         }
         Returns: Json
       }
+      summarize_candidate_pipeline: {
+        Args: { p_job_id?: string; p_stuck_threshold_days?: number }
+        Returns: Json
+      }
       sweep_stale_voice_calls: { Args: never; Returns: number }
       transfer_stock: {
         Args: {
@@ -16182,6 +16186,10 @@ export type Database = {
       }
       webinar_reminder_tick: { Args: never; Returns: Json }
       webinar_tick: { Args: never; Returns: Json }
+      weekly_business_digest: {
+        Args: { p_format?: string; p_period?: string }
+        Returns: Json
+      }
       year_end_readiness: { Args: { p_year?: number }; Returns: Json }
     }
     Enums: {
