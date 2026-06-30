@@ -183,11 +183,16 @@ async function decideAction(ctx: RoutingContext): Promise<VoiceAction> {
       return { type: "connect", target: agent.voice_mobile_number, callerId: call.from, timeoutSeconds: 25 };
     }
 
-    // 2. No agent → AI receptionist if enabled and Gemini key present
+    // 2. No agent → AI receptionist if enabled and Gemini key + WS-number present
     if (settings.aiReceptionistEnabled && Deno.env.get("GEMINI_API_KEY")) {
-      const base = (Deno.env.get("SUPABASE_URL") ?? "").replace(/^https?:\/\//, "wss://");
-      const wsUrl = `${base}/functions/v1/voice-ingest/stream?provider=${call.provider}&call_id=${encodeURIComponent(call.providerCallId)}`;
-      return { type: "stream", wsUrl };
+      const wsNum = (settings.aiReceptionistWebsocketNumber ?? "").trim();
+      if (wsNum) {
+        // Bridge the public DID into the 46elks websocket-number. That number
+        // must have voice_start=wss://<project>.functions.supabase.co/voice-ingest/stream
+        // configured in the 46elks dashboard (one-time setup).
+        return { type: "stream", wsUrl: wsNum };
+      }
+      console.warn("[voice-ingest] AI receptionist enabled but no websocket-number configured — falling back to voicemail");
     }
 
     // 3. Fallback voicemail
