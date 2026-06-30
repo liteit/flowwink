@@ -140,3 +140,18 @@ Turn the fixed classes into permanent guards: broaden the not-null guardrail to
 `create_*`/`update_*` generic-CRUD skills, add a "no silent success" lint, and an
 adversarial regression set so module/migration changes can't silently re-break
 the operator surface.
+
+
+## OpenClaw retest confirmation (2026-06-30 18:33 UTC)
+After Lovable's deploy, OpenClaw re-ran the growth battery uncoached: 5/5 green.
+generate_social_post ✅ generates, seo_content_brief ✅ generates a full brief,
+create_survey_campaign ✅ (manage_survey_template → template → campaign),
+prospect_research ✅, seo_audit_page ✅. The marketing dead-handler fixes + the
+new survey skill are confirmed by the executor, not just direct gateway tests.
+
+Stale findings closed (resolved by our work + deploys): 6cfaa1aa (Composio loop
+verified), 28d0ef50 (checkout redirectUrl), 811d2603 (blog excerpt stripHtml).
+Findings 11 → 8 open; remaining 8 are pure frontend/UX or external-config.
+
+## Dead-handler class: 9 of 9 fixed (deployed/verified); ad_campaign_create
+suffix-verb action-inference fix pending one more agent-execute redeploy.
