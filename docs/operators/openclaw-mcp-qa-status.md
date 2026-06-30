@@ -88,8 +88,31 @@ needs an edge deploy + a sync-skills. Forks (autoversio…) need per-ref
   to the fixture. 46 → 52 tests, green. Future create-skill-on-generic-table with
   an uncovered NOT NULL column now fails CI.
 
+## Dead-handler class (systemic — generative skills wired to generic-CRUD db:)
+A recurring class: a skill described as "Generate/Summarize/Analyze X" but
+wired to `handler: db:<table>`, so it falls through to the generic-CRUD engine
+and LISTS the table (returns `{items:[],count:0,table:X}`) instead of
+generating. Static scan flagged ~8 candidates; `accounting_reports` is a
+dedicated handler (real, cleared). Confirmed dead + fixed this session:
+- ✅ research_content → ai-task:content_research
+- ✅ generate_content_proposal → ai-task:content_proposal (built the task)
+- ✅ summarize_candidate_pipeline → rpc (built aggregation)
+- ✅ weekly_business_digest → rpc (built aggregation, tested live)
+
+Still dead (tracked debt — need ai-task or edge builds, some need infra):
+- `seo_content_brief` (db:content_research) → needs an ai-task (SEO brief)
+- `generate_social_post` (db:content_proposals) → needs ai-task / proposal read
+- `ad_creative_generate` (db:ad_creatives) → needs ai-task (ad copy)
+- `ad_optimize` (db:ad_campaigns) → needs aggregation + AI recommendations
+- `competitor_monitor` (db:agent_memory) → needs web-scrape + AI analysis
+
+Proper guard (follow-up): a "dedicated-handler registry" so a guardrail can
+assert generative-described skills don't sit on the generic-CRUD path. A pure
+static heuristic can't distinguish dedicated db: handlers (accounting_reports)
+from generic-CRUD ones without that registry.
+
 ## Remaining untested surfaces
-analytics, growth, federation, docs, media — lower business priority; sweep when
+growth (in progress via OpenClaw), federation, docs, media — sweep when
 OpenClaw's model is stable for adversarial runs.
 
 ## Phase-3 hardening (not yet done)
