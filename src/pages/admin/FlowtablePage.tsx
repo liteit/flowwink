@@ -24,7 +24,7 @@ import { useIsModuleEnabled } from '@/hooks/useModules';
 import { useToast } from '@/hooks/use-toast';
 import {
   Table2, Plus, Download, Upload, MoreHorizontal, Trash2, ChevronDown, LayoutGrid, List as ListIcon, Rows3,
-  Send, Users, X, Database,
+  Send, Users, X, Database, PanelLeft, PanelRight, ChevronRight,
 } from 'lucide-react';
 import {
   useFlowtableBases, useCreateBase, useUpdateBase, useDeleteBase,
