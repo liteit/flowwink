@@ -9548,11 +9548,16 @@ async function executeAdCreativeGenerate(
   if (error) return { error: `Lookup campaign failed: ${error.message}`, status: 'failed' };
   if (!c) return { error: `Campaign ${campaignId} not found`, status: 'failed' };
 
+  // Campaign fields can be jsonb (e.g. target_audience stored as an object); the
+  // ad_creative task expects strings, so coerce before passing (OpenClaw sweep
+  // hit "Invalid input" on an object audience).
+  const asText = (v: unknown) =>
+    v == null ? undefined : (typeof v === 'string' ? v : JSON.stringify(v));
   const resp = await fetch(`${supabaseUrl}/functions/v1/ai-task`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
     body: JSON.stringify({ task: 'ad_creative', input: {
-      objective: c.objective, target_audience: c.target_audience, platform: c.platform,
+      objective: asText(c.objective), target_audience: asText(c.target_audience), platform: asText(c.platform),
       type: a.type || 'text', tone: a.tone, key_message: a.key_message, cta: a.cta,
     } }),
   });
