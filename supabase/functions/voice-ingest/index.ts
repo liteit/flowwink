@@ -290,12 +290,16 @@ async function persistCall(
 // caller audio as raw PCM16 16 kHz (exactly what Gemini Live wants) and tell
 // 46elks that we will send Gemini's native PCM16 24 kHz audio back.
 
-// Native-audio preview model — best voice quality, but rejects audio when tools
-// are declared (WS 1007). We therefore disable tools below (see ENABLE_AI_TOOLS)
-// to keep the receptionist working. Booking-via-voice is temporarily disabled.
-const GEMINI_LIVE_MODEL = Deno.env.get("GEMINI_LIVE_MODEL") ?? "models/gemini-2.5-flash-native-audio-latest";
-const ENABLE_AI_TOOLS = (Deno.env.get("GEMINI_LIVE_ENABLE_TOOLS") ?? "false") === "true";
+// Two model families, selected per-call by voice settings (`aiReceptionistMode`):
+// - native-audio: best voice quality, but rejects tools with WS 1007. Tools OFF.
+// - half-cascade: audio → text tool-loop → TTS. Slightly more robotic voice, tools STABLE.
+// Env vars are optional overrides.
+const GEMINI_LIVE_MODEL_NATIVE = Deno.env.get("GEMINI_LIVE_MODEL_NATIVE")
+  ?? "models/gemini-2.5-flash-native-audio-latest";
+const GEMINI_LIVE_MODEL_CASCADE = Deno.env.get("GEMINI_LIVE_MODEL_CASCADE")
+  ?? "models/gemini-live-2.5-flash-preview";
 const GEMINI_LIVE_WS = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
+
 
 async function websocketDataToString(data: unknown): Promise<string> {
   if (typeof data === "string") return data;
