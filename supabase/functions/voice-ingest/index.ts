@@ -340,20 +340,26 @@ async function buildSystemPrompt(
   const greeting = settings.aiReceptionistGreeting
     ?? `Hej, du har ringt ${name}. Alla våra medarbetare är upptagna just nu — hur kan jag hjälpa dig?`;
 
+  const toolsEnabled = (settings.aiReceptionistMode ?? "native-audio") === "half-cascade";
+  const capabilityBlock = toolsEnabled
+    ? `You have tools available: lookup_customer_by_phone (call early to personalize), list_available_slots + book_appointment (for bookings), and escalate_to_human (transfer to a live agent). Use tools when the caller's request maps to one — do not ask them to hold; call the tool and speak the result.`
+    : `IMPORTANT: You do NOT have access to the booking calendar or CRM right now. If the caller wants to book, change or cancel an appointment, do NOT try to check times or confirm slots. Instead: ask what the appointment is for and their preferred day/time, repeat it back so it's captured in the transcript, and tell them a colleague will call back to confirm the exact slot.`;
+
   return [
     `You are the AI receptionist for ${name}. Respond in the same language the caller speaks (Swedish or English).`,
     `Tone: ${tone}.`,
     `Open the conversation with: "${greeting}"`,
     `Keep responses short — this is a phone call. One or two sentences at a time.`,
     `The caller's phone number is ${fromNumber}. You may reference it if useful (e.g. for callbacks).`,
-    `If the caller asks to speak to a human, acknowledge it and say a colleague will call them back on ${fromNumber} shortly.`,
-    `IMPORTANT: You do NOT have access to the booking calendar right now. If the caller wants to book, change or cancel an appointment, do NOT try to check times or confirm slots. Instead: ask what the appointment is for and their preferred day/time, repeat it back so it's captured in the transcript, and tell them a colleague will call back to confirm the exact slot.`,
+    `If the caller asks to speak to a human, acknowledge it and ${toolsEnabled ? "call escalate_to_human." : `say a colleague will call them back on ${fromNumber} shortly.`}`,
+    capabilityBlock,
     `Never invent appointment times, prices, or policies. If you don't know something, say you'll have a colleague call back with the answer.`,
 
     settings.aiReceptionistSystemPromptExtra ? `\nAdditional instructions:\n${settings.aiReceptionistSystemPromptExtra}` : "",
     pilotContext,
   ].filter(Boolean).join("\n");
 }
+
 
 // Minimal tool set for MVP — uses skill names that exist in agent_skills.
 // Gemini Live calls them; we dispatch to agent-execute.
