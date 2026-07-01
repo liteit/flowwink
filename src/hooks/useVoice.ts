@@ -14,8 +14,6 @@ export const defaultVoiceSettings: VoiceSettings = {
   voicemailGreetingUrl: undefined,
   welcomeGreetingUrl: undefined,
   ringTimeoutSeconds: 20,
-  bookingIvrEnabled: false,
-  bookingServiceId: undefined,
   smsReplyEnabled: false,
   autoScheduleCallbacks: false,
   autoScheduleSms: false,

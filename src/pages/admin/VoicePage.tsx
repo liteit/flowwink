@@ -298,28 +298,6 @@ function VoiceSettingsCard() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-md border p-3">
-          <div>
-            <Label className="text-sm font-medium">Booking IVR (UC4)</Label>
-            <p className="text-xs text-muted-foreground">When all agents are offline, offer the caller a callback slot from a booking service.</p>
-          </div>
-          <Switch
-            checked={settings.bookingIvrEnabled}
-            onCheckedChange={(v) => set('bookingIvrEnabled', v)}
-          />
-        </div>
-
-        {settings.bookingIvrEnabled && (
-          <div className="space-y-2">
-            <Label htmlFor="svc">Booking service ID</Label>
-            <Input
-              id="svc"
-              placeholder="uuid of booking_services row"
-              value={settings.bookingServiceId ?? ''}
-              onChange={(e) => set('bookingServiceId', e.target.value || undefined)}
-            />
-          </div>
-        )}
 
         <div className="flex items-center justify-between rounded-md border p-3">
           <div>
