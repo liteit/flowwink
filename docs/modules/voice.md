@@ -1,12 +1,13 @@
 # Voice Module
 
-Inbound + outbound voice calls via pluggable providers.
+Inbound + outbound voice calls via pluggable providers (46elks native, Twilio stub,
+Telnyx/Vonage planned) plus an AI receptionist (Gemini Live) for after-hours.
 
 ## Use cases
 
 | # | Status agent | Visitor action | System response |
 |---|---|---|---|
-| 1 | Inloggad + voice_enabled | Ringer | WebRTC ringer i admin → agent svarar → samtal bryggas via SIP |
+| 1 | Inloggad + voice_enabled | Ringer | WebRTC ringer i admin (`Softphone.tsx`, JsSIP mot 46elks WSS) → agent svarar → samtal bryggas via SIP |
 | 2 | Inloggad men upptagen / svarar ej inom timeout | Ringer | Voicemail: greeting → record → missed-call-kö → manuell callback |
 | 3 | Utloggad (alla agenter offline) + AI receptionist av | Ringer | Samma som UC2 |
 | 4 | Utloggad (alla agenter offline) + AI receptionist på | Ringer | Gemini Live svarar. Tools preview kan boka via booking-skills; om tools-modellen nekas faller samtalet tillbaka till native-audio och sparas som callback request. |
