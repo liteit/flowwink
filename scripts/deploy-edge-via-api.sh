@@ -76,8 +76,12 @@ resp=$(curl -s -m 180 -X POST \
   "https://api.supabase.com/v1/projects/$REF/functions/deploy?slug=$FN" \
   -H "Authorization: Bearer $SBP_TOKEN" "${ARGS[@]}")
 
-echo "$resp" | python3 -c 'import sys,json
+echo "$resp" | python3 -c '
+import sys, json
+raw = sys.stdin.read()
 try:
-  d=json.load(sys.stdin); print(f"  → {d.get(\"slug\")} v{d.get(\"version\")} {d.get(\"status\")}")
+    d = json.loads(raw)
+    slug = d.get("slug"); ver = d.get("version"); status = d.get("status")
+    print("  -> {} v{} {}".format(slug, ver, status))
 except Exception:
-  print("  → "+sys.stdin.read()[:300]); sys.exit(1)'
+    print("  -> " + raw[:300]); sys.exit(1)'
