@@ -99,6 +99,14 @@ Voicemail audio is hosted by the voice provider behind HTTP Basic Auth (46elks).
 
 External operators (FlowPilot, OpenClaw, Claude Desktop) call these via MCP. They are gated by the `liveSupport` module being enabled.
 
+### Inbound email → ticket (v1)
+
+Composio webhook levererar inkommande mail till `composio-webhook` edge
+function, som anropar en email-to-ticket-skill. Nya trådar skapas som
+`chat_conversations` med `channel='email'` och landar i Waiting-tabben. Svar
+från agenten går ut via `email-send` (provider-val: Composio / SMTP / Resend
+med intent-aware fallback). Se [`mem/features/email-inbound-to-tickets-gap.md`](../../mem/features/email-inbound-to-tickets-gap.md).
+
 ## Known gaps (roadmap)
 
 - **Canned responses / macros** — not yet implemented.
@@ -106,6 +114,7 @@ External operators (FlowPilot, OpenClaw, Claude Desktop) call these via MCP. The
 - **CSAT survey after close** — `chat_feedback` table exists; surveys not auto-triggered.
 - **Transfer between agents** — skill supports it; UI control missing.
 - **Heartbeat per channel** — see [Channel Adapter Contract](../architecture/channel-adapter-contract.md).
+
 
 ## See also
 

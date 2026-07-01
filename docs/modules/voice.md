@@ -1,12 +1,13 @@
 # Voice Module
 
-Inbound + outbound voice calls via pluggable providers.
+Inbound + outbound voice calls via pluggable providers (46elks native, Twilio stub,
+Telnyx/Vonage planned) plus an AI receptionist (Gemini Live) for after-hours.
 
 ## Use cases
 
 | # | Status agent | Visitor action | System response |
 |---|---|---|---|
-| 1 | Inloggad + voice_enabled | Ringer | WebRTC ringer i admin → agent svarar → samtal bryggas via SIP |
+| 1 | Inloggad + voice_enabled | Ringer | WebRTC ringer i admin (`Softphone.tsx`, JsSIP mot 46elks WSS) → agent svarar → samtal bryggas via SIP |
 | 2 | Inloggad men upptagen / svarar ej inom timeout | Ringer | Voicemail: greeting → record → missed-call-kö → manuell callback |
 | 3 | Utloggad (alla agenter offline) + AI receptionist av | Ringer | Samma som UC2 |
 | 4 | Utloggad (alla agenter offline) + AI receptionist på | Ringer | Gemini Live svarar. Tools preview kan boka via booking-skills; om tools-modellen nekas faller samtalet tillbaka till native-audio och sparas som callback request. |
@@ -91,13 +92,59 @@ Voice-modulen **importerar inte** live-support och vice versa. Kommunikation ske
 - Provider-väljare, ring-timeout, voicemail-greeting, AI receptionist settings
 - Call-detalj-dialog: lyssna på recording/transkript, schemalägg callback, markera klar, `tel:` call-back
 
-**Fas 2 (pågår):**
-- Browser WebRTC-klient i admin (`jssip` mot 46elks WSS) — knapp i sidebar för agent som är voice_enabled
-- Voicemail-transkription via STT (chat-completion / ai-call.ts)
-- AI receptionist callback queue + transcript/summering när tools inte kan användas
-- Gemini Live tools preview: `lookup_customer_by_phone`, `browse_services`, `check_availability`, `book_appointment`
+**Fas 2 (klar):**
+- Browser WebRTC-klient i admin (`Softphone.tsx`, JsSIP mot 46elks WSS) — knapp i sidebar för agent som är voice_enabled. Se [`voice-softphone.md`](./voice-softphone.md).
+- Voicemail-transkription via STT (`chat-completion` / `ai-call.ts`).
+- Voicemail-audio proxy via `voice-recording` edge function (injicerar 46elks Basic Auth server-side så `<audio>` inte får login-popup).
+- Callback-flöde: `voice_calls.callback_status` (`pending` → `scheduled` → `completed`) + admin-UI-tab i Live Support.
+- Master switch `smsReplyEnabled` styr all utgående SMS (voicemail-reply, callback-notiser).
+
+## AI Receptionist (Gemini Live)
+
+När alla agenter är offline och receptionist är på tar Gemini Live över samtalet
+via WebSocket-brygga från 46elks (`voice-ingest`). Två drift-lägen väljs i
+`/admin/voice` → Settings:
+
+| Mode | Model | Tools | Beteende |
+|---|---|---|---|
+| **Native audio** | `models/gemini-2.5-flash-native-audio-latest` | ❌ | Bäst röst/språkkvalitet på svenska. Kan inte boka — instrueras att samla info och lova återuppringning. |
+| **Half-cascade (live tools + fallback)** | `models/gemini-3.1-flash-live-preview` | ✅ | Har `lookup_customer_by_phone`, `browse_services`, `check_availability`, `book_appointment`. Om Google stänger WS (1007/1008) återansluter bryggan mot native-audio-modellen så samtalet inte tappas. |
+
+Rekommenderat val i UI: **Half-cascade — Live tools with native-audio fallback**.
+
+### Digital Secretary-pattern
+
+Systempromptet instruerar agenten att först försöka lösa ärendet (info,
+bokning, kundlookup). Först om ett tool-call misslyckas eller inte finns
+erbjuds återuppringning. Alla AI-hanterade samtal flaggas automatiskt med
+`callback_status='pending'` så admin kan review i Callbacks-tabben — även om
+booking gick igenom (för kvalitetsuppföljning under MVP).
+
+### Live transcript & summering
+
+`voice-ingest` skriver kontinuerligt in transkriberade turns i
+`voice_calls.live_transcript` och genererar en `ai_summary` när samtalet slutar
+(fallback: sista N turns om Gemini inte returnerar summary-token). Visas i
+`VoicePage.tsx` → call detail.
+
+### Kontext till agenten
+
+Agenten får per samtal: `first_greeting`, systemprompt (identity + språkregler +
+mode-specifika instruktioner om tools/callback), och caller ID (A-nummer).
+Business identity kommer från `company_profile` (default: *Flowwink Business
+Operating System*).
+
+### Kända begränsningar / backlog
+
+- Tool-calling på Gemini Live `v1beta` är instabilt — därför fallback-loopen.
+- Provider-agnostisk routing: mycket 46elks-specifik logik ligger idag i
+  `voice-ingest`. Ska flyttas till adaptern under Fas 3. Se
+  [`.lovable/memory/backlog/voice-agent-routing-provider-abstraction.md`](../../.lovable/memory/backlog/voice-agent-routing-provider-abstraction.md).
+- Gemini credits/quota-visibility i integrations-vyn — backlog.
 
 **Fas 3:**
-- Realtime AI voice agents (WebSocket-stream → OpenAI Realtime / Gemini Live) med stabil multi-provider tool-calling
-- Twilio adapter full implementation
-- Telnyx, Vonage adapters
+- Multi-provider realtime voice (OpenAI Realtime som alternativ till Gemini).
+- Twilio adapter full implementation.
+- Telnyx, Vonage adapters.
+- Provider-agnostisk agent-routing (flyttas ur `voice-ingest`).
+
