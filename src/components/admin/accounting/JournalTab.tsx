@@ -8,6 +8,7 @@ import { useJournalEntries, useJournalEntryWithLines, useJournals } from '@/hook
 import { Skeleton } from '@/components/ui/skeleton';
 import { NewJournalEntryDialog } from './NewJournalEntryDialog';
 import { JournalEntryDetail } from './JournalEntryDetail';
+import { JournalCsvActions } from './JournalCsvActions';
 
 const formatCents = (cents: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'SEK', minimumFractionDigits: 0 }).format(cents / 100);
@@ -57,10 +58,13 @@ export function JournalTab() {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Entry
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button onClick={() => setShowCreate(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Entry
+          </Button>
+          <JournalCsvActions statusFilter={statusFilter} journalFilter={journalFilter} />
+        </div>
       </div>
 
       {isLoading ? (
