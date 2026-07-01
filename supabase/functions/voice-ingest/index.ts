@@ -49,12 +49,19 @@ interface VoiceSettings {
   aiReceptionistUseFlowpilotContext?: boolean;
   aiReceptionistVoice?: string;
   /**
+   * `native-audio` = best voice, no tool-calling (WS 1007 bug on tools).
+   * `half-cascade` = stable tool-calling, slightly more robotic voice.
+   * Default: native-audio (kept for backward compat with earlier deploys).
+   */
+  aiReceptionistMode?: "native-audio" | "half-cascade";
+  /**
    * 46elks WebSocket-number (E.164). Måste vara ett separat nummer som är
    * konfigurerat i 46elks dashboard med `voice_start=wss://<project>.functions.supabase.co/voice-ingest/stream`.
    * Det publika DID:t bryggar in samtalet hit via `{connect: <wsNum>}`.
    */
   aiReceptionistWebsocketNumber?: string;
 }
+
 
 // ── Provider adapters ────────────────────────────────────────────────────────
 
@@ -283,12 +290,16 @@ async function persistCall(
 // caller audio as raw PCM16 16 kHz (exactly what Gemini Live wants) and tell
 // 46elks that we will send Gemini's native PCM16 24 kHz audio back.
 
-// Native-audio preview model — best voice quality, but rejects audio when tools
-// are declared (WS 1007). We therefore disable tools below (see ENABLE_AI_TOOLS)
-// to keep the receptionist working. Booking-via-voice is temporarily disabled.
-const GEMINI_LIVE_MODEL = Deno.env.get("GEMINI_LIVE_MODEL") ?? "models/gemini-2.5-flash-native-audio-latest";
-const ENABLE_AI_TOOLS = (Deno.env.get("GEMINI_LIVE_ENABLE_TOOLS") ?? "false") === "true";
+// Two model families, selected per-call by voice settings (`aiReceptionistMode`):
+// - native-audio: best voice quality, but rejects tools with WS 1007. Tools OFF.
+// - half-cascade: audio → text tool-loop → TTS. Slightly more robotic voice, tools STABLE.
+// Env vars are optional overrides.
+const GEMINI_LIVE_MODEL_NATIVE = Deno.env.get("GEMINI_LIVE_MODEL_NATIVE")
+  ?? "models/gemini-2.5-flash-native-audio-latest";
+const GEMINI_LIVE_MODEL_CASCADE = Deno.env.get("GEMINI_LIVE_MODEL_CASCADE")
+  ?? "models/gemini-live-2.5-flash-preview";
 const GEMINI_LIVE_WS = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
+
 
 async function websocketDataToString(data: unknown): Promise<string> {
   if (typeof data === "string") return data;
@@ -329,20 +340,26 @@ async function buildSystemPrompt(
   const greeting = settings.aiReceptionistGreeting
     ?? `Hej, du har ringt ${name}. Alla våra medarbetare är upptagna just nu — hur kan jag hjälpa dig?`;
 
+  const toolsEnabled = (settings.aiReceptionistMode ?? "native-audio") === "half-cascade";
+  const capabilityBlock = toolsEnabled
+    ? `You have tools available: lookup_customer_by_phone (call early to personalize), list_available_slots + book_appointment (for bookings), and escalate_to_human (transfer to a live agent). Use tools when the caller's request maps to one — do not ask them to hold; call the tool and speak the result.`
+    : `IMPORTANT: You do NOT have access to the booking calendar or CRM right now. If the caller wants to book, change or cancel an appointment, do NOT try to check times or confirm slots. Instead: ask what the appointment is for and their preferred day/time, repeat it back so it's captured in the transcript, and tell them a colleague will call back to confirm the exact slot.`;
+
   return [
     `You are the AI receptionist for ${name}. Respond in the same language the caller speaks (Swedish or English).`,
     `Tone: ${tone}.`,
     `Open the conversation with: "${greeting}"`,
     `Keep responses short — this is a phone call. One or two sentences at a time.`,
     `The caller's phone number is ${fromNumber}. You may reference it if useful (e.g. for callbacks).`,
-    `If the caller asks to speak to a human, acknowledge it and say a colleague will call them back on ${fromNumber} shortly.`,
-    `IMPORTANT: You do NOT have access to the booking calendar right now. If the caller wants to book, change or cancel an appointment, do NOT try to check times or confirm slots. Instead: ask what the appointment is for and their preferred day/time, repeat it back so it's captured in the transcript, and tell them a colleague will call back to confirm the exact slot.`,
+    `If the caller asks to speak to a human, acknowledge it and ${toolsEnabled ? "call escalate_to_human." : `say a colleague will call them back on ${fromNumber} shortly.`}`,
+    capabilityBlock,
     `Never invent appointment times, prices, or policies. If you don't know something, say you'll have a colleague call back with the answer.`,
 
     settings.aiReceptionistSystemPromptExtra ? `\nAdditional instructions:\n${settings.aiReceptionistSystemPromptExtra}` : "",
     pilotContext,
   ].filter(Boolean).join("\n");
 }
+
 
 // Minimal tool set for MVP — uses skill names that exist in agent_skills.
 // Gemini Live calls them; we dispatch to agent-execute.
@@ -499,13 +516,18 @@ async function handleStreamSession(req: Request): Promise<Response> {
 
     const settings = await loadVoiceSettings(supabase);
     const systemPrompt = await buildSystemPrompt(supabase, settings, fromNumber);
+    const mode = settings.aiReceptionistMode ?? "native-audio";
+    const modelId = mode === "half-cascade" ? GEMINI_LIVE_MODEL_CASCADE : GEMINI_LIVE_MODEL_NATIVE;
+    const toolsEnabled = mode === "half-cascade";
 
-    console.log("[voice-ai-bridge] connecting Gemini Live", { providerCallId, fromNumber });
+    console.log("[voice-ai-bridge] connecting Gemini Live", {
+      providerCallId, fromNumber, mode, modelId, toolsEnabled,
+    });
     gemini = new WebSocket(`${GEMINI_LIVE_WS}?key=${apiKey}`);
     gemini.onopen = () => {
       const setup = {
         setup: {
-          model: GEMINI_LIVE_MODEL,
+          model: modelId,
           generationConfig: {
             responseModalities: ["AUDIO"],
             speechConfig: {
@@ -515,13 +537,14 @@ async function handleStreamSession(req: Request): Promise<Response> {
             },
           },
           systemInstruction: { parts: [{ text: systemPrompt }] },
-          ...(ENABLE_AI_TOOLS ? { tools: [{ functionDeclarations: AI_TOOLS }] } : {}),
+          ...(toolsEnabled ? { tools: [{ functionDeclarations: AI_TOOLS }] } : {}),
           inputAudioTranscription: {},
           outputAudioTranscription: {},
         },
       };
       gemini!.send(JSON.stringify(setup));
     };
+
 
     gemini.onmessage = async (ev) => {
       try {
