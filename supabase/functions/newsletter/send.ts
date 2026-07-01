@@ -41,21 +41,27 @@ export async function handle(req: Request): Promise<Response> {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const { data: userData, error: authError } = await supabase.auth.getUser(
-      authHeader.replace("Bearer ", ""),
-    );
-    if (authError || !userData?.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const bearer = authHeader.replace("Bearer ", "").trim();
+    // service_role escape: the FlowWink gateway / agent-execute invokes edge: skills
+    // with `Bearer ${SERVICE_ROLE_KEY}` (no end-user JWT), so execute_newsletter_send
+    // over the operator surface must accept the service key or it 401s ("Unauthorized").
+    // The service key is already an admin-equivalent trust boundary.
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    if (!(serviceKey && bearer === serviceKey)) {
+      const { data: userData, error: authError } = await supabase.auth.getUser(bearer);
+      if (authError || !userData?.user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: hasAdmin } = await supabase.rpc("has_role", {
+        _user_id: userData.user.id, _role: "admin",
       });
-    }
-    const { data: hasAdmin } = await supabase.rpc("has_role", {
-      _user_id: userData.user.id, _role: "admin",
-    });
-    if (!hasAdmin) {
-      return new Response(JSON.stringify({ error: "Admin access required" }), {
-        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (!hasAdmin) {
+        return new Response(JSON.stringify({ error: "Admin access required" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Tracking config (provider+from is resolved inside email-send)

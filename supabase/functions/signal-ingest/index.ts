@@ -53,8 +53,14 @@ Deno.serve(async (req) => {
     const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
     const supabase = getServiceClient();
 
-    // Accept anon key, publishable key, or custom token from site_settings
-    let authorized = (anonKey && token === anonKey) || (publishableKey && token === publishableKey);
+    // Accept anon key, publishable key, service_role, or custom token from site_settings.
+    // service_role: the FlowWink gateway / agent-execute invokes edge: skills with the
+    // service key (agent-execute forwards `Bearer ${SERVICE_ROLE_KEY}`), so process_signal
+    // over the operator surface must accept it or every agent call 401s ("Invalid token").
+    let authorized =
+      (anonKey && token === anonKey) ||
+      (publishableKey && token === publishableKey) ||
+      (serviceKey && token === serviceKey);
 
     // Also check custom token in site_settings
     if (!authorized) {

@@ -129,7 +129,7 @@ const SUBSCRIPTIONS_SKILLS: SkillSeed[] = [
     name: 'list_winback_campaigns',
     description: 'List configured win-back campaigns (active or all). Use when: choosing which offer to send, auditing win-back program. NOT for: sending the campaign (send_winback) or campaign creation (create via /admin/subscriptions UI).',
     category: 'commerce',
-    handler: 'edge:agent-execute',
+    handler: 'db:subscription_winback_campaigns',
     scope: 'internal',
     tool_definition: {
       type: 'function',
