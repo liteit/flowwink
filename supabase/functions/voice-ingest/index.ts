@@ -49,12 +49,19 @@ interface VoiceSettings {
   aiReceptionistUseFlowpilotContext?: boolean;
   aiReceptionistVoice?: string;
   /**
+   * `native-audio` = best voice, no tool-calling (WS 1007 bug on tools).
+   * `half-cascade` = stable tool-calling, slightly more robotic voice.
+   * Default: native-audio (kept for backward compat with earlier deploys).
+   */
+  aiReceptionistMode?: "native-audio" | "half-cascade";
+  /**
    * 46elks WebSocket-number (E.164). Måste vara ett separat nummer som är
    * konfigurerat i 46elks dashboard med `voice_start=wss://<project>.functions.supabase.co/voice-ingest/stream`.
    * Det publika DID:t bryggar in samtalet hit via `{connect: <wsNum>}`.
    */
   aiReceptionistWebsocketNumber?: string;
 }
+
 
 // ── Provider adapters ────────────────────────────────────────────────────────
 
