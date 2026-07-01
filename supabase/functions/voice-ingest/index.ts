@@ -510,13 +510,18 @@ async function handleStreamSession(req: Request): Promise<Response> {
 
     const settings = await loadVoiceSettings(supabase);
     const systemPrompt = await buildSystemPrompt(supabase, settings, fromNumber);
+    const mode = settings.aiReceptionistMode ?? "native-audio";
+    const modelId = mode === "half-cascade" ? GEMINI_LIVE_MODEL_CASCADE : GEMINI_LIVE_MODEL_NATIVE;
+    const toolsEnabled = mode === "half-cascade";
 
-    console.log("[voice-ai-bridge] connecting Gemini Live", { providerCallId, fromNumber });
+    console.log("[voice-ai-bridge] connecting Gemini Live", {
+      providerCallId, fromNumber, mode, modelId, toolsEnabled,
+    });
     gemini = new WebSocket(`${GEMINI_LIVE_WS}?key=${apiKey}`);
     gemini.onopen = () => {
       const setup = {
         setup: {
-          model: GEMINI_LIVE_MODEL,
+          model: modelId,
           generationConfig: {
             responseModalities: ["AUDIO"],
             speechConfig: {
@@ -526,13 +531,14 @@ async function handleStreamSession(req: Request): Promise<Response> {
             },
           },
           systemInstruction: { parts: [{ text: systemPrompt }] },
-          ...(ENABLE_AI_TOOLS ? { tools: [{ functionDeclarations: AI_TOOLS }] } : {}),
+          ...(toolsEnabled ? { tools: [{ functionDeclarations: AI_TOOLS }] } : {}),
           inputAudioTranscription: {},
           outputAudioTranscription: {},
         },
       };
       gemini!.send(JSON.stringify(setup));
     };
+
 
     gemini.onmessage = async (ev) => {
       try {
