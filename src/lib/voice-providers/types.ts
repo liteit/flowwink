@@ -89,13 +89,13 @@ export interface VoiceSettings {
   provider: VoiceProviderId | null;
   /** URL till voicemail-greeting (default: provider-default). */
   voicemailGreetingUrl?: string;
-  /** URL till välkomstmeddelande (UC4). */
+  /** URL till välkomstmeddelande (spelas innan agent connect). */
   welcomeGreetingUrl?: string;
   /** Sekunder att ringa innan voicemail tar över. */
   ringTimeoutSeconds: number;
-  /** UC4: föreslå booking-slot till uppringaren? */
-  bookingIvrEnabled: boolean;
-  /** Vilken booking_service som föreslås i UC4. */
+  /** @deprecated Callback-erbjudande hanteras nu av AI-receptionist + auto-schedule. */
+  bookingIvrEnabled?: boolean;
+  /** @deprecated Se bookingIvrEnabled. */
   bookingServiceId?: string;
   /**
    * Låt en agent svara på ett röstmeddelande med SMS till uppringaren
