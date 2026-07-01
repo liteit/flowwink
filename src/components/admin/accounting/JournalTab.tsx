@@ -58,10 +58,13 @@ export function JournalTab() {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Entry
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button onClick={() => setShowCreate(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Entry
+          </Button>
+          <JournalCsvActions statusFilter={statusFilter} journalFilter={journalFilter} />
+        </div>
       </div>
 
       {isLoading ? (
