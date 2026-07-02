@@ -23,6 +23,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 export function SettingsTab() {
   const { locale, setLocale } = useAccountingLocale();
+  const { activePack } = useTenantLocalePack();
   const { data: accounts } = useChartOfAccounts();
   const { data: prefs } = useAccountingPreferences();
   const updatePrefs = useUpdateAccountingPreferences();
@@ -40,14 +41,27 @@ export function SettingsTab() {
 
   const dirty = !!draft && !!prefs && JSON.stringify(draft) !== JSON.stringify(prefs);
 
-  const previewAmount = (() => {
-    if (!draft) return '';
-    const n = 1234567.89;
-    const [intPart, decPart] = n.toFixed(draft.decimals).split('.');
-    const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, draft.thousandsSeparator || '');
-    const num = draft.decimals > 0 ? `${grouped}${draft.decimalSeparator}${decPart}` : grouped;
-    return draft.currencyPosition === 'prefix' ? `${draft.currency} ${num}` : `${num} ${draft.currency}`;
+  // Defaults sourced from the active locale pack — currency + decimals live on
+  // the pack; separator/date conventions are inferred from intl_locale.
+  const packDefaults: Partial<AccountingPreferences> = (() => {
+    if (!activePack) return {};
+    const intl = activePack.currency.intl_locale || '';
+    const isSE = intl.startsWith('sv');
+    const isDE = intl.startsWith('de');
+    const isUS = intl.startsWith('en-US');
+    return {
+      currency: activePack.currency.code,
+      decimals: (activePack.currency.decimals as 0 | 2) ?? 2,
+      currencyPosition: isUS ? 'prefix' : 'suffix',
+      decimalSeparator: isUS ? '.' : ',',
+      thousandsSeparator: isUS ? ',' : isDE ? '.' : ' ',
+      dateFormat: isUS ? 'MM/DD/YYYY' : isDE ? 'DD.MM.YYYY' : 'YYYY-MM-DD',
+    };
   })();
+
+  const applyPackDefaults = () =>
+    setDraft((d) => (d ? { ...d, ...packDefaults } as AccountingPreferences : d));
+
 
 
 
