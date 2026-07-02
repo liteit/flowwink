@@ -22,9 +22,32 @@ import { useQueryClient } from '@tanstack/react-query';
 export function SettingsTab() {
   const { locale, setLocale } = useAccountingLocale();
   const { data: accounts } = useChartOfAccounts();
+  const { data: prefs } = useAccountingPreferences();
+  const updatePrefs = useUpdateAccountingPreferences();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [seeding, setSeeding] = useState(false);
+  const [draft, setDraft] = useState<AccountingPreferences | null>(null);
+
+  useEffect(() => {
+    if (prefs && !draft) setDraft(prefs);
+  }, [prefs, draft]);
+
+  const patch = (p: Partial<AccountingPreferences>) =>
+    setDraft((d) => (d ? { ...d, ...p } : d));
+
+  const dirty = !!draft && !!prefs && JSON.stringify(draft) !== JSON.stringify(prefs);
+
+  const previewAmount = (() => {
+    if (!draft) return '';
+    const n = 1234567.89;
+    const [intPart, decPart] = n.toFixed(draft.decimals).split('.');
+    const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, draft.thousandsSeparator || '');
+    const num = draft.decimals > 0 ? `${grouped}${draft.decimalSeparator}${decPart}` : grouped;
+    return draft.currencyPosition === 'prefix' ? `${draft.currency} ${num}` : `${num} ${draft.currency}`;
+  })();
+
+
 
   const handleSeedLocale = async (targetLocale: string) => {
     setSeeding(true);
