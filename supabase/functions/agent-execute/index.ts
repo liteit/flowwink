@@ -6097,7 +6097,8 @@ async function executeDbAction(
             description: `Reversal: ${original.description}`,
             reference_number: `REV-${original.reference_number || entry_id.slice(0, 8)}`,
             status: 'posted',
-            source: 'flowpilot',
+            source: resolvedSource,
+
           }).select('id').single();
         if (revErr) throw new Error(`Reversal failed: ${revErr.message}`);
 
