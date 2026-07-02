@@ -390,11 +390,15 @@ export function useAgentOperate() {
         content: m.content,
       }));
 
+      // Send the logged-in admin's session JWT — agent-operate runs privileged
+      // service-role tools and now gates on service-key-or-admin (the public
+      // publishable key is not an identity).
+      const { data: { session } } = await supabase.auth.getSession();
       const resp = await fetch(OPERATE_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          'Authorization': `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({

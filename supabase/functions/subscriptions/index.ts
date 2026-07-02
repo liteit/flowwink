@@ -16,6 +16,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { getServiceClient, getUserClient, getAnonClient } from '../_shared/supabase-clients.ts';
+import { requireServiceOrRole, unauthorized } from '../_shared/edge-auth.ts';
 import { getProvider, type SubscriptionProviderId } from "../_shared/subscription-providers.ts";
 
 const corsHeaders = {
@@ -55,8 +56,14 @@ serve(async (req) => {
         return json(await handlePortal(req, body));
       case "manage":
         return json(await handleManage(req, body));
-      case "skill":
+      case "skill": {
+        // The skill path reads/writes subscription + dunning data (customer PII,
+        // MRR) with the service client and had NO auth (checkout/portal/manage
+        // gate themselves). Require service key (agent-execute) or admin JWT.
+        const auth = await requireServiceOrRole(req, getServiceClient());
+        if (!auth.authorized) return unauthorized(corsHeaders);
         return json(await handleSkill(skillName as string, body));
+      }
       default:
         return json(
           { error: `Unknown action: '${action}'. Expected one of: checkout | portal | manage | skill (or pass _skill).` },

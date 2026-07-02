@@ -11,6 +11,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getServiceClient } from '../_shared/supabase-clients.ts';
+import { requireServiceOrRole, unauthorized } from '../_shared/edge-auth.ts';
 import { logAiUsage } from '../_shared/ai-usage-logger.ts';
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 
@@ -27,6 +28,12 @@ const json = (body: unknown, status = 200) =>
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  // Privileged: writes bank_transactions, matches/settles invoices, pulls Stripe
+  // payouts, runs paid OCR. Admin UI calls via functions.invoke (session JWT);
+  // agent-execute edge dispatch sends the service key. Gate both, reject anon.
+  const auth = await requireServiceOrRole(req, getServiceClient());
+  if (!auth.authorized) return unauthorized(corsHeaders);
 
   const url = new URL(req.url);
   const segments = url.pathname.split("/").filter(Boolean);

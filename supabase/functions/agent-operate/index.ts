@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { getServiceClient } from '../_shared/supabase-clients.ts';
+import { requireServiceOrRole, unauthorized } from '../_shared/edge-auth.ts';
 import { callAi } from '../_shared/ai-call.ts';
 import { scoreSkillsByIntent, loadRecentUsageCounts } from '../_shared/skills/intent-scorer.ts';
 import { SKILL_CATEGORY_MODULES, isCategoryActive, loadActiveModuleIds } from '../_shared/mcp/groups.ts';
@@ -105,13 +106,18 @@ serve(async (req) => {
   }
 
   try {
+    const supabase = getServiceClient();
+    // Privileged: a streaming agent that chains up to 10 tool iterations of
+    // service-role skills/built-ins. Admin UI sends the session JWT; gate it.
+    const auth = await requireServiceOrRole(req, supabase);
+    if (!auth.authorized) return unauthorized(corsHeaders);
+
     const body = await req.json();
     const messages = Array.isArray(body.messages) ? body.messages : [];
     const conversation_id = body.conversation_id;
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = getServiceClient();
 
     // Separation of concerns:
     //   FlowChat (this endpoint, as web-CLI shell) ALWAYS works — it's the human shell over the

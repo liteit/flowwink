@@ -7,6 +7,7 @@
 // Lifecycle: draft → scheduled → in_progress → completed → invoiced/cancelled.
 
 import { getServiceClient } from '../_shared/supabase-clients.ts';
+import { requireServiceOrRole, unauthorized } from '../_shared/edge-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,10 +27,15 @@ const ORDER_FIELDS = [
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
+  const supabase = getServiceClient();
+  // Privileged: reads/writes service_orders incl. customer PII with the service
+  // client. Only agent-execute (service key) and admins may call it.
+  const auth = await requireServiceOrRole(req, supabase);
+  if (!auth.authorized) return unauthorized(corsHeaders);
+
   let body: Record<string, any> = {};
   try { body = await req.json(); } catch { body = {}; }
   const action = String(body.action || '').trim();
-  const supabase = getServiceClient();
 
   try {
     switch (action) {
