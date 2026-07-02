@@ -5590,7 +5590,7 @@ async function executeBookingsManagement(
   supabase: any,
   args: Record<string, unknown>,
 ): Promise<unknown> {
-  const { action = 'list', booking_id, status, period = 'month', limit = 50 } = args as any;
+  const { action = 'list', booking_id, status, period = 'month', limit = 50, customer_email, customer_phone } = args as any;
 
   if (action === 'list') {
     const since = new Date();
@@ -5599,10 +5599,16 @@ async function executeBookingsManagement(
     else since.setMonth(since.getMonth() - 1);
 
     let query = supabase.from('bookings')
-      .select('id, customer_name, customer_email, start_time, end_time, status, service_id, created_at')
+      .select('id, customer_name, customer_email, customer_phone, start_time, end_time, status, service_id, created_at')
       .gte('start_time', since.toISOString())
       .order('start_time', { ascending: true }).limit(limit);
     if (status) query = query.eq('status', status);
+    // "When is my appointment?" — callers identify by email or phone.
+    if (customer_email) query = query.ilike('customer_email', String(customer_email).trim());
+    if (customer_phone) {
+      const suffix = String(customer_phone).replace(/\D/g, '').slice(-7);
+      if (suffix) query = query.ilike('customer_phone', `%${suffix}%`);
+    }
     const { data, error } = await query;
     if (error) throw new Error(`List bookings failed: ${error.message}`);
     return { bookings: data || [] };

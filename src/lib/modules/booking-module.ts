@@ -14,7 +14,7 @@ import {
 const BOOKING_SKILLS: SkillSeed[] = [
   {
     name: 'book_appointment',
-    description: 'Create a booking for a customer. Use when: a customer wants to schedule an appointment; confirming a service reservation; creating a booking from a chat conversation. NOT for: checking availability (check_availability); managing existing bookings (manage_bookings).',
+    description: 'Create a simple booking WITHOUT overlap protection — PREFER book_appointment_slot for normal bookings (it derives the end from the service duration and rejects double-bookings). Use when: booking without a defined service, or a workflow explicitly needs ad-hoc date+time. NOT for: normal service bookings (book_appointment_slot); checking availability (check_availability); managing existing bookings (manage_bookings).',
     category: 'crm',
     handler: 'module:booking',
     scope: 'both',
@@ -22,7 +22,7 @@ const BOOKING_SKILLS: SkillSeed[] = [
       type: 'function',
       function: {
         name: 'book_appointment',
-        description: 'Create a booking for a customer. Use when: a customer wants to schedule an appointment; confirming a service reservation; creating a booking from a chat conversation. NOT for: checking availability (check_availability); managing existing bookings (manage_bookings).',
+        description: 'Create a simple booking WITHOUT overlap protection — prefer book_appointment_slot for normal service bookings. Use when: booking without a defined service or ad-hoc date+time. NOT for: normal service bookings (book_appointment_slot); checking availability (check_availability).',
         parameters: {
           type: 'object',
           properties: {
@@ -54,23 +54,19 @@ const BOOKING_SKILLS: SkillSeed[] = [
         },
       },
     },
-    instructions: `## book_appointment
-### What
-Creates a booking for a customer at a specific date and time.
+    instructions: `## book_appointment (legacy simple path)
+PREFER book_appointment_slot — it derives the end time from the service duration and rejects double-bookings. This skill books blindly at date+time.
 ### When to use
-- Visitor asks to book/schedule an appointment in chat
-- Admin creates a booking manually
-- Automated booking from a workflow
+- Booking without any defined service
+- A workflow explicitly needs an ad-hoc date+time booking
 ### Parameters
 - **customer_name**: Required.
-- **customer_email**: Required for confirmation email.
-- **date**: Required, YYYY-MM-DD format.
-- **time**: Required, HH:MM format (24h).
-- **service_id**: Optional. If omitted, uses default service.
+- **customer_email**: Required for confirmation email. Phone callers without email: pass customer_phone — a placeholder email is derived.
+- **date**: Required, YYYY-MM-DD. **time**: Required, HH:MM (24h). (starts_at ISO is also accepted instead of date+time.)
+- **service_id**: Optional. If omitted, the first active service is used.
 ### Edge cases
-- Always call check_availability first to verify the slot is open.
-- Booking confirmation email is sent automatically.
-- Double bookings are rejected by the handler.`,
+- Always call check_availability first and pick from its free_slots.
+- NO overlap protection here — that is why book_appointment_slot is preferred.`,
   },
   {
     name: 'check_availability',
@@ -216,7 +212,7 @@ Manages booking hours and blocked dates for the scheduling system.
   },
   {
     name: 'manage_bookings',
-    description: 'List, view, update or cancel bookings. Use when: reviewing scheduled appointments; modifying a booking time; cancelling an appointment. NOT for: managing availability settings (manage_booking_availability); browsing services (browse_services).',
+    description: 'List, view, update status or cancel EXISTING bookings — find a customer\'s booking by email or phone ("when is my appointment?", "cancel my booking"). Use when: a customer asks about/cancels their booking; admin reviews the calendar; confirming bookings. NOT for: creating bookings (book_appointment_slot); availability settings (manage_booking_availability); free times (check_availability).',
     category: 'crm',
     handler: 'module:booking',
     scope: 'internal',
@@ -224,7 +220,7 @@ Manages booking hours and blocked dates for the scheduling system.
       type: 'function',
       function: {
         name: 'manage_bookings',
-        description: 'List, view, update or cancel bookings. Use when: reviewing scheduled appointments; modifying a booking time; cancelling an appointment. NOT for: managing availability settings (manage_booking_availability); browsing services (browse_services).',
+        description: 'List, view, update status or cancel existing bookings. Find a customer\'s booking via customer_email or customer_phone. NOT for creating bookings (book_appointment_slot).',
         parameters: {
           type: 'object',
           properties: {
@@ -251,6 +247,14 @@ Manages booking hours and blocked dates for the scheduling system.
                 'month',
               ],
             },
+            customer_email: {
+              type: 'string',
+              description: 'Filter list by customer email — use to find "my booking".',
+            },
+            customer_phone: {
+              type: 'string',
+              description: 'Filter list by customer phone (suffix match) — ideal for voice callers.',
+            },
             limit: {
               type: 'number',
             },
@@ -263,22 +267,25 @@ Manages booking hours and blocked dates for the scheduling system.
     },
     instructions: `## manage_bookings
 ### What
-Lists, views, updates, or cancels bookings.
+Lists, views, updates, or cancels EXISTING bookings.
 ### When to use
-- Admin manages appointments
-- Booking status updates (confirm, cancel)
-- Calendar overview
+- Customer asks "when is my appointment?" → action=list + customer_email OR customer_phone
+- Customer wants to cancel → find via list, then action=cancel with booking_id
+- Admin calendar overview / confirming bookings
 ### Parameters
 - **action**: Required. list, get, update_status, cancel.
 - **booking_id**: For get/update_status/cancel.
+- **customer_email** / **customer_phone**: Filter list to a customer's own bookings (phone matches on the last 7 digits — perfect for voice callers).
 - **period**: Filter: today, week, month.
+### RESCHEDULE ("flytta min tid")
+There is no move action — do: (1) find the booking (list + customer filter), (2) action=cancel, (3) book the new time with book_appointment_slot. Tell the customer both steps happened.
 ### Edge cases
 - Cancel sends a cancellation email to the customer.
-- Cancelled bookings free up the time slot.`,
+- Cancelled bookings free up the time slot immediately.`,
   },
   {
     name: 'book_appointment_slot',
-    description: 'Create a booking from a start time — the end is derived from the service duration, and overlapping bookings for the same service are rejected. Use when: booking with proper slot length + double-booking protection. NOT for: ad-hoc bookings without a service (book_appointment) or availability listing (check_availability).',
+    description: 'PREFERRED way to book an appointment: books a service at a start time — the end is derived from the service duration and double-bookings are rejected. Use when: a customer/caller wants to book a time for a service (chat, voice, MCP). NOT for: bookings without a service (book_appointment, legacy), availability listing (check_availability), or changing existing bookings (manage_bookings).',
     category: 'commerce',
     handler: 'rpc:book_appointment_slot',
     scope: 'internal',
@@ -301,7 +308,19 @@ Lists, views, updates, or cancels bookings.
         },
       },
     },
-    instructions: 'The slot length comes from booking_services.duration_minutes — callers only pass the start. Double-booking the same service is rejected (slot_unavailable); cancelled bookings free the slot; adjacent slots are allowed. Pair with check_availability to find open starts.',
+    instructions: `## book_appointment_slot (PREFERRED booking path)
+### Complete workflow
+1. browse_services → let the user pick (or default to the first) — note the service id.
+2. check_availability {date, service_id} → read **free_slots** (ready-to-offer start times on the service-duration grid).
+3. Book: combine the chosen date + free_slot into p_start_time as an ISO timestamp WITH timezone offset (e.g. 2026-07-03T10:00:00+02:00 for Swedish local time).
+### Parameters (exact RPC names — keep the p_ prefix)
+- **p_service_id**: UUID from browse_services. Required.
+- **p_customer_name** + **p_customer_email**: Required. Phone callers without email: ask once; if unavailable, use book_appointment instead (it derives a placeholder from p-phone).
+- **p_start_time**: ISO timestamp with offset. Required. End time is computed from the service duration — never pass an end.
+- **p_customer_phone**, **p_notes**: Optional but pass them when known (phone enables "find my booking" later).
+### Error recovery
+- **slot_unavailable** → the slot was taken between check and book: re-run check_availability and offer the nearest free_slots. Do NOT retry the same time.
+- Cancelled bookings free their slot; back-to-back (adjacent) bookings are allowed.`,
   },
 ];
 
