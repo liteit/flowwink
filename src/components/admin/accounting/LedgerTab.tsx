@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BookOpen, Search } from 'lucide-react';
-import { useAccountBalances } from '@/hooks/useAccounting';
+import { useAccountBalances, useAccountLedger } from '@/hooks/useAccounting';
 import { useAccountingPreferences, useBrandingSettings } from '@/hooks/useSiteSettings';
 import { Skeleton } from '@/components/ui/skeleton';
 
