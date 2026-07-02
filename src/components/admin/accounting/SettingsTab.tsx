@@ -191,16 +191,25 @@ export function SettingsTab() {
         return (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Hash className="h-5 w-5" />
-              Display format
-            </CardTitle>
-            <CardDescription>
-              Controls how amounts and dates appear in journal entries, ledgers and reports.
-              Amounts are always stored as integer öre/cents — this only changes display.
-            </CardDescription>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Hash className="h-5 w-5" />
+                  Display format
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  How amounts and dates appear in journal entries, ledgers and reports.
+                  Defaults come from your locale pack ({activePack?.label ?? '—'} · {activePack?.currency.intl_locale ?? 'n/a'}).
+                  Amounts are always stored as integer öre/cents — this only changes display.
+                </CardDescription>
+              </div>
+              <Button variant="outline" size="sm" onClick={applyPackDefaults} className="shrink-0">
+                Use pack defaults
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
+
             {/* Live preview */}
             <div className="rounded-lg border bg-muted/40 p-4">
               <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Live preview</div>
