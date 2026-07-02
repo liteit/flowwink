@@ -135,11 +135,10 @@ export function useCreateQuote() {
       });
       const totals = computeInvoiceTotals(lineItems, taxRate);
 
-      const { count } = await supabase
-        .from('quotes')
-        .select('*', { count: 'exact', head: true });
-      const nextNum = (count || 0) + 1;
-      const quote_number = `QUO-${String(nextNum).padStart(4, '0')}`;
+      // Gapless, race-safe quote number (atomic counter).
+      const { data: quote_number, error: numErr } = await supabase
+        .rpc('next_document_number', { p_kind: 'quote', p_prefix: 'QUO' });
+      if (numErr || !quote_number) throw numErr ?? new Error('Could not allocate quote number');
 
       const { data, error } = await supabase
         .from('quotes')
@@ -245,12 +244,10 @@ export function useConvertQuoteToInvoice() {
 
   return useMutation({
     mutationFn: async (quote: Quote) => {
-      // Generate invoice number
-      const { count } = await supabase
-        .from('invoices')
-        .select('*', { count: 'exact', head: true });
-      const nextNum = (count || 0) + 1;
-      const invoice_number = `INV-${String(nextNum).padStart(4, '0')}`;
+      // Gapless, race-safe invoice number (same allocator as direct invoices).
+      const { data: invoice_number, error: numErr } = await supabase
+        .rpc('next_document_number', { p_kind: 'invoice', p_prefix: 'INV' });
+      if (numErr || !invoice_number) throw numErr ?? new Error('Could not allocate invoice number');
 
       // Create invoice from quote
       const { data: invoice, error: invError } = await supabase

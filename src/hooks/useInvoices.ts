@@ -141,12 +141,10 @@ export function useCreateInvoice() {
 
       const totals = computeInvoiceTotals(pricedLines, taxRate);
 
-      // Generate invoice number: INV-XXXX
-      const { count } = await supabase
-        .from('invoices')
-        .select('*', { count: 'exact', head: true });
-      const nextNum = (count || 0) + 1;
-      const invoice_number = `INV-${String(nextNum).padStart(4, '0')}`;
+      // Gapless, race-safe invoice number (atomic counter, never reused on delete).
+      const { data: invoice_number, error: numErr } = await supabase
+        .rpc('next_document_number', { p_kind: 'invoice', p_prefix: 'INV' });
+      if (numErr || !invoice_number) throw numErr ?? new Error('Could not allocate invoice number');
 
       const { data, error } = await supabase
         .from('invoices')
