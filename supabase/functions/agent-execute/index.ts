@@ -7040,7 +7040,7 @@ async function executeDbAction(
             description: `Expense report ${report.period}`,
             reference_number: `EXP-${report.period}`,
             status: 'posted',
-            source: 'flowpilot',
+            source: agent_type === 'chat' ? 'chat' : agent_type === 'mcp' ? 'mcp' : 'flowpilot',
           })
           .select('id').single();
         if (jeErr) throw new Error(`Create journal entry failed: ${jeErr.message}`);
