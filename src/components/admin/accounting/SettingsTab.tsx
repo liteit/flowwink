@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Settings, Globe, Check, Database, ExternalLink, Hash } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAccountingLocale, ACCOUNTING_LOCALES } from '@/hooks/useAccountingLocale';
+import { useTenantLocalePack } from '@/hooks/useTenantLocalePack';
 import { useChartOfAccounts } from '@/hooks/useAccounting';
 import { useAccountingPreferences, useUpdateAccountingPreferences, type AccountingPreferences } from '@/hooks/useSiteSettings';
+
 import { IFRS_TEMPLATES } from '@/data/templates-ifrs';
 import { US_GAAP_TEMPLATES } from '@/data/templates-usgaap';
 import { IFRS_ACCOUNTS } from '@/data/accounts-ifrs';
@@ -21,6 +23,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 export function SettingsTab() {
   const { locale, setLocale } = useAccountingLocale();
+  const { activePack } = useTenantLocalePack();
   const { data: accounts } = useChartOfAccounts();
   const { data: prefs } = useAccountingPreferences();
   const updatePrefs = useUpdateAccountingPreferences();
@@ -38,14 +41,27 @@ export function SettingsTab() {
 
   const dirty = !!draft && !!prefs && JSON.stringify(draft) !== JSON.stringify(prefs);
 
-  const previewAmount = (() => {
-    if (!draft) return '';
-    const n = 1234567.89;
-    const [intPart, decPart] = n.toFixed(draft.decimals).split('.');
-    const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, draft.thousandsSeparator || '');
-    const num = draft.decimals > 0 ? `${grouped}${draft.decimalSeparator}${decPart}` : grouped;
-    return draft.currencyPosition === 'prefix' ? `${draft.currency} ${num}` : `${num} ${draft.currency}`;
+  // Defaults sourced from the active locale pack — currency + decimals live on
+  // the pack; separator/date conventions are inferred from intl_locale.
+  const packDefaults: Partial<AccountingPreferences> = (() => {
+    if (!activePack) return {};
+    const intl = activePack.currency.intl_locale || '';
+    const isSE = intl.startsWith('sv');
+    const isDE = intl.startsWith('de');
+    const isUS = intl.startsWith('en-US');
+    return {
+      currency: activePack.currency.code,
+      decimals: (activePack.currency.decimals as 0 | 2) ?? 2,
+      currencyPosition: isUS ? 'prefix' : 'suffix',
+      decimalSeparator: isUS ? '.' : ',',
+      thousandsSeparator: isUS ? ',' : isDE ? '.' : ' ',
+      dateFormat: isUS ? 'MM/DD/YYYY' : isDE ? 'DD.MM.YYYY' : 'YYYY-MM-DD',
+    };
   })();
+
+  const applyPackDefaults = () =>
+    setDraft((d) => (d ? { ...d, ...packDefaults } as AccountingPreferences : d));
+
 
 
 
@@ -175,16 +191,25 @@ export function SettingsTab() {
         return (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Hash className="h-5 w-5" />
-              Display format
-            </CardTitle>
-            <CardDescription>
-              Controls how amounts and dates appear in journal entries, ledgers and reports.
-              Amounts are always stored as integer öre/cents — this only changes display.
-            </CardDescription>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Hash className="h-5 w-5" />
+                  Display format
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  How amounts and dates appear in journal entries, ledgers and reports.
+                  Defaults come from your locale pack ({activePack?.label ?? '—'} · {activePack?.currency.intl_locale ?? 'n/a'}).
+                  Amounts are always stored as integer öre/cents — this only changes display.
+                </CardDescription>
+              </div>
+              <Button variant="outline" size="sm" onClick={applyPackDefaults} className="shrink-0">
+                Use pack defaults
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
+
             {/* Live preview */}
             <div className="rounded-lg border bg-muted/40 p-4">
               <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Live preview</div>
