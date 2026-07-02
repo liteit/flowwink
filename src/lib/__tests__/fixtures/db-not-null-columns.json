@@ -131,6 +131,9 @@
     ],
     "crm_tasks": [
       "title"
+    ],
+    "tickets": [
+      "subject"
     ]
   },
   "_skill_auto_filled_columns": {
@@ -235,6 +238,9 @@
     ],
     "create_return": [
       "rma_number"
+    ],
+    "manage_ticket": [
+      "subject"
     ]
   }
 }
