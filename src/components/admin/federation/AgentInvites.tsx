@@ -296,14 +296,18 @@ export function AgentInvites() {
       const instructions = selectedMission === 'custom' ? customInstructions : mission.instructions;
       const peerName = agentName || mission.name;
 
-      // Call federation-invite-peer edge function to create peer + mission record
+      // Call federation-invite-peer edge function to create peer + mission record.
+      // Send the logged-in admin's session JWT (NOT the public anon key) — the
+      // edge function gates key-minting on has_role('admin'); the anon key would
+      // let any anonymous caller mint mcp:* keys.
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/federation-invite-peer`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'Authorization': `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({
             invitee_name: peerName,

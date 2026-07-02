@@ -106,9 +106,44 @@ serve(async (req: Request) => {
       }
     }
 
-    // Determine inherited toolset groups (full transitive trust)
+    // ─── AUTH GATE ───────────────────────────────────────────────────────
+    // If no peer inviter resolved, the ONLY other legitimate caller is a
+    // logged-in admin (the admin UI) or the service role (internal path).
+    // Without this, an anonymous caller minted an mcp:* key with attacker-
+    // controlled toolset_groups (inviter stayed null and execution continued).
+    let isAdminCaller = false;
+    let isServiceCaller = false;
+    if (!inviter) {
+      const auth = req.headers.get("authorization") ?? "";
+      const token = auth.replace(/^Bearer\s+/i, "").trim();
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+      const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "";
+      if (token && token === serviceKey) {
+        isServiceCaller = true;
+      } else if (token && token !== anonKey && token !== publishableKey) {
+        const { data: u } = await supabase.auth.getUser(token);
+        if (u?.user) {
+          const { data: adm } = await supabase.rpc("has_role", { _user_id: u.user.id, _role: "admin" });
+          isAdminCaller = !!adm;
+        }
+      }
+    }
+    if (!inviter && !isAdminCaller && !isServiceCaller) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Determine inherited toolset groups (full transitive trust).
     const inheritedGroups = inviter?.toolset_groups ?? [];
-    const grantedGroups = body.toolset_groups ?? inheritedGroups;
+    // Privilege clamp: a peer inviter may only pass on groups it already holds
+    // (no self-escalation). Admin / service callers may grant any requested set.
+    let grantedGroups = body.toolset_groups ?? inheritedGroups;
+    if (inviter && !isAdminCaller && !isServiceCaller && Array.isArray(body.toolset_groups)) {
+      const allowed = new Set(inheritedGroups);
+      grantedGroups = body.toolset_groups.filter((g: string) => allowed.has(g));
+    }
 
     // Generate MCP key for the new peer
     const mcpKey = generateMcpKey();
