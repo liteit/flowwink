@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Settings, Globe, Check, Database, ExternalLink, Hash } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAccountingLocale, ACCOUNTING_LOCALES } from '@/hooks/useAccountingLocale';
+import { useTenantLocalePack } from '@/hooks/useTenantLocalePack';
 import { useChartOfAccounts } from '@/hooks/useAccounting';
 import { useAccountingPreferences, useUpdateAccountingPreferences, type AccountingPreferences } from '@/hooks/useSiteSettings';
+
 import { IFRS_TEMPLATES } from '@/data/templates-ifrs';
 import { US_GAAP_TEMPLATES } from '@/data/templates-usgaap';
 import { IFRS_ACCOUNTS } from '@/data/accounts-ifrs';
