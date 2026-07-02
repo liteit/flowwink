@@ -115,7 +115,7 @@ export const sePack: AccountingLocalePack = {
           'Aktiebolag får sätta av upp till 25% av skattemässigt resultat till periodiseringsfond. Återförs senast år 6. Stub — fyll i belopp innan approve.',
         lines: [
           { account_code: '8811', debit_cents: 0, credit_cents: 0, description: 'Avsättning till periodiseringsfond' },
-          { account_code: '2125', debit_cents: 0, credit_cents: 0, description: 'Periodiseringsfond år ' + _year },
+          { account_code: '2110', debit_cents: 0, credit_cents: 0, description: 'Periodiseringsfond år ' + _year },
         ],
         confidence: 0.2,
         meta: { kind: 'tax-disposition', cap_pct: 25 },
@@ -126,7 +126,7 @@ export const sePack: AccountingLocalePack = {
         rationale:
           'Skillnad mellan skattemässig (30/20-regeln) och planmässig avskrivning bokförs som obeskattad reserv. Stub — kräver fixed_assets-körning.',
         lines: [
-          { account_code: '8850', debit_cents: 0, credit_cents: 0, description: 'Förändring av överavskrivningar' },
+          { account_code: '8830', debit_cents: 0, credit_cents: 0, description: 'Förändring av överavskrivningar' },
           { account_code: '2150', debit_cents: 0, credit_cents: 0, description: 'Ackumulerade överavskrivningar' },
         ],
         confidence: 0.2,

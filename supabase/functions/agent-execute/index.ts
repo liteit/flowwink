@@ -6074,8 +6074,60 @@ async function executeDbAction(
       }
 
       // action === 'create'
-      const { entry_date, description, reference_number, template_name, auto_confirm } = args as any;
+      const { entry_date, description, reference_number, template_name, auto_confirm, template_id: explicitTemplateId, amount_cents } = args as any;
       let { lines: entryLines } = args as any;
+
+      // Expand percentage-based template lines (debit_pct/credit_pct) into
+      // cents using a NET base amount. E.g. a 25%-VAT sale template
+      // (125/100/25) with amount_cents=100000 → 125000/100000/25000.
+      // Rounding drift is absorbed by the largest line so the entry balances.
+      const expandTemplateLines = (tplLines: any[], baseCents: number): any[] => {
+        const out = tplLines.map((l: any) => ({
+          account_code: l.account_code,
+          account_name: l.account_name,
+          description: l.description ?? null,
+          debit_cents: Math.round(((l.debit_pct ?? 0) / 100) * baseCents),
+          credit_cents: Math.round(((l.credit_pct ?? 0) / 100) * baseCents),
+        }));
+        const d = out.reduce((s, l) => s + l.debit_cents, 0);
+        const c = out.reduce((s, l) => s + l.credit_cents, 0);
+        if (d !== c) {
+          const diff = d - c;
+          const biggest = out.reduce((a, b) =>
+            Math.max(b.debit_cents, b.credit_cents) > Math.max(a.debit_cents, a.credit_cents) ? b : a);
+          if (biggest.debit_cents >= biggest.credit_cents) biggest.debit_cents -= diff;
+          else biggest.credit_cents += diff;
+        }
+        return out;
+      };
+      const isPctTemplate = (tplLines: any[]): boolean =>
+        Array.isArray(tplLines) && tplLines.some((l: any) => (l.debit_pct ?? 0) > 0 || (l.credit_pct ?? 0) > 0);
+
+      // ─── Explicit template_id (one-call booking) ─────────────────────────
+      // manage_journal_entry {action:'create', template_id, amount_cents} —
+      // fetch the template and expand it; previously template_id was declared
+      // in the schema but silently ignored by this handler.
+      if ((!entryLines || entryLines.length === 0) && explicitTemplateId) {
+        const { data: tpl, error: tplErr } = await supabase.from('accounting_templates')
+          .select('id, template_name, template_lines, usage_count').eq('id', explicitTemplateId).maybeSingle();
+        if (tplErr || !tpl) throw new Error(`Template ${explicitTemplateId} not found`);
+        if (isPctTemplate(tpl.template_lines)) {
+          if (!amount_cents || amount_cents <= 0) {
+            return {
+              status: 'propose',
+              template_id: tpl.id,
+              template_name: tpl.template_name,
+              template_lines: tpl.template_lines,
+              message: `Template '${tpl.template_name}' uses percentage lines — call again with amount_cents (NET base amount in cents/öre) to expand, or provide populated lines.`,
+            };
+          }
+          entryLines = expandTemplateLines(tpl.template_lines, amount_cents);
+        } else {
+          entryLines = tpl.template_lines;
+        }
+        await supabase.from('accounting_templates')
+          .update({ usage_count: (tpl.usage_count || 0) + 1 }).eq('id', tpl.id);
+      }
 
       // ─── Template-First Matching (OpenClaw instrument principle) ────────
       // FlowPilot MUST use templates. If no template matches, escalate.
@@ -6195,7 +6247,23 @@ async function executeDbAction(
 
         // 🟢 AUTO-BOOK — very high confidence, use template lines
         // (Only reaches here if auto_confirm=true AND confidence ≥ 95%)
-        entryLines = best.template.template_lines;
+        if (isPctTemplate(best.template.template_lines)) {
+          if (!amount_cents || amount_cents <= 0) {
+            // Percentage template without a base amount would book a
+            // zero-amount entry — downgrade to propose instead.
+            return {
+              status: 'propose',
+              confidence,
+              template_id: best.template.id,
+              template_name: best.template.template_name,
+              template_lines: best.template.template_lines,
+              message: `Template '${best.template.template_name}' matched (${confidence}%) but uses percentage lines — call again with amount_cents (NET base amount in cents/öre) and auto_confirm=true to book.`,
+            };
+          }
+          entryLines = expandTemplateLines(best.template.template_lines, amount_cents);
+        } else {
+          entryLines = best.template.template_lines;
+        }
         // Log which template was used
         console.log(`[accounting] Auto-booking with template '${best.template.template_name}' (${confidence}% confidence)`);
 
@@ -6214,6 +6282,9 @@ async function executeDbAction(
       const totalCredit = entryLines.reduce((s: number, l: any) => s + (l.credit_cents || 0), 0);
       if (totalDebit !== totalCredit) {
         throw new Error(`Unbalanced: debit ${totalDebit} ≠ credit ${totalCredit}. Each entry must balance.`);
+      }
+      if (totalDebit === 0) {
+        throw new Error('Zero-amount entry rejected: lines have no debit_cents/credit_cents. For percentage templates, pass amount_cents (NET base) so the lines can be expanded.');
       }
 
       const { data: entry, error: entryErr } = await supabase.from('journal_entries')

@@ -28,6 +28,8 @@ export const BAS_2024_ACCOUNTS = [
   { account_code: '1180', account_name: 'Pågående nyanläggningar', account_type: 'asset', account_category: 'Materiella anläggningstillgångar', normal_balance: 'debit', locale: 'se-bas2024' },
   { account_code: '1190', account_name: 'Övriga materiella anläggningstillgångar', account_type: 'asset', account_category: 'Materiella anläggningstillgångar', normal_balance: 'debit', locale: 'se-bas2024' },
   { account_code: '1200', account_name: 'Inventarier', account_type: 'asset', account_category: 'Materiella anläggningstillgångar', normal_balance: 'debit', locale: 'se-bas2024' },
+  { account_code: '1220', account_name: 'Inventarier och verktyg', account_type: 'asset', account_category: 'Materiella anläggningstillgångar', normal_balance: 'debit', locale: 'se-bas2024' },
+  { account_code: '1229', account_name: 'Ackumulerade avskrivningar inventarier', account_type: 'asset', account_category: 'Materiella anläggningstillgångar', normal_balance: 'credit', locale: 'se-bas2024' },
   { account_code: '1209', account_name: 'Ack avskrivning inventarier och verktyg', account_type: 'asset', account_category: 'Materiella anläggningstillgångar', normal_balance: 'credit', locale: 'se-bas2024' },
   // Finansiella anläggningstillgångar
   { account_code: '1310', account_name: 'Andelar i koncernföretag', account_type: 'asset', account_category: 'Finansiella anläggningstillgångar', normal_balance: 'debit', locale: 'se-bas2024' },
@@ -54,6 +56,8 @@ export const BAS_2024_ACCOUNTS = [
   { account_code: '1630', account_name: 'Avräkning för skatter och avgifter', account_type: 'asset', account_category: 'Kortfristiga fordringar', normal_balance: 'debit', locale: 'se-bas2024' },
   { account_code: '1640', account_name: 'Skattefordringar', account_type: 'asset', account_category: 'Kortfristiga fordringar', normal_balance: 'debit', locale: 'se-bas2024' },
   { account_code: '1650', account_name: 'Momsfordran', account_type: 'asset', account_category: 'Kortfristiga fordringar', normal_balance: 'debit', locale: 'se-bas2024' },
+  { account_code: '1710', account_name: 'Förutbetalda kostnader', account_type: 'asset', account_category: 'Fordringar', normal_balance: 'debit', locale: 'se-bas2024' },
+  { account_code: '1790', account_name: 'Upplupna intäkter och förutbetalda kostnader', account_type: 'asset', account_category: 'Fordringar', normal_balance: 'debit', locale: 'se-bas2024' },
   { account_code: '1660', account_name: 'Fordringar hos leverantörer', account_type: 'asset', account_category: 'Kortfristiga fordringar', normal_balance: 'debit', locale: 'se-bas2024' },
   // Kortfristiga placeringar
   { account_code: '1810', account_name: 'Aktier i börsnoterade bolag', account_type: 'asset', account_category: 'Kortfristiga placeringar', normal_balance: 'debit', locale: 'se-bas2024' },
@@ -120,6 +124,7 @@ export const BAS_2024_ACCOUNTS = [
   { account_code: '2890', account_name: 'Upplupna semesterlöner', account_type: 'liability', account_category: 'Kortfristiga skulder', normal_balance: 'credit', locale: 'se-bas2024' },
   { account_code: '2891', account_name: 'Upplupna sociala avgifter', account_type: 'liability', account_category: 'Kortfristiga skulder', normal_balance: 'credit', locale: 'se-bas2024' },
   { account_code: '2920', account_name: 'Upplupna löner', account_type: 'liability', account_category: 'Kortfristiga skulder', normal_balance: 'credit', locale: 'se-bas2024' },
+  { account_code: '2990', account_name: 'Upplupna kostnader', account_type: 'liability', account_category: 'Kortfristiga skulder', normal_balance: 'credit', locale: 'se-bas2024' },
 
   // ============================================================
   // 3xxx — Intäkter (Revenue)
@@ -143,6 +148,8 @@ export const BAS_2024_ACCOUNTS = [
   { account_code: '3100', account_name: 'Intäkter vid pågående arbeten', account_type: 'revenue', account_category: 'Intäkter', normal_balance: 'credit', locale: 'se-bas2024' },
   { account_code: '3200', account_name: 'Rabatter och prisavdrag', account_type: 'revenue', account_category: 'Intäkter', normal_balance: 'credit', locale: 'se-bas2024' },
   { account_code: '3300', account_name: 'Returvaror', account_type: 'revenue', account_category: 'Intäkter', normal_balance: 'credit', locale: 'se-bas2024' },
+  { account_code: '3310', account_name: 'Försäljning tjänster EU', account_type: 'revenue', account_category: 'Nettoomsättning', normal_balance: 'credit', locale: 'se-bas2024' },
+  { account_code: '3380', account_name: 'Försäljning export', account_type: 'revenue', account_category: 'Nettoomsättning', normal_balance: 'credit', locale: 'se-bas2024' },
   { account_code: '3500', account_name: 'Aktiverat arbete för egen räkning', account_type: 'revenue', account_category: 'Övriga intäkter', normal_balance: 'credit', locale: 'se-bas2024' },
   { account_code: '3530', account_name: 'Övriga ränteintäkter', account_type: 'revenue', account_category: 'Övriga intäkter', normal_balance: 'credit', locale: 'se-bas2024' },
   { account_code: '3540', account_name: 'Valutakursvinster', account_type: 'revenue', account_category: 'Övriga intäkter', normal_balance: 'credit', locale: 'se-bas2024' },
@@ -163,6 +170,7 @@ export const BAS_2024_ACCOUNTS = [
   { account_code: '4100', account_name: 'Lagerförändring', account_type: 'expense', account_category: 'Varuinköp', normal_balance: 'debit', locale: 'se-bas2024' },
   { account_code: '4500', account_name: 'Underkonsulter', account_type: 'expense', account_category: 'Varuinköp', normal_balance: 'debit', locale: 'se-bas2024' },
   { account_code: '4600', account_name: 'Legoarbeten', account_type: 'expense', account_category: 'Varuinköp', normal_balance: 'debit', locale: 'se-bas2024' },
+  { account_code: '4990', account_name: 'Förändring av lager', account_type: 'expense', account_category: 'Material och varor', normal_balance: 'debit', locale: 'se-bas2024' },
 
   // ============================================================
   // 5xxx — Övriga externa kostnader
@@ -211,6 +219,7 @@ export const BAS_2024_ACCOUNTS = [
   { account_code: '6250', account_name: 'Postbox och post', account_type: 'expense', account_category: 'Övriga externa kostnader', normal_balance: 'debit', locale: 'se-bas2024' },
   { account_code: '6310', account_name: 'Företagsförsäkringar', account_type: 'expense', account_category: 'Övriga externa kostnader', normal_balance: 'debit', locale: 'se-bas2024' },
   { account_code: '6320', account_name: 'Ansvarsförsäkring', account_type: 'expense', account_category: 'Övriga externa kostnader', normal_balance: 'debit', locale: 'se-bas2024' },
+  { account_code: '6350', account_name: 'Förluster på kundfordringar', account_type: 'expense', account_category: 'Övriga externa kostnader', normal_balance: 'debit', locale: 'se-bas2024' },
   { account_code: '6410', account_name: 'Styrelseomkostnader', account_type: 'expense', account_category: 'Övriga externa kostnader', normal_balance: 'debit', locale: 'se-bas2024' },
   { account_code: '6420', account_name: 'Ersättningar till revisor', account_type: 'expense', account_category: 'Övriga externa kostnader', normal_balance: 'debit', locale: 'se-bas2024' },
   { account_code: '6530', account_name: 'Redovisningstjänster', account_type: 'expense', account_category: 'Övriga externa kostnader', normal_balance: 'debit', locale: 'se-bas2024' },
@@ -278,6 +287,8 @@ export const BAS_2024_ACCOUNTS = [
   { account_code: '8710', account_name: 'Extraordinära intäkter', account_type: 'revenue', account_category: 'Extraordinära poster', normal_balance: 'credit', locale: 'se-bas2024' },
   { account_code: '8750', account_name: 'Extraordinära kostnader', account_type: 'expense', account_category: 'Extraordinära poster', normal_balance: 'debit', locale: 'se-bas2024' },
   // Bokslutsdispositioner
+  { account_code: '8811', account_name: 'Avsättning till periodiseringsfond', account_type: 'expense', account_category: 'Bokslutsdispositioner', normal_balance: 'debit', locale: 'se-bas2024' },
+  { account_code: '8819', account_name: 'Återföring från periodiseringsfond', account_type: 'revenue', account_category: 'Bokslutsdispositioner', normal_balance: 'credit', locale: 'se-bas2024' },
   { account_code: '8810', account_name: 'Koncernbidrag', account_type: 'expense', account_category: 'Bokslutsdispositioner', normal_balance: 'debit', locale: 'se-bas2024' },
   { account_code: '8830', account_name: 'Förändring av överavskrivningar', account_type: 'expense', account_category: 'Bokslutsdispositioner', normal_balance: 'debit', locale: 'se-bas2024' },
   // Skatt

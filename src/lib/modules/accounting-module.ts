@@ -94,9 +94,10 @@ const ACCOUNTING_SKILLS: SkillSeed[] = [
             description: { type: 'string' },
             entry_date: { type: 'string' },
             lines: { type: 'array', items: { type: 'object', properties: { account_code: { type: 'string' }, account_name: { type: 'string' }, debit_cents: { type: 'number' }, credit_cents: { type: 'number' } } } },
+            amount_cents: { type: 'number', description: 'NET base amount in cents/öre for percentage-based templates — the template lines (debit_pct/credit_pct) are expanded from this. E.g. a 25%-VAT sale with amount_cents=100000 books 125000/100000/25000. Required for one-call template booking.' },
             invoice_id: { type: 'string' },
             vendor_id: { type: 'string', description: 'Link to vendor — required when booking a supplier transaction so vendor learning fires.' },
-            template_id: { type: 'string', description: 'Link to the accounting_template that guided the booking — usage_count auto-increments.' },
+            template_id: { type: 'string', description: 'Book directly from this accounting_template: its percentage lines are expanded using amount_cents (usage_count auto-increments). Preferred one-call flow: {action:create, template_id, amount_cents, description}.' },
             reference_number: { type: 'string' },
           },
           required: ['action'],
@@ -107,6 +108,7 @@ const ACCOUNTING_SKILLS: SkillSeed[] = [
       },
     },
     instructions: `Double-entry bookkeeping. lines = [{account_code, account_name, debit_cents, credit_cents}] (integer cents); total debits MUST equal total credits.
+PREFERRED ONE-CALL FLOW (templates): find the template via manage_accounting_template action=list (or let matching pick one from description), then call {action:'create', template_id, amount_cents: <NET amount in öre/cents>, description, auto_confirm:true}. Percentage lines (debit_pct/credit_pct) expand from amount_cents — a 25%-VAT sale with amount_cents=100000 books 1510:125000 / 3010:100000 / 2610:25000. Zero-amount entries are rejected.
 STAGED OPERATION: create returns {staged:true, operation_id, ...} for review — this is NOT a failure and NOT a permission error. To execute: (1) call approve_pending_operation with {p_id: <operation_id>}, then (2) re-invoke manage_journal_entry with the SAME args plus _approved_operation_id: <operation_id>. The entry is only booked after step 2.
 Routing rules in order: (1) vendor.default_account_code wins; (2) keyword-match against accounting_templates ordered by usage_count DESC; (3) only fall back to manual account selection if no template scores ≥0.6 and the vendor has no default. Always include template_id and vendor_id in the create payload when known. Locale-specific guidance: ${getActivePack().ai_instructions.journal_entry}`,
   },
