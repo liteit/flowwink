@@ -134,6 +134,9 @@
     ],
     "tickets": [
       "subject"
+    ],
+    "subscription_winback_campaigns": [
+      "name"
     ]
   },
   "_skill_auto_filled_columns": {

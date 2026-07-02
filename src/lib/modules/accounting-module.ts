@@ -32,6 +32,16 @@ type AccountingOutput = z.infer<typeof accountingOutputSchema>;
 
 const ACCOUNTING_SKILLS: SkillSeed[] = [
   {
+    name: 'prepare_vat_return',
+    description: 'Summarize output/input VAT from the posted ledger for a period into the boxes of a Swedish momsdeklaration (output 25/12/6% + reverse-charge, input, net to pay). Use when: closing a VAT period / preparing the momsdeklaration. NOT for: booking the VAT payment (manage_journal_entry) or full financial reports (accounting_reports).',
+    category: 'system',
+    handler: 'rpc:prepare_vat_return',
+    scope: 'internal',
+    trust_level: 'auto',
+    tool_definition: {"type":"function","function":{"name":"prepare_vat_return","description":"Read-only VAT summary for a period: output VAT by rate, input VAT, net to pay Skatteverket.","parameters":{"type":"object","required":["p_from","p_to"],"properties":{"p_from":{"type":"string","description":"Period start YYYY-MM-DD"},"p_to":{"type":"string","description":"Period end YYYY-MM-DD"}}}}} as SkillSeed['tool_definition'],
+    instructions: 'Read-only. Sums posted journal lines on the VAT accounts (2610/2620/2630 output, 2611 reverse-charge, 2640/2645 input) for [p_from, p_to]. net_to_pay_cents > 0 = pay Skatteverket. Verify against the 2650 control account before filing; then book the payment via manage_journal_entry (template "Momsredovisning (betalning)").',
+  },
+  {
     name: 'list_voucher_gaps',
     description: 'Detect gaps in voucher-number sequences per series and fiscal year. Use when: closing a period, verifying audit integrity. NOT for: listing all entries (manage_journal_entry action=list) or explaining a specific gap (explain_voucher_gap).',
     category: 'system',
@@ -563,6 +573,7 @@ export const accountingModule = defineModule<AccountingInput, AccountingOutput>(
   skills: [
     'manage_journal_entry',
     'accounting_reports',
+    'prepare_vat_return',
     'manage_accounting_template',
     'manage_opening_balances',
     'manage_chart_of_accounts',

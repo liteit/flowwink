@@ -33,6 +33,16 @@ type PurchasingOutput = z.infer<typeof purchasingOutputSchema>;
 
 const PURCHASING_SKILLS: SkillSeed[] = [
   {
+    name: 'pay_vendor_invoice',
+    description: 'Record the OUTGOING payment of an approved vendor invoice: posts Dt 2440 leverantörsskuld / Cr bank and marks the invoice paid. Use when: a supplier bill is due/approved and being paid — the final P2P step. NOT for: customer/AR payments (record_invoice_payment) or registering the incoming bill (register_vendor_invoice).',
+    category: 'commerce',
+    handler: 'rpc:pay_vendor_invoice',
+    scope: 'internal',
+    trust_level: 'notify',
+    tool_definition: {"type":"function","function":{"name":"pay_vendor_invoice","description":"Pay an approved vendor invoice: posts Dt 2440 / Cr bank and marks it paid. Rejects an already-paid invoice.","parameters":{"type":"object","required":["p_vendor_invoice_id"],"properties":{"p_vendor_invoice_id":{"type":"string","description":"UUID of the vendor_invoices row"},"p_pay_date":{"type":"string","description":"Payment date YYYY-MM-DD (default today)"},"p_bank_account":{"type":"string","description":"BAS bank account credited, default 1930"}}}}} as SkillSeed['tool_definition'],
+    instructions: 'Pays the full total_cents of the vendor invoice. Find the invoice via manage_record/list on vendor_invoices (status approved, paid_at null). Posts a balanced journal entry (2440 debit, bank credit) and sets status=paid. Already-paid invoices are rejected.',
+  },
+  {
     name: 'register_vendor_invoice',
     description: 'Register an incoming vendor invoice (AP inbox). Use when: a vendor bill arrives that needs 3-way matching against a PO before payment. NOT for: customer invoices (use create_invoice).',
     category: 'commerce',
@@ -339,7 +349,7 @@ export const purchasingModule = defineModule<PurchasingInput, PurchasingOutput>(
     'receive_purchase_order', 'match_invoice_to_receipt', 'auto_approve_vendor_invoice',
     'purchase_reorder_check',
     'register_vendor_invoice', 'match_po_to_invoice', 'flag_invoice_variance',
-    'update_purchase_order', 'auto_generate_purchase_orders',
+    'update_purchase_order', 'auto_generate_purchase_orders', 'pay_vendor_invoice',
   ],
   data: {
     tables: [
