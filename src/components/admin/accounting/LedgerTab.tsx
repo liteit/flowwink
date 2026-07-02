@@ -7,6 +7,7 @@ import { useAccountingPreferences } from '@/hooks/useSiteSettings';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function LedgerTab() {
+  useAccountingRealtime();
   const [search, setSearch] = useState('');
   const { data: balances, isLoading } = useAccountBalances();
   const { data: prefs } = useAccountingPreferences();
