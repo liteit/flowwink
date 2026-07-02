@@ -1,18 +1,23 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Settings, Globe, Check, Database, ExternalLink } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Settings, Globe, Check, Database, ExternalLink, Hash } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAccountingLocale, ACCOUNTING_LOCALES } from '@/hooks/useAccountingLocale';
 import { useChartOfAccounts } from '@/hooks/useAccounting';
+import { useAccountingPreferences, useUpdateAccountingPreferences, type AccountingPreferences } from '@/hooks/useSiteSettings';
 import { IFRS_TEMPLATES } from '@/data/templates-ifrs';
 import { US_GAAP_TEMPLATES } from '@/data/templates-usgaap';
 import { IFRS_ACCOUNTS } from '@/data/accounts-ifrs';
 import { US_GAAP_ACCOUNTS } from '@/data/accounts-usgaap';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+
 
 export function SettingsTab() {
   const { locale, setLocale } = useAccountingLocale();
