@@ -28,6 +28,38 @@ type TicketModuleOutput = z.infer<typeof ticketModuleOutputSchema>;
 // ── Bundled skill definitions ──
 const TICKETS_SKILLS: SkillSeed[] = [
   {
+    name: 'manage_ticket',
+    description:
+      'List, view, update, resolve/close, reopen, reassign, or re-prioritize helpdesk tickets. Use when: closing a resolved ticket, changing status/priority, assigning a ticket to an agent, or reviewing the queue. NOT for: creating a ticket from an email (email_to_ticket), classifying (ticket_triage), or replying to the customer (reply_to_ticket_via_email).',
+    category: 'crm',
+    handler: 'db:tickets',
+    scope: 'both',
+    trust_level: 'notify',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'manage_ticket',
+        description: 'CRUD + lifecycle for support tickets. action=update changes any field (status/priority/category/assigned_to); use it to close (status="closed"), resolve ("resolved"), reopen ("open") or reassign.',
+        parameters: {
+          type: 'object',
+          properties: {
+            action: { type: 'string', enum: ['list', 'get', 'update'] },
+            id: { type: 'string', description: 'Ticket UUID — required for get/update.' },
+            status: { type: 'string', enum: ['new', 'open', 'in_progress', 'waiting', 'resolved', 'closed'], description: 'On list: filters by status. On update: sets it (resolved/closed also stamp resolved_at/closed_at).' },
+            priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'] },
+            category: { type: 'string', enum: ['bug', 'feature', 'question', 'billing', 'other'] },
+            assigned_to: { type: 'string', description: 'support_agents/user UUID to reassign to (update).' },
+            limit: { type: 'number' },
+          },
+          required: ['action'],
+          'x-action-required': { get: ['id'], update: ['id'] },
+        },
+      },
+    },
+    instructions:
+      'Lifecycle via action=update on an id: close={status:"closed"}, resolve={status:"resolved"}, reopen={status:"open"}, reassign={assigned_to:<uuid>}, escalate={priority:"urgent"}. action=list without a status returns recent tickets; pass status to filter the queue. Reply to the customer is a separate skill (reply_to_ticket_via_email).',
+  },
+  {
     name: 'ticket_triage',
     description:
       'Auto-classify a helpdesk ticket: set priority + category, attach up to 3 relevant KB article suggestions, write a 1-sentence internal summary. Use when: a new ticket needs triage, an existing ticket changed and needs re-classification, or a human asks "what is this ticket about?". NOT for: drafting a customer-facing reply (that is a separate ai-task), or bulk re-triaging the queue (loop calls per ticket).',
@@ -66,7 +98,7 @@ export const ticketsModule = defineModule<TicketModuleInput, TicketModuleOutput>
   inputSchema: ticketModuleInputSchema,
   outputSchema: ticketModuleOutputSchema,
 
-  skills: ['suggest_kb_for_ticket'],
+  skills: ['manage_ticket', 'ticket_triage'],
   data: {
     tables: ['ticket_comments', 'support_escalations', 'tickets', 'support_agents'],
   },

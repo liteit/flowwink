@@ -43,7 +43,13 @@ export function NewsletterBlock({ data }: NewsletterBlockProps) {
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/newsletter/subscribe`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            // Public block: anonymous visitors need the publishable key or the
+            // gateway 401s and the form fails silently (same pattern as FormBlock).
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
           body: JSON.stringify({ email, name: name || undefined }),
         }
       );

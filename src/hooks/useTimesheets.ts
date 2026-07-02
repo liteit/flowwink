@@ -262,13 +262,18 @@ export function getWeekDates(offset = 0) {
   const day = now.getDay();
   const monday = new Date(now);
   monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1) + offset * 7);
-  monday.setHours(0, 0, 0, 0);
+
+  // Format from LOCAL Y-M-D — never .toISOString() here: local Monday 00:00 in a
+  // UTC+ timezone (Sweden) reads back as the previous UTC day, shifting the whole
+  // week by one and attaching hours to the wrong calendar day.
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
   const days: string[] = [];
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
-    days.push(d.toISOString().slice(0, 10));
+    days.push(fmt(d));
   }
 
   return { weekStart: days[0], weekEnd: days[6], days };

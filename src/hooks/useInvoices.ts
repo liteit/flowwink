@@ -186,17 +186,19 @@ export function useUpdateInvoice() {
       // Strip joined data before sending to DB
       const { leads, ...dbUpdates } = updates as any;
 
-      // Recompute totals if line_items or tax_rate changed; resolve pricelist if lines changed
+      // Recompute totals if line_items or tax_rate changed; resolve pricelist if lines changed.
       let computed = {};
       if (dbUpdates.line_items || dbUpdates.tax_rate !== undefined) {
-        let lineItems = dbUpdates.line_items || [];
+        // A tax-only update MUST recompute from the EXISTING line items — never
+        // default to [] or the invoice total silently zeroes out.
+        const { data: current } = await supabase
+          .from('invoices')
+          .select('lead_id, currency, tax_rate, line_items, leads(company_id)')
+          .eq('id', id)
+          .maybeSingle();
+
+        let lineItems = dbUpdates.line_items ?? (current as any)?.line_items ?? [];
         if (dbUpdates.line_items) {
-          // Need lead context — fetch from current invoice
-          const { data: current } = await supabase
-            .from('invoices')
-            .select('lead_id, currency, leads(company_id)')
-            .eq('id', id)
-            .maybeSingle();
           lineItems = await applyPricelistToLineItems(lineItems, {
             lead_id: (current as any)?.lead_id ?? null,
             company_id: (current as any)?.leads?.company_id ?? null,
@@ -204,7 +206,7 @@ export function useUpdateInvoice() {
           });
           dbUpdates.line_items = lineItems;
         }
-        const taxRate = dbUpdates.tax_rate ?? 0.25;
+        const taxRate = dbUpdates.tax_rate ?? (current as any)?.tax_rate ?? 0.25;
         computed = computeInvoiceTotals(lineItems, taxRate);
       }
 

@@ -138,16 +138,41 @@ Routing rules in order: (1) vendor.default_account_code wins; (2) keyword-match 
       type: 'function',
       function: {
         name: 'manage_accounting_template',
+        description: 'CRUD for reusable percentage-based booking templates. template_lines use debit_pct/credit_pct (percent of the NET base=100); one-call booking via manage_journal_entry {template_id, amount_cents} expands them to öre.',
         parameters: {
           type: 'object',
-          properties: { action: { type: 'string', enum: ['create', 'list', 'update'] }, template_name: { type: 'string' }, description: { type: 'string' }, category: { type: 'string' }, keywords: { type: 'array', items: { type: 'string' } }, template_lines: { type: 'array' } },
+          properties: {
+            action: { type: 'string', enum: ['create', 'list', 'update'] },
+            id: { type: 'string', description: 'Template UUID — required for update.' },
+            template_name: { type: 'string' },
+            description: { type: 'string' },
+            category: { type: 'string', enum: ['revenue', 'expense', 'payment', 'tax', 'payroll', 'asset', 'adjustment', 'general'] },
+            keywords: { type: 'array', items: { type: 'string' }, description: 'Match terms for AI auto-selection (Swedish + English).' },
+            template_lines: {
+              type: 'array',
+              description: 'Double-entry lines as percentages of the NET amount (base = 100). Each line uses debit_pct OR credit_pct (the other = 0). Σ debit_pct MUST equal Σ credit_pct. Ex (25% VAT sale): [{account_code:"1510",account_name:"Kundfordringar",debit_pct:125,credit_pct:0},{account_code:"3010",account_name:"Försäljning",debit_pct:0,credit_pct:100},{account_code:"2610",account_name:"Utgående moms 25%",debit_pct:0,credit_pct:25}].',
+              items: {
+                type: 'object',
+                properties: {
+                  account_code: { type: 'string', description: 'BAS account, e.g. "1930"' },
+                  account_name: { type: 'string' },
+                  debit_pct: { type: 'number', description: 'Percent of net base on the debit side (0 if credit line). Can exceed 100 (e.g. 125 for receivable incl. VAT).' },
+                  credit_pct: { type: 'number', description: 'Percent of net base on the credit side (0 if debit line).' },
+                },
+                required: ['account_code', 'debit_pct', 'credit_pct'],
+              },
+            },
+          },
           required: ['action'],
           'x-action-required': {
-            create: ['template_name'],
+            create: ['template_name', 'template_lines'],
+            update: ['id'],
           },
         },
       },
     },
+    instructions:
+      'template_lines are PERCENTAGES of the net transaction amount (base = 100), not fixed amounts — booking expands them via manage_journal_entry {template_id, amount_cents}. Each line uses debit_pct OR credit_pct (other = 0); Σ debit_pct must equal Σ credit_pct or the booked verifikat will not balance. The receivable/payable line is typically 100 + VAT (e.g. 125 for 25% moms), the revenue/cost line 100, the VAT line 25. Use only account_codes that exist in the chart of accounts.',
   },
   {
     name: 'manage_opening_balances',
