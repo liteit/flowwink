@@ -6021,6 +6021,22 @@ async function executeDbAction(
       // ─── manage_journal_entry ──────────────────────────────────────────
       const { action = 'create' } = args as any;
 
+      // Resolve `source` for journal_entries.source column from the actual
+      // channel that invoked us. auditCtx.agent_type is 'flowpilot' | 'chat' | 'mcp'
+      // — chat means Flowchat (visitor uploads a receipt, admin asks in chat),
+      // mcp means an external agent (OpenClaw, Claude Code, Copilot).
+      // Caller may override via args.source (e.g. 'manual' from admin UI).
+      const _callerAgent = auditCtx?.agent_type;
+      const resolvedSource: string =
+        ((args as any).source && typeof (args as any).source === 'string')
+          ? (args as any).source
+          : (_callerAgent === 'chat' ? 'chat'
+            : _callerAgent === 'mcp' ? 'mcp'
+            : _callerAgent === 'flowpilot' ? 'flowpilot'
+            : 'agent');
+
+
+
       if (action === 'list') {
         const { data, error } = await supabase.from('journal_entries')
           .select('id, entry_date, description, reference_number, status, source, created_at')
@@ -6083,7 +6099,8 @@ async function executeDbAction(
             description: `Reversal: ${original.description}`,
             reference_number: `REV-${original.reference_number || entry_id.slice(0, 8)}`,
             status: 'posted',
-            source: 'flowpilot',
+            source: resolvedSource,
+
           }).select('id').single();
         if (revErr) throw new Error(`Reversal failed: ${revErr.message}`);
 
@@ -6324,7 +6341,8 @@ async function executeDbAction(
           description: description || 'FlowPilot transaction',
           reference_number: reference_number || null,
           status: 'posted',
-          source: 'flowpilot',
+          source: resolvedSource,
+
         }).select('id').single();
       if (entryErr) throw new Error(`Create entry failed: ${entryErr.message}`);
 
@@ -7024,7 +7042,7 @@ async function executeDbAction(
             description: `Expense report ${report.period}`,
             reference_number: `EXP-${report.period}`,
             status: 'posted',
-            source: 'flowpilot',
+            source: auditCtx?.agent_type === 'chat' ? 'chat' : auditCtx?.agent_type === 'mcp' ? 'mcp' : 'flowpilot',
           })
           .select('id').single();
         if (jeErr) throw new Error(`Create journal entry failed: ${jeErr.message}`);
