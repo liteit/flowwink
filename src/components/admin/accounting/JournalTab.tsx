@@ -68,15 +68,6 @@ export function JournalTab() {
     });
   }, [entries, search, dateFrom, dateTo]);
 
-  const byMonth = useMemo(() => {
-    const groups = new Map<string, typeof filtered>();
-    for (const e of filtered) {
-      const key = (e.entry_date || '').slice(0, 7); // YYYY-MM
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(e);
-    }
-    return Array.from(groups.entries()).sort(([a], [b]) => b.localeCompare(a));
-  }, [filtered]);
 
   const grandTotal = filtered.reduce((s, e) => s + (e.total_cents || 0), 0);
 
