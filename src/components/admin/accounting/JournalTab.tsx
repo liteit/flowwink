@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, FileText, Check, AlertTriangle, Search } from 'lucide-react';
 import { useJournalEntries, useJournalEntryWithLines, useJournals } from '@/hooks/useAccounting';
+import { useAccountingRealtime } from '@/hooks/useAccountingRealtime';
 import { useAccountingPreferences, useBrandingSettings } from '@/hooks/useSiteSettings';
 import { Skeleton } from '@/components/ui/skeleton';
 import { NewJournalEntryDialog } from './NewJournalEntryDialog';
