@@ -14,7 +14,7 @@
  *   3. Done. No core changes required.
  */
 
-export type AccountType = 'asset' | 'liability' | 'equity' | 'income' | 'expense';
+export type AccountType = 'asset' | 'liability' | 'equity' | 'revenue' | 'income' | 'expense';
 export type NormalBalance = 'debit' | 'credit';
 
 export interface ChartAccount {
