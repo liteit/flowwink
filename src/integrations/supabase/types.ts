@@ -10454,6 +10454,7 @@ export type Database = {
           deal_id: string | null
           discount_cents: number
           exchange_rate: number
+          expiry_reminder_sent_at: string | null
           id: string
           intro_text: string | null
           invoice_id: string | null
@@ -10493,6 +10494,7 @@ export type Database = {
           deal_id?: string | null
           discount_cents?: number
           exchange_rate?: number
+          expiry_reminder_sent_at?: string | null
           id?: string
           intro_text?: string | null
           invoice_id?: string | null
@@ -10532,6 +10534,7 @@ export type Database = {
           deal_id?: string | null
           discount_cents?: number
           exchange_rate?: number
+          expiry_reminder_sent_at?: string | null
           id?: string
           intro_text?: string | null
           invoice_id?: string | null
@@ -14344,6 +14347,7 @@ export type Database = {
         Args: { p_notes?: string; p_return_id: string }
         Returns: Json
       }
+      ar_aging_report: { Args: { p_as_of?: string }; Returns: Json }
       audit_logs_retention_status: { Args: never; Returns: Json }
       auto_allocate_vacation: {
         Args: { p_dry_run?: boolean; p_year: number }
@@ -14984,6 +14988,7 @@ export type Database = {
           deal_id: string | null
           discount_cents: number
           exchange_rate: number
+          expiry_reminder_sent_at: string | null
           id: string
           intro_text: string | null
           invoice_id: string | null
@@ -15012,6 +15017,13 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_recent_migrations: {
+        Args: { p_limit?: number }
+        Returns: {
+          name: string
+          version: string
+        }[]
       }
       get_support_agent_user_id: {
         Args: { p_agent_id: string }
@@ -15611,6 +15623,10 @@ export type Database = {
       publish_scheduled_pages: { Args: never; Returns: Json }
       publish_webinar: { Args: { p_webinar_id: string }; Returns: Json }
       purge_audit_logs_past_retention: { Args: never; Returns: Json }
+      quote_line_items_discount_valid: {
+        Args: { items: Json }
+        Returns: boolean
+      }
       receive_purchase_order: {
         Args: {
           p_lines: Json
