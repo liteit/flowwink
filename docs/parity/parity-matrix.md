@@ -9,7 +9,7 @@ category: reference
 > **GENERATED FILE.** Run `bun run scripts/parity-report.ts` to refresh.
 > Edit `docs/parity/capabilities/<module>.json` to change scores.
 
-**Benchmarked modules:** 54  ·  **Mean parity:** 59%  ·  **Differentiators (no Odoo benchmark):** 10  ·  **Unscored:** 3
+**Benchmarked modules:** 54  ·  **Mean parity:** 60%  ·  **Differentiators (no Odoo benchmark):** 10  ·  **Unscored:** 3
 
 ## Scored modules
 
@@ -17,7 +17,6 @@ category: reference
 |---|---|---|---|---|---|
 | **shipping** | Inventory → Delivery/Shipping connectors | L2 → L4 | `███░░░░░░░` 31% | 4/2/9 | — |
 | **email** | Mail / Discuss (outbound email) | L3 → L4 | `████░░░░░░` 38% | 2/1/4 | — |
-| **quotes** | Sales (sale.order quotation) | L3 → L4 | `████░░░░░░` 40% | 8/0/9 | EPIC-04 |
 | **contact-center** | Live Chat + Helpdesk (omnichannel routing, VOIP voicemail) | L1 → L3 | `████░░░░░░` 41% | 0/5/1 | — |
 | **projects** | Project (project.project/project.task) | L3 → L4 | `████░░░░░░` 41% | 5/2/6 | — |
 | **chat** | Livechat + chatbot | L3 → L4 | `████░░░░░░` 42% | 0/4/1 | — |
@@ -26,8 +25,8 @@ category: reference
 | **fixed-assets** | Accounting → Assets | L3 → L4 | `████░░░░░░` 44% | 7/0/7 | — |
 | **pos** | Point of Sale (pos.order) | L3 → L4 | `████░░░░░░` 44% | 7/2/7 | — |
 | **timesheets** | Timesheets (account.analytic.line) | L3 → L4 | `████░░░░░░` 44% | 7/0/7 | — |
-| **booking** | Appointments (calendar.appointment) | L3 → L4 | `█████░░░░░` 45% | 9/1/9 | — |
 | **payroll** | Payroll (hr.payslip) | L2 → L4 | `█████░░░░░` 45% | 8/2/7 | — |
+| **quotes** | Sales (sale.order quotation) | L3 → L4 | `█████░░░░░` 45% | 8/2/7 | EPIC-04 |
 | **pricelists** | Sales pricelists (product.pricelist) | L3 → L4 | `█████░░░░░` 46% | 5/1/6 | — |
 | **sla** | Helpdesk SLA policies | L3 → L4 | `█████░░░░░` 47% | 7/1/7 | — |
 | **subscriptions** | Subscriptions (sale.subscription) | L3 → L4 | `█████░░░░░` 47% | 7/0/7 | — |
@@ -41,15 +40,16 @@ category: reference
 | **expenses** | Expenses (hr.expense) | L4 → L4 | `█████░░░░░` 53% | 8/1/6 | — |
 | **reconciliation** | Accounting bank reconciliation | L3 → L4 | `█████░░░░░` 53% | 7/2/4 | — |
 | **recruitment** | Recruitment (hr.applicant) | L3 → L4 | `█████░░░░░` 53% | 9/0/7 | — |
+| **booking** | Appointments (calendar.appointment) | L3 → L4 | `██████░░░░` 55% | 9/4/6 | — |
 | **documents** | Documents (documents.document) | L3 → L4 | `██████░░░░` 56% | 2/1/3 | — |
 | **media** | Website media library | L2 → L4 | `██████░░░░` 57% | 2/3/1 | — |
 | **multi-currency** | Accounting multi-currency | L2 → L4 | `██████░░░░` 57% | 6/0/4 | — |
 | **wiki** | Knowledge (knowledge.article) | L2 → L4 | `██████░░░░` 57% | 3/0/3 | — |
 | **analytics** | Website analytics / Dashboards | L3 → L4 | `██████░░░░` 58% | 2/1/2 | — |
-| **invoicing** | Invoicing (account.move) | L4 → L4 | `██████░░░░` 58% | 7/3/4 | — |
 | **newsletter** | Email Marketing (mailing.mailing) | L4 → L4 | `██████░░░░` 59% | 3/4/2 | — |
 | **purchasing** | Purchase (purchase.order) | L3 → L4 | `██████░░░░` 60% | 11/0/7 | — |
 | **deals** | CRM/Sales (crm.lead opportunities) | L4 → L4 | `██████░░░░` 61% | 5/1/5 | — |
+| **invoicing** | Invoicing (account.move) | L4 → L4 | `██████░░░░` 61% | 7/4/3 | — |
 | **blog** | Blog (blog.post) | L4 → L4 | `██████░░░░` 63% | 3/2/2 | — |
 | **crm** | CRM (crm.lead, crm.stage) | L4 → L4 | `██████░░░░` 63% | 6/2/4 | — |
 | **growth** | Marketing Automation + Social Marketing | L3 → L4 | `██████░░░░` 64% | 2/2/1 | — |
