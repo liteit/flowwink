@@ -226,8 +226,12 @@ export default function PlatformTestsPage() {
           </div>
           <div className="px-4 pb-4">
             <InstanceHealthCard />
-          </div>
         </div>
+
+        {/* ── ZONE 1b: Deploy Status (what code/version is actually running) ── */}
+        <DeployStatusPanel />
+
+
 
         {/* ── ZONE 2: Platform & Module test suites ── */}
         <div className="space-y-3">
