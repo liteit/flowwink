@@ -22,6 +22,7 @@ import { getAllSuites, type TestSuite, type TestScope } from '@/lib/platform-tes
 import { useModules } from '@/hooks/useModules';
 import { bootstrapModule } from '@/lib/module-bootstrap';
 import { InstanceHealthCard } from '@/components/admin/InstanceHealthCard';
+import { DeployStatusPanel } from '@/components/admin/DeployStatusPanel';
 import { useLatestTestRuns, useSuiteRunHistory, formatRelativeTime, type PlatformTestRun } from '@/hooks/usePlatformTestRuns';
 import { useQueryClient } from '@tanstack/react-query';
 
