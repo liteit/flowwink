@@ -70,11 +70,12 @@
     },
     {
       "id": "esignature",
-      "name": "True e-signature integration",
+      "name": "Native e-signature (capture + evidence)",
       "odoo": true,
-      "status": "missing",
+      "status": "partial",
       "weight": 2,
-      "verify": "e-signature provider integration"
+      "verify": "Reframed per docs/parity/references/quotes-contracts-sign-odoo.md (Odoo's own SMB baseline is the free portal sign flow, not an external provider): native signing now covers (1) expiry enforcement at signing time — supabase/functions/quote-sign/index.ts rejects action=accept with HTTP 410 code=quote_expired when valid_until < today, mirroring Odoo is_expired; src/pages/PublicQuotePage.tsx shows the expired banner and disables Accept; (2) draw-signature capture — src/components/public/SignaturePad.tsx (plain canvas, pointer events, undo/clear, no new deps) with Type/Draw tabs on the public sign page, drawn PNG data-URL stored in quote_signatures.signature_image (migration 20260704100000_esign-hardening.sql; server-side sanitized: PNG/JPEG data-URL, <=300k chars); typed-name path unchanged; (3) evidence artifact — quote-sign stores content_hash (SHA-256 of canonical quote content: items/totals/terms/version, via _shared/agent-audit.ts sha256Hex) on the signature row and in audit_logs metadata, and a printable certificate page (src/pages/SignatureCertificatePage.tsx, route /quote/:token/certificate) renders reference+version, signer, signature image or typed name, timestamp, IP, user-agent, hash via token-gated SECURITY DEFINER RPC get_quote_certificate (same migration); linked from the public confirmation and from QuoteDetailSheet. manage_quote skill instructions document the 410 expiry failure mode and the certificate URL.",
+      "notes": "Capped at partial: not runtime-verified against a live Supabase instance in this session (no DB access — Stage-3 rule), and no signed-PDF artifact attached to the record (print-to-PDF from the certificate page is the deliberate SMB scope this round; PDF generation deferred). Provider integrations (Scrive/DocuSign/BankID) remain integration-only per the reference card — never build in-house."
     },
     {
       "id": "einvoice_formats",

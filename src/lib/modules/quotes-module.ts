@@ -97,7 +97,7 @@ const QUOTES_SKILLS: SkillSeed[] = [
       },
     },
     instructions:
-      'Workflow: 1) create with lead_id (and optionally deal_id to link to a CRM opportunity) → returns draft quote. 2) add_item one or more times. 3) request_approval to check whether the quote requires sign-off (above 25k SEK by default). 4) Once approved (or if not required), send to generate the public accept_token and email the customer the link. 5) convert_to_invoice once the customer accepts.',
+      'Workflow: 1) create with lead_id (and optionally deal_id to link to a CRM opportunity) → returns draft quote. 2) add_item one or more times. 3) request_approval to check whether the quote requires sign-off (above 25k SEK by default). 4) Once approved (or if not required), send to generate the public accept_token and email the customer the link. 5) convert_to_invoice once the customer accepts. EXPIRY: the public signing endpoint (quote-sign) rejects acceptance after valid_until with HTTP 410 code=quote_expired — an expired quote can no longer be accepted online (declining still works). To revive an expired offer, update valid_until to a future date (or create a new version) and send again. EVIDENCE: on accept/decline the signer, timestamp, IP, user-agent, optional drawn signature image, and a SHA-256 content_hash of the quote body are stored in quote_signatures; a printable signature certificate is available at /quote/{accept_token}/certificate.',
   },
   {
     name: 'send_quote_expiry_reminders',
