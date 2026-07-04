@@ -6,7 +6,40 @@
 
 ---
 
-## Maturity Scale (5 levels)
+## Core Processes
+
+Thirteen processes, one platform. Each links to its own doc — one page per process, all following the same anatomy (explained in the next section).
+
+| Process | Maturity | Business lever | Modules | Doc |
+|---------|----------|----------------|---------|-----|
+| **Lead-to-Customer** | L4 | **More deals** | Forms, Leads/CRM, Sales Intelligence, Companies, Deals, Newsletter | [lead-to-customer.md](./lead-to-customer.md) |
+| **Quote-to-Cash** | L3 | **Faster cash** | Quotes, Deals, Projects, Timesheets, Invoicing, Accounting, Reconciliation, Contracts | [quote-to-cash.md](./quote-to-cash.md) |
+| **Procure-to-Pay** | L3 | **Lower admin cost** | Purchasing (3-way match), Inventory, Expenses (full P2P), Invoicing, Accounting | [procure-to-pay.md](./procure-to-pay.md) |
+| **Order-to-Delivery** | L3 | **Lower ops cost** | Products, Inventory, POS, SLA, Documents | [order-to-delivery.md](./order-to-delivery.md) |
+| **Hire-to-Retire** | L3 | **Lower HR admin** | Recruitment, HR, Contracts, Documents, Expenses, Resume | [hire-to-retire.md](./hire-to-retire.md) |
+| **Content-to-Conversion** | L4 | **Cheaper marketing** | Pages, Blog, KB, Newsletter, Growth (Paid), Analytics, Sales Intelligence | [content-to-conversion.md](./content-to-conversion.md) |
+| **Record-to-Report** | L3 | **Lower accounting cost** | Accounting (period lock + SIE/SAF-T), Reconciliation, Invoicing, Expenses, Analytics | [record-to-report.md](./record-to-report.md) |
+| **Support-to-Resolution** | L3 | **Lower support cost** | Chat, Tickets, Live Support, Knowledge Base, SLA, Analytics | [support-to-resolution.md](./support-to-resolution.md) |
+| **Subscribe-to-Renew** | L3 | **Safer cash** | Subscriptions, Invoicing, Reconciliation, CRM | [subscribe-to-renew.md](./subscribe-to-renew.md) |
+| **Return-to-Refund** | L3 | **Lower ops cost** | Returns, Inventory, Invoicing, Shipping | [return-to-refund.md](./return-to-refund.md) |
+| **Acquire-to-Retire** | L3 | **Lower accounting cost** | Fixed Assets, Accounting, Purchasing | [acquire-to-retire.md](./acquire-to-retire.md) |
+| **Book-to-Meet** | L3 | **More deals** | Booking, Email, Voice (IVR), Calendar, SLA, HR (staff) | [book-to-meet.md](./book-to-meet.md) |
+| **Register-to-Attend** | L3 | **More pipeline** | Webinars, Leads/CRM, Blog (content loop), Automations | [register-to-attend.md](./register-to-attend.md) |
+
+---
+
+## How to read a process doc
+
+Every process doc follows the same anatomy, top to bottom:
+
+1. **Tagline + "Problem it solves"** — what the process is, and the pain it removes, in one line each.
+2. **Maturity line** — how far along the process is, on the 5-level scale below.
+3. **Flow diagram** — the happy path, step by step. Steps highlighted in indigo (🟦) are agent-runnable; the rest are human steps.
+4. **"How it works in practice"** — the adopter layer: work story, state machines, who-does-what, and a coming-from-spreadsheets mapping (detailed in the next section).
+5. **Agent coverage** — the honest per-step table of who can run what, using the actor legend below.
+6. **Known gaps** — what is missing for the next maturity level. No marketing fog.
+
+### Maturity Scale (5 levels)
 
 | Level | Name | Meaning |
 |-------|------|---------|
@@ -21,9 +54,7 @@
 - L4 = "Yes, and the agent can run parts autonomously"
 - L5 = "Yes, even for complex cases" (few processes are here today)
 
----
-
-## Agent Coverage
+### Agent Coverage
 
 For each process we mark **who does what**:
 
@@ -32,24 +63,6 @@ For each process we mark **who does what**:
 | 👤 **Manual** | Human via admin UI |
 | 🤖 **FlowPilot** | The platform's built-in agent |
 | 🔗 **External agent** | Federated peer (e.g. ClawThree, OpenClaw) via A2A/MCP |
-
----
-
-## Core Processes
-
-| Process | Maturity | Modules | Doc |
-|---------|----------|---------|-----|
-| **Lead-to-Customer** | L4 | Forms, Leads/CRM, Sales Intelligence, Companies, Deals, Newsletter | [lead-to-customer.md](./lead-to-customer.md) |
-| **Quote-to-Cash** | L3 | Quotes, Deals, Projects, Timesheets, Invoicing, Accounting, Reconciliation, Contracts | [quote-to-cash.md](./quote-to-cash.md) |
-| **Procure-to-Pay** | L3 | Purchasing (3-way match), Inventory, Expenses (full P2P), Invoicing, Accounting | [procure-to-pay.md](./procure-to-pay.md) |
-| **Order-to-Delivery** | L3 | Products, Inventory, POS, SLA, Documents | [order-to-delivery.md](./order-to-delivery.md) |
-| **Hire-to-Retire** | L3 | Recruitment, HR, Contracts, Documents, Expenses, Resume | [hire-to-retire.md](./hire-to-retire.md) |
-| **Content-to-Conversion** | L4 | Pages, Blog, KB, Newsletter, Growth (Paid), Analytics, Sales Intelligence | [content-to-conversion.md](./content-to-conversion.md) |
-| **Record-to-Report** | L3 | Accounting (period lock + SIE/SAF-T), Reconciliation, Invoicing, Expenses, Analytics | [record-to-report.md](./record-to-report.md) |
-| **Support-to-Resolution** | L3 | Chat, Tickets, Live Support, Knowledge Base, SLA, Analytics | [support-to-resolution.md](./support-to-resolution.md) |
-| **Subscribe-to-Renew** | L3 | Subscriptions, Invoicing, Reconciliation, CRM | [subscribe-to-renew.md](./subscribe-to-renew.md) |
-| **Return-to-Refund** | L3 | Returns, Inventory, Invoicing, Shipping | [return-to-refund.md](./return-to-refund.md) |
-| **Acquire-to-Retire** | L3 | Fixed Assets, Accounting, Purchasing | [acquire-to-retire.md](./acquire-to-retire.md) |
 
 ---
 
@@ -84,6 +97,59 @@ are the machine truth, this section is the human truth — if they disagree, the
 doc is wrong); module composition lives only in the generated
 `docs/modules/*.md`; program status (maturity/gaps) stays in the sections
 above. Exemplar: [procure-to-pay.md](./procure-to-pay.md) § Expenses.
+
+---
+
+## The CEO/CFO question — where does agentic AI work today?
+
+For readers arriving from the agentic-AI handbook ([clawable.org](https://clawable.org)):
+the honest answer to *"which business processes does agentic AI actually work
+for?"* is this catalog. Each doc's **Agent coverage** table shows exactly which
+steps an agent runs today (🤖 FlowPilot / 🔗 external operator) versus a human
+(👤), and the maturity level says how much you can lean on it. The business
+lever, per process:
+
+| Process | What the agent runs today | Business lever |
+|---|---|---|
+| Lead-to-Customer (L4) | Qualifies, scores, dedupes leads; drafts follow-ups | **More deals** — minutes-not-days response time |
+| Book-to-Meet (L3) | Books/checks availability via chat & voice, sends reminders | **More deals** — 24/7 booking without a receptionist |
+| Quote-to-Cash (L3) | Creates & sends quotes, chases expiry, records payments | **Faster cash** — shorter quote→paid cycle |
+| Subscribe-to-Renew (L3) | Bills, runs the dunning ladder, flags churn risk | **Safer cash** — fewer silently lost renewals |
+| Content-to-Conversion (L4) | Drafts/publishes content, answers from the KB | **Cheaper marketing** — output without headcount |
+| Support-to-Resolution (L3) | First-line answers, routing, KB deflection | **Lower support cost** per ticket |
+| Procure-to-Pay (L3) | 3-way match auto-approve, expense month-end loop | **Lower admin cost** — no invoice-matching hours |
+| Record-to-Report (L3) | Posts expenses/payroll/depreciation, reconciles bank | **Lower accounting cost** — balanced vouchers, automatically |
+| Return-to-Refund (L3) | RMA intake, QC stamps, partial refunds with guardrails | **Lower ops cost** — returns without escalation |
+| Order-to-Delivery (L3) | Stock checks, fulfillment steps, order status | **Lower ops cost**, fewer stockout surprises |
+| Register-to-Attend (L3) | Registrations, lifecycle, attendance scoring | **More pipeline** from events |
+| Hire-to-Retire (L3) | Screening assist, contracts, expense loop | **Lower HR admin** |
+| Acquire-to-Retire (L3) | Depreciation runs, disposal postings | **Lower accounting cost** |
+
+Everything a human sees, the agent did through the same skills — and every
+agent action is verifiable in the record's timeline (the "titthål" principle).
+That is what makes the CEO/CFO delegation safe: you don't trust the agent,
+you *verify* it — at a glance.
+
+---
+
+## Gaps are an invitation (community)
+
+Every process doc ends with an honest "Known gaps (missing for L5)" list, and
+the adopter sections flag statuses that exist in schema but have no wired
+transition. That transparency is deliberate and does double duty:
+
+- **Adopters** see exactly what they get today (L3 = run it in production)
+  and what to expect next — no marketing fog.
+- **Contributors** see a concrete, scoped backlog with business value
+  attached: close a gap, and you've built something real businesses run on —
+  and something you can build a business around yourself (hosting, services,
+  verticals). The gap lists ARE the contribution funnel; pick one, see
+  [contributing](../contributing/contributing.md).
+
+Also usable as training material: the "How it works in practice" sections
+teach the standard process itself (what a quote lifecycle or an expense
+month-end IS), not just FlowWink's buttons — useful for onboarding staff who
+have never worked with system support before.
 
 ---
 

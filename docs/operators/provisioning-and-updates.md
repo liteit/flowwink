@@ -117,7 +117,13 @@ After merging a change that touches **skills, handlers, or edge functions**:
 4. Seed skills: `DATABASE_URL=… npm run sync:skills -- --apply`.
 5. Enable the modules the customer actually runs in `/admin/modules` (opt-in —
    inactive modules are deliberate, not "unused waste").
-6. Build/host the frontend (Vercel, VPS, or static).
+6. Register the instance-bound DB hooks (they bake THIS instance's URL + anon
+   key into pg_cron jobs / trigger functions, so migrations alone can't do it):
+   ```sql
+   SELECT register_flowpilot_cron('https://<ref>.supabase.co', '<anon-key>');
+   SELECT register_visitor_intent_trigger('https://<ref>.supabase.co', '<anon-key>');
+   ```
+7. Build/host the frontend (Vercel, VPS, or static).
 
 `scripts/flowwink.sh` (run via `npm run cli`) automates much of the per-project
 plumbing (keys, migration status, function list, secrets).
