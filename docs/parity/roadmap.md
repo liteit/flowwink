@@ -39,6 +39,11 @@ Breadth track (community)  ──────────────►  contin
 | **S3** | Breadth wave 1 | — | Scaffold `attendance`, `maintenance` modules (see breadth backlog) at L2 |
 | **S3+** | Community track | — | Open issues for carrier integrations, country payroll, MRP work centers |
 
+> **Program charter:** [program-80.md](program-80.md) — SMB weighting (P1: CMS/CRM/
+> e-comm/quote→contract→sign), the grounding rule (Odoo docs + community source,
+> no guessing), the non-goal rule for enterprise-heavy capabilities, and the
+> round loop that drives every round below.
+
 ## Round R1 (2026-07) — Verify & Surface
 
 EPIC-01/03/04 are substantially shipped and the 2026-07-03 audit corrected the
