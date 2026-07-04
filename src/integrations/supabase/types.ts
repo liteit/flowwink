@@ -8015,6 +8015,7 @@ export type Database = {
           device_type: string | null
           id: string
           ip_address: string | null
+          lead_id: string | null
           page_id: string | null
           page_slug: string
           page_title: string | null
@@ -8031,6 +8032,7 @@ export type Database = {
           device_type?: string | null
           id?: string
           ip_address?: string | null
+          lead_id?: string | null
           page_id?: string | null
           page_slug: string
           page_title?: string | null
@@ -8047,6 +8049,7 @@ export type Database = {
           device_type?: string | null
           id?: string
           ip_address?: string | null
+          lead_id?: string | null
           page_id?: string | null
           page_slug?: string
           page_title?: string | null
@@ -8056,6 +8059,13 @@ export type Database = {
           visitor_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "page_views_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "page_views_page_id_fkey"
             columns: ["page_id"]
@@ -13625,6 +13635,100 @@ export type Database = {
           },
         ]
       }
+      visitor_identities: {
+        Row: {
+          created_at: string
+          first_seen_at: string
+          id: string
+          identification_source: string | null
+          identified_at: string
+          lead_id: string | null
+          metadata: Json
+          updated_at: string
+          visitor_id: string
+        }
+        Insert: {
+          created_at?: string
+          first_seen_at?: string
+          id?: string
+          identification_source?: string | null
+          identified_at?: string
+          lead_id?: string | null
+          metadata?: Json
+          updated_at?: string
+          visitor_id: string
+        }
+        Update: {
+          created_at?: string
+          first_seen_at?: string
+          id?: string
+          identification_source?: string | null
+          identified_at?: string
+          lead_id?: string | null
+          metadata?: Json
+          updated_at?: string
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_identities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitor_signals: {
+        Row: {
+          created_at: string
+          evidence: Json
+          fired_at: string
+          id: string
+          lead_id: string | null
+          reason: string | null
+          rule_id: string | null
+          score_delta: number
+          signal_name: string
+          signal_type: string
+          visitor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          evidence?: Json
+          fired_at?: string
+          id?: string
+          lead_id?: string | null
+          reason?: string | null
+          rule_id?: string | null
+          score_delta?: number
+          signal_name: string
+          signal_type: string
+          visitor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          evidence?: Json
+          fired_at?: string
+          id?: string
+          lead_id?: string | null
+          reason?: string | null
+          rule_id?: string | null
+          score_delta?: number
+          signal_name?: string
+          signal_type?: string
+          visitor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_signals_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voice_calls: {
         Row: {
           agent_id: string | null
@@ -16303,6 +16407,10 @@ export type Database = {
       }
       start_mo: { Args: { p_mo_id: string }; Returns: Json }
       start_webinar: { Args: { p_webinar_id: string }; Returns: Json }
+      stitch_visitor_to_lead: {
+        Args: { p_lead_id: string; p_source?: string; p_visitor_id: string }
+        Returns: Json
+      }
       submit_expense_report: { Args: { p_report_id: string }; Returns: Json }
       submit_survey_response: {
         Args: {
