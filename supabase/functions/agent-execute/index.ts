@@ -6931,11 +6931,22 @@ async function executeDbAction(
         const a = args as any;
         const qid = a.id || a.quote_id;
         if (!qid) throw new Error('id (or quote_id) is required');
+        // Law 3 symmetry: the UI's send path (useQuoteWorkflow) mints the public
+        // accept_token; without it an agent-sent quote has no customer link and
+        // quote-expiry-reminders skips it (found live 2026-07-04, EPIC-05).
+        const { data: existing } = await supabase.from('quotes')
+          .select('accept_token').eq('id', qid).maybeSingle();
+        let acceptToken: string | null = existing?.accept_token ?? null;
+        if (!acceptToken) {
+          const arr = new Uint8Array(24);
+          crypto.getRandomValues(arr);
+          acceptToken = btoa(String.fromCharCode(...arr)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
         const { data, error } = await supabase.from('quotes')
-          .update({ status: 'sent', sent_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-          .eq('id', qid).select('id, quote_number, status').single();
+          .update({ status: 'sent', accept_token: acceptToken, sent_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+          .eq('id', qid).select('id, quote_number, status, accept_token').single();
         if (error) throw new Error(`Send quote failed: ${error.message}`);
-        return { sent: true, quote_id: data.id, quote_number: data.quote_number, status: data.status, note: 'Status set to sent. Email delivery is a separate concern (requires an email integration).' };
+        return { sent: true, quote_id: data.id, quote_number: data.quote_number, status: data.status, accept_token: data.accept_token, note: 'Status set to sent; public accept link token ensured. Email delivery is a separate concern (requires an email integration).' };
       }
 
       if (action === 'request_approval') {
