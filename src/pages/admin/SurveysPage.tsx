@@ -26,9 +26,12 @@ export default function SurveysPage() {
   const { data: responses } = useSurveyResponses(selectedCampaign);
   const createCampaign = useCreateCampaign();
   const sendSurvey = useSendSurvey();
+  const saveTemplate = useSaveTemplate();
+  const deleteTemplate = useDeleteTemplate();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState<string | null>(null);
+  const [templateEdit, setTemplateEdit] = useState<Partial<SurveyTemplate> | null>(null);
   const [form, setForm] = useState({ name: '', template_id: '', trigger: 'manual', email_subject: 'How was your experience?', email_intro: 'We would love your feedback. It takes 10 seconds.' });
   const [recipients, setRecipients] = useState('');
 
