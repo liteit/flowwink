@@ -3104,6 +3104,7 @@ export type Database = {
           escalated_at: string | null
           escalation_reason: string | null
           id: string
+          lead_id: string | null
           priority: string | null
           scope: string
           sentiment_score: number | null
@@ -3126,6 +3127,7 @@ export type Database = {
           escalated_at?: string | null
           escalation_reason?: string | null
           id?: string
+          lead_id?: string | null
           priority?: string | null
           scope?: string
           sentiment_score?: number | null
@@ -3148,6 +3150,7 @@ export type Database = {
           escalated_at?: string | null
           escalation_reason?: string | null
           id?: string
+          lead_id?: string | null
           priority?: string | null
           scope?: string
           sentiment_score?: number | null
@@ -3168,6 +3171,13 @@ export type Database = {
           {
             foreignKeyName: "chat_conversations_contact_id_fkey"
             columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_conversations_lead_id_fkey"
+            columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
             referencedColumns: ["id"]
@@ -3660,11 +3670,13 @@ export type Database = {
         Row: {
           action: string
           comment: string | null
+          content_hash: string | null
           contract_id: string
           created_at: string
           id: string
           ip_address: string | null
           signature_data: string | null
+          signature_image: string | null
           signer_email: string | null
           signer_name: string | null
           user_agent: string | null
@@ -3672,11 +3684,13 @@ export type Database = {
         Insert: {
           action: string
           comment?: string | null
+          content_hash?: string | null
           contract_id: string
           created_at?: string
           id?: string
           ip_address?: string | null
           signature_data?: string | null
+          signature_image?: string | null
           signer_email?: string | null
           signer_name?: string | null
           user_agent?: string | null
@@ -3684,11 +3698,13 @@ export type Database = {
         Update: {
           action?: string
           comment?: string | null
+          content_hash?: string | null
           contract_id?: string
           created_at?: string
           id?: string
           ip_address?: string | null
           signature_data?: string | null
+          signature_image?: string | null
           signer_email?: string | null
           signer_name?: string | null
           user_agent?: string | null
@@ -3933,6 +3949,7 @@ export type Database = {
         Row: {
           assigned_to: string | null
           completed_at: string | null
+          completion_note: string | null
           created_at: string
           created_by: string | null
           deal_id: string | null
@@ -3947,6 +3964,7 @@ export type Database = {
         Insert: {
           assigned_to?: string | null
           completed_at?: string | null
+          completion_note?: string | null
           created_at?: string
           created_by?: string | null
           deal_id?: string | null
@@ -3961,6 +3979,7 @@ export type Database = {
         Update: {
           assigned_to?: string | null
           completed_at?: string | null
+          completion_note?: string | null
           created_at?: string
           created_by?: string | null
           deal_id?: string | null
@@ -4129,6 +4148,8 @@ export type Database = {
           expected_close: string | null
           id: string
           lead_id: string
+          lost_note: string | null
+          lost_reason: string | null
           notes: string | null
           product_id: string | null
           stage: Database["public"]["Enums"]["deal_stage"]
@@ -4144,6 +4165,8 @@ export type Database = {
           expected_close?: string | null
           id?: string
           lead_id: string
+          lost_note?: string | null
+          lost_reason?: string | null
           notes?: string | null
           product_id?: string | null
           stage?: Database["public"]["Enums"]["deal_stage"]
@@ -4159,6 +4182,8 @@ export type Database = {
           expected_close?: string | null
           id?: string
           lead_id?: string
+          lost_note?: string | null
+          lost_reason?: string | null
           notes?: string | null
           product_id?: string | null
           stage?: Database["public"]["Enums"]["deal_stage"]
@@ -4295,6 +4320,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      discount_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          currency: string | null
+          id: string
+          max_uses: number | null
+          min_order_cents: number | null
+          type: string
+          updated_at: string
+          use_count: number
+          valid_from: string | null
+          valid_until: string | null
+          value: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          max_uses?: number | null
+          min_order_cents?: number | null
+          type?: string
+          updated_at?: string
+          use_count?: number
+          valid_from?: string | null
+          valid_until?: string | null
+          value: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          max_uses?: number | null
+          min_order_cents?: number | null
+          type?: string
+          updated_at?: string
+          use_count?: number
+          valid_from?: string | null
+          valid_until?: string | null
+          value?: number
+        }
+        Relationships: []
       }
       docs_page_versions: {
         Row: {
@@ -6851,6 +6924,8 @@ export type Database = {
           created_by: string | null
           email: string
           id: string
+          lost_note: string | null
+          lost_reason: string | null
           name: string | null
           needs_review: boolean | null
           phone: string | null
@@ -6871,6 +6946,8 @@ export type Database = {
           created_by?: string | null
           email: string
           id?: string
+          lost_note?: string | null
+          lost_reason?: string | null
           name?: string | null
           needs_review?: boolean | null
           phone?: string | null
@@ -6891,6 +6968,8 @@ export type Database = {
           created_by?: string | null
           email?: string
           id?: string
+          lost_note?: string | null
+          lost_reason?: string | null
           name?: string | null
           needs_review?: boolean | null
           phone?: string | null
@@ -7822,6 +7901,9 @@ export type Database = {
           customer_email: string
           customer_name: string | null
           delivered_at: string | null
+          discount_cents: number | null
+          discount_code: string | null
+          discount_code_id: string | null
           exchange_rate: number
           fulfillment_notes: string | null
           fulfillment_status: string
@@ -7830,6 +7912,15 @@ export type Database = {
           packed_at: string | null
           picked_at: string | null
           shipped_at: string | null
+          shipping_address_line1: string | null
+          shipping_address_line2: string | null
+          shipping_city: string | null
+          shipping_cost_cents: number | null
+          shipping_country: string | null
+          shipping_method: string | null
+          shipping_name: string | null
+          shipping_phone: string | null
+          shipping_postal_code: string | null
           status: string
           stripe_checkout_id: string | null
           stripe_payment_intent: string | null
@@ -7847,6 +7938,9 @@ export type Database = {
           customer_email: string
           customer_name?: string | null
           delivered_at?: string | null
+          discount_cents?: number | null
+          discount_code?: string | null
+          discount_code_id?: string | null
           exchange_rate?: number
           fulfillment_notes?: string | null
           fulfillment_status?: string
@@ -7855,6 +7949,15 @@ export type Database = {
           packed_at?: string | null
           picked_at?: string | null
           shipped_at?: string | null
+          shipping_address_line1?: string | null
+          shipping_address_line2?: string | null
+          shipping_city?: string | null
+          shipping_cost_cents?: number | null
+          shipping_country?: string | null
+          shipping_method?: string | null
+          shipping_name?: string | null
+          shipping_phone?: string | null
+          shipping_postal_code?: string | null
           status?: string
           stripe_checkout_id?: string | null
           stripe_payment_intent?: string | null
@@ -7872,6 +7975,9 @@ export type Database = {
           customer_email?: string
           customer_name?: string | null
           delivered_at?: string | null
+          discount_cents?: number | null
+          discount_code?: string | null
+          discount_code_id?: string | null
           exchange_rate?: number
           fulfillment_notes?: string | null
           fulfillment_status?: string
@@ -7880,6 +7986,15 @@ export type Database = {
           packed_at?: string | null
           picked_at?: string | null
           shipped_at?: string | null
+          shipping_address_line1?: string | null
+          shipping_address_line2?: string | null
+          shipping_city?: string | null
+          shipping_cost_cents?: number | null
+          shipping_country?: string | null
+          shipping_method?: string | null
+          shipping_name?: string | null
+          shipping_phone?: string | null
+          shipping_postal_code?: string | null
           status?: string
           stripe_checkout_id?: string | null
           stripe_payment_intent?: string | null
@@ -7895,6 +8010,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_discount_code_id_fkey"
+            columns: ["discount_code_id"]
+            isOneToOne: false
+            referencedRelation: "discount_codes"
             referencedColumns: ["id"]
           },
         ]
@@ -9756,6 +9878,7 @@ export type Database = {
           track_inventory: boolean
           type: Database["public"]["Enums"]["product_type"]
           updated_at: string
+          weight_grams: number | null
         }
         Insert: {
           allow_backorder?: boolean
@@ -9780,6 +9903,7 @@ export type Database = {
           track_inventory?: boolean
           type?: Database["public"]["Enums"]["product_type"]
           updated_at?: string
+          weight_grams?: number | null
         }
         Update: {
           allow_backorder?: boolean
@@ -9804,6 +9928,7 @@ export type Database = {
           track_inventory?: boolean
           type?: Database["public"]["Enums"]["product_type"]
           updated_at?: string
+          weight_grams?: number | null
         }
         Relationships: [
           {
@@ -10323,11 +10448,13 @@ export type Database = {
         Row: {
           action: string
           comment: string | null
+          content_hash: string | null
           created_at: string
           id: string
           ip_address: string | null
           quote_id: string
           signature_data: string | null
+          signature_image: string | null
           signer_email: string | null
           signer_name: string | null
           user_agent: string | null
@@ -10335,11 +10462,13 @@ export type Database = {
         Insert: {
           action: string
           comment?: string | null
+          content_hash?: string | null
           created_at?: string
           id?: string
           ip_address?: string | null
           quote_id: string
           signature_data?: string | null
+          signature_image?: string | null
           signer_email?: string | null
           signer_name?: string | null
           user_agent?: string | null
@@ -10347,11 +10476,13 @@ export type Database = {
         Update: {
           action?: string
           comment?: string | null
+          content_hash?: string | null
           created_at?: string
           id?: string
           ip_address?: string | null
           quote_id?: string
           signature_data?: string | null
+          signature_image?: string | null
           signer_email?: string | null
           signer_name?: string | null
           user_agent?: string | null
@@ -10474,6 +10605,8 @@ export type Database = {
           lead_id: string | null
           line_items: Json
           notes: string | null
+          paid_at: string | null
+          prepayment_pct: number | null
           quote_number: string
           rejected_at: string | null
           sent_at: string | null
@@ -10514,6 +10647,8 @@ export type Database = {
           lead_id?: string | null
           line_items?: Json
           notes?: string | null
+          paid_at?: string | null
+          prepayment_pct?: number | null
           quote_number: string
           rejected_at?: string | null
           sent_at?: string | null
@@ -10554,6 +10689,8 @@ export type Database = {
           lead_id?: string | null
           line_items?: Json
           notes?: string | null
+          paid_at?: string | null
+          prepayment_pct?: number | null
           quote_number?: string
           rejected_at?: string | null
           sent_at?: string | null
@@ -14601,6 +14738,7 @@ export type Database = {
         Args: {
           p_conversation_id?: string
           p_email: string
+          p_name?: string
           p_session_id?: string
         }
         Returns: Json
@@ -15006,6 +15144,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_contract_certificate: { Args: { p_token: string }; Returns: Json }
       get_conversation_token_estimate: {
         Args: { p_conversation_id: string }
         Returns: number
@@ -15111,6 +15250,8 @@ export type Database = {
           lead_id: string | null
           line_items: Json
           notes: string | null
+          paid_at: string | null
+          prepayment_pct: number | null
           quote_number: string
           rejected_at: string | null
           sent_at: string | null
@@ -15134,6 +15275,8 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_quote_certificate: { Args: { p_token: string }; Returns: Json }
+      get_quote_payment_status: { Args: { p_token: string }; Returns: Json }
       get_recent_migrations: {
         Args: { p_limit?: number }
         Returns: {
@@ -15252,6 +15395,10 @@ export type Database = {
           vendor_id: string
           vendor_name: string
         }[]
+      }
+      list_shipping_options: {
+        Args: { p_currency?: string; p_weight_grams: number }
+        Returns: Json
       }
       list_voucher_gaps: {
         Args: { p_series?: string; p_year?: number }
@@ -15421,6 +15568,22 @@ export type Database = {
           p_starts_at?: string
           p_title?: string
           p_to?: string
+        }
+        Returns: Json
+      }
+      manage_discount_code: {
+        Args: {
+          p_action: string
+          p_active?: boolean
+          p_code?: string
+          p_code_id?: string
+          p_currency?: string
+          p_max_uses?: number
+          p_min_order_cents?: number
+          p_type?: string
+          p_valid_from?: string
+          p_valid_until?: string
+          p_value?: number
         }
         Returns: Json
       }
@@ -15865,6 +16028,7 @@ export type Database = {
         }
         Returns: Json
       }
+      redeem_discount_code: { Args: { p_code_id: string }; Returns: boolean }
       redeem_gift_card: {
         Args: { p_amount_cents: number; p_code: string }
         Returns: Json
@@ -15934,6 +16098,10 @@ export type Database = {
           p_phone?: string
           p_webinar_id: string
         }
+        Returns: Json
+      }
+      register_visitor_intent_trigger: {
+        Args: { p_anon_key: string; p_supabase_url: string }
         Returns: Json
       }
       reject_pending_operation: {
@@ -16364,11 +16532,13 @@ export type Database = {
         Returns: {
           action: string
           comment: string | null
+          content_hash: string | null
           contract_id: string
           created_at: string
           id: string
           ip_address: string | null
           signature_data: string | null
+          signature_image: string | null
           signer_email: string | null
           signer_name: string | null
           user_agent: string | null
@@ -16541,6 +16711,10 @@ export type Database = {
           p_status: string
         }
         Returns: undefined
+      }
+      validate_discount_code: {
+        Args: { p_code: string; p_currency?: string; p_order_cents?: number }
+        Returns: Json
       }
       webinar_reminder_tick: { Args: never; Returns: Json }
       webinar_tick: { Args: never; Returns: Json }
