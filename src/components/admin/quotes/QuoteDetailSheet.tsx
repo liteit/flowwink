@@ -294,6 +294,24 @@ export function QuoteDetailSheet({ quoteId, open, onOpenChange }: Props) {
             </div>
           )}
 
+          {/* Signature certificate (after customer accepted/declined via public link) */}
+          {(quote.status === 'accepted' || quote.status === 'rejected') &&
+            (quote as unknown as { accept_token?: string }).accept_token && (
+              <div className="rounded-md border p-3 text-sm flex items-center gap-2 bg-muted/50">
+                <ShieldCheck className="h-4 w-4" />
+                <span className="flex-1">Signature certificate (evidence of {quote.status === 'accepted' ? 'acceptance' : 'decline'})</span>
+                <Button variant="ghost" size="sm" asChild>
+                  <a
+                    href={`/quote/${(quote as unknown as { accept_token: string }).accept_token}/certificate`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open
+                  </a>
+                </Button>
+              </div>
+            )}
+
           {/* Actions */}
           <div className="flex flex-wrap gap-2 pt-2">
             <Button onClick={handleSave} disabled={updateQuote.isPending}>
