@@ -152,10 +152,37 @@ Deno.serve(async (req) => {
 
         // Bump lead score
         const { data: leadRow } = await supabase
-          .from('leads').select('score').eq('id', leadId).maybeSingle();
+          .from('leads').select('score, name, email, company').eq('id', leadId).maybeSingle();
         const currentScore = (leadRow?.score as number) ?? 0;
         await supabase.from('leads').update({ score: currentScore + rule.score }).eq('id', leadId);
         signalsFired++;
+
+        // Optional email notification when a signal fires.
+        // Config lives alongside rules: site_settings.visitor_intelligence_rules.notify = { enabled, email, min_score? }
+        const notify = (config as unknown as { notify?: { enabled?: boolean; email?: string; min_score?: number } }).notify;
+        if (notify?.enabled && notify.email && (!notify.min_score || rule.score >= notify.min_score)) {
+          const lead = leadRow as { name?: string; email?: string; company?: string } | null;
+          const subject = `🔔 Visitor signal: ${rule.name} — ${lead?.name || lead?.email || 'lead'}`;
+          const html = `
+            <h2 style="margin:0 0 12px">New visitor signal fired</h2>
+            <p><strong>Signal:</strong> ${rule.name} (+${rule.score} points)</p>
+            <p><strong>Lead:</strong> ${lead?.name || '(no name)'} &lt;${lead?.email || 'n/a'}&gt;${lead?.company ? ` — ${lead.company}` : ''}</p>
+            <p><strong>New score:</strong> ${currentScore + rule.score}</p>
+            <p><strong>Evidence:</strong> <code>${JSON.stringify(evidence)}</code></p>
+            <hr style="border:none;border-top:1px solid #eee"/>
+            <p style="color:#666;font-size:12px">FlowWink Visitor Intelligence</p>
+          `;
+          supabase.functions.invoke('email-send', {
+            body: {
+              to: notify.email,
+              subject,
+              html,
+              source: 'visitor-intelligence',
+              related_entity_type: 'lead',
+              related_entity_id: leadId,
+            },
+          }).catch(() => {});
+        }
       }
     }
 
