@@ -48,9 +48,10 @@
       "id": "lead_capture",
       "name": "Lead capture from chat",
       "odoo": true,
-      "status": "missing",
+      "status": "partial",
       "weight": 1,
-      "verify": "no lead-capture skill or chat-to-lead flow found in chat-completion or chat module",
+      "verify": "ChatLeadCapture.tsx (dismissible email prompt after first visitor message, gated by chat settings leadCaptureEnabled, default OFF); capture_chat_lead RPC in 20260704150000 migration upserts lead by email (source 'chat-widget') and links chat_conversations.lead_id (session-ownership guarded, anon-safe SECURITY DEFINER)",
+      "notes": "Built 2026-07-04: settings toggle in ChatSettingsPage, prompt rendered via ChatConversation for visitor chat (widget/landing/block), never blocks the conversation. Dedupe via leads_email_unique (existing lead gets name backfill + score bump). Pending live verification + admin surfacing of the lead link before done.",
       "epic": "EPIC-06"
     },
     {

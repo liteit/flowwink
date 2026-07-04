@@ -38,9 +38,10 @@
       "id": "categories",
       "name": "Block categories",
       "odoo": true,
-      "status": "missing",
+      "status": "partial",
       "weight": 1,
-      "verify": "global_blocks only has fixed slots (header/footer) + type; no category field, skill, or UI",
+      "verify": "global_blocks.category (nullable text, 20260704150500 migration); Library tab in GlobalBlocksPage.tsx with free-text category input (datalist suggestions from existing values) + category filter; manage_global_blocks handler in agent-execute supports category on list (filter) and update (set)",
+      "notes": "Built 2026-07-04: free-text categories, no taxonomy table by design. Skill tool_definition patched via migration (skill is migration-seeded, not in module skillSeeds). Pending live verification before done.",
       "epic": "EPIC-06"
     }
   ]
