@@ -113,17 +113,16 @@ export default function VisitorIntelligencePage() {
         <AdminPageHeader
           title="Visitor Intelligence"
           description="Rules that turn anonymous browsing into scored signals against identified leads."
-          actions={
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={runNow} disabled={running}>
-                <Play className="h-4 w-4 mr-2" />{running ? 'Running…' : 'Run now'}
-              </Button>
-              <Button onClick={save} disabled={saving}>
-                <Save className="h-4 w-4 mr-2" />{saving ? 'Saving…' : 'Save'}
-              </Button>
-            </div>
-          }
-        />
+        >
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={runNow} disabled={running}>
+              <Play className="h-4 w-4 mr-2" />{running ? 'Running…' : 'Run now'}
+            </Button>
+            <Button onClick={save} disabled={saving}>
+              <Save className="h-4 w-4 mr-2" />{saving ? 'Saving…' : 'Save'}
+            </Button>
+          </div>
+        </AdminPageHeader>
 
         <div className="space-y-6">
           <Card>
