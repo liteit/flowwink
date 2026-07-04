@@ -3338,11 +3338,15 @@ async function executeGlobalBlocksAction(
   _skillName: string,
   args: Record<string, unknown>,
 ): Promise<unknown> {
-  const { action = 'list', slot, block_data } = args as any;
+  const { action = 'list', slot, block_data, category } = args as any;
 
   if (action === 'list') {
-    const { data, error } = await supabase.from('global_blocks')
-      .select('id, slot, type, data, is_active, updated_at');
+    let query = supabase.from('global_blocks')
+      .select('id, slot, type, data, category, is_active, updated_at');
+    if (typeof category === 'string' && category.trim()) {
+      query = query.eq('category', category.trim());
+    }
+    const { data, error } = await query;
     if (error) throw new Error(`List global blocks failed: ${error.message}`);
     return { global_blocks: data || [] };
   }
@@ -3355,21 +3359,25 @@ async function executeGlobalBlocksAction(
   }
 
   if (action === 'update' && slot) {
-    if (!block_data) throw new Error('block_data is required');
+    const hasCategory = typeof category === 'string';
+    if (!block_data && !hasCategory) throw new Error('block_data or category is required');
     const { data: existing } = await supabase.from('global_blocks')
       .select('id, data').eq('slot', slot).maybeSingle();
 
     if (existing) {
-      const mergedData = { ...existing.data, ...block_data };
+      const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      if (block_data) updates.data = { ...existing.data, ...block_data };
+      if (hasCategory) updates.category = category.trim() || null;
       const { data, error } = await supabase.from('global_blocks')
-        .update({ data: mergedData, updated_at: new Date().toISOString() })
+        .update(updates)
         .eq('id', existing.id).select('id, slot, type').single();
       if (error) throw new Error(`Update global block failed: ${error.message}`);
       return { id: data.id, slot: data.slot, status: 'updated' };
     } else {
       const { block_type = slot === 'header' ? 'header' : 'footer' } = args as any;
       const { data, error } = await supabase.from('global_blocks').insert({
-        slot, type: block_type, data: block_data, is_active: true,
+        slot, type: block_type, data: block_data || {}, is_active: true,
+        category: hasCategory ? (category.trim() || null) : null,
       }).select('id, slot, type').single();
       if (error) throw new Error(`Create global block failed: ${error.message}`);
       return { id: data.id, slot: data.slot, status: 'created' };

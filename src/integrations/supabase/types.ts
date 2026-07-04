@@ -3104,6 +3104,7 @@ export type Database = {
           escalated_at: string | null
           escalation_reason: string | null
           id: string
+          lead_id: string | null
           priority: string | null
           scope: string
           sentiment_score: number | null
@@ -3126,6 +3127,7 @@ export type Database = {
           escalated_at?: string | null
           escalation_reason?: string | null
           id?: string
+          lead_id?: string | null
           priority?: string | null
           scope?: string
           sentiment_score?: number | null
@@ -3148,6 +3150,7 @@ export type Database = {
           escalated_at?: string | null
           escalation_reason?: string | null
           id?: string
+          lead_id?: string | null
           priority?: string | null
           scope?: string
           sentiment_score?: number | null
@@ -3158,6 +3161,13 @@ export type Database = {
           visitor_profile?: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "chat_conversations_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chat_conversations_assigned_agent_id_fkey"
             columns: ["assigned_agent_id"]
@@ -5864,6 +5874,7 @@ export type Database = {
       }
       global_blocks: {
         Row: {
+          category: string | null
           created_at: string
           created_by: string | null
           data: Json
@@ -5875,6 +5886,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          category?: string | null
           created_at?: string
           created_by?: string | null
           data?: Json
@@ -5886,6 +5898,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          category?: string | null
           created_at?: string
           created_by?: string | null
           data?: Json
@@ -14488,6 +14501,15 @@ export type Database = {
       }
       cancel_webinar: {
         Args: { p_reason?: string; p_webinar_id: string }
+        Returns: Json
+      }
+      capture_chat_lead: {
+        Args: {
+          p_conversation_id?: string
+          p_email: string
+          p_name?: string
+          p_session_id?: string
+        }
         Returns: Json
       }
       chain_approval_satisfied: {
