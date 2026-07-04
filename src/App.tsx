@@ -320,6 +320,7 @@ const router = createBrowserRouter([
       { path: "/admin/bookings/availability", element: <BookingsPage /> },
       { path: "/admin/modules", element: <ModulesPage /> },
       { path: "/admin/automations", element: <AutomationsPage /> },
+      { path: "/admin/visitor-intelligence", element: <VisitorIntelligencePage /> },
       { path: "/admin/integrations", element: <IntegrationsStatusPage /> },
       { path: "/admin/webhooks", element: <Navigate to="/admin/developer" replace /> },
       { path: "/admin/knowledge-base", element: <KnowledgeBaseAdminPage /> },
