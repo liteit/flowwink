@@ -1,5 +1,5 @@
 import { defineModule } from '@/lib/module-def';
-import type { SkillSeed } from '@/lib/module-bootstrap';
+import type { SkillSeed, AutomationSeed } from '@/lib/module-bootstrap';
 import { z } from 'zod';
 
 // ── Visitor Intelligence Module ──────────────────────────────────────────────
@@ -85,6 +85,21 @@ Returns page_views + visitor_signals for a lead, most recent first. Filter by le
   },
 ];
 
+// Runs every 15 min via automation-dispatcher (pg_cron ticks the dispatcher).
+// Seeded enabled=true when module activates — admin can pause/adjust in /admin/automations.
+const VISITOR_INTELLIGENCE_AUTOMATIONS: AutomationSeed[] = [
+  {
+    name: 'Score visitor intent (every 15 min)',
+    description:
+      'Evaluates visitor-intelligence rules against recent page views and fires behavioral signals against identified leads. Adjust cadence or pause here without touching the database.',
+    trigger_type: 'cron',
+    trigger_config: { expression: '*/15 * * * *' },
+    skill_name: 'score_visitor_intent',
+    skill_arguments: {},
+    executor: 'platform',
+  },
+];
+
 export const visitorIntelligenceModule = defineModule<Input, Output>({
   id: 'visitorIntelligence',
   name: 'Visitor Intelligence',
@@ -100,6 +115,7 @@ export const visitorIntelligenceModule = defineModule<Input, Output>({
 
   skills: ['score_visitor_intent', 'get_visitor_timeline'],
   skillSeeds: VISITOR_INTELLIGENCE_SKILLS,
+  automations: VISITOR_INTELLIGENCE_AUTOMATIONS,
 
   async publish(input: Input): Promise<Output> {
     return { success: true, message: `visitor-intelligence ${input.action} ok` };
