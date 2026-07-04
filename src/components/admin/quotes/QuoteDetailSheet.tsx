@@ -187,6 +187,27 @@ export function QuoteDetailSheet({ quoteId, open, onOpenChange }: Props) {
                   onFocus={(e) => e.target.select()}
                   className="w-32"
                 />
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  max={100}
+                  step="1"
+                  placeholder="Disc %"
+                  value={!item.discount_pct ? '' : item.discount_pct}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === '') {
+                      updateLineItem(i, 'discount_pct', 0);
+                    } else {
+                      const num = Number(v);
+                      updateLineItem(i, 'discount_pct', Number.isFinite(num) ? Math.min(100, Math.max(0, num)) : 0);
+                    }
+                  }}
+                  onFocus={(e) => e.target.select()}
+                  className="w-20"
+                  title="Line discount %"
+                />
                 <Button variant="ghost" size="icon" onClick={() => removeLineItem(i)}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -272,6 +293,24 @@ export function QuoteDetailSheet({ quoteId, open, onOpenChange }: Props) {
               </Button>
             </div>
           )}
+
+          {/* Signature certificate (after customer accepted/declined via public link) */}
+          {(quote.status === 'accepted' || quote.status === 'rejected') &&
+            (quote as unknown as { accept_token?: string }).accept_token && (
+              <div className="rounded-md border p-3 text-sm flex items-center gap-2 bg-muted/50">
+                <ShieldCheck className="h-4 w-4" />
+                <span className="flex-1">Signature certificate (evidence of {quote.status === 'accepted' ? 'acceptance' : 'decline'})</span>
+                <Button variant="ghost" size="sm" asChild>
+                  <a
+                    href={`/quote/${(quote as unknown as { accept_token: string }).accept_token}/certificate`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open
+                  </a>
+                </Button>
+              </div>
+            )}
 
           {/* Actions */}
           <div className="flex flex-wrap gap-2 pt-2">

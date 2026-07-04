@@ -2,9 +2,9 @@
  * Public quote page — anonymous customer can view and sign their quote via /quote/:token
  */
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { CheckCircle2, XCircle, FileText } from 'lucide-react';
+import { CheckCircle2, XCircle, FileText, Clock, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +12,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
+import { SignaturePad } from '@/components/public/SignaturePad';
 import { usePublicQuote, useSignQuote, markQuoteViewed } from '@/hooks/useQuoteWorkflow';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -27,6 +29,7 @@ export default function PublicQuotePage() {
   const [signerEmail, setSignerEmail] = useState('');
   const [comment, setComment] = useState('');
   const [mode, setMode] = useState<'view' | 'accept' | 'reject'>('view');
+  const [signatureImage, setSignatureImage] = useState<string | null>(null);
 
   const itemsKey = ['public-quote-items', quote?.id];
   const { data: items = [] } = useQuery({
@@ -93,6 +96,9 @@ export default function PublicQuotePage() {
   const fmt = (cents: number) => new Intl.NumberFormat('sv-SE', { style: 'currency', currency }).format(cents / 100);
 
   const isFinal = status === 'accepted' || status === 'rejected';
+  // Expiry mirrors the server-side gate in quote-sign: valid through valid_until, expired after.
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const isExpired = !isFinal && !!validUntil && validUntil < todayStr;
 
   const handleSubmit = async () => {
     if (!signerName.trim() || !signerEmail.trim()) return;
@@ -102,7 +108,8 @@ export default function PublicQuotePage() {
       action: mode === 'accept' ? 'accept' : 'reject',
       signer_name: signerName,
       signer_email: signerEmail,
-      signature_data: signerName, // typed signature
+      signature_data: signerName, // typed signature (always recorded)
+      signature_image: signatureImage ?? undefined, // drawn signature (optional)
       comment,
     });
     setMode('view');
@@ -197,10 +204,20 @@ export default function PublicQuotePage() {
               </div>
             )}
 
+            {/* Expired notice — accepting is blocked server-side too (quote-sign returns 410) */}
+            {isExpired && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900 p-3 text-sm flex items-start gap-2">
+                <Clock className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>
+                  This quote expired on {format(new Date(validUntil!), 'yyyy-MM-dd')} — contact us for a renewed offer.
+                </span>
+              </div>
+            )}
+
             {/* Signing */}
             {!isFinal && mode === 'view' && (
               <div className="border-t pt-4 flex flex-wrap gap-2">
-                <Button onClick={() => setMode('accept')} className="gap-2">
+                <Button onClick={() => setMode('accept')} disabled={isExpired} className="gap-2">
                   <CheckCircle2 className="h-4 w-4" /> Accept Quote
                 </Button>
                 <Button onClick={() => setMode('reject')} variant="outline" className="gap-2">
@@ -226,8 +243,27 @@ export default function PublicQuotePage() {
                   <Label>Comment (optional)</Label>
                   <Textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={2} />
                 </div>
+                {mode === 'accept' && (
+                  <div className="space-y-1">
+                    <Label>Signature</Label>
+                    <Tabs defaultValue="type" onValueChange={(v) => { if (v === 'type') setSignatureImage(null); }}>
+                      <TabsList>
+                        <TabsTrigger value="type">Type name</TabsTrigger>
+                        <TabsTrigger value="draw">Draw</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="type">
+                        <p className="font-serif italic text-2xl border rounded-md px-4 py-3 min-h-[3.5rem] text-foreground/80">
+                          {signerName || <span className="text-sm not-italic font-sans text-muted-foreground">Your typed name is used as your signature</span>}
+                        </p>
+                      </TabsContent>
+                      <TabsContent value="draw">
+                        <SignaturePad onChange={setSignatureImage} />
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground">
-                  By typing your name and clicking {mode === 'accept' ? 'Accept' : 'Decline'} you create a binding electronic signature.
+                  By {mode === 'accept' ? 'signing' : 'typing your name'} and clicking {mode === 'accept' ? 'Accept' : 'Decline'} you create a binding electronic signature.
                 </p>
                 <div className="flex gap-2">
                   <Button
@@ -243,7 +279,7 @@ export default function PublicQuotePage() {
             )}
 
             {isFinal && (
-              <div className="border-t pt-4">
+              <div className="border-t pt-4 space-y-3">
                 {status === 'accepted' ? (
                   <div className="flex items-center gap-2 text-primary">
                     <CheckCircle2 className="h-5 w-5" />
@@ -255,6 +291,11 @@ export default function PublicQuotePage() {
                     <span>This quote has been declined.</span>
                   </div>
                 )}
+                <Button variant="outline" size="sm" asChild>
+                  <Link to={`/quote/${token}/certificate`}>
+                    <ShieldCheck className="h-4 w-4 mr-1" /> View signature certificate
+                  </Link>
+                </Button>
               </div>
             )}
           </CardContent>
