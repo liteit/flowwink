@@ -19,8 +19,6 @@ category: reference
 | **email** | Mail / Discuss (outbound email) | L3 → L4 | `████░░░░░░` 40% | 2/2/4 | EPIC-05 |
 | **contact-center** | Live Chat + Helpdesk (omnichannel routing, VOIP voicemail) | L1 → L3 | `████░░░░░░` 41% | 0/5/1 | EPIC-07 |
 | **projects** | Project (project.project/project.task) | L3 → L4 | `████░░░░░░` 41% | 5/2/6 | — |
-| **chat** | Livechat + chatbot | L3 → L4 | `████░░░░░░` 42% | 0/4/1 | EPIC-06, EPIC-07 |
-| **global-blocks** | Website building blocks/snippets | L3 → L4 | `████░░░░░░` 42% | 0/3/1 | EPIC-06 |
 | **field-service** | Field Service (industry_fsm) | L2 → L4 | `████░░░░░░` 44% | 5/3/6 | EPIC-05 |
 | **fixed-assets** | Accounting → Assets | L3 → L4 | `████░░░░░░` 44% | 7/0/7 | — |
 | **pos** | Point of Sale (pos.order) | L3 → L4 | `████░░░░░░` 44% | 7/2/7 | — |
@@ -32,7 +30,9 @@ category: reference
 | **tickets** | Helpdesk (helpdesk.ticket) | L3 → L4 | `█████░░░░░` 48% | 8/0/9 | EPIC-07 |
 | **accounting** | Accounting (account.move, account.account) | L3 → L4 | `█████░░░░░` 50% | 8/2/6 | EPIC-08 |
 | **calendar** | Calendar (calendar.event) | L3 → L4 | `█████░░░░░` 50% | 2/0/3 | — |
-| **quotes** | Sales (sale.order quotation) | L3 → L4 | `█████░░░░░` 50% | 8/3/6 | EPIC-05, EPIC-04 |
+| **chat** | Livechat + chatbot | L3 → L4 | `█████░░░░░` 50% | 0/5/0 | EPIC-06, EPIC-07 |
+| **global-blocks** | Website building blocks/snippets | L3 → L4 | `█████░░░░░` 50% | 0/4/0 | EPIC-06 |
+| **quotes** | Sales (sale.order quotation) | L3 → L4 | `█████░░░░░` 50% | 8/4/6 | EPIC-05, EPIC-04 |
 | **resume** | Employees → Skills / niche consultant pool | L2 → L4 | `█████░░░░░` 50% | 3/0/3 | — |
 | **templates** | Website themes | L3 → L4 | `█████░░░░░` 50% | 0/4/0 | EPIC-06 |
 | **manufacturing** | Manufacturing (mrp.production) | L2 → L4 | `█████░░░░░` 52% | 8/4/6 | EPIC-08 |
