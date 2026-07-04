@@ -48,7 +48,6 @@ category: reference
 | **booking** | Appointments (calendar.appointment) | L3 → L4 | `██████░░░░` 59% | 10/3/6 | EPIC-05 |
 | **newsletter** | Email Marketing (mailing.mailing) | L4 → L4 | `██████░░░░` 59% | 3/4/2 | — |
 | **purchasing** | Purchase (purchase.order) | L3 → L4 | `██████░░░░` 60% | 11/0/7 | — |
-| **invoicing** | Invoicing (account.move) | L4 → L4 | `██████░░░░` 61% | 7/4/3 | EPIC-05 |
 | **blog** | Blog (blog.post) | L4 → L4 | `██████░░░░` 63% | 3/2/2 | — |
 | **deals** | CRM/Sales (crm.lead opportunities) | L4 → L4 | `██████░░░░` 64% | 5/2/4 | — |
 | **growth** | Marketing Automation + Social Marketing | L3 → L4 | `██████░░░░` 64% | 2/2/1 | — |
@@ -56,6 +55,7 @@ category: reference
 | **surveys** | Surveys (survey.survey) | L2 → L4 | `██████░░░░` 64% | 2/4/0 | EPIC-06 |
 | **maintenance** | Maintenance (maintenance.equipment / maintenance.request) | L3 → L4 | `███████░░░` 65% | 3/1/3 | — |
 | **crm** | CRM (crm.lead, crm.stage) | L4 → L4 | `███████░░░` 66% | 6/3/3 | — |
+| **invoicing** | Invoicing (account.move) | L4 → L4 | `███████░░░` 67% | 8/3/3 | EPIC-05 |
 | **returns** | Inventory returns / RMA | L2 → L4 | `███████░░░` 69% | 9/0/4 | — |
 | **pages** | Website (website.page) | L4 → L4 | `███████░░░` 70% | 5/0/3 | — |
 | **kb** | Knowledge / Helpdesk KB | L3 → L4 | `███████░░░` 71% | 3/2/1 | — |

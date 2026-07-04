@@ -1,7 +1,13 @@
--- Invoicing: AR aging report (docs/parity/capabilities/invoicing.json#aging_report).
--- Buckets open (not fully paid, not cancelled) invoices per customer into
--- current / 1-30 / 31-60 / 61-90 / 90+ days overdue, based on due_date vs
--- p_as_of and outstanding = total_cents - paid_amount_cents. Read-only. Idempotent.
+-- Fix ar_aging_report: the totals SELECT referenced the per_customer CTE, but a
+-- WITH clause in PL/pgSQL only covers the single statement it prefixes — so the
+-- second statement failed at runtime with 'relation "per_customer" does not
+-- exist'. Caught by live verification on rzhj 2026-07-04 (the report never
+-- worked on any instance where 20260703140000 was applied). Forward-dated +
+-- CREATE OR REPLACE so it reaches managed/forked instances whose migration
+-- ledger is already past the original file's timestamp.
+--
+-- Fix: derive the bucket totals by aggregating the per-customer jsonb array that
+-- was already computed into v_customers, instead of re-scanning the CTE.
 
 CREATE OR REPLACE FUNCTION "public"."ar_aging_report"(
   "p_as_of" "date" DEFAULT CURRENT_DATE
@@ -65,10 +71,6 @@ BEGIN
   INTO v_customers
   FROM per_customer;
 
-  -- Totals: aggregate the per-customer array already computed above. A second
-  -- reference to the per_customer CTE would be out of scope here — a WITH clause
-  -- only covers the single statement it prefixes (this was the 'relation
-  -- "per_customer" does not exist' bug, caught by live verification 2026-07-04).
   SELECT jsonb_build_object(
       'current_cents', COALESCE(SUM((e->>'current_cents')::bigint), 0),
       'overdue_1_30_cents', COALESCE(SUM((e->>'overdue_1_30_cents')::bigint), 0),

@@ -83,10 +83,10 @@
       "id": "partial_payment",
       "name": "Partial/over/under payment handling",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 2,
-      "verify": "invoices.paid_amount_cents tracked by reconcile_invoice_payments (bank path) + record_invoice_payment RPC/skill (manual partial payments, overpay rejected, status→paid when settled) (migration 20260614100000) + admin UI: RecordPaymentDialog (prefilled outstanding balance, client-side overpay guard) launched from InvoiceDetailSheet 'Record Payment', paid/total progress shown on invoice detail",
-      "notes": "Bank-rec partial/over/under already existed; added manual payment path. Scratch-Postgres verified 2026-06-14: 5000 then 7500 on a 12500 invoice → remaining 7500 then 0/status paid/paid_at set; overpay rejected. UI shipped 2026-07-03 (src/components/admin/invoices/RecordPaymentDialog.tsx). Pending: Stage-3 runtime sign-off before done.",
+      "verify": "LIVE E2E VERIFIED on rzhj 2026-07-04 (Stage-3 evidence): created invoice INV-2026-00013 (total 12500) via manage_invoice, then record_invoice_payment 5000 → remaining_cents=7500 paid_amount=5000; record_invoice_payment 20000 → correctly REJECTED ('Payment 20000 exceeds remaining balance 7500'); record_invoice_payment 7500 → remaining_cents=0, status='paid', paid_amount=12500. Mechanism: invoices.paid_amount_cents tracked by reconcile_invoice_payments (bank path) + record_invoice_payment RPC/skill (manual partial payments, overpay rejected, status→paid when settled) (migration 20260614100000) + admin UI: RecordPaymentDialog (prefilled outstanding balance, client-side overpay guard) launched from InvoiceDetailSheet 'Record Payment', paid/total progress shown on invoice detail",
+      "notes": "Bank-rec partial/over/under already existed; manual payment path added and now runtime-verified end-to-end (partial → overpay-reject → settle → paid). UI shipped 2026-07-03 (src/components/admin/invoices/RecordPaymentDialog.tsx).",
       "epic": "EPIC-05"
     },
     {
@@ -112,7 +112,7 @@
       "status": "partial",
       "weight": 1,
       "verify": "ar_aging_report RPC/skill (migration 20260703140000) buckets open invoices (total_cents - paid_amount_cents > 0, invoice_type='invoice', status<>cancelled) per customer into current/1-30/31-60/61-90/90+ days overdue vs due_date; admin UI: 'Aging Report' tab on /admin/invoices (src/components/admin/invoices/ArAgingReportTab.tsx) showing bucket totals + per-customer table",
-      "notes": "Built 2026-07-03, no live DB access this session to run a Stage-3 scratch-Postgres check — reasoned through the bucket SQL and admin/approver auth guard by inspection only. Pending: Stage-3 runtime sign-off before done.",
+      "notes": "LIVE VERIFICATION FOUND A REAL BUG 2026-07-04: ar_aging_report failed at runtime with 'relation \"per_customer\" does not exist' — the totals SELECT referenced the per_customer CTE, but a WITH clause in PL/pgSQL only covers the single statement it prefixes, so the second statement was out of scope. This was latent in the migration itself (never worked on any instance). Fixed: totals now aggregate the already-computed v_customers jsonb array (source migration 20260703140000 corrected in place + forward-dated CREATE OR REPLACE in 20260704180000_fix-ar-aging-per-customer-scope.sql for live/managed instances). Stays partial pending live re-verify after the fix deploys to rzhj (Lovable MCP was down at fix time, so the DDL could not be applied live this session). A clean example of static inspection passing while runtime failed — Stage-3 rule vindicated.",
       "epic": "EPIC-05"
     },
     {
