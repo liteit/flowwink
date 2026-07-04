@@ -50,8 +50,8 @@
       "odoo": true,
       "status": "partial",
       "weight": 2,
-      "verify": "shipping_rates weight bands + calc_shipping_rate RPC/skill (cheapest matching band) + manage_shipping_rate CRUD (migration 20260613030000)",
-      "notes": "Built + verified against LOCAL Supabase 2026-06-13 (800g=4900, 2000g=7900, 50000g=band L; idempotent). Pending: checkout/shipment wiring + admin rate-card UI + Stage-3 fleet deploy before done.",
+      "verify": "shipping_rates weight bands + calc_shipping_rate RPC/skill (cheapest matching band) + manage_shipping_rate CRUD (migration 20260613030000); checkout wiring 2026-07-04: products.weight_grams + anon list_shipping_options RPC (migration 20260704130000) → CheckoutPage delivery radios → create-checkout resolveShipping persists orders.shipping_method/shipping_cost_cents",
+      "notes": "Built + verified against LOCAL Supabase 2026-06-13 (800g=4900, 2000g=7900, 50000g=band L; idempotent). Checkout wiring built 2026-07-04 (code-cited; see ecommerce.json#delivery_choice_checkout). Pending: admin rate-card UI + Stage-3 fleet deploy before done.",
       "epic": "EPIC-08"
     },
     {

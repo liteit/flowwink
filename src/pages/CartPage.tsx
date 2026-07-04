@@ -8,9 +8,11 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/hooks/useProducts';
+import { useVatDisplay } from '@/hooks/useVatDisplay';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, totalPriceCents, currency, totalItems } = useCart();
+  const vat = useVatDisplay();
   const navigate = useNavigate();
 
   if (items.length === 0) {
@@ -155,6 +157,9 @@ export default function CartPage() {
                     <span>Total</span>
                     <span>{formatPrice(totalPriceCents, currency)}</span>
                   </div>
+                  {vat.label && (
+                    <p className="text-xs text-muted-foreground text-right">{vat.label}</p>
+                  )}
                 </CardContent>
                 <CardFooter>
                   <Button

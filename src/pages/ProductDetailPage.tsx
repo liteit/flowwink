@@ -13,6 +13,7 @@ import { useProduct, useProducts, formatPrice } from '@/hooks/useProducts';
 import { useProductVariants, resolveVariant } from '@/hooks/useProductVariants';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist, useToggleWishlist } from '@/hooks/useCustomerData';
+import { useVatDisplay } from '@/hooks/useVatDisplay';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
@@ -80,6 +81,7 @@ export default function ProductDetailPage() {
   const { user } = useAuth();
   const { data: wishlistItems = [] } = useWishlist();
   const toggleWishlist = useToggleWishlist();
+  const vat = useVatDisplay();
 
   // Variant selection: attributeId → attributeValueId
   const [selection, setSelection] = useState<Record<string, string>>({});
@@ -235,6 +237,9 @@ export default function ProductDetailPage() {
                   </span>
                   {product.type === 'recurring' && (
                     <span className="text-base text-muted-foreground">/month</span>
+                  )}
+                  {vat.label && (
+                    <span className="text-sm text-muted-foreground">{vat.label}</span>
                   )}
                 </div>
 

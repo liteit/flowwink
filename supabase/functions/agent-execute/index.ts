@@ -3699,7 +3699,7 @@ async function executeProductsAction(
   if (action === 'list') {
     const { is_active } = args as any;
     let query = supabase.from('products')
-      .select('id, name, description, price_cents, currency, type, is_active, stock_quantity, track_inventory, image_url, created_at')
+      .select('id, name, description, price_cents, currency, type, is_active, stock_quantity, track_inventory, image_url, weight_grams, created_at')
       .order('created_at', { ascending: false }).limit(50);
     if (is_active !== undefined) query = query.eq('is_active', is_active);
     const { data, error } = await query;
@@ -3708,11 +3708,13 @@ async function executeProductsAction(
   }
 
   if (action === 'create') {
-    const { name, description, price_cents, currency = 'SEK', type = 'one_time', image_url, stripe_price_id } = args as any;
+    const { name, description, price_cents, currency = 'SEK', type = 'one_time', image_url, stripe_price_id, weight_grams } = args as any;
     if (!name || price_cents === undefined) throw new Error('name and price_cents required');
     const { data, error } = await supabase.from('products').insert({
       name, description, price_cents, currency, type,
       image_url, stripe_price_id, is_active: true,
+      // null/undefined = non-shippable service/digital product
+      weight_grams: weight_grams ?? null,
     }).select('id, name, price_cents').single();
     if (error) throw new Error(`Create product failed: ${error.message}`);
     return { product_id: data.id, name: data.name, price_cents: data.price_cents };

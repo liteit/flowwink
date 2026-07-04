@@ -16,6 +16,17 @@ interface CartItem {
   variantId?: string | null;
 }
 
+interface ShippingAddressInput {
+  name?: string | null;
+  line1?: string | null;
+  line2?: string | null;
+  postalCode?: string | null;
+  postal_code?: string | null;
+  city?: string | null;
+  country?: string | null;
+  phone?: string | null;
+}
+
 interface CheckoutRequest {
   items: CartItem[];
   customerName: string;
@@ -28,6 +39,19 @@ interface CheckoutRequest {
   discountCode?: string | null;
   /** snake_case alias for agent/REST callers */
   discount_code?: string | null;
+  shippingAddress?: ShippingAddressInput | null;
+  /** snake_case alias for agent/REST callers */
+  shipping_address?: ShippingAddressInput | null;
+  shippingRateId?: string | null;
+  shipping_rate_id?: string | null;
+}
+
+interface ResolvedShipping {
+  rateId: string;
+  carrierName: string;
+  rateName: string;
+  priceCents: number;
+  weightGrams: number;
 }
 
 interface Product {
@@ -150,6 +174,107 @@ async function resolveDiscount(
   };
 }
 
+/**
+ * Resolve the chosen delivery method server-side. The client only sends a
+ * shipping_rates id; the price and weight-band validity are always taken from
+ * the DB so a tampered client can never set its own shipping cost. The cart
+ * weight is recomputed from products.weight_grams (NULL = non-shippable and
+ * excluded from the sum), matching the storefront's list_shipping_options.
+ */
+// deno-lint-ignore no-explicit-any
+async function resolveShipping(
+  supabase: any,
+  rateId: string,
+  items: CartItem[],
+): Promise<ResolvedShipping> {
+  const { data: rate, error: rateError } = await supabase
+    .from("shipping_rates")
+    .select("id, name, price_cents, min_weight_grams, max_weight_grams, is_active, carriers(name, is_active)")
+    .eq("id", rateId)
+    .maybeSingle();
+  if (rateError) {
+    logStep("Shipping rate fetch error", rateError);
+    throw new Error("Could not fetch shipping rate");
+  }
+  if (!rate || !rate.is_active || rate.carriers?.is_active === false) {
+    throw new Error("Selected shipping option is no longer available");
+  }
+
+  const productIds = [...new Set(items.map((i) => i.productId))];
+  const { data: products, error: productsError } = await supabase
+    .from("products")
+    .select("id, weight_grams")
+    .in("id", productIds);
+  if (productsError) {
+    logStep("Error fetching product weights", productsError);
+    throw new Error("Could not fetch product weights");
+  }
+  const weights = new Map<string, number | null>();
+  for (const p of products || []) weights.set(p.id, p.weight_grams ?? null);
+
+  let weightGrams = 0;
+  for (const item of items) {
+    const w = weights.get(item.productId);
+    if (w !== null && w !== undefined) weightGrams += w * item.quantity;
+  }
+
+  if (
+    weightGrams < rate.min_weight_grams ||
+    (rate.max_weight_grams !== null && weightGrams > rate.max_weight_grams)
+  ) {
+    throw new Error("Selected shipping option does not match the cart weight — please reselect delivery");
+  }
+
+  return {
+    rateId: rate.id,
+    carrierName: rate.carriers?.name ?? "Shipping",
+    rateName: rate.name,
+    priceCents: rate.price_cents,
+    weightGrams,
+  };
+}
+
+/** Orders-row columns for the shipping address + chosen delivery method. */
+function buildShippingColumns(
+  address: ShippingAddressInput | null,
+  shipping: ResolvedShipping | null,
+  customerName: string,
+): Record<string, unknown> {
+  const cols: Record<string, unknown> = {};
+  if (address) {
+    cols.shipping_name = address.name || customerName || null;
+    cols.shipping_address_line1 = address.line1 || null;
+    cols.shipping_address_line2 = address.line2 || null;
+    cols.shipping_postal_code = address.postalCode ?? address.postal_code ?? null;
+    cols.shipping_city = address.city || null;
+    cols.shipping_country = (address.country || "SE").toUpperCase();
+    cols.shipping_phone = address.phone || null;
+  }
+  if (shipping) {
+    cols.shipping_method = `${shipping.carrierName} — ${shipping.rateName}`;
+    cols.shipping_cost_cents = shipping.priceCents;
+  }
+  return cols;
+}
+
+/**
+ * VAT provenance stamp for order metadata (display setting → invoice side).
+ * Display-only: totals are never recalculated here. When prices include VAT,
+ * vat_cents is the VAT portion of the (discounted, shipping-inclusive) total:
+ * total × rate / (100 + rate).
+ */
+// deno-lint-ignore no-explicit-any
+function computeVatMetadata(ecomConfig: any, totalCents: number): Record<string, unknown> | null {
+  const ratePct = typeof ecomConfig?.vatRatePct === "number" ? ecomConfig.vatRatePct : 0;
+  if (!ratePct || ratePct <= 0) return null;
+  const pricesIncludeVat = ecomConfig?.pricesIncludeVat !== false;
+  return {
+    rate_pct: ratePct,
+    prices_include_vat: pricesIncludeVat,
+    vat_cents: pricesIncludeVat ? Math.round(totalCents * ratePct / (100 + ratePct)) : null,
+  };
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -192,6 +317,8 @@ serve(async (req: Request) => {
       bookingId,
     } = body;
     const discountCode = (body.discountCode ?? body.discount_code ?? "").trim() || null;
+    const shippingAddress = body.shippingAddress ?? body.shipping_address ?? null;
+    const shippingRateId = (body.shippingRateId ?? body.shipping_rate_id ?? "").toString().trim() || null;
 
     // The storefront passes a real successUrl (its own confirmation page), but
     // autonomous/MCP callers (e.g. place_order via an agent) don't — which made
@@ -222,6 +349,13 @@ serve(async (req: Request) => {
     // Variant items always get DB-truth prices (also validates ownership).
     const variantMap = await resolveVariantPrices(supabase, items);
 
+    // Delivery method: server-resolved price + weight-band validation.
+    let shipping: ResolvedShipping | null = null;
+    if (shippingRateId) {
+      shipping = await resolveShipping(supabase, shippingRateId, items);
+      logStep("Shipping resolved", shipping);
+    }
+
     // ── SANDBOX MODE: Skip Stripe entirely ──
     if (sandboxMode) {
       logStep("Sandbox mode — creating order without payment");
@@ -235,7 +369,8 @@ serve(async (req: Request) => {
         discount = await resolveDiscount(supabase, discountCode, subtotalCents, currency || 'SEK');
         logStep("Discount applied (sandbox)", discount);
       }
-      const totalCents = subtotalCents - (discount?.discountCents ?? 0);
+      const totalCents = subtotalCents - (discount?.discountCents ?? 0) + (shipping?.priceCents ?? 0);
+      const vatMeta = computeVatMetadata(ecomConfig, totalCents);
 
       const orderStatus = sandboxAutoPayDays === 0 ? "paid" : "pending";
 
@@ -251,6 +386,7 @@ serve(async (req: Request) => {
           discount_code: discount?.code ?? null,
           discount_cents: discount?.discountCents ?? null,
           discount_code_id: discount?.codeId ?? null,
+          ...buildShippingColumns(shippingAddress, shipping, customerName),
           metadata: {
             sandbox: true,
             sandbox_auto_pay_days: sandboxAutoPayDays,
@@ -259,6 +395,8 @@ serve(async (req: Request) => {
               : null,
             booking_id: bookingId || null,
             ...(discount ? { discount: { code: discount.code, type: discount.type, value: discount.value, discount_cents: discount.discountCents } } : {}),
+            ...(shipping ? { shipping: { rate_id: shipping.rateId, weight_grams: shipping.weightGrams } } : {}),
+            ...(vatMeta ? { vat: vatMeta } : {}),
           },
         })
         .select()
@@ -479,10 +617,28 @@ serve(async (req: Request) => {
       discount = await resolveDiscount(supabase, discountCode, subtotalCents, currency || 'SEK');
       logStep("Discount applied (live)", discount);
     }
-    const totalCents = subtotalCents - (discount?.discountCents ?? 0);
+    const totalCents = subtotalCents - (discount?.discountCents ?? 0) + (shipping?.priceCents ?? 0);
+    const vatMeta = computeVatMetadata(ecomConfig, totalCents);
 
-    // Create order in database. total_cents is net of discount; use_count is
-    // incremented by stripe-webhook when the payment actually completes.
+    // Shipping is charged as its own Stripe line item so the customer sees it
+    // separately in Checkout; the server-resolved price keeps it honest.
+    if (shipping && shipping.priceCents > 0) {
+      lineItems.push({
+        price_data: {
+          currency: currency.toLowerCase(),
+          unit_amount: shipping.priceCents,
+          product_data: {
+            name: `Shipping — ${shipping.carrierName} (${shipping.rateName})`,
+            metadata: { flowwink_shipping_rate_id: shipping.rateId },
+          },
+        },
+        quantity: 1,
+      });
+    }
+
+    // Create order in database. total_cents is net of discount and includes
+    // shipping; use_count is incremented by stripe-webhook when the payment
+    // actually completes.
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
@@ -495,12 +651,15 @@ serve(async (req: Request) => {
         discount_code: discount?.code ?? null,
         discount_cents: discount?.discountCents ?? null,
         discount_code_id: discount?.codeId ?? null,
+        ...buildShippingColumns(shippingAddress, shipping, customerName),
         metadata: {
           mode,
           hasRecurring,
           hasOneTime,
           booking_id: bookingId || null,
           ...(discount ? { discount: { code: discount.code, type: discount.type, value: discount.value, discount_cents: discount.discountCents } } : {}),
+          ...(shipping ? { shipping: { rate_id: shipping.rateId, weight_grams: shipping.weightGrams } } : {}),
+          ...(vatMeta ? { vat: vatMeta } : {}),
         },
       })
       .select()
