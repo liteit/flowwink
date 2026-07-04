@@ -92,6 +92,10 @@ Browse products in the catalog (visitor-facing, read-only).
             description: {
               type: 'string',
             },
+            weight_grams: {
+              type: 'number',
+              description: 'Product weight in grams. Omit/null = non-shippable (service/digital). A weighted product participates in the checkout shipping calculation.',
+            },
           },
           required: [
             'action',
@@ -110,8 +114,10 @@ Manages products in the catalog: create, update, delete, manage variants.
 - **name**: Product name (create/update).
 - **price_cents**: Price in cents (create/update).
 - **description**: Product description.
+- **weight_grams**: Weight in grams (create/update). null/omitted = non-shippable service or digital product; set it for physical goods so checkout can offer weight-based delivery options.
 ### Edge cases
 - Price is in cents (e.g., 9900 = $99.00 or 99 SEK).
+- weight_grams drives shipping at checkout: carts with any weighted product require a delivery address and get carrier options from the shipping_rates weight bands.
 - Use manage_inventory for stock levels.`,
   },
   {
