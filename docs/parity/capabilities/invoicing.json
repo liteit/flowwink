@@ -64,10 +64,10 @@
       "id": "recurring",
       "name": "Recurring/subscription invoices",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 3,
-      "verify": "ENGINE LIVE-VERIFIED on rzhj 2026-07-05 (Stage-3): create_manual_subscription (19900 SEK/month) → generate_subscription_invoice produced SUB-20260705-16078 with exact tax math (19900+25% = 24875) and advanced next_invoice_date one month (2026-07-05 → 2026-08-05); cancel_manual_subscription clean. Mechanism: subscription-billing-cron (due manual subs → invoice) + generate_subscription_invoice skill + subscriptions.next_invoice_date/billing_interval",
-      "notes": "LIVE VERIFICATION FOUND A REAL BUG 2026-07-05: generate_subscription_invoice was NOT idempotent — an immediate second call created a DUPLICATE invoice for the same period without advancing next_invoice_date (double-billing risk on the agent/skill path; the cron filters on due date but the RPC had no guard). Also the next date was advanced from CURRENT_DATE rather than the due date, so late runs shifted the billing anniversary. Both fixed in forward-dated 20260705150000_fix-subscription-invoice-idempotency.sql (due-guard refuses when next_invoice_date is in the future; advance now bases on next_invoice_date) + skill instructions document the one-call-per-period contract. Stays partial pending deploy + live re-verify of the guard (same bar as credit_notes' cumulative guard). Remaining after that: proration (P1.1); card-provider recurring is Stripe-native. Test data cleaned (subscription cancelled, both invoices cancelled)."
+      "verify": "LIVE E2E VERIFIED on rzhj 2026-07-05 after the due-guard deployed (Stage-3): create_manual_subscription (10000 SEK/month) → generate_subscription_invoice produced SUB-20260705-84457 total 12500 (exact 25% tax) and advanced next_invoice_date 2026-07-05 → 2026-08-05; an IMMEDIATE second call was REFUSED with 'not due: next invoice date is 2026-08-05 (already invoiced through the current period)' — the double-billing guard works; cancel clean, test data removed. Mechanism: subscription-billing-cron + generate_subscription_invoice (due-guard + anniversary-preserving advance, migration 20260705150000) + subscriptions.next_invoice_date/billing_interval",
+      "notes": "Was NOT idempotent until 2026-07-05 (second same-day call double-billed the period and late runs shifted the billing anniversary) — caught live, fixed (20260705150000), redeployed and re-verified live. Remaining depth: proration (P1.1); card-provider recurring is Stripe-native."
     },
     {
       "id": "credit_notes",

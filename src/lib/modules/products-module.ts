@@ -235,15 +235,15 @@ CRUD over the uoms table (units of measure). Categories live in uom_categories; 
         parameters: {
           type: 'object',
           properties: {
-            p_quantity: { type: 'number', description: 'Quantity to convert' },
-            p_from_uom_id: { type: 'string', description: 'Source UoM UUID' },
-            p_to_uom_id: { type: 'string', description: 'Target UoM UUID' },
+            p_qty: { type: 'number', description: 'Quantity to convert' },
+            p_from_uom: { type: 'string', description: 'Source UoM UUID' },
+            p_to_uom: { type: 'string', description: 'Target UoM UUID' },
           },
-          required: ['p_quantity', 'p_from_uom_id', 'p_to_uom_id'],
+          required: ['p_qty', 'p_from_uom', 'p_to_uom'],
         },
       },
     },
-    instructions: 'Both units must belong to the same uom_categories row — cross-category conversion raises an error. Get unit UUIDs via manage_uom action=list first.',
+    instructions: 'Both units must belong to the same uom_categories row — cross-category conversion raises an error. Get unit UUIDs via manage_uom action=list first. Param names are exactly p_qty, p_from_uom, p_to_uom (matching the Postgres signature).',
   },
   {
     name: 'manage_inventory',

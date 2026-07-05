@@ -3996,6 +3996,21 @@ async function executeWebinarsAction(
     return { webinar_id: data.id, title: data.title, status: 'updated' };
   }
 
+  if (action === 'registrations') {
+    // Declared in the skill schema since day one but never implemented —
+    // operators could register attendees yet not review them (found live
+    // 2026-07-05 while verifying the reminder markers).
+    const { webinar_id, limit = 100 } = args as any;
+    if (!webinar_id) throw new Error('webinar_id is required for registrations');
+    const { data, error } = await supabase.from('webinar_registrations')
+      .select('id, webinar_id, name, email, phone, lead_id, registered_at, attended, follow_up_sent, reminder_confirm_sent_at, reminder_t24_sent_at, reminder_t1_sent_at, reminder_post_sent_at')
+      .eq('webinar_id', webinar_id)
+      .order('registered_at', { ascending: false })
+      .limit(limit);
+    if (error) throw new Error(`List registrations failed: ${error.message}`);
+    return { registrations: data || [], count: (data || []).length };
+  }
+
   return { error: `Unknown webinars action: ${action}` };
 }
 
@@ -8243,6 +8258,15 @@ async function executeDbAction(
 // AuditContext, ACCOUNTING_AUDIT_TABLES, sha256Hex, diffSnapshots, writeAuditTrail
 // imported from ../_shared/agent-audit.ts (top of file)
 
+// Column masks for tables whose rows carry secrets. The generic engine selects
+// '*' by default, which leaked support_agents.voice_sip_password to operators
+// (found live 2026-07-05) — any whitelisted table with credential/secret
+// columns MUST get an explicit safe column list here.
+const TABLE_SELECT_MASKS: Record<string, string> = {
+  support_agents:
+    'id, user_id, status, current_conversations, max_conversations, last_seen_at, supported_channels, voice_enabled, voice_routing_mode, created_at, updated_at',
+};
+
 const GENERIC_CRUD_TABLES = new Set([
   'employees', 'leave_requests', 'projects', 'project_tasks',
   'time_entries', 'contracts', 'contract_documents',
@@ -8509,7 +8533,7 @@ async function executeGenericCrud(
     switch (action) {
       case 'list': {
         const { limit = 50, offset = 0, order_by = 'created_at', ascending = false, filters, ...rest } = fields;
-        let query = supabase.from(table).select('*')
+        let query = supabase.from(table).select(TABLE_SELECT_MASKS[table] ?? '*')
           .order(order_by, { ascending })
           .range(offset, offset + limit - 1);
 
@@ -8526,8 +8550,10 @@ async function executeGenericCrud(
 
       case 'get': {
         if (!id) return { error: 'id is required for get action' };
-        const { data, error } = await supabase.from(table).select('*').eq('id', id).single();
+        const { data, error } = await supabase.from(table)
+          .select(TABLE_SELECT_MASKS[table] ?? '*').eq('id', id).maybeSingle();
         if (error) throw new Error(`Get ${table} failed: ${error.message}`);
+        if (!data) return { found: false, error: `${table} row ${id} not found` };
         return { item: data, table };
       }
 

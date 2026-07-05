@@ -48,22 +48,22 @@ category: reference
 | **purchasing** | Purchase (purchase.order) | L3 → L4 | `██████░░░░` 60% | 11/0/7 | — |
 | **blog** | Blog (blog.post) | L4 → L4 | `██████░░░░` 63% | 3/2/2 | — |
 | **contracts** | Sign + contract management | L3 → L4 | `██████░░░░` 64% | 8/0/4 | — |
-| **deals** | CRM/Sales (crm.lead opportunities) | L4 → L4 | `██████░░░░` 64% | 5/2/4 | — |
 | **growth** | Marketing Automation + Social Marketing | L3 → L4 | `██████░░░░` 64% | 2/2/1 | — |
 | **inventory** | Inventory (stock) | L3 → L4 | `██████░░░░` 64% | 9/2/5 | EPIC-08 |
 | **surveys** | Surveys (survey.survey) | L2 → L4 | `██████░░░░` 64% | 2/4/0 | EPIC-06 |
 | **maintenance** | Maintenance (maintenance.equipment / maintenance.request) | L3 → L4 | `███████░░░` 65% | 3/1/3 | — |
 | **booking** | Appointments (calendar.appointment) | L3 → L4 | `███████░░░` 66% | 12/1/6 | EPIC-05 |
+| **deals** | CRM/Sales (crm.lead opportunities) | L4 → L4 | `███████░░░` 68% | 6/1/4 | — |
 | **returns** | Inventory returns / RMA | L2 → L4 | `███████░░░` 69% | 9/0/4 | — |
 | **pages** | Website (website.page) | L4 → L4 | `███████░░░` 70% | 5/0/3 | — |
 | **kb** | Knowledge / Helpdesk KB | L3 → L4 | `███████░░░` 71% | 3/2/1 | — |
 | **crm** | CRM (crm.lead, crm.stage) | L4 → L4 | `███████░░░` 72% | 8/1/3 | — |
-| **invoicing** | Invoicing (account.move) | L4 → L4 | `████████░░` 75% | 10/1/3 | — |
 | **products** | Sales / Inventory (product.template, product.product, sale.order.line) | L4 → L4 | `████████░░` 75% | 9/2/4 | EPIC-01 |
 | **hr** | Employees + Time Off + Attendances + Appraisals (hr.employee) | L3 → L4 | `████████░░` 76% | 15/0/5 | — |
-| **webinars** | Events (event.event) | L3 → L4 | `████████░░` 78% | 4/2/1 | — |
-| **live-support** | Livechat (im_livechat) | L3 → L4 | `████████░░` 79% | 4/1/1 | EPIC-07 |
 | **ecommerce** | Website eCommerce + Sales (website_sale, sale.order draft→sent→sale→cancel; see docs/parity/references/ecommerce-odoo.md) | L3 → L4 | `████████░░` 81% | 10/7/1 | — |
+| **invoicing** | Invoicing (account.move) | L4 → L4 | `████████░░` 83% | 11/0/3 | — |
+| **live-support** | Livechat (im_livechat) | L3 → L4 | `█████████░` 86% | 5/0/1 | EPIC-07 |
+| **webinars** | Events (event.event) | L3 → L4 | `█████████░` 89% | 6/0/1 | — |
 | **companies** | Contacts (res.partner companies) | L4 → L4 | `█████████░` 93% | 11/0/1 | — |
 | **approvals** | Approvals + studio approval rules | L3 → L4 | `██████████` 100% | 9/0/0 | — |
 | **customer360** | Contacts 360 view (partner timeline) | L3 → L4 | `██████████` 100% | 2/0/0 | — |
@@ -97,7 +97,6 @@ category: reference
 | Module | Capability | Status | Epic |
 |---|---|---|---|
 | contact-center | Presence-aware routing → queue → escalation | partial | EPIC-07 |
-| invoicing | Recurring/subscription invoices | partial | — |
 | manufacturing | Work centers + routing operations | partial | EPIC-08 |
 | reconciliation | Live bank feeds (Plaid/Tink/GoCardless) | missing | — |
 
