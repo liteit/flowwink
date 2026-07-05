@@ -91,7 +91,7 @@
       "weight": 2,
       "epic": "EPIC-01",
       "verify": "uom_categories + uoms (factor-to-reference) tables, products.sales_uom_id, convert_uom() (migration 20260610170000); admin UI = SalesUomSelect.tsx wired into ProductDialog.tsx (per-product sales-unit picker, save button calls products.sales_uom_id update)",
-      "notes": "Agent surface BUILT 2026-07-05 (was the remaining dual-surface gap): manage_uom skill (db:uoms via the generic CRUD engine — uoms + uom_categories whitelisted in GENERIC_CRUD_TABLES) + convert_uom skill (rpc:convert_uom) registered in products-module skillSeeds with discover-then-convert instructions; artifact regenerated. Earlier state: conversion + cross-category guard scratch-verified (g/kg/t), SalesUomSelect admin UI shipped. Stays partial pending deploy (agent-execute redeploy for the whitelist + skills sync) and a Stage-3 live conversion run through the new skills."
+      "notes": "LIVE RE-VERIFY 2026-07-05 FOUND DEEPER DRIFT: manage_uom (new skill) works but returned an EMPTY uoms table, and convert_uom failed with 'function not found in schema cache' — the entire UoM foundation (seed categories/units + convert_uom function) from back-dated migration 20260610170000 never reached rzhj (same ledger-skip class as the July-4 batch; the tables exist but function + seeds are missing). Fix: forward-dated re-emit 20260705170000_reemit-uom-foundation.sql (convert_uom + idempotent seeds). Agent surface (manage_uom + convert_uom skills, generic-CRUD whitelist) is deployed and confirmed reachable. Stays partial pending the re-emit migration applying + a live conversion run."
     },
     {
       "id": "partial_shipments",

@@ -51,10 +51,10 @@
       "id": "availability",
       "name": "Agent availability/presence",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 1,
-      "verify": "useSupportPresence.tsx realtime presence + status dropdown in LiveSupportPage",
-      "notes": "Skill surface BUILT 2026-07-05 (was the remaining dual-surface gap — UI presence existed): list_support_agents skill (db:support_agents via the generic CRUD engine, table whitelisted) returns status + current/max load per agent, with instructions to pair with support_assign_conversation for transfer decisions; artifact regenerated (358 skills). Stays partial pending deploy (agent-execute whitelist) + skills sync + a Stage-3 live list run.",
+      "verify": "LIVE VERIFIED on rzhj 2026-07-05 (Stage-3): list_support_agents action=list returned the agent roster with status/current_conversations/max_conversations/last_seen_at — the availability picture for transfer decisions. UI side (useSupportPresence realtime + status dropdown) already shipped. useSupportPresence.tsx realtime presence + status dropdown in LiveSupportPage",
+      "notes": "Dual-surface complete. Two follow-ups filed from the live run (not blocking): (1) SECURITY — the generic-CRUD select * initially exposed voice_sip_password in the skill response; fixed same day with a per-table column mask in agent-execute (pending redeploy). (2) Data quality: an agent row shows current_conversations=24 vs max 5 — historical counter drift from paths that assigned without incrementing/decrementing symmetrically.",
       "epic": "EPIC-07"
     }
   ]
