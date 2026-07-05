@@ -3902,8 +3902,9 @@ async function executeFormsAction(
     const { submission_id } = args as any;
     if (!submission_id) throw new Error('submission_id is required');
     const { data, error } = await supabase.from('form_submissions')
-      .select('*').eq('id', submission_id).single();
+      .select('*').eq('id', submission_id).maybeSingle();
     if (error) throw new Error(`Get submission failed: ${error.message}`);
+    if (!data) return { found: false, error: `Submission ${submission_id} not found` };
     return data;
   }
 
@@ -4473,8 +4474,9 @@ async function executeNewsletterAction(
       const id = newsletter_id;
       if (!id) throw new Error('newsletter_id required for get');
       const { data, error } = await supabase.from('newsletters')
-        .select('*').eq('id', id).single();
+        .select('*').eq('id', id).maybeSingle();
       if (error) throw new Error(`Get newsletter failed: ${error.message}`);
+      if (!data) return { found: false, error: `Newsletter ${id} not found` };
       return data;
     }
 
@@ -4755,8 +4757,9 @@ async function executeOrdersAction(
 
     if (action === 'get' && order_id) {
       const { data: order, error } = await supabase.from('orders')
-        .select('*').eq('id', order_id).single();
+        .select('*').eq('id', order_id).maybeSingle();
       if (error) throw new Error(`Get order failed: ${error.message}`);
+      if (!order) return { found: false, error: `Order ${order_id} not found` };
       const { data: items } = await supabase.from('order_items')
         .select('id, product_name, quantity, price_cents').eq('order_id', order_id);
       return { ...order, items: items || [] };
@@ -5657,8 +5660,9 @@ async function executeBlogPostsManagement(
     if (post_id) query = query.eq('id', post_id);
     else if (slug) query = query.eq('slug', slug);
     else throw new Error('post_id or slug required');
-    const { data, error } = await query.single();
+    const { data, error } = await query.maybeSingle();
     if (error) throw new Error(`Get post failed: ${error.message}`);
+    if (!data) return { found: false, error: `Blog post not found (${post_id ? 'id ' + post_id : 'slug ' + slug})` };
     return data;
   }
 
@@ -5757,8 +5761,9 @@ async function executeBookingsManagement(
 
   if (action === 'get' && booking_id) {
     const { data, error } = await supabase.from('bookings')
-      .select('*').eq('id', booking_id).single();
+      .select('*').eq('id', booking_id).maybeSingle();
     if (error) throw new Error(`Get booking failed: ${error.message}`);
+    if (!data) return { found: false, error: `Booking ${booking_id} not found` };
     return data;
   }
 
@@ -7510,8 +7515,9 @@ async function executeDbAction(
         const { purchase_order_id } = args as any;
         if (!purchase_order_id) throw new Error('purchase_order_id required');
         const { data: po, error } = await supabase.from('purchase_orders')
-          .select('*, vendors(name, email), purchase_order_lines(*)').eq('id', purchase_order_id).single();
+          .select('*, vendors(name, email), purchase_order_lines(*)').eq('id', purchase_order_id).maybeSingle();
         if (error) throw new Error(`Get PO failed: ${error.message}`);
+        if (!po) return { found: false, error: `Purchase order ${purchase_order_id} not found` };
         return po;
       }
 
