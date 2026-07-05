@@ -66,8 +66,8 @@
       "odoo": true,
       "status": "partial",
       "weight": 3,
-      "verify": "subscription-billing-cron (due manual subs → invoice) + generate_subscription_invoice skill + subscriptions.next_invoice_date/billing_interval",
-      "notes": "Verify-first 2026-06-12: engine already exists for invoice-billed (manual) subscriptions — audit 'missing' was stale. Remaining: proration (P1.1), card-provider recurring is Stripe-native."
+      "verify": "ENGINE LIVE-VERIFIED on rzhj 2026-07-05 (Stage-3): create_manual_subscription (19900 SEK/month) → generate_subscription_invoice produced SUB-20260705-16078 with exact tax math (19900+25% = 24875) and advanced next_invoice_date one month (2026-07-05 → 2026-08-05); cancel_manual_subscription clean. Mechanism: subscription-billing-cron (due manual subs → invoice) + generate_subscription_invoice skill + subscriptions.next_invoice_date/billing_interval",
+      "notes": "LIVE VERIFICATION FOUND A REAL BUG 2026-07-05: generate_subscription_invoice was NOT idempotent — an immediate second call created a DUPLICATE invoice for the same period without advancing next_invoice_date (double-billing risk on the agent/skill path; the cron filters on due date but the RPC had no guard). Also the next date was advanced from CURRENT_DATE rather than the due date, so late runs shifted the billing anniversary. Both fixed in forward-dated 20260705150000_fix-subscription-invoice-idempotency.sql (due-guard refuses when next_invoice_date is in the future; advance now bases on next_invoice_date) + skill instructions document the one-call-per-period contract. Stays partial pending deploy + live re-verify of the guard (same bar as credit_notes' cumulative guard). Remaining after that: proration (P1.1); card-provider recurring is Stripe-native. Test data cleaned (subscription cancelled, both invoices cancelled)."
     },
     {
       "id": "credit_notes",
