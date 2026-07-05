@@ -145,15 +145,15 @@ serve(async (req) => {
       chats,
       webinars,
     ] = await Promise.all([
-      fetchByLeadOrEmail("deals", "id, title, amount, stage, status, created_at, updated_at", null),
+      fetchByLeadOrEmail("deals", "id, stage, value_cents, expected_close, lead_id, product_id, created_at, updated_at", null),
       fetchByLeadOrEmail(
         "invoices",
-        "id, invoice_number, total, status, issue_date, due_date, created_at",
+        "id, invoice_number, total_cents, status, issue_date, due_date, created_at",
         "customer_email",
       ),
       fetchByLeadOrEmail(
         "quotes",
-        "id, quote_number, total, status, valid_until, created_at",
+        "id, quote_number, total_cents, status, valid_until, created_at",
         "customer_email",
       ),
       fetchByLeadOrEmail(
@@ -165,7 +165,7 @@ serve(async (req) => {
       email
         ? (await admin
             .from("orders")
-            .select("id, order_number, total, status, fulfillment_status, created_at")
+            .select("id, order_number, total_cents, status, fulfillment_status, created_at")
             .eq("customer_email", email)).data ?? []
         : [],
       email
@@ -177,7 +177,7 @@ serve(async (req) => {
       email
         ? (await admin
             .from("subscriptions")
-            .select("id, plan_name, status, current_period_end, created_at")
+            .select("id, product_name, status, current_period_end, created_at")
             .eq("customer_email", email)).data ?? []
         : [],
       leadId
