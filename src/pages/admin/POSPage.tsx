@@ -17,6 +17,7 @@ import {
 } from '@/hooks/usePOS';
 import { Plus, Trash2, Receipt, Banknote, CreditCard, Smartphone, Search, X } from 'lucide-react';
 import { format } from 'date-fns';
+import { GiftCardsTab } from '@/components/admin/pos/GiftCardsTab';
 
 function fmtMoney(cents: number, currency = 'SEK') {
   return `${(cents / 100).toFixed(2)} ${currency}`;
@@ -159,6 +160,7 @@ export default function POSPage() {
               <TabsTrigger value="register">Register</TabsTrigger>
               <TabsTrigger value="session">Session</TabsTrigger>
               <TabsTrigger value="history">History</TabsTrigger>
+              <TabsTrigger value="gift-cards">Gift Cards</TabsTrigger>
             </TabsList>
 
             {/* Register / sale */}
@@ -406,6 +408,11 @@ export default function POSPage() {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Gift Cards */}
+            <TabsContent value="gift-cards">
+              <GiftCardsTab />
             </TabsContent>
           </Tabs>
         )}
