@@ -41,6 +41,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ReconciliationRulesPanel } from '@/components/admin/reconciliation/ReconciliationRulesPanel';
+import { ReconciliationReportPanel } from '@/components/admin/reconciliation/ReconciliationReportPanel';
 
 const STATUS_COLORS: Record<BankTxStatus, string> = {
   unmatched: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
@@ -52,7 +54,7 @@ const STATUS_COLORS: Record<BankTxStatus, string> = {
 type ImportFormat = 'csv' | 'camt053' | 'sie' | 'image';
 
 export default function ReconciliationPage() {
-  const [tab, setTab] = useState<'transactions' | 'reconciliation' | 'imports' | 'accounts'>('transactions');
+  const [tab, setTab] = useState<'transactions' | 'reconciliation' | 'rules' | 'report' | 'imports' | 'accounts'>('transactions');
   const [statusFilter, setStatusFilter] = useState<BankTxStatus | 'all'>('unmatched');
   const [accountFilter, setAccountFilter] = useState<string>('all');
   const [importFormat, setImportFormat] = useState<ImportFormat>('csv');
@@ -270,10 +272,16 @@ export default function ReconciliationPage() {
           <TabsList>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
             <TabsTrigger value="reconciliation">Reconciliation</TabsTrigger>
+            <TabsTrigger value="rules">Rules</TabsTrigger>
+            <TabsTrigger value="report">Report</TabsTrigger>
             <TabsTrigger value="imports">Import history</TabsTrigger>
             <TabsTrigger value="accounts">Bank accounts</TabsTrigger>
           </TabsList>
         </Tabs>
+
+        {tab === 'rules' && <ReconciliationRulesPanel />}
+        {tab === 'report' && <ReconciliationReportPanel />}
+
 
         {tab === 'transactions' && (
           <>
