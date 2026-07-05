@@ -52,7 +52,7 @@ const STATUS_COLORS: Record<BankTxStatus, string> = {
 type ImportFormat = 'csv' | 'camt053' | 'sie' | 'image';
 
 export default function ReconciliationPage() {
-  const [tab, setTab] = useState<'transactions' | 'reconciliation' | 'imports' | 'accounts'>('transactions');
+  const [tab, setTab] = useState<'transactions' | 'reconciliation' | 'rules' | 'report' | 'imports' | 'accounts'>('transactions');
   const [statusFilter, setStatusFilter] = useState<BankTxStatus | 'all'>('unmatched');
   const [accountFilter, setAccountFilter] = useState<string>('all');
   const [importFormat, setImportFormat] = useState<ImportFormat>('csv');
