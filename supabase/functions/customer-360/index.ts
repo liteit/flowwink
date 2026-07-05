@@ -145,15 +145,15 @@ serve(async (req) => {
       chats,
       webinars,
     ] = await Promise.all([
-      fetchByLeadOrEmail("deals", "id, title, amount, stage, status, created_at, updated_at", null),
+      fetchByLeadOrEmail("deals", "id, stage, value_cents, expected_close, lead_id, product_id, created_at, updated_at", null),
       fetchByLeadOrEmail(
         "invoices",
-        "id, invoice_number, total, status, issue_date, due_date, created_at",
+        "id, invoice_number, total_cents, status, issue_date, due_date, created_at",
         "customer_email",
       ),
       fetchByLeadOrEmail(
         "quotes",
-        "id, quote_number, total, status, valid_until, created_at",
+        "id, quote_number, total_cents, status, valid_until, created_at",
         "customer_email",
       ),
       fetchByLeadOrEmail(
@@ -165,7 +165,7 @@ serve(async (req) => {
       email
         ? (await admin
             .from("orders")
-            .select("id, order_number, total, status, fulfillment_status, created_at")
+            .select("id, order_number, total_cents, status, fulfillment_status, created_at")
             .eq("customer_email", email)).data ?? []
         : [],
       email
@@ -177,7 +177,7 @@ serve(async (req) => {
       email
         ? (await admin
             .from("subscriptions")
-            .select("id, plan_name, status, current_period_end, created_at")
+            .select("id, product_name, status, current_period_end, created_at")
             .eq("customer_email", email)).data ?? []
         : [],
       leadId
@@ -238,9 +238,9 @@ serve(async (req) => {
         id: `deal-${d.id}`,
         ts: d.created_at,
         kind: "deal",
-        title: d.title,
-        amount: d.amount,
-        status: d.stage || d.status,
+        title: `Deal ${d.id.slice(0, 8)}`,
+        amount: (d.value_cents ?? 0) / 100,
+        status: d.stage,
         href: `/admin/deals`,
       });
     }
@@ -250,7 +250,7 @@ serve(async (req) => {
         ts: o.created_at,
         kind: "order",
         title: `Order ${o.order_number || o.id.slice(0, 8)}`,
-        amount: o.total,
+        amount: (o.total_cents ?? 0) / 100,
         status: o.status,
         href: `/admin/orders`,
       });
@@ -261,7 +261,7 @@ serve(async (req) => {
         ts: i.created_at,
         kind: "invoice",
         title: `Invoice ${i.invoice_number || i.id.slice(0, 8)}`,
-        amount: i.total,
+        amount: (i.total_cents ?? 0) / 100,
         status: i.status,
         href: `/admin/invoicing`,
       });
@@ -272,7 +272,7 @@ serve(async (req) => {
         ts: q.created_at,
         kind: "quote",
         title: `Quote ${q.quote_number || q.id.slice(0, 8)}`,
-        amount: q.total,
+        amount: (q.total_cents ?? 0) / 100,
         status: q.status,
         href: `/admin/quotes`,
       });
@@ -302,7 +302,7 @@ serve(async (req) => {
         id: `sub-${s.id}`,
         ts: s.created_at,
         kind: "subscription",
-        title: s.plan_name || "Subscription",
+        title: s.product_name || "Subscription",
         status: s.status,
         href: `/admin/subscriptions`,
       });
@@ -342,15 +342,15 @@ serve(async (req) => {
       arr.reduce((acc, row) => acc + (Number(row[k]) || 0), 0);
     const kpis = {
       lifetime_value:
-        sum(orders, "total") + sum(invoices.filter((i: any) => i.status === "paid"), "total"),
+        (sum(orders, "total_cents") + sum(invoices.filter((i: any) => i.status === "paid"), "total_cents")) / 100,
       open_deals_value: sum(
-        deals.filter((d: any) => !["won", "lost", "closed"].includes((d.stage || d.status || "").toLowerCase())),
-        "amount",
-      ),
+        deals.filter((d: any) => !["won", "lost", "closed", "closed_won", "closed_lost"].includes((d.stage || "").toLowerCase())),
+        "value_cents",
+      ) / 100,
       open_invoices_value: sum(
         invoices.filter((i: any) => ["sent", "overdue", "draft"].includes(i.status)),
-        "total",
-      ),
+        "total_cents",
+      ) / 100,
       open_tickets: tickets.filter((t: any) => !["closed", "resolved"].includes(t.status)).length,
       total_orders: orders.length,
       total_invoices: invoices.length,
