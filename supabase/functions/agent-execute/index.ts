@@ -8265,6 +8265,8 @@ const GENERIC_CRUD_TABLES = new Set([
   'quotes',
   // Pricelists (Odoo-style versioned pricing)
   'pricelists', 'pricelist_items',
+  // Units of measure (per-category, factor-to-reference; conversion via convert_uom RPC)
+  'uoms', 'uom_categories',
   // P2P tolerance policies
   'tolerance_policies',
   // O2D — carriers, shipments, returns/RMA
