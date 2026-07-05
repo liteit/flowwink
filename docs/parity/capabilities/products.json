@@ -87,11 +87,11 @@
       "id": "uom",
       "name": "Multiple units of measure",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 2,
       "epic": "EPIC-01",
-      "verify": "uom_categories + uoms (factor-to-reference) tables, products.sales_uom_id, convert_uom() (migration 20260610170000); admin UI = SalesUomSelect.tsx wired into ProductDialog.tsx (per-product sales-unit picker, save button calls products.sales_uom_id update)",
-      "notes": "LIVE RE-VERIFY 2026-07-05 FOUND DEEPER DRIFT: manage_uom (new skill) works but returned an EMPTY uoms table, and convert_uom failed with 'function not found in schema cache' — the entire UoM foundation (seed categories/units + convert_uom function) from back-dated migration 20260610170000 never reached rzhj (same ledger-skip class as the July-4 batch; the tables exist but function + seeds are missing). Fix: forward-dated re-emit 20260705170000_reemit-uom-foundation.sql (convert_uom + idempotent seeds). Agent surface (manage_uom + convert_uom skills, generic-CRUD whitelist) is deployed and confirmed reachable. Stays partial pending the re-emit migration applying + a live conversion run."
+      "verify": "LIVE E2E VERIFIED on rzhj 2026-07-05 (Stage-3, after re-emit 20260705170000 applied): convert_uom skill through the full chain (gateway /rest/execute → agent-execute → RPC) returned 2.5 for 2500 g→kg; direct RPC also verified 1500 kg→t = 1.5 and cross-category (g→Unit) correctly REJECTED ('Cannot convert between UoMs in different categories'); manage_uom list returned the seeded catalog (Unit ref + Weight: kg ref / g 0.001 / t 1000). Mechanism: uom_categories + uoms (factor-to-reference) + convert_uom(p_qty,p_from_uom,p_to_uom) (re-emit migration 20260705170000) + manage_uom (db:uoms) / convert_uom (rpc:) skills; admin UI = SalesUomSelect.tsx wired into ProductDialog.tsx (per-product sales-unit picker → products.sales_uom_id)",
+      "notes": "Drift saga closed 2026-07-05: the original back-dated 20260610170000 was silently skipped by the migration ledger (tables landed, function + seeds did not), AND the first convert_uom skill seed had wrong param names (p_quantity/p_from_uom_id/… vs the real p_qty/p_from_uom/p_to_uom — exposed by the PGRST202 hint). Both fixed: forward-dated re-emit + corrected tool_definition, deployed via Lovable, re-verified live end-to-end. Remaining depth (not blocking done): purchase-vs-sales UoM per product and automatic line-level conversion on orders — Odoo converts qty on order lines; FlowWink stores a per-product sales UoM + exposes conversion as a skill/RPC."
     },
     {
       "id": "partial_shipments",
