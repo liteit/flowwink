@@ -342,15 +342,15 @@ serve(async (req) => {
       arr.reduce((acc, row) => acc + (Number(row[k]) || 0), 0);
     const kpis = {
       lifetime_value:
-        sum(orders, "total") + sum(invoices.filter((i: any) => i.status === "paid"), "total"),
+        (sum(orders, "total_cents") + sum(invoices.filter((i: any) => i.status === "paid"), "total_cents")) / 100,
       open_deals_value: sum(
-        deals.filter((d: any) => !["won", "lost", "closed"].includes((d.stage || d.status || "").toLowerCase())),
-        "amount",
-      ),
+        deals.filter((d: any) => !["won", "lost", "closed", "closed_won", "closed_lost"].includes((d.stage || "").toLowerCase())),
+        "value_cents",
+      ) / 100,
       open_invoices_value: sum(
         invoices.filter((i: any) => ["sent", "overdue", "draft"].includes(i.status)),
-        "total",
-      ),
+        "total_cents",
+      ) / 100,
       open_tickets: tickets.filter((t: any) => !["closed", "resolved"].includes(t.status)).length,
       total_orders: orders.length,
       total_invoices: invoices.length,
