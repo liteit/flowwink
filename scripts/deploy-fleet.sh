@@ -40,6 +40,13 @@ ref_for() {
   node -e "const f=require('$FLEET_JSON');const i=f.instances.find(x=>x.name==='$1');if(!i){console.error('unknown instance: $1');process.exit(1)}process.stdout.write(i.ref)"
 }
 
+# db.<ref>.supabase.co resolves IPv6-only — unreachable from IPv4-only networks.
+# Use the instance's Supavisor pooler (user postgres.<ref>, port 6543) when
+# fleet.json declares one. PGPW is read from the environment, not interpolated.
+db_url_for() {
+  node -e "const f=require('$FLEET_JSON');const i=f.instances.find(x=>x.name==='$1');if(!i){console.error('unknown instance: $1');process.exit(1)}const pw=process.env.PGPW;process.stdout.write(i.poolerHost?('postgresql://postgres.'+i.ref+':'+pw+'@'+i.poolerHost+':6543/postgres'):('postgresql://postgres:'+pw+'@db.'+i.ref+'.supabase.co:5432/postgres'))"
+}
+
 deploy_one() {
   local name="$1" ref
   ref="$(ref_for "$name")"
@@ -52,7 +59,8 @@ deploy_one() {
     echo "✗ PGPW not set — export the DB password for $name and re-run." >&2
     return 1
   fi
-  local dburl="postgresql://postgres:${PGPW}@db.${ref}.supabase.co:5432/postgres"
+  local dburl
+  dburl="$(db_url_for "$name")"
 
   echo "── 1/4  Migrations (db push, idempotent) ──────────────────"
   supabase db push --project-ref "$ref"

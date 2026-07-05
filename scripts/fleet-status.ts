@@ -20,7 +20,14 @@ const pw = process.env.PGPW;
 if (!pw) { console.error('Set PGPW (DB password)'); process.exit(1); }
 
 const ROOT = resolve(import.meta.dir, '..');
-const fleet = JSON.parse(readFileSync(resolve(ROOT, 'scripts', 'fleet.json'), 'utf8')).instances as Array<{ name: string; ref: string; fork?: boolean }>;
+const fleet = JSON.parse(readFileSync(resolve(ROOT, 'scripts', 'fleet.json'), 'utf8')).instances as Array<{ name: string; ref: string; fork?: boolean; poolerHost?: string }>;
+
+// db.<ref>.supabase.co resolves IPv6-only; on IPv4-only networks those
+// connections are refused. Prefer the instance's Supavisor pooler when
+// fleet.json declares one (user postgres.<ref>, port 6543).
+const dbUrl = (inst: { ref: string; poolerHost?: string }) => inst.poolerHost
+  ? `postgresql://postgres.${inst.ref}:${pw}@${inst.poolerHost}:6543/postgres`
+  : `postgresql://postgres:${pw}@db.${inst.ref}.supabase.co:5432/postgres`;
 const artifact = JSON.parse(readFileSync(resolve(ROOT, 'supabase', 'seed', 'module-skills.json'), 'utf8'));
 const codeModules: Array<{ moduleId: string; skills: any[] }> = artifact.modules;
 
@@ -35,7 +42,7 @@ interface Row { name: string; fork: boolean; total: number; exposed: number; mal
 
 async function check(inst: { name: string; ref: string; fork?: boolean }): Promise<Row> {
   const row: Row = { name: inst.name, fork: !!inst.fork, total: 0, exposed: 0, malformed: 0, drift: 0, brokenRpc: [], brokenEdge: [] };
-  const c = new Client({ connectionString: `postgresql://postgres:${pw}@db.${inst.ref}.supabase.co:5432/postgres` });
+  const c = new Client({ connectionString: dbUrl(inst) });
   try { await c.connect(); } catch (e) { row.error = (e as Error).message; return row; }
   try {
     const skills = (await c.query(`select name, handler, description, tool_definition from agent_skills where enabled and mcp_exposed`)).rows;
