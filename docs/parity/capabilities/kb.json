@@ -24,10 +24,10 @@
       "id": "search",
       "name": "Search",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 1,
-      "verify": "public search in src/pages/KnowledgeBasePage.tsx",
-      "notes": "Skill surface BUILT 2026-07-05 (was the gap): search_kb skill (module:kb, action=search) matches title/question/answer server-side with the same reach as the public KnowledgeBasePage search box — published-only by default, featured-then-views ranking; new 'search' action in the KB handler in agent-execute. DEPLOY STATUS 2026-07-05 evening: agent-execute redeployed (the search action IS live in the handler), but Lovable hand-seeded the search_kb agent_skills row with the WRONG handler — a live gateway call reached agent-execute and came back with the recursive 400 body {'error':'skill_id or skill_name required'}, the signature of an edge:agent-execute-style handler re-invoking agent-execute without skill_name, instead of handler module:kb (the seeded description 'Search KB articles by keyword.' also doesn't match the repo seed, confirming hand-seeding). Handler FIXED 2026-07-05 late evening via Lovable MCP query_database (row updated to module:kb + repo tool_definition/instructions); the very next live run then exposed defect #10: 'column kb_articles.answer does not exist' — the search action selected/filtered on 'answer' but the schema column is answer_text (manage_kb_article mirrors body into answer_text + answer_json). Fixed in agent-execute (select + or-filter → answer_text). Stays partial pending one agent-execute redeploy + a Stage-3 live search returning results. Public UI search remains client-side substring (server FTS is the remaining depth item)."
+      "verify": "Stage-3 live 2026-07-06: search_kb over the MCP REST gateway on rzhj returned ranked published articles (first run caught+fixed a schema bug — the action queried kb_articles.answer; columns are answer_text/answer_json, fixed in 4c9b9ad0, agent-execute redeployed, re-run green). Public search in src/pages/KnowledgeBasePage.tsx.",
+      "notes": "search_kb skill (module:kb, action=search) matches title/question/answer_text server-side — published-only by default, featured-then-views ranking. Public UI search remains client-side substring (server FTS is the remaining depth item)."
     },
     {
       "id": "public_portal",

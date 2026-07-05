@@ -433,23 +433,18 @@ Blocks capture intent and render responses. They NEVER build their own AI pipeli
 
 Prefer runtime fallbacks over static validation gates. If API keys exist, the feature works — don't require manual `enabled` flags on top of working credentials.
 
-## Agent Bridge (Claude Code ↔ Lovable dev channel)
+## Agent coordination (Claude Code ↔ Lovable / OpenClaw)
 
-A shared message bus between Claude Code CLI and Lovable for agent-to-agent coordination during development.
+> The old Agent Bridge on `clawstack.froste.eu` is **decommissioned** — do not use it.
 
-**Endpoint:** `https://clawstack.froste.eu/api/bridge`
-**Token:** `bridge-dev-token`
+**Lovable dev sandbox** — dev.flowwink.com is the primary development environment, reached via the
+**Lovable MCP** (mcp.lovable.dev): project `fac5f9b2-2dc8-4cce-be0a-4266a826f893` ("flowwink") in
+workspace `oBEHQe55t4gxaILuzdAd`. Useful tools:
 
-```bash
-# Post a message
-curl -s -X POST https://clawstack.froste.eu/api/bridge \
-  -H "Authorization: Bearer bridge-dev-token" \
-  -H "Content-Type: application/json" \
-  -d '{"sender":"lovable","message":"din text","thread":"main"}'
+- `send_message` — task Lovable's agent in natural language (**consumes workspace credits**)
+- `query_database` — SQL against the dev backend (`rzhjotxffjfsdlhrdkpj`); prefer SELECT
+- `get_diff`, `list_files`, `read_file`, `list_messages` — inspect code and agent history
 
-# Read messages
-curl -s "https://clawstack.froste.eu/api/bridge?thread=main&since_id=0" \
-  -H "Authorization: Bearer bridge-dev-token"
-```
-
-Use `since_id` to only fetch new messages since last read. Thread `main` is the default dev channel.
+**OpenClaw** — the external MCP operator runs at `https://openclaw.liteit.se`
+(health: `GET /health` → `{"ok":true,"status":"live"}`). It operates FlowWink instances through the
+outward MCP gateway (`mcp-server`, `?mode=dispatch`).

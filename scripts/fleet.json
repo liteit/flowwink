@@ -1,9 +1,9 @@
 {
-  "_comment": "Known FlowWink fleet — name → Supabase project ref. No secrets here; the DB password is passed via the PGPW env var at runtime. Add new sites as they are provisioned.",
+  "_comment": "Known FlowWink fleet — name → Supabase project ref. No secrets here; the DB password is passed via the PGPW env var at runtime. Add new sites as they are provisioned. poolerHost = the instance's Supavisor pooler (user postgres.<ref>, port 6543) — preferred over db.<ref>.supabase.co, which resolves IPv6-only and is unreachable from IPv4-only networks. Look it up via GET https://api.supabase.com/v1/projects/<ref>/config/database/pooler.",
   "instances": [
-    { "name": "autoversio", "ref": "trpejhoieysrwiuhskkm", "fork": true },
-    { "name": "liteit", "ref": "cdwpqcevbcbqxhycsqhm" },
-    { "name": "demo", "ref": "lcztuuaxulxivhbnkcpm" },
-    { "name": "www", "ref": "hebytraibjmbqntsljph" }
+    { "name": "autoversio", "ref": "trpejhoieysrwiuhskkm", "fork": true, "poolerHost": "aws-1-eu-north-1.pooler.supabase.com" },
+    { "name": "liteit", "ref": "cdwpqcevbcbqxhycsqhm", "poolerHost": "aws-0-eu-west-1.pooler.supabase.com" },
+    { "name": "demo", "ref": "lcztuuaxulxivhbnkcpm", "poolerHost": "aws-1-eu-north-1.pooler.supabase.com" },
+    { "name": "www", "ref": "hebytraibjmbqntsljph", "poolerHost": "aws-1-eu-north-1.pooler.supabase.com" }
   ]
 }

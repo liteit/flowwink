@@ -9,7 +9,7 @@ category: reference
 > **GENERATED FILE.** Run `bun run scripts/parity-report.ts` to refresh.
 > Edit `docs/parity/capabilities/<module>.json` to change scores.
 
-**Benchmarked modules:** 55  ·  **Mean parity:** 62%  ·  **Differentiators (no Odoo benchmark):** 10  ·  **Unscored:** 4
+**Benchmarked modules:** 55  ·  **Mean parity:** 63%  ·  **Differentiators (no Odoo benchmark):** 10  ·  **Unscored:** 4
 
 ## Scored modules
 
@@ -56,9 +56,9 @@ category: reference
 | **deals** | CRM/Sales (crm.lead opportunities) | L4 → L4 | `███████░░░` 68% | 6/1/4 | — |
 | **returns** | Inventory returns / RMA | L2 → L4 | `███████░░░` 69% | 9/0/4 | — |
 | **pages** | Website (website.page) | L4 → L4 | `███████░░░` 70% | 5/0/3 | — |
-| **kb** | Knowledge / Helpdesk KB | L3 → L4 | `███████░░░` 71% | 3/2/1 | — |
 | **crm** | CRM (crm.lead, crm.stage) | L4 → L4 | `███████░░░` 72% | 8/1/3 | — |
 | **hr** | Employees + Time Off + Attendances + Appraisals (hr.employee) | L3 → L4 | `████████░░` 76% | 15/0/5 | — |
+| **kb** | Knowledge / Helpdesk KB | L3 → L4 | `████████░░` 79% | 4/1/1 | — |
 | **products** | Sales / Inventory (product.template, product.product, sale.order.line) | L4 → L4 | `████████░░` 80% | 10/1/4 | — |
 | **ecommerce** | Website eCommerce + Sales (website_sale, sale.order draft→sent→sale→cancel; see docs/parity/references/ecommerce-odoo.md) | L3 → L4 | `████████░░` 81% | 10/7/1 | — |
 | **invoicing** | Invoicing (account.move) | L4 → L4 | `████████░░` 83% | 11/0/3 | — |
