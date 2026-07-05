@@ -149,6 +149,7 @@ export default function InventoryPage() {
           <TabsTrigger value="pickpack">Pick & Pack</TabsTrigger>
           <TabsTrigger value="receiving">Receiving</TabsTrigger>
           <TabsTrigger value="moves">Movements</TabsTrigger>
+          <TabsTrigger value="cyclecount">Cycle Count</TabsTrigger>
           <TabsTrigger value="reorder">Reorder & MRP</TabsTrigger>
           <TabsTrigger value="locations">Locations</TabsTrigger>
           <TabsTrigger value="untracked">Untracked ({untrackedProducts.length})</TabsTrigger>
