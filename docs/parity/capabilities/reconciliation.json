@@ -72,10 +72,10 @@
       "id": "rule_engine",
       "name": "Configurable matching rules",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 2,
-      "verify": "reconciliation_rules table + apply_reconciliation_rules (priority match on counterparty/reference/description, contains|equals|regex) + manage_reconciliation_rule (migration 20260614060000)",
-      "notes": "Built + scratch-Postgres verified 2026-06-14: Spotify→6540 (contains), El→5020 (regex), first-priority-wins, idempotent. Pending: rule admin UI + Stage-3 before done.",
+      "verify": "Dual-surface DONE 2026-07-06. Skill: Stage-3 live over MCP gateway — manage_reconciliation_rule create→list (rule 'Google Ads → 6541' priority 100 contains GOOGLE→6541), apply_reconciliation_rules ran (tagged 0, no unmatched tx). UI: ReconciliationRulesPanel.tsx (Rules tab in ReconciliationPage) + useReconciliationRules hook — priority-ordered list, create/edit dialog (match_field/type/pattern/account), 'Run rules now'. reconciliation_rules table + apply_reconciliation_rules RPC.",
+      "notes": "Backend verified 2026-06-14; admin UI built + Stage-3 live-verified 2026-07-06 (commit 87089ad3).",
       "epic": "EPIC-08"
     },
     {
@@ -106,10 +106,10 @@
       "id": "reconciliation_report",
       "name": "Reconciliation summary report",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 1,
-      "verify": "reconciliation_report(from,to) — matched/unmatched count+cents + rule_suggested_count (migration 20260614060000)",
-      "notes": "Built + verified 2026-06-14 (3 tx: 1 matched 2500, 2 unmatched, 2 rule-suggested). Pending: report UI + Stage-3 before done.",
+      "verify": "Dual-surface DONE 2026-07-06. Skill: reconciliation_report(from,to) live over gateway → matched/unmatched/rule_suggested counts+cents. UI: ReconciliationReportPanel.tsx (Report tab) + useReconciliationReport hook — from/to pickers (default current month), 4 KPI cards (total/matched/unmatched/rule-suggested), SEK amounts, matched green / unmatched red.",
+      "notes": "Backend verified 2026-06-14; admin UI built + Stage-3 live-verified 2026-07-06 (commit 87089ad3).",
       "epic": "EPIC-08"
     }
   ]
