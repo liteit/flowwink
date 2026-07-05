@@ -270,10 +270,16 @@ export default function ReconciliationPage() {
           <TabsList>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
             <TabsTrigger value="reconciliation">Reconciliation</TabsTrigger>
+            <TabsTrigger value="rules">Rules</TabsTrigger>
+            <TabsTrigger value="report">Report</TabsTrigger>
             <TabsTrigger value="imports">Import history</TabsTrigger>
             <TabsTrigger value="accounts">Bank accounts</TabsTrigger>
           </TabsList>
         </Tabs>
+
+        {tab === 'rules' && <ReconciliationRulesPanel />}
+        {tab === 'report' && <ReconciliationReportPanel />}
+
 
         {tab === 'transactions' && (
           <>
