@@ -41,6 +41,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ReconciliationRulesPanel } from '@/components/admin/reconciliation/ReconciliationRulesPanel';
+import { ReconciliationReportPanel } from '@/components/admin/reconciliation/ReconciliationReportPanel';
 
 const STATUS_COLORS: Record<BankTxStatus, string> = {
   unmatched: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
