@@ -1137,3 +1137,27 @@ rail is 6%. Template-content refinement — adjust template data, no code.
 **Remaining for the daily-use MVP:** batch-book the remaining 16 fixture events via the UI, vendor-default
 learning loop verification, then the VAT-close round (later). The CFO pitch is now demonstrably true:
 *underlag in → agent proposes → human approves → posted, voucher-numbered, balanced.*
+
+### Autonomous booking milestone (2026-07-06, same day)
+
+Magnus turned HIL off for booking and challenged the agent to book autonomously. Findings:
+
+- **The queue is a window, not a gate.** `propose_bookkeeping` is read-only; the actual HIL gate is
+  `agent_skills.requires_staging` on `manage_journal_entry` (checked at agent-execute:246).
+  `trust_level=notify` stays on — everything is still logged/notified post-hoc.
+- **With `requires_staging=false`, OpenClaw booked the entire auto lane in one run:** 14 events
+  (confidence ≥95) booked directly, **no approvals** — the 2 sub-threshold events (Kontorsgiganten 80%,
+  Dustin 75%) correctly LEFT in the queue for human review. Trial balance balanced after.
+  Final state: **15/17 fixture events posted, 15 distinct vouchers, 2 in queue.**
+- **Template-gap loop closed the same hour:** Magnus's review of low-confidence rows revealed 3 missing
+  standard templates (Insättning till skattekonto, El & energi, Kontorsfika & frukt — all present in
+  Bokio's standard library). Added to the SE pack (data-only; guardrails caught wrong account
+  names/codes → fixed to chart: 1630/5020/7290). Distribution went 10 auto/6 propose → **14 auto/2
+  propose/0 escalate, the new matches at 100%**.
+- **One transient voucher-number collision** during the rapid autonomous run, self-recovered by retry —
+  the assign_voucher_number row lock held (no duplicate vouchers). Watch under batch load.
+
+**The autonomy contract that emerges (the CFO pitch, now demonstrated):** the agent books the ≥95 lane
+autonomously; 70–95 waits in the queue for a human click; <70 escalates toward template creation. HIL
+is a per-skill dial (`requires_staging`), not an architecture change — turning it off/on changes nothing
+about visibility (audit trail, voucher chain, linked bank events, post-hoc notify all remain).
