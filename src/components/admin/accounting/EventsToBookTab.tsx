@@ -18,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown, Loader2, Inbox } from 'lucide-react';
+import { ChevronDown, Loader2, Inbox, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type ProposalStatus = 'auto' | 'propose' | 'escalate';
