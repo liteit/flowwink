@@ -1184,3 +1184,23 @@ VAT position + deadline, Estimated corporate tax 20.6% (the running transparent 
 Period status + pending approvals. **Every card = standalone component + own hook**
 (`components/admin/accounting/dashboard/`) so the best cards can be lifted into FlowWink's global
 dashboard/analytics later without rework. Accounting-intimate first; platform borrows the summary.
+
+### Approval-system convergence decision (Magnus caught it, 2026-07-07)
+
+Magnus stopped a parallel-system drift: FlowWink has TWO approval stores — `approval_requests`
+(approvals module: policy rules, escalation chains `chain_id`, `required_role` — approves *business
+decisions* about entities) and `pending_operations` (staging: one-shot gate + `_approved_operation_id`
+re-invoke handshake — approves *agent executions*). Different machines, no data duplication — but
+building separate UI surfaces per store (tabs on /admin/approvals AND in accounting) would have created
+parallel UX systems. Cancelled.
+
+**Decided path:**
+1. **Now (MVP): build no more approval UI.** Keep only the module-local accounting Approvals tab
+   (with bookkeeping rendering). Do NOT touch the staging handshake — it is a live wire contract for
+   external agents.
+2. **Later — real unification: staging becomes a SOURCE of the approvals module.** A gated agent
+   operation creates an `approval_request` with `entity_type='agent_operation'`. Agent gates then get
+   the existing policy machinery for free: escalation chains, roles, amount thresholds ("agent bookings
+   over 50k SEK require CFO role"). One policy engine, one inbox; /admin/approvals becomes THE page.
+   Same reuse-the-framework move as bookkeeping intake reusing signals.
+3. "Gated" badge/filter in the skills panel = config visibility, orthogonal, still wanted.
