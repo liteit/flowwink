@@ -1066,3 +1066,37 @@ Sweden climbs toward level 3; a fresh country starts easily at level 1 and climb
 flagship depth (proves the model + serves Liteit); Germany is open to anyone who knows the fine print.
 The only thing that keeps this true is the same law: **the interface must be clean enough that a German
 accountant-dev fills the pack without touching the engine.**
+
+---
+
+## SCOPE DECISION (Magnus, 2026-07-06): stop at ledger + RR/BR + SIE→ÅR-online
+
+The chosen v1 scope line — **not a different architecture, just where on the depth ladder we stop:**
+**FlowWink is the ledger + agentic bookkeeping + reports (RR Resultatrapport / BR Balansrapport), and we
+hand off the statutory year-end via SIE export to a specialist (ÅR online / the accountant).** We do NOT
+build ÅR/INK2/SRU/authority-submission in v1.
+
+**Why this is the right cut (not a retreat):**
+- The part we drop is exactly the deep, liability-heavy, country-specific tier (L2–L3). Hand it to
+  specialists who already own it and carry the responsibility.
+- **SIE is the free universal handoff** — SIE4 adapter exists, Swedish de-facto standard, every year-end
+  tool imports it; interop-only by design (anti-lock-in).
+- **Sharpens the value prop** to the agentic *daily* bookkeeping (our differentiation), not the once-a-year
+  filing (where the accountant adds value).
+- **De-risks localization scaling** (directly answers the "does this scale?" worry): a new country needs
+  only the L1 pack + a standard export. The deepest country-specific tier is outsourced — "build England"
+  never means building Companies House/CT600; you export and hand off.
+
+**The honest tradeoff:** we give up the "the year closes itself *inside* FlowWink" GTM wedge. Mitigate:
+- Keep a **transparent RR/BR + result & tax preview** inside FlowWink (cheap — just reads the ledger) so
+  the user sees where they land continuously; then a clean SIE handoff for the formal ÅR.
+- **Do NOT delete the in-house ÅR generator — park it as an opt-in plugin on the roadmap.** The wedge play
+  stays available; we're just not gating v1 on it.
+
+**What becomes load-bearing:** the **SIE export must be complete and rock-solid** — it's now the product
+boundary. Full bundle: chart + opening balances + all verifications + dimensions/tags. Handoff quality =
+whether the user trusts the cut.
+
+**Net:** the pragmatic v1 line, fully consistent with the depth-ladder model, and it makes the generic-BOS
+story *stronger* — it outsources precisely the tier that was hardest to scale. Build rounds 1–2 (agentic
+batch bookkeeping + review queue + RR/BR + VAT) are unaffected and remain the priority.
