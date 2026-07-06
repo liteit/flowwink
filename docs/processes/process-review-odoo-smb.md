@@ -55,7 +55,7 @@ often a Swedish/EU SMB hits the need:
 
 | Need (Odoo app) | Where it would live | Honest status | Recommendation |
 |---|---|---|---|
-| **VAT/tax filing** (Odoo Accounting localizations) | Record-to-Report | Bookkeeping + SIE export exist; no moms declaration, AGI, K10 | Keep positioning as "operational finance + export to your accountant" — this is a conscious boundary, but say it in every finance doc, not just record-to-report |
+| **VAT/tax filing** (Odoo Accounting localizations) | Record-to-Report | Bookkeeping + SIE export exist; no moms declaration, AGI, K10 | Keep positioning as "operational finance + export to your accountant" — but the SE plugin now has a reference implementation to borrow from: [erp-mafia/accounted](https://github.com/erp-mafia/accounted) (SKV 4700 rutor, NE-bilaga, INK2/SRU, 7-year archive). Full map + borrow plan: record-to-report.md § The Swedish statutory tail |
 | **Bulk email / campaigns** (Email Marketing + Marketing Automation) | Lead-to-Customer / Content-to-Conversion | Newsletter sends exist; no audience segments, no unsubscribe-list management, no drip builder | The biggest *marketing* gap vs Odoo. `lead_nurture_sequence` is a start; a segments + consent + drip triangle would close both this and the GDPR row |
 | **GDPR consent center** | Lead-to-Customer | Missing (scorecard: `consent_center`) | Every EU SMB asks. Pairs naturally with the bulk-email work — do them together |
 | **Appointment resources** (Odoo Appointments) | Book-to-Meet | Availability is per service, not per employee/room; no buffers, no waiting list | Documented honestly already; per-staff calendars is the single most-requested upgrade for clinics/salons |
