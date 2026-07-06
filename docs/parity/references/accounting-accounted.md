@@ -288,6 +288,14 @@ their conversational UX — a far stronger position than airledger (which had to
 chat/STT). The job is: make FlowWink's MCP ledger surface *excellent* for horizontal agents to operate.
 Horizontal agent + horizontal BOS ledger — never a vertical agent.
 
+**Final priorities (Magnus, 2026-07-06):**
+1. **External horizontal agents are the priority** — optimize the MCP ledger surface for them.
+2. **Focus = the FlowWink BoS ledger** = the company's **private data**, **self-hosted OR in cloud**
+   (single-tenant; the customer owns/hosts it). Data sovereignty is part of the pitch.
+3. **Voice/STT: supported, not focus.** FlowWink *does* ship STT, so a user can talk to FlowWink's own
+   operator (FlowPilot) directly — a supported convenience, NOT the moat. Don't over-invest there; the
+   frontier agents carry the conversational load. Keep STT working, keep building the ledger + skills.
+
 ## SRU / NE-bilaga / INK2 — deliverable format (reference: srumaker.se)
 
 The concrete deliverable for the Skatteverket statutory reports is **the SRU file-transfer format**,
