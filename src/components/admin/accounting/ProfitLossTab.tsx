@@ -4,6 +4,7 @@ import { useAccountingPreferences } from '@/hooks/useSiteSettings';
 import { useBrandingSettings } from '@/hooks/useSiteSettings';
 import { useAccountingRealtime } from '@/hooks/useAccountingRealtime';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useFiscalYear } from './FiscalYearContext';
 
 export function ProfitLossTab() {
   useAccountingRealtime();
