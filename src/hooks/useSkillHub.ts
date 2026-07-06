@@ -81,7 +81,13 @@ export function useUpsertSkill() {
         handler: skill.handler,
         enabled: skill.enabled ?? true,
         tool_definition: skill.tool_definition ?? {},
-        ...(skill.trust_level ? { trust_level: skill.trust_level } : {}),
+        // Unify trust_level with requires_staging — the flag agent-execute reads to
+        // gate a skill behind the staged-approval (HIL) envelope. Writing only
+        // trust_level left requires_staging stale, so admins would flip a skill
+        // to "notify" but it kept staging. Keep them in lockstep.
+        ...(skill.trust_level
+          ? { trust_level: skill.trust_level, requires_staging: skill.trust_level === 'approve' }
+          : {}),
       };
 
       if (skill.id) {
