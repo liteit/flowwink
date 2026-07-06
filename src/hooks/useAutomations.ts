@@ -116,6 +116,15 @@ export function useRunAutomationNow() {
       });
 
       if (error) throw error;
+
+      // Staged envelope (requires_staging skill): the skill did NOT run —
+      // a pending operation was created that needs approval. Don't count it
+      // as a run and don't toast success (sweep finding #C1).
+      const payload = (data as any)?.result ?? data;
+      if (payload?.staged === true) {
+        return { staged: true, operation_id: payload.operation_id } as any;
+      }
+
       const errMsg = (data as any)?.error ?? null;
 
       await supabase
@@ -130,9 +139,13 @@ export function useRunAutomationNow() {
       if (errMsg) throw new Error(errMsg);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY });
-      toast.success('Automation executed');
+      if (data?.staged === true) {
+        toast.info('Skill is gated — a pending operation was created and needs approval before it runs.');
+      } else {
+        toast.success('Automation executed');
+      }
     },
     onError: (err: Error) => toast.error(err.message || 'Run failed'),
   });

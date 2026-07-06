@@ -86,20 +86,27 @@ describe('Skill handler integrity guardrails', () => {
   });
 
   // ── db:<table> must be reachable through the generic-CRUD allowlist ──────
+  // …or through an EXPLICIT switch case in the db dispatcher (custom handlers
+  // like db:propose_bookkeeping are cased before the generic-CRUD fallthrough,
+  // so they never touch the allowlist at runtime).
   describe('db: handlers', () => {
     const allow = genericCrudTables();
     const aliases = tableAliases();
+    const explicitCases = new Set(
+      [...AGENT_EXECUTE_SRC.matchAll(/case '([a-z0-9_]+)':/g)].map((x) => x[1]),
+    );
     const dbSkills = SEEDS.filter((s) => s.handler!.startsWith('db:'));
 
     for (const s of dbSkills) {
       const table = s.handler!.slice('db:'.length);
-      it(`[${s.name}] table "${table}" is in GENERIC_CRUD_TABLES (or aliased)`, () => {
+      it(`[${s.name}] table "${table}" is in GENERIC_CRUD_TABLES (or aliased/explicit case)`, () => {
         expect(
-          allow.has(table) || aliases.has(table),
+          allow.has(table) || aliases.has(table) || explicitCases.has(table),
           `Skill "${s.name}" (module ${s.moduleId}) uses db:${table} but the ` +
-            `table is not in agent-execute's GENERIC_CRUD_TABLES allowlist — ` +
+            `table is not in agent-execute's GENERIC_CRUD_TABLES allowlist, ` +
+            `TABLE_ALIASES, or an explicit switch case — ` +
             `every call returns "Generic CRUD is not enabled". Add '${table}' ` +
-            `to the allowlist in supabase/functions/agent-execute/index.ts.`,
+            `to the allowlist or add a case in supabase/functions/agent-execute/index.ts.`,
         ).toBe(true);
       });
     }

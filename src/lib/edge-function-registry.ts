@@ -49,7 +49,7 @@ export const DEFAULT_PLAN: SupabasePlan = 'free';
  * the `shared` helper dir, and `tests`). Guardrail-tested against the filesystem.
  */
 export const ALL_EDGE_FUNCTIONS: readonly string[] = [
-  'a2a', 'agent-card', 'agent-execute', 'agent-operate', 'agent-reason', 'ai-task',
+  'a2a', 'accounting-vat-return-se', 'agent-card', 'agent-execute', 'agent-operate', 'agent-reason', 'ai-task',
   'analyze-brand', 'automation-dispatcher', 'blog-rss', 'browser-fetch',
   'chat-completion', 'chat-stt', 'check-secrets', 'company-profile', 'composio-proxy',
   'composio-webhook', 'consultant-checkin', 'contact-center', 'contact-finder', 'content-api',

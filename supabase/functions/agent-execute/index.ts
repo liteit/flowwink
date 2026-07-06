@@ -313,12 +313,23 @@ serve(async (req) => {
       // Verify approval before continuing
       const { data: op } = await supabase
         .from('pending_operations')
-        .select('status, skill_name')
+        .select('status, skill_name, expires_at')
         .eq('id', approvedOpId)
         .maybeSingle();
       if (!op || op.status !== 'approved' || op.skill_name !== skill.name) {
         return new Response(JSON.stringify({
           error: 'pending operation not approved or skill mismatch',
+          operation_id: approvedOpId,
+        }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      // Approval windows are finite: an approved-but-unexecuted operation past
+      // expires_at must NOT execute with stale context (sweep finding #B5).
+      if (op.expires_at && new Date(op.expires_at).getTime() < Date.now()) {
+        await supabase.from('pending_operations')
+          .update({ status: 'expired' })
+          .eq('id', approvedOpId);
+        return new Response(JSON.stringify({
+          error: `pending operation expired at ${op.expires_at} — re-stage the skill call to get a fresh approval`,
           operation_id: approvedOpId,
         }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
@@ -6768,6 +6779,28 @@ async function executeDbAction(
 
       if (!entryLines || entryLines.length === 0) {
         throw new Error('lines array is required for create action');
+      }
+
+      // Explicit period-lock check (sweep finding #B3). The DB trigger
+      // guard_journal_entries_period() is the backstop; checking here gives
+      // agents a clear, actionable error instead of a raw trigger exception.
+      const effectiveDate = entry_date || new Date().toISOString().split('T')[0];
+      {
+        const d = new Date(effectiveDate);
+        if (!isNaN(d.getTime())) {
+          const { data: per } = await supabase
+            .from('accounting_periods')
+            .select('status')
+            .eq('fiscal_year', d.getFullYear())
+            .eq('period_month', d.getMonth() + 1)
+            .maybeSingle();
+          if (per && per.status !== 'open') {
+            throw new Error(
+              `Accounting period ${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')} is ${per.status} — ` +
+              `entries cannot be posted into a ${per.status} period. Use reopen_accounting_period (admin) or book in the current open period.`
+            );
+          }
+        }
       }
 
       // Validate balance
