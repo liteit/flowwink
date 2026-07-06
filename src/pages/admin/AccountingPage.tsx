@@ -69,6 +69,7 @@ const MORE: { group: string; items: { id: TabId; label: string }[] }[] = [
     group: 'Operations',
     items: [
       { id: 'pending', label: 'Approvals' },
+      { id: 'events_to_book', label: 'Händelser att bokföra' },
       { id: 'templates', label: 'Templates' },
       { id: 'export', label: 'Export' },
       { id: 'settings', label: 'Settings' },
