@@ -140,6 +140,7 @@ export default function AccountingPage() {
             </DropdownMenu>
           </div>
 
+          <TabsContent value="overview"><OverviewTab onNavigate={(id) => ALL_IDS.has(id as TabId) && setTab(id as TabId)} /></TabsContent>
           <TabsContent value="journal"><JournalTab /></TabsContent>
           <TabsContent value="ledger"><LedgerTab /></TabsContent>
           <TabsContent value="pnl"><ProfitLossTab /></TabsContent>
