@@ -10,9 +10,9 @@ interface VatReturn {
 }
 
 export function VatCard() {
+  const { year } = useFiscalYear();
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  const month = year === now.getFullYear() ? now.getMonth() + 1 : 12;
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['dash', 'vat-return', year, month],
