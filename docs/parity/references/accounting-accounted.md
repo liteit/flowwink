@@ -103,3 +103,22 @@ INK2/SRU files. If FlowWink nails this end-to-end for Liteit, it nails it for a 
 **Build shape:** a `skatteuträkning` engine (small, on top of resultat före skatt + year-versioned
 tax rate + justeringar) → transparent calc view → INK2/SRU + ÅR generators. All year-versioned data
 in the SE pack; the presentation + file export is the product, the forms are the wire format.
+
+### The AB year-end TIMELINE and SEQUENCE (shapes the flow — Magnus, 2026-07-06)
+
+For a calendar-year AB (close 2025-12-31), the real-world sequence FlowWink must model:
+
+1. **Year closes** (2025-12-31) — books closed in FlowWink → RR + BR final.
+2. **~4 months later: bolagsstämma** (AGM). The **ÅR (built from FlowWink's RR + BR)** is presented
+   there. → so the **ÅR is the FIRST deliverable** and it must be ready for the stämma.
+3. **Signed ÅR → Bolagsverket** (after the stämma).
+4. **THEN: INK2 → Skatteverket** — submitted **via the SRU files if you have them** (the digital
+   route; SRU is what makes it file-based instead of paper).
+5. **Deadline: before 1 August** (digital INK2 filing for a Dec-31 fiscal year).
+
+Implications for the build:
+- **ÅR first, INK2/SRU second** — model them as two ordered stages of one year-end flow, not one blob.
+- FlowWink should surface a **year-end checklist / deadline tracker**: close → ÅR (stämma →
+  Bolagsverket) → INK2/SRU (Skatteverket, before Aug 1). This is the L4/L5 record-to-report UX.
+- The stämma needs a **presentable ÅR** (K2 layout) generated straight from the booked RR/BR — that's
+  the artefact the board signs; everything downstream (Bolagsverket filing, INK2/SRU) hangs off it.
