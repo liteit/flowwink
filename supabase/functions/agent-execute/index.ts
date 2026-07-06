@@ -6781,6 +6781,24 @@ async function executeDbAction(
         throw new Error('lines array is required for create action');
       }
 
+      // Idempotency guard (litmus finding, 2026-07-07): booking a bank event
+      // twice double-books the ledger. If the event is already linked to a
+      // journal entry, refuse — the link IS the idempotency key. Retries after
+      // transport failures hit this instead of creating duplicates.
+      const bankTxIdForGuard = (args as any).bank_transaction_id;
+      if (bankTxIdForGuard) {
+        const { data: existingTx } = await supabase.from('bank_transactions')
+          .select('journal_entry_id').eq('id', bankTxIdForGuard).maybeSingle();
+        if (existingTx?.journal_entry_id) {
+          return {
+            already_booked: true,
+            entry_id: existingTx.journal_entry_id,
+            bank_transaction_id: bankTxIdForGuard,
+            message: 'This bank event is already booked (linked to a journal entry). No new entry was created.',
+          };
+        }
+      }
+
       // Explicit period-lock check (sweep finding #B3). The DB trigger
       // guard_journal_entries_period() is the backstop; checking here gives
       // agents a clear, actionable error instead of a raw trigger exception.
