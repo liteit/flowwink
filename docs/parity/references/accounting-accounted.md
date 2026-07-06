@@ -56,3 +56,24 @@ Extension system.
 
 Each of these becomes a capability spec (skill + admin UI) under the parity program. Related:
 docs/processes/record-to-report.md (the accounting process this feeds).
+
+## SRU / NE-bilaga / INK2 — deliverable format (reference: srumaker.se)
+
+The concrete deliverable for the Skatteverket statutory reports is **the SRU file-transfer format**,
+NOT paper blanketter. Reference UX: **srumaker.se** — fill in figures → get **two files** →
+upload to Skatteverket's *Filöverföring* in the declaration service. Standard for ~10 years.
+
+The two files:
+- **INFO.SRU** — identity block (`#DATABESKRIVNING`, `#MEDIELEV`, org/personnummer, name, contact).
+- **BLANKETTER.SRU** — `#BLANKETT` records (e.g. `INK2`, `NE`) with `#UPPGIFT <field_code> <value>`
+  lines. The **field codes are the SRU codes** — yearly-versioned, published by bas.se
+  (SRU-kopplingar: BAS account → SRU code). This is the perishable data.
+
+**Architecture (confirms the locale-pack thesis):**
+- **Generic** = the two-file `.SRU` writer (INFO + BLANKETTER record format) — write once, country/year-agnostic mechanics.
+- **Year-versioned data in the pack** = `se/sru-2026.ts` (BAS account → SRU field code) + the form
+  field layout for NE / INK2. New year = add `sru-2027.ts`, no code change.
+
+**FlowWink's edge over srumaker.se:** srumaker makes the user *type in* the figures. FlowWink already
+**has the booked ledger** — the SRU files fall out of the existing journal automatically, and an
+**agent** can generate + file them. Book the year → get the two SRU files. That's the agentic record-to-report payoff.
