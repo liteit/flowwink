@@ -968,3 +968,29 @@ So a signal is either **underlag to interpret** (lane 1) or a **finished busines
 already booked by its own module pipeline). Same signal framework, same staged→post commit, no new edge
 functions — accounting just connects to the pipes the BOS already has. This is the intake half of the
 "agent does the work, you feed it underlag" pitch: the "feeding" is any existing signal channel.
+
+---
+
+## Backlog (later): a per-tenant signal-mapping layer ("n8n-style virtual layer")
+
+Magnus (2026-07-06): different companies receive signals differently (email receipts, bank API, Stripe,
+forwarded from another system), so we'll eventually want a **per-tenant mapping/routing layer** on top of
+the signals framework — a virtual orchestration layer, n8n-style: **source → normalize → function/skill.**
+This is an *authoring* layer, not a new engine — the building blocks already exist.
+
+Principles (so it doesn't become a mess of special cases):
+- **Canonical contracts are the waist.** Every source maps to the same internal event model
+  (`src/types/module-contracts.ts` Zod schemas). The mapping layer only translates "company A's odd
+  input" → canonical event; nothing downstream cares where it came from.
+- **Config/metadata-driven, never hardcoded** (same law as skill scoring) — a mapping is *data*, not an
+  `if`-statement.
+- **Skills = the nodes.** The MCP surface is already a function catalog, so the virtual layer wires
+  `signal → skill`. We already own `automation-dispatcher` / `event-dispatcher` / `agent_automations`,
+  and **n8n already exists as a provider** — so we can either build a light internal mapper OR delegate
+  the truly custom flows to a real n8n that calls our skills as nodes.
+- **Agent-authored wiring:** the agent can create/adjust the mappings itself ("this vendor always emails a
+  PDF → route to receipt-parsing") — self-service, not a consulting engagement. Same "agent does the
+  work" story, one layer up.
+
+Sequencing: **later** (after build rounds 1–2 — the batch bookkeeping + review queue). Captured so it
+isn't lost. Relates to the two-lane intake above and the existing signals framework.
