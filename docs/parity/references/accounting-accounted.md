@@ -1161,3 +1161,26 @@ Magnus turned HIL off for booking and challenged the agent to book autonomously.
 autonomously; 70–95 waits in the queue for a human click; <70 escalates toward template creation. HIL
 is a per-skill dial (`requires_staging`), not an architecture change — turning it off/on changes nothing
 about visibility (audit trail, voucher chain, linked bank events, post-hoc notify all remain).
+
+### Review-surface model + Overview dashboard (decisions, 2026-07-06 evening)
+
+**Two views, two questions (Magnus's clarification):**
+- **Events to book** = the bookkeeping-adapted review surface: *"what should be booked, and how?"*
+  (proposal, template, confidence, debit/credit). **The human's click here IS the approval** — when the
+  skill dial is on `approve`, the queue's Book action auto-approves the staged envelope in the same
+  click (no double gate). Trygghet mode = agent books nothing alone; every event waits for a click here.
+- **Approvals (PendingOperationsList)** = the generic safety net for ledger writes that do NOT come via
+  the queue (e.g. an external agent calling manage_journal_entry directly with custom lines). Booking
+  operations there are rendered *as bookings* (template + debit/credit table), not raw JSON.
+- The trust dial on the skill (approve ↔ info) is the master switch; UI bug fixed so the dial writes
+  BOTH `trust_level` and `requires_staging` (approve ⇒ staged; else ⇒ direct). Bootstrap resyncs never
+  touch either — the operator's dial survives. Fresh instances default to approve (ship-safe).
+- Honest trade-off, per Magnus: hard to be generic AND great — resolved by giving bookkeeping its
+  intimate surface while keeping the generic gate as fallback. Explainable.
+
+**Accounting Overview dashboard (new default tab):** answers "what needs me today?" — cards:
+Events-to-book count, **Agent activity** (the trust card: what agents booked this week), Result YTD,
+VAT position + deadline, Estimated corporate tax 20.6% (the running transparent tax preview),
+Period status + pending approvals. **Every card = standalone component + own hook**
+(`components/admin/accounting/dashboard/`) so the best cards can be lifted into FlowWink's global
+dashboard/analytics later without rework. Accounting-intimate first; platform borrows the summary.
