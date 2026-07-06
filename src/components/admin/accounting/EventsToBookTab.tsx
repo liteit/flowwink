@@ -18,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown, Loader2, Inbox } from 'lucide-react';
+import { ChevronDown, Loader2, Inbox, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type ProposalStatus = 'auto' | 'propose' | 'escalate';
@@ -93,10 +93,46 @@ export function EventsToBookTab() {
   const [templateOverrides, setTemplateOverrides] = useState<Record<string, string>>({});
   const [batchMode, setBatchMode] = useState(false);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [view, setView] = useState<'queue' | 'booked'>('queue');
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['events-to-book'],
     queryFn: () => invokeSkill<ProposalsResult>('propose_bookkeeping', {}),
+  });
+
+  const { data: bookedData, refetch: refetchBooked } = useQuery({
+    queryKey: ['events-booked'],
+    queryFn: async () => {
+      const { data: txs, error } = await supabase
+        .from('bank_transactions')
+        .select('id, transaction_date, amount_cents, counterparty, description, journal_entry_id')
+        .not('journal_entry_id', 'is', null)
+        .order('transaction_date', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      const entryIds = (txs ?? []).map((t: any) => t.journal_entry_id).filter(Boolean);
+      let entries: Record<string, any> = {};
+      if (entryIds.length) {
+        const { data: es } = await supabase
+          .from('journal_entries')
+          .select('id, voucher_series, voucher_number, description')
+          .in('id', entryIds);
+        entries = Object.fromEntries((es ?? []).map((e: any) => [e.id, e]));
+      }
+      return { rows: txs ?? [], entries };
+    },
+  });
+
+  const { data: bookedCount } = useQuery({
+    queryKey: ['events-booked-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('bank_transactions')
+        .select('id', { count: 'exact', head: true })
+        .not('journal_entry_id', 'is', null);
+      if (error) throw error;
+      return count ?? 0;
+    },
   });
 
   const proposals = data?.proposals ?? [];
@@ -141,9 +177,12 @@ export function EventsToBookTab() {
       }
       return first as { created: boolean; entry_id: string };
     },
-    onSuccess: () => {
-      toast.success('Booked');
+    onSuccess: (res: any) => {
+      const v = res?.entry?.voucher_number ?? res?.voucher_number;
+      toast.success(v ? `Booked — V${v}` : 'Booked');
       qc.invalidateQueries({ queryKey: ['events-to-book'] });
+      qc.invalidateQueries({ queryKey: ['events-booked'] });
+      qc.invalidateQueries({ queryKey: ['events-booked-count'] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -200,29 +239,65 @@ export function EventsToBookTab() {
         )}
       </div>
 
-      {/* Batch toggle */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Switch
-            id="batch-mode"
-            checked={batchMode}
-            onCheckedChange={(v) => setBatchMode(v)}
-          />
-          <Label htmlFor="batch-mode" className="text-sm text-muted-foreground">
-            Batch book
-          </Label>
-        </div>
-        {batchMode && autoCount > 0 && (
-          <Button
-            size="sm"
-            onClick={bookSelected}
-            disabled={bookMutation.isPending || batchTargets === 0}
+      {/* Segmented control + batch toggle */}
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div className="inline-flex rounded-md border border-border bg-card p-0.5">
+          <button
+            type="button"
+            onClick={() => setView('queue')}
+            className={cn(
+              'px-3 py-1.5 text-xs rounded-[5px] transition-colors',
+              view === 'queue'
+                ? 'bg-muted text-foreground'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
           >
-            {bookMutation.isPending && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
-            Book selected ({batchTargets})
-          </Button>
+            To book ({summary?.total ?? proposals.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setView('booked')}
+            className={cn(
+              'px-3 py-1.5 text-xs rounded-[5px] transition-colors',
+              view === 'booked'
+                ? 'bg-muted text-foreground'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            Booked ({bookedCount ?? 0})
+          </button>
+        </div>
+        {view === 'queue' && (
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="batch-mode"
+                checked={batchMode}
+                onCheckedChange={(v) => setBatchMode(v)}
+              />
+              <Label htmlFor="batch-mode" className="text-sm text-muted-foreground">
+                Batch book
+              </Label>
+            </div>
+            {batchMode && autoCount > 0 && (
+              <Button
+                size="sm"
+                onClick={bookSelected}
+                disabled={bookMutation.isPending || batchTargets === 0}
+              >
+                {bookMutation.isPending && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
+                Book selected ({batchTargets})
+              </Button>
+            )}
+          </div>
         )}
       </div>
+
+      {view === 'booked' ? (
+        <BookedList data={bookedData} />
+      ) : (
+      <>
+
 
       <div className="rounded-lg border border-border bg-card overflow-hidden">
         {isLoading ? (
@@ -330,9 +405,62 @@ export function EventsToBookTab() {
           <Loader2 className="h-3 w-3 animate-spin" /> Uppdaterar…
         </div>
       )}
+      </>
+      )}
     </div>
   );
 }
+
+function BookedList({ data }: { data: { rows: any[]; entries: Record<string, any> } | undefined }) {
+  const rows = data?.rows ?? [];
+  const entries = data?.entries ?? {};
+  if (rows.length === 0) {
+    return (
+      <div className="rounded-lg border border-border bg-card p-16 text-center">
+        <p className="text-sm text-muted-foreground">Nothing booked yet.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-lg border border-border bg-card overflow-hidden">
+      <div className="divide-y divide-border">
+        {rows.map((r) => {
+          const entry = entries[r.journal_entry_id];
+          const voucher = entry
+            ? `${entry.voucher_series ?? ''}${entry.voucher_number ?? ''}`
+            : '';
+          return (
+            <div
+              key={r.id}
+              className="px-5 py-4 flex items-center gap-4"
+            >
+              <div className="w-16 shrink-0 text-xs text-muted-foreground tabular-nums">
+                {fmtDate(r.transaction_date)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm text-foreground truncate">{r.counterparty || '—'}</div>
+                <div className="text-xs text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
+                  <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                  {voucher || 'Booked'}
+                  {entry?.description ? ` · ${entry.description}` : ''}
+                </div>
+              </div>
+              <div
+                className={cn(
+                  'w-28 shrink-0 text-right tabular-nums text-sm',
+                  r.amount_cents < 0 ? 'text-foreground' : 'text-emerald-700 dark:text-emerald-400',
+                )}
+              >
+                {fmtSek(r.amount_cents)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 
 function ProposalDetail({
   proposal,
@@ -357,7 +485,8 @@ function ProposalDetail({
   const isEscalate = p.status === 'escalate';
 
   return (
-    <div className="p-6 md:p-8 h-full flex flex-col">
+    <div className="p-6 md:p-8">
+
       <div className="mb-6">
         <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
           {new Date(p.transaction_date).toLocaleDateString('sv-SE', {
@@ -413,21 +542,19 @@ function ProposalDetail({
         )}
       </div>
 
-      <div className="mb-6">
+      <div className="mb-3 text-sm">
         {isEscalate ? (
-          <p className="text-sm text-foreground">
-            No template matched — pick one manually.
-          </p>
+          <p className="text-foreground">No template matched — pick one manually.</p>
         ) : (
-          <div className="text-sm">
+          <>
             <span className="text-muted-foreground">Template: </span>
             <span className="text-foreground">{effectiveTemplateName}</span>
             <span className="text-muted-foreground"> · {p.confidence}% confidence</span>
-          </div>
+          </>
         )}
       </div>
 
-      <div className="mt-auto flex flex-wrap items-center gap-2 pt-4 border-t border-border">
+      <div className="flex flex-wrap items-center gap-2">
         <Button onClick={onBook} disabled={isBooking || !effectiveTemplateId}>
           {isBooking && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
           Book
@@ -461,6 +588,7 @@ function ProposalDetail({
           Skip
         </Button>
       </div>
+
     </div>
   );
 }
