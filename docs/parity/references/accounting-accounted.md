@@ -183,6 +183,30 @@ Consequences:
 - So: earlier "the ÅR generator's input = SIE4" is only true for the *external-source* path. For a
   FlowWink-booked company it's ledger-direct; SIE is the bridge for everyone else.
 
+### SIE import = a full bundle that must be NORMALIZED to our canonical chart (Magnus, 2026-07-06)
+
+SIE is not just transactions — it carries a **whole chart of accounts** (#KONTO) plus verifications
+(#VER/#TRANS) plus opening/closing balances (#IB/#UB). So SIE import is not "dump transactions"; it's:
+
+**Parse SIE (chart + ver + trans + IB/UB) → RECONCILE the imported chart against FlowWink's canonical
+BAS chart → normalize everything to the reconciled accounts → write to the native ledger.**
+
+The reconciliation step:
+- Imported account matches a canonical BAS account by number → **1:1 map** (the common case).
+- Imported account is non-standard (e.g. cash on **1932** where our canonical is **1930**) → offer the
+  user the standard remap question: "use the system's 1930 for cash instead?" — remap to canonical, or
+  (advanced/överkurs) keep it as-is.
+- A fully custom chart that doesn't follow the BAS template = **överkurs, out of initial scope.**
+
+**Target-segment discipline (80/20):** the companies we go after first — simple SMBs on the standard
+BAS template, agent-adopters — have charts that are **mostly identity-mapped** (standard numbers).
+So the reconciliation is near-trivial for the 80%, and the **agent can do it automatically** (map the
+standard accounts, flag the few oddities for a one-click confirm). The remap UI is the edge-case escape
+hatch, not the main path — another agentic "it just works" moment.
+
+**CSV/TSV** exports from other systems are usually **transactions-only** (no chart) → lower value than
+SIE and lower priority. SIE is the real on-ramp precisely because it's the complete, chart-bearing bundle.
+
 ### GTM: the ÅR/year-end IS the adoption magnet (scope decision, 2026-07-06)
 
 The strategic question — is a basic "årsredovisning online" in scope? **Yes — it's likely the single
