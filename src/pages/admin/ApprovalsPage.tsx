@@ -323,9 +323,13 @@ function GatedSkillsPanel() {
 
   const updateTrust = useMutation({
     mutationFn: async ({ name, trust_level }: { name: string; trust_level: 'auto' | 'notify' | 'approve' }) => {
+      // trust_level and requires_staging are one dial to the user:
+      // approve = staged (HIL gate), anything else = direct execution.
+      // Keep them in lockstep — the runtime gates on requires_staging
+      // (system-sweep finding #A1, 2026-07-07).
       const { error } = await supabase
         .from('agent_skills')
-        .update({ trust_level })
+        .update({ trust_level, requires_staging: trust_level === 'approve' } as never)
         .eq('name', name);
       if (error) throw error;
     },

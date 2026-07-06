@@ -54,7 +54,10 @@ export function useGatedSkills() {
       const { data: skills, error: skillsError } = await supabase
         .from('agent_skills')
         .select('name, description, category, trust_level, requires_staging, mcp_exposed, enabled')
-        .in('trust_level', ['approve', 'notify'])
+        // Gated = trust-levelled OR runtime-staged. A skill can carry
+        // requires_staging=true with any trust_level — it must still show
+        // here (system-sweep finding #A2, 2026-07-07).
+        .or('trust_level.in.(approve,notify),requires_staging.eq.true')
         .order('trust_level', { ascending: false })
         .order('name', { ascending: true });
       if (skillsError) throw skillsError;

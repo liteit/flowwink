@@ -6182,7 +6182,11 @@ async function executeDbAction(
         const { data, error } = await supabase.from('bank_transactions')
           .select('id, transaction_date, amount_cents, currency, counterparty, reference, description, status, journal_entry_id')
           .is('journal_entry_id', null)
-          .neq('status', 'ignored')
+          // ONLY unclaimed events. status='matched'/'partial' means the
+          // reconciliation pipeline matched this tx to an invoice/expense —
+          // it will be (or was) booked by THAT pipeline; proposing it here
+          // would double-book (system-sweep finding #B1, 2026-07-07).
+          .eq('status', 'unmatched')
           .order('transaction_date', { ascending: false })
           .limit(Math.min(Number(limit) || 50, 200));
         if (error) throw new Error(`Load unbooked bank events failed: ${error.message}`);

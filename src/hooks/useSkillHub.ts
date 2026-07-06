@@ -24,9 +24,13 @@ export function useToggleSkill() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
+      // MCP invariant: mcp_exposed=true requires enabled=true. Disabling a
+      // skill must also unexpose it, or the MCP catalog advertises a tool
+      // that errors on call (system-sweep finding #A4, 2026-07-07).
+      const payload = enabled ? { enabled } : { enabled, mcp_exposed: false };
       const { error } = await supabase
         .from('agent_skills')
-        .update({ enabled })
+        .update(payload as never)
         .eq('id', id);
       if (error) throw error;
     },
@@ -40,9 +44,11 @@ export function useBulkToggleSkills() {
   return useMutation({
     mutationFn: async ({ ids, enabled }: { ids: string[]; enabled: boolean }) => {
       if (!ids.length) return;
+      // Same MCP invariant as useToggleSkill (finding #A4).
+      const payload = enabled ? { enabled } : { enabled, mcp_exposed: false };
       const { error } = await supabase
         .from('agent_skills')
-        .update({ enabled })
+        .update(payload as never)
         .in('id', ids);
       if (error) throw error;
     },
@@ -58,9 +64,12 @@ export function useToggleMcpExposed() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, mcp_exposed }: { id: string; mcp_exposed: boolean }) => {
+      // MCP invariant: exposing a skill implies enabling it — an exposed but
+      // disabled skill is an orphan tool (system-sweep finding #A3).
+      const payload = mcp_exposed ? { mcp_exposed, enabled: true } : { mcp_exposed };
       const { error } = await supabase
         .from('agent_skills')
-        .update({ mcp_exposed } as any)
+        .update(payload as never)
         .eq('id', id);
       if (error) throw error;
     },
