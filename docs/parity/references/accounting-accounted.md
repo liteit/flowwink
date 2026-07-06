@@ -1100,3 +1100,40 @@ whether the user trusts the cut.
 **Net:** the pragmatic v1 line, fully consistent with the depth-ladder model, and it makes the generic-BOS
 story *stronger* — it outsources precisely the tier that was hardest to scale. Build rounds 1–2 (agentic
 batch bookkeeping + review queue + RR/BR + VAT) are unaffected and remain the priority.
+
+---
+
+## BUILD ROUND 1 — SHIPPED & VERIFIED E2E (2026-07-06)
+
+The agentic batch-bookkeeping pipeline is live on dev and proven end-to-end by an external agent:
+
+**Built (one session):**
+- `propose_bookkeeping` skill (`db:propose_bookkeeping` in agent-execute, no new edge functions):
+  unbooked bank events → template ranking (same scorer as the booking path) → gross→net derivation →
+  proposed balanced debit/credit lines + confidence (auto ≥95 / propose ≥70 / escalate <70).
+- `bank_transactions.journal_entry_id` FK (migration, forward-dated) + booking link in
+  `manage_journal_entry` (pass `bank_transaction_id` → event leaves the queue).
+- **"Händelser att bokföra" tab** (Lovable, 3.5 credits, one shot): queue + split view, proposal table
+  (Konto|Debet|Kredit), Bokför / Byt mall / Hoppa över, "Bokför flera" batch mode, Bokio look.
+- Liteit-2025 fixture: 17 realistic bank events seeded on dev.
+
+**Verified by OpenClaw as external MCP agent (GLM-5.2):**
+1. 17 proposals — **11 auto / 6 propose / 0 escalate — ALL balanced** (Σdebet = Σkredit per proposal).
+2. Booking as external agent → **staged envelope** (trust layer engaged exactly as designed) →
+   admin `approve_pending_operation` → re-invoke with `_approved_operation_id` → **posted**.
+3. Posted entry V223 (`12fa074d…`): 5810 Biljetter 500 / 2640 Ingående moms 125 / 1930 kredit 625 —
+   gross→net math correct; `source=mcp`; linked to `liteit25-16`; **event left the queue (16 remain)**.
+4. Trial balance balanced before and after.
+
+**Found & fixed during the round (the collab loop working):** OpenClaw filed a HIGH finding within
+minutes — the manually-seeded `agent_skills` row lacked `mcp_exposed=true` (my INSERT omitted the
+column; `module-bootstrap.ts` sets it correctly for bundled seeds). Fixed on dev, OpenClaw resolved its
+own finding. **Lesson: when hand-seeding a skill row, copy ALL flag columns from a sibling row —
+or better, run the module bootstrap.**
+
+**Known tuning item (data, not pipeline):** the seeded `Resekostnader` template books 25% VAT; Swedish
+rail is 6%. Template-content refinement — adjust template data, no code.
+
+**Remaining for the daily-use MVP:** batch-book the remaining 16 fixture events via the UI, vendor-default
+learning loop verification, then the VAT-close round (later). The CFO pitch is now demonstrably true:
+*underlag in → agent proposes → human approves → posted, voucher-numbered, balanced.*
