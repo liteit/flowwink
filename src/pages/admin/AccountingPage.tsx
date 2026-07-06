@@ -166,6 +166,7 @@ export default function AccountingPage() {
           <TabsContent value="templates"><TemplatesTab /></TabsContent>
           <TabsContent value="export"><ExportTab /></TabsContent>
           <TabsContent value="settings"><SettingsTab /></TabsContent>
+          </FiscalYearProvider>
         </Tabs>
       </AdminPageContainer>
     </AdminLayout>
