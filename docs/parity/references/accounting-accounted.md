@@ -235,6 +235,28 @@ human dictates (stämma/vinstdisposition, accruals, corrections). Both land in t
 approve → posted flow. Lane 2 is what makes the *close* and the *whole year-end* conversational —
 "vi höll stämma, godkänn dispositionen" → the books close themselves.
 
+### Prior-art / reference: airledger (Magnus's own MVP — reuse it)
+
+`~/Code/github/airledger` ("Air Ledger — AI-Driven Bokföring") is Magnus's working MVP of exactly this
+agentic-bookkeeping pipeline — **his own IP, fully portable** (no license issue). It de-risks the build:
+the whole "talk to the agent → it books" mechanism is already designed and running. Reference
+architecture to lift/adapt (React/TS/Supabase, same stack):
+- **chat-assistant edge fn with a MULTI-AGENT split**: `booking-agent`, `advisory-agent`,
+  `reporting-agent`, `dynamic-agent` — routed by intent. Maps to lane-2 conversational bookkeeping.
+- **The proven pipeline (both files ~380 lines):** `classifyIntent(msg, templateNames)` → extracts
+  `matched_template_hint` + `extracted_data` (amount/counterparty) → **`matchTemplateWithCandidates`**
+  scores against the template library (**exact hint = 0.95 confidence**, partial, candidates) with
+  amount-based overrides + warning rules → **propose ("tolkar det som **<template>**") → confirm →
+  save** (`use_transaction_template` / `save_general_transaction` / `save_opening_balance`).
+- **This IS the confidence-gate + propose/confirm loop** I described — already built. It maps 1:1 onto
+  FlowWink's `suggest_accounting_template` + staged→approve→posted flow.
+- Also there: `analyze-bank-statement` (lane 1 feed), `analyze-receipt` (PDF/photo signal), `voice-to-text`,
+  opening-balance handling with auto-motkonto (1930), follow-up suggestions after a booking.
+
+**Takeaway:** FlowWink's agentic-bookkeeping build is NOT greenfield — it's porting airledger's proven
+intent→match→propose→confirm→book pipeline onto FlowWink's native ledger + skills. Biggest de-risk in
+the whole accounting roadmap.
+
 ## SRU / NE-bilaga / INK2 — deliverable format (reference: srumaker.se)
 
 The concrete deliverable for the Skatteverket statutory reports is **the SRU file-transfer format**,
