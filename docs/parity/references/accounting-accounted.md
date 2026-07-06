@@ -139,6 +139,35 @@ minimal 4-step wizard FlowWink should mirror:
 This config lives on the company/locale-pack binding, drives moms period + booking recognition +
 opening balances. Small, high-value onboarding build; makes the whole stack "just work" per company.
 
+## THE core differentiation: AGENTIC bookkeeping (not template-assisted manual)
+
+Key insight from the Bokio walkthrough (Magnus, 2026-07-06): Bokio does the right *first* thing — a
+**queue of events to book (todo list)** — but then makes the **human open EACH verification, SEARCH
+for a template, and confirm the accounts**. Batch-booking the whole queue doesn't work (no automatic
+match). So despite the template assist, **a human still books verification-by-verification.** That is
+**NOT agentic bookkeeping** — it's manual bookkeeping with training wheels (Bokio's real aim is to
+*educate* the small-business owner).
+
+**FlowWink's differentiation = actual agentic bookkeeping:**
+- The agent takes the **whole queue** and **classifies + books every event in a batch** — it does the
+  account-selection + VAT + template-matching that Bokio makes the human do per verification. It uses
+  the BAS chart, accounting templates, counterparty/description patterns, and prior bookings.
+- The human's role flips from "book each one" to **"review the batch / handle only the low-confidence
+  exceptions."** Same "saker att göra" surface — but the agent empties it, not the user.
+- FlowWink already has the pieces: the staged-booking flow (create → staged → approve → posted,
+  double-entry enforced) + `suggest_accounting_template` + `record_accounting_correction`. Agentic
+  booking = run classification over the queue and drive that flow in batch.
+
+**Correction model = rättelse genom OMBOKNING (reversal), never edit/delete.** If a posted verification
+is wrong, you **reverse it** (a counter-entry) when discovered and **re-book it correctly** — the
+audit trail is preserved (Bokföringslagen). `record_accounting_correction` is the seed. This is ALSO
+why transaction **immutability is deferred but consistent**: posted entries are immutable; corrections
+are new reversing entries, not edits. The agent can even *detect* likely mis-bookings and propose the
+reversal+re-book.
+
+**Positioning line:** Bokio/Dooer assist a human doing the books; **FlowWink's agent does the books,
+the human reviews.** That's the wedge — and it's what makes the free agentic year-end credible.
+
 ## THE MVP: prove the integrated year, end to end (Magnus, 2026-07-06)
 
 **Priority decision:** the MVP is proving the **whole integrated process on one company for one year**,
