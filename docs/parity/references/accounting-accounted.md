@@ -403,6 +403,32 @@ across the skepticism. The "händelser att bokföra" queue is agent-filled but h
 (accept / edit / reject each proposal). This is the FOURTH surface (human GUI) alongside MCP /
 FlowChat / FlowPilot — and the one that earns trust.
 
+### Agent-AUDITABLE: the auditor runs their OWN agent over MCP (Magnus, 2026-07-06)
+
+The closing symmetry of the MCP thesis. If a company runs **agentic bookkeeping**, then the **auditor
+(revisor)** doesn't import a SIE or log in — they **connect their own agent to the company's FlowWink
+MCP surface from outside, read-scoped, and it verifies everything**: double-entry integrity, sample →
+*full* voucher checks, trace to underlag, re-derive VAT/tax, confirm period locks, reconcile. Same
+ledger, same MCP surface, different scope.
+
+- **Company's agent BOOKS** (over MCP / FlowPilot / GUI). **Auditor's agent VERIFIES** (external,
+  read-scoped, over MCP). Two agents, one ledger.
+- **Already PROVEN, not theoretical:** OpenClaw already audits FlowWink over MCP today and filed real
+  defects (the beta_test_findings loop). The auditor use case *is* that, formalized: a read-scoped
+  `api_keys` key (scopes already exist) + the audit-read skills that already exist (`accounting_reports`,
+  Audit Trail, `list_voucher_gaps`, `reconciliation_report`, ledger/entry reads).
+- **Step-change in audit quality:** the auditor's agent checks **100%**, not a sample. That's both a
+  better audit and a **selling point** — auditors prefer auditable systems and can recommend FlowWink
+  to their clients. FlowWink isn't just *agent-operated*, it's **agent-auditable**.
+- **Raises the value of the deferred immutability + audit trail:** an auditor's agent wants proof that
+  posted entries weren't silently changed — corrections-by-reversal (ombokning) + the immutable audit
+  trail are exactly what lets an external verifier trust the books. Build immutability with this in mind.
+- Requirement: expose a clean, **read-scoped audit surface** over MCP (scoped API keys, read-only skill
+  set), so a third-party agent can verify without write access.
+
+Full trust story: **GUI** (human control) + **auditor's external agent** (independent verification) —
+both on top of the same agentic ledger. Booking agent + audit agent + human GUI = trust from every angle.
+
 ### ONE skill layer, THREE surfaces (hard requirement, Magnus, 2026-07-06)
 
 When exposing the **whole package** as MCP skills — the full process **bokföring → bokslut → ÅR →
