@@ -32,10 +32,10 @@
       "id": "tax_vat",
       "name": "Tax/VAT codes + grids",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 1,
-      "verify": "tax/VAT codes and reporting grids",
-      "notes": "VAT codes/rates exist (VatPolicy in src/lib/locale-packs/se/index.ts:74, output/input accounts, vendor default_vat_code). But the VAT-return/reporting grid is unimplemented: vatReturnAdapter references edge_function 'accounting-vat-return-se' (se/index.ts:58) which does not exist under supabase/functions/."
+      "verify": "Dual-surface DONE 2026-07-06. Momsdeklaration SKV 4700: declarative box mapping in the SE locale pack (vat-return-2026.ts, versioned data) → engine edge fn accounting-vat-return-se → skill prepare_vat_return (edge handler) + Momsdeklaration admin tab. Stage-3 live as an agent over the MCP gateway: year 2026/month 7 → ruta 05 11100, ruta 10 2775, ruta 49 2775 att betala, matches_box_49:true. Boxes 05/10/11/12/20/21/22/30/31/32/35/39/41/48/49.",
+      "notes": "Generic engine + year-versioned pack data (SKV 4700 2026). Next SE-pack items: NE-bilaga/INK2/SRU (year-versioned), skatteuträkning engine."
     },
     {
       "id": "financial_reports",

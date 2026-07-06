@@ -35,10 +35,10 @@ category: reference
 | **recruitment** | Recruitment (hr.applicant) | L3 → L4 | `█████░░░░░` 53% | 9/0/7 | — |
 | **sla** | Helpdesk SLA policies | L3 → L4 | `█████░░░░░` 53% | 8/0/7 | — |
 | **pricelists** | Sales pricelists (product.pricelist) | L3 → L4 | `█████░░░░░` 54% | 6/0/6 | — |
-| **accounting** | Accounting (account.move, account.account) | L3 → L4 | `██████░░░░` 55% | 9/1/6 | — |
 | **media** | Website media library | L2 → L4 | `██████░░░░` 57% | 2/3/1 | EPIC-06 |
 | **multi-currency** | Accounting multi-currency | L2 → L4 | `██████░░░░` 57% | 6/0/4 | — |
 | **wiki** | Knowledge (knowledge.article) | L2 → L4 | `██████░░░░` 57% | 3/0/3 | — |
+| **accounting** | Accounting (account.move, account.account) | L3 → L4 | `██████░░░░` 58% | 10/0/6 | — |
 | **analytics** | Website analytics / Dashboards | L3 → L4 | `██████░░░░` 58% | 2/1/2 | — |
 | **expenses** | Expenses (hr.expense) | L4 → L4 | `██████░░░░` 59% | 9/0/6 | — |
 | **newsletter** | Email Marketing (mailing.mailing) | L4 → L4 | `██████░░░░` 59% | 3/4/2 | — |
