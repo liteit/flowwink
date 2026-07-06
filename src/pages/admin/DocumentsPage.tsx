@@ -64,13 +64,32 @@ export default function DocumentsPage() {
           </TabsList>
           <TabsContent value={category}>
             <Card>
-              <CardContent className="pt-6">
+              <CardContent className="pt-6 space-y-4">
+                {allTags.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Tag:</span>
+                    <Select value={tagFilter} onValueChange={setTagFilter}>
+                      <SelectTrigger className="h-8 w-48">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All tags</SelectItem>
+                        {allTags.map((t) => (
+                          <SelectItem key={t} value={t}>{t}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {tagFilter !== "all" && (
+                      <Button variant="ghost" size="sm" onClick={() => setTagFilter("all")}>Clear</Button>
+                    )}
+                  </div>
+                )}
                 {isLoading ? (
                   <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
-                ) : !documents?.length ? (
+                ) : !filteredDocs.length ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>No documents in this category.</p>
+                    <p>{documents?.length ? "No documents match this tag." : "No documents in this category."}</p>
                     <Button variant="outline" className="mt-4" onClick={() => setAddOpen(true)}>
                       <Plus className="h-4 w-4 mr-2" /> Add your first document
                     </Button>
@@ -83,12 +102,13 @@ export default function DocumentsPage() {
                         <TableHead>Category</TableHead>
                         <TableHead>Size</TableHead>
                         <TableHead>Folder</TableHead>
+                        <TableHead>Tags</TableHead>
                         <TableHead>Added</TableHead>
                         <TableHead />
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {documents.map((doc) => (
+                      {filteredDocs.map((doc) => (
                         <TableRow key={doc.id}>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -112,6 +132,9 @@ export default function DocumentsPage() {
                           </TableCell>
                           <TableCell className="text-sm">{formatSize(doc.file_size_bytes)}</TableCell>
                           <TableCell className="text-sm">{doc.folder || "—"}</TableCell>
+                          <TableCell>
+                            <DocumentTagsCell documentId={doc.id} tags={doc.tags} />
+                          </TableCell>
                           <TableCell className="text-sm">{format(new Date(doc.created_at), "MMM d, yyyy")}</TableCell>
                           <TableCell>
                             <div className="flex gap-1">
