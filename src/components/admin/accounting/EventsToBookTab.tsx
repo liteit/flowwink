@@ -239,29 +239,65 @@ export function EventsToBookTab() {
         )}
       </div>
 
-      {/* Batch toggle */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Switch
-            id="batch-mode"
-            checked={batchMode}
-            onCheckedChange={(v) => setBatchMode(v)}
-          />
-          <Label htmlFor="batch-mode" className="text-sm text-muted-foreground">
-            Batch book
-          </Label>
-        </div>
-        {batchMode && autoCount > 0 && (
-          <Button
-            size="sm"
-            onClick={bookSelected}
-            disabled={bookMutation.isPending || batchTargets === 0}
+      {/* Segmented control + batch toggle */}
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div className="inline-flex rounded-md border border-border bg-card p-0.5">
+          <button
+            type="button"
+            onClick={() => setView('queue')}
+            className={cn(
+              'px-3 py-1.5 text-xs rounded-[5px] transition-colors',
+              view === 'queue'
+                ? 'bg-muted text-foreground'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
           >
-            {bookMutation.isPending && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
-            Book selected ({batchTargets})
-          </Button>
+            To book ({summary?.total ?? proposals.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setView('booked')}
+            className={cn(
+              'px-3 py-1.5 text-xs rounded-[5px] transition-colors',
+              view === 'booked'
+                ? 'bg-muted text-foreground'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            Booked ({bookedCount ?? 0})
+          </button>
+        </div>
+        {view === 'queue' && (
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="batch-mode"
+                checked={batchMode}
+                onCheckedChange={(v) => setBatchMode(v)}
+              />
+              <Label htmlFor="batch-mode" className="text-sm text-muted-foreground">
+                Batch book
+              </Label>
+            </div>
+            {batchMode && autoCount > 0 && (
+              <Button
+                size="sm"
+                onClick={bookSelected}
+                disabled={bookMutation.isPending || batchTargets === 0}
+              >
+                {bookMutation.isPending && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
+                Book selected ({batchTargets})
+              </Button>
+            )}
+          </div>
         )}
       </div>
+
+      {view === 'booked' ? (
+        <BookedList data={bookedData} />
+      ) : (
+      <>
+
 
       <div className="rounded-lg border border-border bg-card overflow-hidden">
         {isLoading ? (
