@@ -17,6 +17,8 @@ export interface GatedSkill {
   description: string | null;
   category: string | null;
   trust_level: 'approve' | 'notify';
+  /** The runtime gate: true = invocations are staged in pending_operations until approved */
+  requires_staging: boolean;
   mcp_exposed: boolean;
   enabled: boolean;
   /** Module id that declared this skill (or null if it's a core/orphan skill) */
@@ -51,7 +53,7 @@ export function useGatedSkills() {
       // 1. Pull every gated skill from the catalog
       const { data: skills, error: skillsError } = await supabase
         .from('agent_skills')
-        .select('name, description, category, trust_level, mcp_exposed, enabled')
+        .select('name, description, category, trust_level, requires_staging, mcp_exposed, enabled')
         .in('trust_level', ['approve', 'notify'])
         .order('trust_level', { ascending: false })
         .order('name', { ascending: true });
@@ -68,6 +70,17 @@ export function useGatedSkills() {
         .order('created_at', { ascending: false });
       if (reqError) throw reqError;
 
+      // 2b. Staged operations are the OTHER pending source: gated skills
+      // (requires_staging=true) write to pending_operations, not
+      // approval_requests. Count those too so the page reflects reality.
+      // (Convergence decision 2026-07-07: staging will later become a source
+      // of approval_requests — until then, merge both here.)
+      const { data: stagedOps, error: opsError } = await supabase
+        .from('pending_operations')
+        .select('skill_name, status, created_at')
+        .gte('created_at', thirtyDaysAgo);
+      if (opsError) throw opsError;
+
       // 3. Index requests by skill name
       const reqByName = new Map<string, { pending: number; recent: number; last: string | null }>();
       for (const r of requests ?? []) {
@@ -79,6 +92,14 @@ export function useGatedSkills() {
         if (r.status === 'pending') cur.pending += 1;
         if (!cur.last || r.created_at > cur.last) cur.last = r.created_at;
         reqByName.set(name, cur);
+      }
+      for (const op of stagedOps ?? []) {
+        if (!op.skill_name) continue;
+        const cur = reqByName.get(op.skill_name) ?? { pending: 0, recent: 0, last: null };
+        cur.recent += 1;
+        if (op.status === 'pending') cur.pending += 1;
+        if (!cur.last || op.created_at > cur.last) cur.last = op.created_at;
+        reqByName.set(op.skill_name, cur);
       }
 
       // 4. Resolve module ownership from the unified registry
@@ -92,6 +113,7 @@ export function useGatedSkills() {
           description: s.description,
           category: s.category,
           trust_level: s.trust_level as 'approve' | 'notify',
+          requires_staging: !!(s as { requires_staging?: boolean }).requires_staging,
           mcp_exposed: !!s.mcp_exposed,
           enabled: !!s.enabled,
           moduleId: owner?.id ?? null,
