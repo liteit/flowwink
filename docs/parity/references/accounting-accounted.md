@@ -108,6 +108,22 @@ users **import SIE files**.
 - **Bokio went paid; Dooer offers free.** The free-magnet lane isn't crowded — a free agentic year-end
   is a sharp, uncontested entry.
 
+**Bokio app nav / UX (logged-in, 2026-07-06 — fresher & more guided than Dooer):** Översikt ·
+**Saker att göra (todo)** · Uppladdat · Rapporter · Bank · **"Bokföring och bokslut" (one item —
+bookkeeping AND year-end close as a continuous, event-based flow)** · Fakturering · Försäljning
+(dagskassor) · Leverantörer och inköp · Personal och löner · Utlägg · Integrationer ·
+**Tilläggstjänster (add-on services — where the ÅR/tax partner + accountant marketplace lives)** ·
+Inställningar. Heavy **guided wizards** ("Starta guiden", "Ställ in dina datum").
+
+UX takeaways to steal:
+- **Todo/checklist-driven UX** ("Saker att göra") — the perfect surface for the agentic year-end: an
+  agent works the list (book these, run moms, close the year, generate ÅR + files). FlowWink should
+  expose a **year-end checklist the agent drives** — "what's left" as first-class UX.
+- **Bookkeeping + bokslut as ONE continuous flow**, not a separate silo. The year-end is the
+  continuation of daily booking.
+- Bokio puts the deep year-end deliverables in **add-on services (outsourced)** — FlowWink does them
+  **natively + agentically** instead. Same slot in the UX, different (better) fulfilment.
+
 ### FlowWink accounting ONBOARDING pattern (adopt Bokio's clean wizard)
 
 Bokio's setup captures exactly the config that parametrizes the SE accounting engine per company — a
