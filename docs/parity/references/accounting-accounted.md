@@ -146,6 +146,25 @@ movements; Not värdepapper from the 13xx holdings); the narrative parts come fr
 **Build shape:** `sie4-in → K2-ÅR-template → signable ÅR (PDF/iXBRL)`. Decoupled, testable against any
 SIE4 — including a SIE4 exported from Liteit 2025.
 
+### SIE4 vs SIE5 — format strategy (Magnus, 2026-07-06)
+
+The input contract is **a normalized ledger model, NOT a specific file format.** Two realities:
+- **SIE4** = the de facto standard for ~30 years. Flat text, `#`-records (#VER/#TRANS/#KONTO/#RAR/
+  #IB/#UB/#RES), historically **CP437 / IBM-PC encoding**. Every existing Swedish program exports it —
+  it's **table stakes / backward compatibility** (the whole installed base). Magnus already has a
+  SIE4 import/export impl in his other project **aircount** (his own IP — portable, no license issue).
+- **SIE5** = the new **XML-based** standard the industry is steering toward. Richer schema; adoption
+  still ramping, but it's the forward bet.
+
+**Architecture:** parse both `SIE4-in` and `SIE5-in` into the **same internal ledger representation**
+that the ÅR / skatteuträkning / INK2 / SRU generators consume. Likewise two writers: SIE4-out (legacy
+compat) + SIE5-out (future). The generators stay format-agnostic — new format = new parser, not a
+generator rewrite. Support **SIE4 now** (reach the installed base), **be SIE5-ready** as the industry shifts.
+
+**Interop note:** FlowWink's current `sie4-adapter.ts` emits **UTF-8** (browser-native). Strict
+legacy interop wants **CP437/PC8** on export; import should accept both. Worth aligning with aircount's
+proven impl when porting.
+
 ### GTM: the ÅR/year-end IS the adoption magnet (scope decision, 2026-07-06)
 
 The strategic question — is a basic "årsredovisning online" in scope? **Yes — it's likely the single
