@@ -882,3 +882,62 @@ VAT-close is its own guided wizard (later round, not build round 1), but it **re
 the agent runs step 1 (readiness) autonomously, presents steps 2 (box grid) for human/auditor sign-off,
 closes, and books the step-5 settlement — with step 3 (Skatteverket filing) as the opt-in SRU plugin.
 Same "human wizard = agent decision tree" pattern as the bookkeeping flow.
+
+---
+
+## Bokio "Bokföring och bokslut" — the bank queue + year-end wizard (captured live 2026-07-06)
+
+The nav section **Bokföring och bokslut** has 5 sub-pages: **Händelser att bokföra** (bank inbox),
+**Bokfört** (booked), **Bokslut** (year-end), **Tillgångar** (assets), **Periodiseringar** (accruals).
+Also confirmed: Bokio has **offerter (Försäljning) + fakturor (Fakturering)** — FlowWink already at parity.
+
+### "Händelser att bokföra" IS build round 1's review queue (exact reference)
+The bank-feed inbox: a list of **unbooked bank events** (`datum · motpart · belopp · konto 1930`), e.g.
+Elbolaget AB −2 500, SKATTEVERKET −3 000, Fruktkorgen AB −1 043, Webhotell AB −2 747 … "**13 händelser
+att bokföra**". Controls: search, **Filter**, **"Bokför flera"** (batch toggle), **"Delad vy"** (split).
+
+**Selecting an event opens a 3-pane split:**
+- Left: the queue.
+- Middle: **"Förslag på underlag"** — Bokio tries to auto-match a receipt to the transaction
+  ("Bokio kunde inte automatiskt hitta rätt underlag" when none) + upload dropzone.
+- Right: **"Välj mall"** with a **"Bokföringsförslag"**: *"Inköp från **Fruktkorgen AB** bokförs ofta
+  som:"* → ranked templates (**Fruktkorg 6% moms**, **Inköp Varor 6% moms**), each one-click.
+
+**This is the agentic auto-match rendered as UI**, and it's exactly our stack: the *"bokförs ofta som"*
+ranking = `manage_vendor_defaults.last_used_template_id` + `suggest_accounting_template` (keyword×usage)
++ `record_accounting_correction` learning. The "B+" glyph marks agent-proposed items.
+
+**Refined build-round-1 spec** (this is the surface to build):
+- A **"Händelser att bokföra" queue** page: unbooked events (from bank import / reconciliation), each row
+  = date · counterparty · amount · account.
+- **Agent pre-fills each row** with a proposed template + confidence (vendor default → template score →
+  fallback), so the human sees a ready proposal, not a blank.
+- **Select → split view**: middle = source/receipt match, right = proposed double-entry + ranked
+  alternative templates (accept / pick another / edit / reject).
+- **"Bokför flera"** batch mode: multi-select high-confidence rows → book all at once (our batch commit
+  through staged→post). Agent auto-books above a confidence threshold; the rest queue for review.
+- Same Bokio look: serif, paper, calm, graceful at low volume.
+
+### Bokslut (year-end) is a 5-step wizard — confirms our spec exactly
+**Bokslut** page: tabs **Aktiva | Kommande | Avslutat**, one row per räkenskapsår (e.g. *Bokslut 2026,
+2026-01-01–2026-12-31, Kommande*). Opening it shows the guided wizard **Bokslutsperiod 2026**:
+
+1. **Avstämning** — reconcile everything (gate; "can't close until 2 bank days after year-end so all
+   bank events are booked").
+2. **Välj bokslutspaket** — choose the year-end package (DIY vs assisted / K2 level — Bokio's
+   productisation tier).
+3. **Bokslutsbokningar** — year-end adjustment entries (periodiseringar, avskrivningar, etc.; fed by the
+   **Tillgångar** and **Periodiseringar** sub-pages).
+4. **Skatt och resultat** — the **tax computation + result disposition** → this is Magnus's "transparent
+   tax-calc presentation": show how bolagsskatt (20,6 %) is derived, then hand over the files.
+5. **Färdigställ bokslut** — finalize: årsredovisning (K2) + INK2/SRU.
+
+This is precisely our spec chain **book → close → VAT → tax → ÅR → SRU**. The wizard steps map to:
+`year_end_readiness` (1) → package/scope (2) → `propose_accruals`/`propose_annual_depreciation` +
+`run_year_end` (3) → tax calc + `vinstdisposition` (4) → ÅR generator + SRU/INK2 export (5). Steps 4–5
+are the biggest build gap today (tax computation transparency + ÅR/SRU output); 1–3 largely exist.
+
+### Net: the whole picture is captured
+Three Bokio flows now documented as our build reference — **bookkeeping wizard** (round 1), **VAT-close
+wizard** (later), **year-end wizard** (later) — all the same pattern: *human wizard = agent decision tree*,
+built on the mature FlowWink ledger core, with the review/control UI as the trust layer.
