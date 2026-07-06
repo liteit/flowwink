@@ -941,3 +941,30 @@ are the biggest build gap today (tax computation transparency + ÅR/SRU output);
 Three Bokio flows now documented as our build reference — **bookkeeping wizard** (round 1), **VAT-close
 wizard** (later), **year-end wizard** (later) — all the same pattern: *human wizard = agent decision tree*,
 built on the mature FlowWink ledger core, with the review/control UI as the trust layer.
+
+---
+
+## Bookkeeping intake = the existing FlowWink signals framework (Magnus, 2026-07-06)
+
+Architectural lock-in: the "Händelser att bokföra" queue is **fed by the signals framework we already
+have** — NOT a new intake pipeline, NOT new edge functions. Accounting becomes a new **signal consumer**.
+
+**Existing intake surfaces (reuse):** `signal-ingest` (generic, `source_type` + content), channel
+ingesters `telegram-ingest` / `twilio-ingest` / `voice-ingest` / `gatewayapi-ingest` / `elks46-ingest`,
+`stripe-webhook`, `gmail-inbox-scan`. Dispatch: `signal-dispatcher` / `event-dispatcher` /
+`automation-dispatcher`.
+
+**Two lanes into the queue (the key distinction):**
+- **Lane 1 — raw signals that need interpretation** (the agent's core job): emailed receipt to the
+  company inbox (`gmail-inbox-scan`), bank feed line (bank ingest), Stripe payout / direct bank debit
+  (`stripe-webhook`). These land as **proposed verifications** with template + confidence — the agent
+  classifies → matches → proposes.
+- **Lane 2 — structured business events that already carry their bookkeeping** (no interpretation):
+  an eshop purchase **is an order directly** → order→invoice→payment→journal, the verification created
+  automatically downstream as a byproduct. Same for issued invoices and payroll runs. These may surface
+  in the queue for a confirmation but are high-confidence/auto.
+
+So a signal is either **underlag to interpret** (lane 1) or a **finished business event** (lane 2,
+already booked by its own module pipeline). Same signal framework, same staged→post commit, no new edge
+functions — accounting just connects to the pipes the BOS already has. This is the intake half of the
+"agent does the work, you feed it underlag" pitch: the "feeding" is any existing signal channel.
