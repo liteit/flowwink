@@ -405,9 +405,62 @@ export function EventsToBookTab() {
           <Loader2 className="h-3 w-3 animate-spin" /> Uppdaterar…
         </div>
       )}
+      </>
+      )}
     </div>
   );
 }
+
+function BookedList({ data }: { data: { rows: any[]; entries: Record<string, any> } | undefined }) {
+  const rows = data?.rows ?? [];
+  const entries = data?.entries ?? {};
+  if (rows.length === 0) {
+    return (
+      <div className="rounded-lg border border-border bg-card p-16 text-center">
+        <p className="text-sm text-muted-foreground">Nothing booked yet.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-lg border border-border bg-card overflow-hidden">
+      <div className="divide-y divide-border">
+        {rows.map((r) => {
+          const entry = entries[r.journal_entry_id];
+          const voucher = entry
+            ? `${entry.voucher_series ?? ''}${entry.voucher_number ?? ''}`
+            : '';
+          return (
+            <div
+              key={r.id}
+              className="px-5 py-4 flex items-center gap-4"
+            >
+              <div className="w-16 shrink-0 text-xs text-muted-foreground tabular-nums">
+                {fmtDate(r.transaction_date)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm text-foreground truncate">{r.counterparty || '—'}</div>
+                <div className="text-xs text-muted-foreground truncate mt-0.5 flex items-center gap-1.5">
+                  <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                  {voucher || 'Booked'}
+                  {entry?.description ? ` · ${entry.description}` : ''}
+                </div>
+              </div>
+              <div
+                className={cn(
+                  'w-28 shrink-0 text-right tabular-nums text-sm',
+                  r.amount_cents < 0 ? 'text-foreground' : 'text-emerald-700 dark:text-emerald-400',
+                )}
+              >
+                {fmtSek(r.amount_cents)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 
 function ProposalDetail({
   proposal,
