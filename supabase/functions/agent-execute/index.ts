@@ -17,6 +17,74 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// ─── Agentic bookkeeping: shared template scoring + expansion ───────────────
+// These mirror the inline logic in the manage_journal_entry create path
+// (db:journal_entries). They are used by db:propose_bookkeeping so the queue
+// proposes the SAME double-entry the booking path would produce.
+// TODO(unify): fold the manage_journal_entry inline copies onto these helpers
+// so the scoring can never drift between the propose and book surfaces.
+function acctExpandTemplateLines(tplLines: any[], baseCents: number): any[] {
+  const out = tplLines.map((l: any) => ({
+    account_code: l.account_code,
+    account_name: l.account_name,
+    description: l.description ?? null,
+    debit_cents: Math.round(((l.debit_pct ?? 0) / 100) * baseCents),
+    credit_cents: Math.round(((l.credit_pct ?? 0) / 100) * baseCents),
+  }));
+  const d = out.reduce((s: number, l: any) => s + l.debit_cents, 0);
+  const c = out.reduce((s: number, l: any) => s + l.credit_cents, 0);
+  if (d !== c) {
+    const diff = d - c;
+    const biggest = out.reduce((a: any, b: any) =>
+      Math.max(b.debit_cents, b.credit_cents) > Math.max(a.debit_cents, a.credit_cents) ? b : a);
+    if (biggest.debit_cents >= biggest.credit_cents) biggest.debit_cents -= diff;
+    else biggest.credit_cents += diff;
+  }
+  return out;
+}
+function acctIsPctTemplate(tplLines: any[]): boolean {
+  return Array.isArray(tplLines) && tplLines.some((l: any) => (l.debit_pct ?? 0) > 0 || (l.credit_pct ?? 0) > 0);
+}
+// Gross→net: a percentage template's counter (bank) side is e.g. 125% of the
+// NET base. A bank line is GROSS (incl. VAT), so the NET base to feed the
+// template = gross / (sum(debit_pct)/100). E.g. 1000 gross, 125% total → 800.
+function acctNetBaseFromGross(tplLines: any[], grossCents: number): number {
+  const grossPct = (tplLines || []).reduce((s: number, l: any) => s + (l.debit_pct ?? 0), 0);
+  return grossPct > 0 ? Math.round(grossCents / (grossPct / 100)) : grossCents;
+}
+function acctScoreTemplates(
+  allTemplates: any[],
+  searchTerms: string,
+): { template: any; score: number; confidence: number; matchDetails: string[] }[] {
+  const terms = (searchTerms || '').toLowerCase().trim();
+  const searchWords = terms.split(/\s+/).filter((w: string) => w.length > 2);
+  const scored = (allTemplates || []).map((t: any) => {
+    let score = 0;
+    const details: string[] = [];
+    const keywords: string[] = t.keywords || [];
+    for (const kw of keywords) {
+      const kwLower = String(kw).toLowerCase();
+      if (terms.includes(kwLower)) { score += 40; details.push(`keyword:${kw}`); }
+      for (const sw of searchWords) {
+        if (kwLower.includes(sw) || sw.includes(kwLower)) { score += 15; details.push(`partial:${sw}~${kw}`); }
+      }
+    }
+    const nameLower = String(t.template_name || '').toLowerCase();
+    if (nameLower && (terms.includes(nameLower) || nameLower.includes(terms))) { score += 30; details.push('name:exact'); }
+    else {
+      const nameWords = nameLower.split(/\s+/);
+      const nameOverlap = searchWords.filter((sw: string) => nameWords.some((nw: string) => nw.includes(sw) || sw.includes(nw)));
+      if (nameOverlap.length > 0) { score += 15 * nameOverlap.length; details.push(`name:words(${nameOverlap.join(',')})`); }
+    }
+    const descLower = String(t.description || '').toLowerCase();
+    for (const sw of searchWords) { if (descLower.includes(sw)) { score += 10; details.push(`desc:${sw}`); } }
+    score += Math.min(10, (t.usage_count || 0) * 2);
+    return { template: t, score, confidence: Math.min(100, Math.round((score / 100) * 100)), matchDetails: details };
+  });
+  scored.sort((a, b) => b.score - a.score);
+  return scored;
+}
+
 // Postgres RPCs whose signature is exactly `(args jsonb)` — they receive the
 // whole argument object under a single `args` key instead of one `p_`-prefixed
 // param per field. The rpc: dispatcher forwards `{ args: {...} }` for these.
@@ -6093,6 +6161,88 @@ async function executeDbAction(
       return { period, total: ratings.length, positive, negative, satisfaction_rate: ratings.length > 0 ? Math.round(positive / ratings.length * 100) : null, recent: ratings.slice(0, 10) };
     }
 
+    case 'propose_bookkeeping': {
+      // ─── Agentic bookkeeping: propose double-entry for unbooked bank events ─
+      // Read-only sensor. For each unbooked bank_transaction it ranks a
+      // template (same scoring as manage_journal_entry), derives the NET base
+      // from the GROSS bank amount, and expands the proposed debit/credit lines
+      // + a confidence. It does NOT post — the accept path calls
+      // manage_journal_entry {template_id, amount_cents: suggested_amount_cents,
+      // reference_number}. This is the queue behind "Händelser att bokföra".
+      const { bank_transaction_ids, limit = 50 } = args as any;
+
+      let events: any[] | null = null;
+      if (Array.isArray(bank_transaction_ids) && bank_transaction_ids.length > 0) {
+        const { data, error } = await supabase.from('bank_transactions')
+          .select('id, transaction_date, amount_cents, currency, counterparty, reference, description, status, journal_entry_id')
+          .in('id', bank_transaction_ids);
+        if (error) throw new Error(`Load bank events failed: ${error.message}`);
+        events = data;
+      } else {
+        const { data, error } = await supabase.from('bank_transactions')
+          .select('id, transaction_date, amount_cents, currency, counterparty, reference, description, status, journal_entry_id')
+          .is('journal_entry_id', null)
+          .neq('status', 'ignored')
+          .order('transaction_date', { ascending: false })
+          .limit(Math.min(Number(limit) || 50, 200));
+        if (error) throw new Error(`Load unbooked bank events failed: ${error.message}`);
+        events = data;
+      }
+
+      const { data: allTemplates } = await supabase.from('accounting_templates')
+        .select('id, template_name, description, keywords, template_lines, usage_count, category');
+
+      const proposals = (events || []).map((ev: any) => {
+        const searchTerms = `${ev.counterparty || ''} ${ev.description || ''} ${ev.reference || ''}`.trim();
+        const grossCents = Math.abs(ev.amount_cents || 0);
+        const base = {
+          bank_transaction_id: ev.id,
+          transaction_date: ev.transaction_date,
+          amount_cents: ev.amount_cents,
+          counterparty: ev.counterparty,
+          description: ev.description,
+          already_booked: !!ev.journal_entry_id,
+        };
+        if (!allTemplates || allTemplates.length === 0 || !searchTerms) {
+          return { ...base, status: 'escalate', confidence: 0,
+            reason: !searchTerms ? 'No counterparty/description to match on' : 'No accounting templates exist',
+            suggested_amount_cents: grossCents, proposed_lines: [], top_candidates: [] };
+        }
+        const scored = acctScoreTemplates(allTemplates, searchTerms);
+        const best = scored[0];
+        const status = best.confidence >= 95 ? 'auto' : best.confidence >= 70 ? 'propose' : 'escalate';
+        const isPct = acctIsPctTemplate(best.template.template_lines);
+        const netBase = isPct ? acctNetBaseFromGross(best.template.template_lines, grossCents) : grossCents;
+        const proposedLines = status === 'escalate'
+          ? []
+          : (isPct ? acctExpandTemplateLines(best.template.template_lines, netBase) : best.template.template_lines);
+        return {
+          ...base,
+          status,
+          confidence: best.confidence,
+          suggested_template_id: best.template.id,
+          suggested_template_name: best.template.template_name,
+          // amount to pass to manage_journal_entry (NET base for pct templates):
+          suggested_amount_cents: netBase,
+          match_details: best.matchDetails,
+          proposed_lines: proposedLines,
+          top_candidates: scored.slice(0, 3).map((s) => ({
+            template_id: s.template.id, name: s.template.template_name, confidence: s.confidence,
+          })),
+        };
+      });
+
+      return {
+        proposals,
+        summary: {
+          total: proposals.length,
+          auto: proposals.filter((p: any) => p.status === 'auto').length,
+          propose: proposals.filter((p: any) => p.status === 'propose').length,
+          escalate: proposals.filter((p: any) => p.status === 'escalate').length,
+        },
+      };
+    }
+
     case 'journal_entries': {
       // ─── Accounting: Journal Entries & Reports ─────────────────────────
       if (skillName === 'suggest_accounting_template') {
@@ -6648,9 +6798,21 @@ async function executeDbAction(
         })));
       if (linesErr2) throw new Error(`Create lines failed: ${linesErr2.message}`);
 
+      // Agentic bookkeeping: if this entry was booked from a bank event
+      // (the "Händelser att bokföra" queue), link it so the event leaves the
+      // queue and gains an audit trail back to its posted verification.
+      const bankTxId = (args as any).bank_transaction_id;
+      if (bankTxId) {
+        const { error: linkErr } = await supabase.from('bank_transactions')
+          .update({ journal_entry_id: entry.id, status: 'matched' })
+          .eq('id', bankTxId);
+        if (linkErr) console.warn(`[accounting] bank_transaction link failed: ${linkErr.message}`);
+      }
+
       return {
         created: true,
         entry_id: entry.id,
+        bank_transaction_id: bankTxId || null,
         entry_date: entry_date || new Date().toISOString().split('T')[0],
         total_debit_cents: totalDebit,
         total_credit_cents: totalCredit,

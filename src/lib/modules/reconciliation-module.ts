@@ -180,6 +180,32 @@ const RECONCILIATION_SKILLS: SkillSeed[] = [
     instructions: 'Returned rows are candidates for manage_journal_entry (book) or human matching. Order by transaction_date DESC by default.',
   },
   {
+    name: 'propose_bookkeeping',
+    description: 'Propose a double-entry booking for unbooked bank transactions: for each event it ranks the best accounting template (counterparty + description), derives the NET base from the GROSS bank amount, and returns the proposed debit/credit lines + a confidence (auto ≥95 / propose ≥70 / escalate <70). Use when: building the "Händelser att bokföra" review queue, batch-proposing bookings for a bank feed, letting an agent pre-fill bookings for human review. NOT for: actually posting (that is manage_journal_entry), invoice/expense/order events (booked by their own pipeline).',
+    category: 'commerce',
+    handler: 'db:propose_bookkeeping',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'propose_bookkeeping',
+        description: 'Propose double-entry bookings for unbooked bank transactions (read-only; does not post).',
+        parameters: {
+          type: 'object',
+          properties: {
+            bank_transaction_ids: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Specific bank_transaction ids to propose for. Omit to propose for all unbooked events (journal_entry_id IS NULL, status <> ignored).',
+            },
+            limit: { type: 'integer', description: 'Max events when proposing for all unbooked. Default 50, max 200.' },
+          },
+        },
+      },
+    },
+    instructions: 'Read-only. To BOOK a proposal, call manage_journal_entry { action: "create", template_id: suggested_template_id, amount_cents: suggested_amount_cents, description, reference_number, bank_transaction_id, auto_confirm: true } — passing bank_transaction_id links the entry to the event and removes it from the queue. suggested_amount_cents is the NET base (already derived from the gross bank amount) — pass it verbatim. Only auto-book status="auto" (confidence ≥95); surface status="propose" for human review; status="escalate" needs a manual template or a new one via manage_accounting_template.',
+  },
+  {
     name: 'manage_reconciliation_rule',
     description: 'Manage auto-categorisation rules for bank transactions (match counterparty/reference/description → suggested account + category). Use when: setting up recurring-payment rules, automating bank coding. NOT for: running the rules (apply_reconciliation_rules) or matching to invoices (auto_match_transactions).',
     category: 'commerce',
@@ -285,6 +311,7 @@ export const reconciliationModule = defineModule<Input, Output>({
     'import_bank_image',
     'auto_match_transactions',
     'list_unmatched_transactions',
+    'propose_bookkeeping',
     'manage_reconciliation_rule',
     'apply_reconciliation_rules',
     'reconciliation_report',
