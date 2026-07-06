@@ -93,10 +93,46 @@ export function EventsToBookTab() {
   const [templateOverrides, setTemplateOverrides] = useState<Record<string, string>>({});
   const [batchMode, setBatchMode] = useState(false);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [view, setView] = useState<'queue' | 'booked'>('queue');
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['events-to-book'],
     queryFn: () => invokeSkill<ProposalsResult>('propose_bookkeeping', {}),
+  });
+
+  const { data: bookedData, refetch: refetchBooked } = useQuery({
+    queryKey: ['events-booked'],
+    queryFn: async () => {
+      const { data: txs, error } = await supabase
+        .from('bank_transactions')
+        .select('id, transaction_date, amount_cents, counterparty, description, journal_entry_id')
+        .not('journal_entry_id', 'is', null)
+        .order('transaction_date', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      const entryIds = (txs ?? []).map((t: any) => t.journal_entry_id).filter(Boolean);
+      let entries: Record<string, any> = {};
+      if (entryIds.length) {
+        const { data: es } = await supabase
+          .from('journal_entries')
+          .select('id, voucher_series, voucher_number, description')
+          .in('id', entryIds);
+        entries = Object.fromEntries((es ?? []).map((e: any) => [e.id, e]));
+      }
+      return { rows: txs ?? [], entries };
+    },
+  });
+
+  const { data: bookedCount } = useQuery({
+    queryKey: ['events-booked-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('bank_transactions')
+        .select('id', { count: 'exact', head: true })
+        .not('journal_entry_id', 'is', null);
+      if (error) throw error;
+      return count ?? 0;
+    },
   });
 
   const proposals = data?.proposals ?? [];
