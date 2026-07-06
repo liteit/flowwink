@@ -65,10 +65,10 @@
       "id": "subtasks",
       "name": "Sub-tasks",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 2,
-      "verify": "project_tasks.parent_task_id self-FK (ON DELETE CASCADE) exposed via manage_project_task; milestone_id link too (migration 20260613010000)",
-      "notes": "Built + verified: parent delete cascades subtasks; MCP via generic db engine. Pending: nested-task admin UI + Stage-3 before done."
+      "verify": "Dual-surface DONE 2026-07-06. Skill: manage_project_task create with parent_task_id live (Subtask A under parent → created). UI: hierarchical task rendering with Add-subtask + per-parent progress in ProjectsPage (commit a141bdbc).",
+      "notes": "Backend verified; admin UI built + Stage-3 live 2026-07-06."
     },
     {
       "id": "resource_planning",

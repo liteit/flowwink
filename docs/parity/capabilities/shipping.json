@@ -48,10 +48,10 @@
       "id": "weight_rate_calc",
       "name": "Weight-based rate calc",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 2,
-      "verify": "shipping_rates weight bands + calc_shipping_rate RPC/skill (cheapest matching band) + manage_shipping_rate CRUD (migration 20260613030000); checkout wiring 2026-07-04: products.weight_grams + anon list_shipping_options RPC (migration 20260704130000) → CheckoutPage delivery radios → create-checkout resolveShipping persists orders.shipping_method/shipping_cost_cents",
-      "notes": "Built + verified against LOCAL Supabase 2026-06-13 (800g=4900, 2000g=7900, 50000g=band L; idempotent). Checkout wiring built 2026-07-04 (code-cited; see ecommerce.json#delivery_choice_checkout). Pending: admin rate-card UI + Stage-3 fleet deploy before done.",
+      "verify": "Dual-surface DONE 2026-07-06. Skill: manage_shipping_rate create live (Standard 0-1kg → rate_id) + calc_shipping_rate(PostNord,800g)→4900. UI: Shipping Rates section + rate calculator in ShippingPage (commit 66d1b018).",
+      "notes": "Backend verified 2026-06-13; admin UI built + Stage-3 live 2026-07-06.",
       "epic": "EPIC-08"
     },
     {
@@ -66,10 +66,10 @@
       "id": "dimensional_weight",
       "name": "Dimensional weight",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 1,
-      "verify": "calc_shipping_rate bills max(actual, dimensional); dim grams = L×W×H/dim_divisor×1000 (default 5000) (migration 20260613030000)",
-      "notes": "Verified on local Supabase: 300g @40×40×40cm → dim 12800g, billed_on=dimensional → band L. Pending: dimensions on shipment/checkout + UI before done.",
+      "verify": "Dual-surface DONE 2026-07-06. Skill: calc_shipping_rate with dims live (2000g @40x30x20 → dimensional_grams 4800, billed_on dimensional). UI: rate calculator shows billed_on actual|dimensional in ShippingPage.",
+      "notes": "Backend verified 2026-06-13; surfaced in the Shipping Rates calculator 2026-07-06.",
       "epic": "EPIC-08"
     },
     {
