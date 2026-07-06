@@ -86,7 +86,7 @@ const ALL_IDS = new Set<TabId>([
 ]);
 
 export default function AccountingPage() {
-  const [tab, setTab] = useState<TabId>('journal');
+  const [tab, setTab] = useState<TabId>('overview');
   const inPrimary = PRIMARY.some((t) => t.id === tab);
   const activeMore = !inPrimary
     ? MORE.flatMap((g) => g.items).find((i) => i.id === tab)
