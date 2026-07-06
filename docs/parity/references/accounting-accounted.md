@@ -90,6 +90,39 @@ view), free-bookkeeping-as-magnet, "integrate not migrate", AI-assisted finance.
 4. Nice-to-note feature they have that we don't: **aktiebok (shareholder register)** — small, cheap,
    expected by ABs.
 
+## Competitor: Bokio (bokio.se) — the incumbent free-ish SMB bookkeeper
+
+Reviewed 2026-07-06 (public + Magnus's logged-in onboarding). Bokio = the popular incumbent for the
+exact segment (Swedish SMB bookkeeping). Feature map: automatic bookkeeping suggestions from bank
+transactions + templates · integrated moms declaration · **NE-bilaga auto-generated in-house (enskild
+firma)** · **ÅR + INK2 + SRU via a PARTNER integration (Årsredovisning Online), with digital signing** ·
+invoicing/e-invoicing · payroll (auto tax/holiday/employer contributions, pay Skatteverket) · Bokio
+business account/card. Pricing: **paid tiers from ~319 kr/mo** (no longer a free wedge). Switching
+users **import SIE files**.
+
+**Takeaways:**
+- **Bokio outsources the AB year-end deliverable** (ÅR/INK2/SRU) to a 3rd party (Årsredovisning Online).
+  So the **full native/agentic AB year-end is an opening** — nobody in this set owns it end-to-end
+  agentically. That's FlowWink's wedge.
+- **SIE-import-on-ramp confirmed again** (Bokio, Dooer, Årsredovisning Online all take SIE-in). Universal.
+- **Bokio went paid; Dooer offers free.** The free-magnet lane isn't crowded — a free agentic year-end
+  is a sharp, uncontested entry.
+
+### FlowWink accounting ONBOARDING pattern (adopt Bokio's clean wizard)
+
+Bokio's setup captures exactly the config that parametrizes the SE accounting engine per company — a
+minimal 4-step wizard FlowWink should mirror:
+1. **Momsredovisningsperiod** — Årligen / Kvartalsvis / Månadsvis / Momsbefriad → drives the SKV 4700
+   declaration frequency (we have the engine; onboarding sets the period).
+2. **Redovisningsmetod** — **Fakturametoden (accrual) vs Kontantmetoden (cash)** → an ENGINE
+   REQUIREMENT: affects when txns + VAT are recognised (cash = on payment; invoice = on invoice date).
+   Confirm the engine handles both.
+3. **Räkenskapsår** + **Första räkenskapsåret vs Annat** → fiscal calendar + whether opening balances
+   are needed (first year = none; other = import IB, the SIE/IB path).
+
+This config lives on the company/locale-pack binding, drives moms period + booking recognition +
+opening balances. Small, high-value onboarding build; makes the whole stack "just work" per company.
+
 ## THE MVP: prove the integrated year, end to end (Magnus, 2026-07-06)
 
 **Priority decision:** the MVP is proving the **whole integrated process on one company for one year**,
