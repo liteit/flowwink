@@ -296,6 +296,26 @@ Horizontal agent + horizontal BOS ledger — never a vertical agent.
    operator (FlowPilot) directly — a supported convenience, NOT the moat. Don't over-invest there; the
    frontier agents carry the conversational load. Keep STT working, keep building the ledger + skills.
 
+### ONE skill layer, THREE surfaces (hard requirement, Magnus, 2026-07-06)
+
+When exposing the **whole package** as MCP skills — the full process **bokföring → bokslut → ÅR →
+INK2/SRU** — build it **once as skills** so the *same* capability is operable from all three surfaces:
+1. **External horizontal agents over MCP** — the PRIORITY (what we believe scales FlowWink SaaS;
+   hence the last month's MCP focus).
+2. **FlowChat inside FlowWink** — the in-app chat must do the *same* year-end (no separate code path).
+3. **FlowPilot** — turning on the built-in operator must do the *same* year-end.
+
+This is already the platform's design and must be honored: skills live once in `agent_skills`; the
+**Skill Relevance Engine + executeSkill are shared** between FlowPilot (in-process) and the MCP gateway,
+and FlowChat runs over the same skills. So **build accounting as skills and all three surfaces come for
+free** — the discipline is: **never hardcode year-end logic into one surface** (not into an MCP-only
+handler, not into a FlowPilot-only path, not into a FlowChat-only UI). The skill is the single contract.
+
+Design consequence for the propose→confirm loop: the **staged→approve→posted** pattern must be
+**surface-neutral** — the confirmation can come from an external agent, a FlowChat user, or FlowPilot
+(the `approve_pending_operation` staging already works this way, verified). Build the year-end skills
+with agent-friendly propose/confirm semantics and they work identically across all three.
+
 ## SRU / NE-bilaga / INK2 — deliverable format (reference: srumaker.se)
 
 The concrete deliverable for the Skatteverket statutory reports is **the SRU file-transfer format**,
