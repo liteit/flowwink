@@ -37,10 +37,15 @@ export function useIncomeStatementYTD() {
 
 export function ResultCard() {
   const { data, isLoading, isError } = useIncomeStatementYTD();
+  const { year } = useFiscalYear();
   const now = new Date();
+  const isCurrent = year === now.getFullYear();
+  const endLabel = isCurrent
+    ? now.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })
+    : 'Dec 31';
 
   return (
-    <DashCard label="Result YTD">
+    <DashCard label={isCurrent ? 'Result YTD' : `Result ${year}`}>
       {isLoading ? (
         <QuietEmpty>Loading…</QuietEmpty>
       ) : isError || !data ? (
@@ -52,8 +57,7 @@ export function ResultCard() {
             tone={data.net_result_cents > 0 ? 'positive' : 'default'}
           />
           <Subline>
-            Jan 1 – {now.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })} ·{' '}
-            {fmtSek(data.total_income_cents)} income
+            {year} Jan 1 – {endLabel} · {fmtSek(data.total_income_cents)} income
           </Subline>
         </>
       )}
