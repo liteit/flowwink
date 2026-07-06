@@ -542,21 +542,19 @@ function ProposalDetail({
         )}
       </div>
 
-      <div className="mb-6">
+      <div className="mb-3 text-sm">
         {isEscalate ? (
-          <p className="text-sm text-foreground">
-            No template matched — pick one manually.
-          </p>
+          <p className="text-foreground">No template matched — pick one manually.</p>
         ) : (
-          <div className="text-sm">
+          <>
             <span className="text-muted-foreground">Template: </span>
             <span className="text-foreground">{effectiveTemplateName}</span>
             <span className="text-muted-foreground"> · {p.confidence}% confidence</span>
-          </div>
+          </>
         )}
       </div>
 
-      <div className="mt-auto flex flex-wrap items-center gap-2 pt-4 border-t border-border">
+      <div className="flex flex-wrap items-center gap-2">
         <Button onClick={onBook} disabled={isBooking || !effectiveTemplateId}>
           {isBooking && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
           Book
@@ -590,6 +588,7 @@ function ProposalDetail({
           Skip
         </Button>
       </div>
+
     </div>
   );
 }
