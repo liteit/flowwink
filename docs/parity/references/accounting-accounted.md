@@ -168,6 +168,20 @@ reversal+re-book.
 **Positioning line:** Bokio/Dooer assist a human doing the books; **FlowWink's agent does the books,
 the human reviews.** That's the wedge — and it's what makes the free agentic year-end credible.
 
+**The mechanism is IDENTICAL — only the consumer differs (Magnus, 2026-07-06).** Bokio's
+"Bokföringsförslag" per event ("purchases from <supplier> are often booked as <template>, 25% VAT")
+is exactly what `suggest_accounting_template` does: a template picked by counterparty/pattern. Bokio
+shows that suggestion to a **human who clicks it, row by row**. FlowWink points **the same suggestion
+engine at the agent**, which applies it and books in **batch**. So the build is SMALL and highly
+provable — not a new engine:
+- For each queued bank event: `suggest_accounting_template` → proposed template (accounts + VAT) with
+  a confidence signal (Bokio literally exposes "bokförs *ofta* som" — the same signal).
+- **Confidence-gate:** auto-apply high-confidence, stage them, book the batch; route only the
+  ambiguous/low-confidence events to human review. Missing `underlag` (receipt) is one such flag.
+- That's it. The gap between "Bokio's manual click-through" and "FlowWink agentic batch" is a loop +
+  a confidence threshold over machinery FlowWink already has (`suggest_accounting_template` + templates
+  + the staged-booking flow). First, most-provable build round.
+
 ## THE MVP: prove the integrated year, end to end (Magnus, 2026-07-06)
 
 **Priority decision:** the MVP is proving the **whole integrated process on one company for one year**,
