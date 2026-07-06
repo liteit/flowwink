@@ -79,7 +79,10 @@ flowchart TD
 *Added 2026-07-06 after reviewing [erp-mafia/accounted](https://github.com/erp-mafia/accounted)
 (open-source Swedish bookkeeping, BAS 2026, AGPL) — the reference for what
 "complete" looks like for a Swedish SMB. The SE plugin work borrows from it;
-this section maps the rhythm so the process doc tells the whole truth.*
+this section maps the rhythm so the process doc tells the whole truth. The
+ranked gap list (P0–P2, incl. live findings on the dev instance) lives in
+[docs/parity/references/accounting-accounted.md](../parity/references/accounting-accounted.md)
+— this section is the calendar, that card is the build order.*
 
 A Swedish SMB's accounting year is a fixed sequence of statutory events on top
 of the operational loop above. Status per step:
