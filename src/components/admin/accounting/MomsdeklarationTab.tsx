@@ -28,7 +28,9 @@ function fmtSek(cents: number) {
 
 export function MomsdeklarationTab() {
   const now = new Date();
-  const [year, setYear] = useState<number>(now.getFullYear());
+  const { year: ctxYear } = useFiscalYear();
+  const [year, setYear] = useState<number>(ctxYear);
+  useEffect(() => { setYear(ctxYear); }, [ctxYear]);
   const [mode, setMode] = useState<'month' | 'quarter'>('month');
   const [month, setMonth] = useState<number>(now.getMonth() + 1);
   const [quarter, setQuarter] = useState<number>(Math.floor(now.getMonth() / 3) + 1);
