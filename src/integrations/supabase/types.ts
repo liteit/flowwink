@@ -16839,7 +16839,15 @@ export type Database = {
         | "contract"
         | "internship"
         | "temporary"
-      invoice_status: "draft" | "sent" | "paid" | "cancelled" | "overdue"
+      invoice_status:
+        | "draft"
+        | "sent"
+        | "paid"
+        | "cancelled"
+        | "overdue"
+        | "void"
+        | "booked"
+        | "posted"
       job_posting_status: "draft" | "published" | "closed" | "archived"
       lead_status: "lead" | "opportunity" | "customer" | "lost"
       mo_status:
@@ -17187,7 +17195,16 @@ export const Constants = {
         "internship",
         "temporary",
       ],
-      invoice_status: ["draft", "sent", "paid", "cancelled", "overdue"],
+      invoice_status: [
+        "draft",
+        "sent",
+        "paid",
+        "cancelled",
+        "overdue",
+        "void",
+        "booked",
+        "posted",
+      ],
       job_posting_status: ["draft", "published", "closed", "archived"],
       lead_status: ["lead", "opportunity", "customer", "lost"],
       mo_status: [
