@@ -210,6 +210,31 @@ resultat), (5) skatteuträkning engine (non-deductible flagging + corp tax, year
 **The proof:** one company (Liteit 2025 fixture) goes book → close → VAT → tax → ÅR → SRU as one
 **agentic** flow — "året som gör sig självt." That demo IS the adoption magnet.
 
+### The Liteit test fixture + TWO classes of verification (Magnus, 2026-07-06)
+
+The 17 Liteit business-account events (bank CSV export — Webhotell, Skatteverket, Datorbutiken,
+Elbolaget, Faktura #12, Fruktkorgen…) are a clean test: few parallel transactions, **17 verifications
+total** from the bank feed. **Signal-source is general** — today a CSV, later a PDF / photo / live
+bank connection; downstream is the same (normalize → event → classify/book). The agent's booking
+logic doesn't care about the input channel.
+
+Then **more verifications are added by TALKING to the agent** — the deeper capability:
+
+> "Vi höll bolagsstämma den 10 juni, 2025 års vinstdisposition godkändes — lägg 2025 års resultat till
+> balanserad vinst (föregående års upplupna vinst)."
+
+The human speaks a **business event in plain Swedish**; the agent produces the **correct verification**
+(the year-end appropriation: move `2099 Årets resultat` → `2091 Balanserad vinst` per the stämma
+decision; for Liteit: 19 537 + (−16 344) = 3 193 i ny räkning — matches the actual ÅR). This is
+**natural-language → verification**, and it's how the *year-end closing/appropriation* entries get
+made — not a wizard button, but the agent executing a spoken instruction.
+
+**So agentic bookkeeping has two lanes:** (1) **batch-classify the bank feed** via
+`suggest_accounting_template` (the 17), and (2) **natural-language → verification** for the events a
+human dictates (stämma/vinstdisposition, accruals, corrections). Both land in the same staged →
+approve → posted flow. Lane 2 is what makes the *close* and the *whole year-end* conversational —
+"vi höll stämma, godkänn dispositionen" → the books close themselves.
+
 ## SRU / NE-bilaga / INK2 — deliverable format (reference: srumaker.se)
 
 The concrete deliverable for the Skatteverket statutory reports is **the SRU file-transfer format**,
