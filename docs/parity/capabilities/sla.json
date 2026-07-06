@@ -72,10 +72,10 @@
       "id": "business_hours",
       "name": "Business-hours calendar",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 2,
-      "verify": "business_hours + business_holidays tables + business_minutes_between(start,end) working-hours function + manage_business_hours skill (migration 20260614020000)",
-      "notes": "Admin UI BUILT + skill Stage-3 live-verified 2026-07-06 (set_hours/add_holiday, commit e7286b2f): Business Hours tab in SlaMonitorPage + useBusinessHours hook. Remaining before done: wire sla-check sweep to use business_minutes_between (still wall-clock — grep of sla-check/index.ts = 0 refs).",
+      "verify": "Dual-surface + consumer DONE 2026-07-06. Config: business_hours + business_holidays tables, business_minutes_between() function, manage_business_hours skill (Stage-3 live: set_hours/add_holiday), Business Hours admin tab in SlaMonitorPage. CONSUMER wired (commit 74495ace): sla-check now measures elapsed on business minutes when a schedule exists (wall-clock fallback otherwise) — verified live Fri 18:00→Sat 10:00 = 0 business min (wall-clock 960), Fri→Mon 09:30 = 120.",
+      "notes": "Fully closed 2026-07-06: admin UI + skill + sla-check consumer all use working-hours minutes. A Friday-evening ticket no longer breaches over the weekend.",
       "epic": "EPIC-07"
     },
     {
