@@ -26,9 +26,21 @@ function formatSize(bytes: number | null) {
 
 export default function DocumentsPage() {
   const [category, setCategory] = useState("all");
+  const [tagFilter, setTagFilter] = useState<string>("all");
   const [addOpen, setAddOpen] = useState(false);
   const { data: documents, isLoading } = useDocuments(category);
   const deleteDoc = useDeleteDocument();
+
+  const allTags = useMemo(() => {
+    const set = new Set<string>();
+    for (const d of documents ?? []) for (const t of d.tags ?? []) set.add(t);
+    return Array.from(set).sort();
+  }, [documents]);
+
+  const filteredDocs = useMemo(() => {
+    if (tagFilter === "all") return documents ?? [];
+    return (documents ?? []).filter((d) => (d.tags ?? []).includes(tagFilter));
+  }, [documents, tagFilter]);
 
   const openFile = async (filePath: string) => {
     const url = await getDocumentSignedUrl(filePath, 120);
