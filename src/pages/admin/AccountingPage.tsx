@@ -31,6 +31,7 @@ import { VoucherIntegrityTab } from '@/components/admin/accounting/VoucherIntegr
 import { YearEndTab } from '@/components/admin/accounting/YearEndTab';
 import { BudgetsTab } from '@/components/admin/accounting/BudgetsTab';
 import { PendingOperationsList } from '@/components/admin/PendingOperationsList';
+import { OverviewTab } from '@/components/admin/accounting/dashboard/OverviewTab';
 
 type TabId =
   | 'journal' | 'ledger' | 'pnl' | 'balance'
