@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
@@ -8,10 +8,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDocuments, useDeleteDocument, getDocumentSignedUrl } from "@/hooks/useDocuments";
 import { FileText, Trash2, ExternalLink, FolderOpen, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { AddDocumentDialog } from "@/components/admin/documents/AddDocumentDialog";
+import { DocumentTagsCell } from "@/components/admin/documents/DocumentTagsCell";
 
 const CATEGORIES = ["all", "general", "contract", "hr", "finance", "project"];
 
