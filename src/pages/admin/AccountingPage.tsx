@@ -41,6 +41,7 @@ type TabId =
   | 'pending' | 'events_to_book' | 'templates' | 'export' | 'settings';
 
 const PRIMARY: { id: TabId; label: string }[] = [
+  { id: 'overview', label: 'Overview' },
   { id: 'journal', label: 'Journal' },
   { id: 'ledger', label: 'General Ledger' },
   { id: 'pnl', label: 'Profit & Loss' },
