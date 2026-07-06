@@ -22,6 +22,7 @@ import { TemplatesTab } from '@/components/admin/accounting/TemplatesTab';
 import { TaxTab } from '@/components/admin/accounting/TaxTab';
 import { VatReportTab } from '@/components/admin/accounting/VatReportTab';
 import { MomsdeklarationTab } from '@/components/admin/accounting/MomsdeklarationTab';
+import { EventsToBookTab } from '@/components/admin/accounting/EventsToBookTab';
 import { SettingsTab } from '@/components/admin/accounting/SettingsTab';
 import { AnalyticAccountingTab } from '@/components/admin/accounting/AnalyticAccountingTab';
 import { AuditTrailTab } from '@/components/admin/accounting/AuditTrailTab';
@@ -35,7 +36,7 @@ type TabId =
   | 'journal' | 'ledger' | 'pnl' | 'balance'
   | 'vat' | 'momsdekl' | 'tax'
   | 'opening' | 'analytic' | 'yearend' | 'audit' | 'voucher' | 'budgets'
-  | 'pending' | 'templates' | 'export' | 'settings';
+  | 'pending' | 'events_to_book' | 'templates' | 'export' | 'settings';
 
 const PRIMARY: { id: TabId; label: string }[] = [
   { id: 'journal', label: 'Journal' },
@@ -68,6 +69,7 @@ const MORE: { group: string; items: { id: TabId; label: string }[] }[] = [
     group: 'Operations',
     items: [
       { id: 'pending', label: 'Approvals' },
+      { id: 'events_to_book', label: 'Händelser att bokföra' },
       { id: 'templates', label: 'Templates' },
       { id: 'export', label: 'Export' },
       { id: 'settings', label: 'Settings' },
@@ -149,6 +151,7 @@ export default function AccountingPage() {
           <TabsContent value="voucher"><VoucherIntegrityTab /></TabsContent>
           <TabsContent value="budgets"><BudgetsTab /></TabsContent>
           <TabsContent value="pending"><PendingOperationsList /></TabsContent>
+          <TabsContent value="events_to_book"><EventsToBookTab /></TabsContent>
           <TabsContent value="templates"><TemplatesTab /></TabsContent>
           <TabsContent value="export"><ExportTab /></TabsContent>
           <TabsContent value="settings"><SettingsTab /></TabsContent>
