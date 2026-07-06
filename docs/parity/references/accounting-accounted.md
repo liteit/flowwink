@@ -124,6 +124,22 @@ router / one `accounting-se` router), on the **native ledger**, year-versioned d
 5. **ÅR (K2) + INK2 + SRU** — generators reading the native ledger (SIE-in for external books); one
    `accounting-se` router (fold `accounting-vat-return-se` in as the first action).
 
+## UI design: Bokio is the north star — but polish is LAST (decision, 2026-07-06)
+
+Design inspiration for the accounting UI = **Bokio** (clean, fresh, task/todo-driven; see the Bokio
+notes above). Sequencing decision, with one important distinction:
+- **Functional / control UI is built ALONGSIDE the skills** — the review queue ("händelser att bokföra"
+  the agent fills + human accepts/edits/rejects), agent-work visibility (which template/confidence/
+  source), journal/reports/close, the transparent tax widget. This is the **trust + control layer** and
+  is load-bearing — it is NOT deferred; each build round ships its functional UI.
+- **Visual design polish** (making it look as fresh as Bokio) is the **last-mile correction**, done
+  once the underlying ledger + skills + functional UI are stable. Polishing pixels before the data
+  model settles = rework. Delegate this final design pass to **Lovable**, Bokio-inspired.
+
+**So: no more UI input needed now.** Bokio is captured as the design north star; revisit at the polish
+stage. Build the substance first (agentic bookkeeping + native ledger + the functional control UI),
+then one Lovable design pass at the end.
+
 ## Backlog from the competitor sweep (what to add later)
 
 Distilled from Accounted (feature set + SE standards — borrow features, never AGPL code), Bokio, Dooer:
