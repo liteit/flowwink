@@ -57,6 +57,73 @@ Extension system.
 Each of these becomes a capability spec (skill + admin UI) under the parity program. Related:
 docs/processes/record-to-report.md (the accounting process this feeds).
 
+## CONSOLIDATED INVENTORY + BUILD PLAN (three-repo sweep, 2026-07-06)
+
+Result of inventorying FlowWink accounting + aircount + airledger (all Magnus's IP / FlowWink's own).
+
+### A. FlowWink accounting is FAR more built than assumed — L3 on the daily stack
+
+**BUILT (L3):** 28 skills (20 accounting + 8 reconciliation). Core double-entry (`manage_journal_entry`,
+`accounting_reports` = RR/BR/HB/trial balance), `manage_chart_of_accounts`, `manage_opening_balances`,
+VAT (SKV 4700), period close/reopen, voucher-gap detection. **Reconciliation is already a unified
+ROUTER** (`supabase/functions/reconciliation/index.ts`: import-file/import-image/auto-match/sync-stripe)
+— and it already *parses* SIE into bank_transactions. **The template/learning infra already exists:**
+`accounting_templates` (~30 BAS templates, %-based), `suggest_accounting_template`,
+`manage_vendor_defaults` (per-vendor auto-coding), `record_accounting_correction` (learning log).
+DB is rich (journal_entries + lines + voucher series, accounting_periods, tax_codes/tax_code_grids,
+analytic_accounts, budgets, bank_transactions/matches/rules). SIE4 **export** exists (sie4-adapter).
+
+**PARTIAL (L2):** year-end (`year_end_readiness`, `run_year_end`, `propose_accruals`,
+`propose_annual_depreciation` — proposes, doesn't auto-book); SE pack stubs `se-periodiseringsfond`
++ `se-overavskrivningar` (amounts=0, wait on skatteuträkning); fixed_assets table (no UI).
+
+**MISSING (L0) — exactly the MVP gaps:** SIE4 **import of the full ledger** (chart+VER+IB, not just
+bank lines) · **skatteuträkning** (taxable result) · **ÅR** generation · **INK2** · **SRU**.
+
+### B. airledger = the agentic-bookkeeping pipeline to PORT (as skills)
+
+The intent→match→propose→confirm→book loop, proven. Port the LOGIC as skills (not the chat/STT/vision UI):
+- **Intent classifier** — LLM tool-call → `{intent enum, extracted_data (amount/date/vendor/vat), matched_template_hint, confidence, clarification_needed}`.
+- **Template matcher** — 4-stage confidence cascade: exact hint **0.95** → category **0.7** → keyword
+  **0.6–0.85** + **recency bonus** (+2/7d, +1/30d); **amount overrides** (e.g. >½ prisbasbelopp switches
+  template); **warning rules**; returns top-3 candidates. Thresholds: **<0.50 clarify · <0.80
+  disambiguate · ≥0.80 propose**. → this IS the confidence-gate.
+- **Field collection** (multi-turn, calc expressions), **VAT calc engine** (6 rate×type variants +
+  placeholders resolved at booking), **double-entry validation** (Σdr=Σcr ±0.01), **duplicate
+  detection**, **opening-balance motkonto** (class-2 → pair 1930).
+- **Template data model** worth aligning: `template_entries` JSONB with `vat_calculation` +
+  placeholders (`{amount_excluding_vat}`/`{vat_amount}`/`{total_amount}`) — richer than FlowWink's
+  current `accounting_templates`; borrow the placeholder/VAT-calc pattern.
+- **KEY:** FlowWink already has the *templates + suggest + corrections*; the port is mostly the
+  **intent→match→confidence→propose loop** on top, exposed as skills. Small.
+
+### C. aircount = SIE4 IMPORT (the on-ramp)
+
+- **Reusable:** `ImportPage.jsx` parser (#VER/#TRANS/#KONTO/#IB) + **`encodingUtils.js` CP437 decoder**
+  (solves the legacy-encoding gotcha). Data model (debit/credit + `ver`).
+- **Harden for production:** multi-line quoted fields, Σdr=Σcr per VER validation, `#UB`/`#KSUMMA`,
+  **chart normalization to canonical BAS** (the 1932→1930 reconciliation), encoding auto-detect.
+- **Home:** extend the existing **reconciliation router** (it already parses SIE for bank lines) to a
+  full-ledger import, OR the SE pack — NOT a new edge function.
+
+### D. Build order for the MVP gaps (respecting all constraints)
+
+All as **surface-neutral skills** (MCP + FlowChat + FlowPilot), routed (agent-execute / reconciliation
+router / one `accounting-se` router), on the **native ledger**, year-versioned data in the SE pack.
+
+1. **Agentic batch-bookkeeping (lane 1)** — port airledger's intent→match→confidence→propose loop as a
+   skill over FlowWink's existing `accounting_templates` + `suggest_accounting_template` + the
+   staged→approve→posted flow. Batch the bank-event queue; auto-apply ≥0.80, stage; route <0.80 to
+   review. **First, most-provable round** (Liteit's 17 events).
+2. **Natural-language → verification (lane 2)** — the intent classifier + freeform-booking path as a
+   skill, so "vi höll stämma, godkänn dispositionen" → the 2099→2091 appropriation entry. Enables the
+   conversational close.
+3. **SIE4 import** — aircount parser + CP437, normalize to canonical BAS, into the reconciliation router.
+4. **Skatteuträkning** — RPC/handler: resultat före skatt + skattemässiga justeringar (ej avdragsgilla)
+   + year-versioned bolagsskatt → beskattningsbar inkomst; unblocks periodiseringsfond cap + INK2.
+5. **ÅR (K2) + INK2 + SRU** — generators reading the native ledger (SIE-in for external books); one
+   `accounting-se` router (fold `accounting-vat-return-se` in as the first action).
+
 ## Backlog from the competitor sweep (what to add later)
 
 Distilled from Accounted (feature set + SE standards — borrow features, never AGPL code), Bokio, Dooer:
