@@ -138,7 +138,11 @@ export function PendingOperationsList() {
                   </div>
                   <span className="text-xs text-muted-foreground">{new Date(op.created_at).toLocaleString()}</span>
                 </div>
-                <pre className="text-xs bg-muted/50 p-2 rounded overflow-auto max-h-48">{JSON.stringify(op.preview ?? op.args, null, 2)}</pre>
+                {op.skill_name === 'manage_journal_entry' ? (
+                  renderJournalEntry(op)
+                ) : (
+                  <pre className="text-xs bg-muted/50 p-2 rounded overflow-auto max-h-48">{JSON.stringify(op.preview ?? op.args, null, 2)}</pre>
+                )}
                 <div className="flex gap-2">
                   <Button size="sm" variant="default" onClick={() => approve.mutate(op.id)}>
                     <Check className="h-4 w-4 mr-1" /> Approve
