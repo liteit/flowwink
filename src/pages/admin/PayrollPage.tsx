@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { Wallet, Plus, CheckCircle2, Banknote, Eye, Trash2, FileDown, FileText } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { PayslipDialog } from '@/components/payroll/PayslipDialog';
 
 interface PayrollRun {
   id: string;
@@ -465,9 +466,18 @@ function RunDetails({ run }: { run: PayrollRun }) {
                   {fmtSEK(l.gross_cents + l.social_fee_cents)}
                 </TableCell>
                 <TableCell className="text-right">
-                  {run.status === 'draft' && (
-                    <SickDaysDialog run={run} line={l} />
-                  )}
+                  <div className="flex justify-end gap-2">
+                    {run.status === 'draft' && (
+                      <SickDaysDialog run={run} line={l} />
+                    )}
+                    {(run.status === 'approved' || run.status === 'paid') && (
+                      <PayslipDialog
+                        runId={run.id}
+                        employeeId={l.employee_id}
+                        employeeName={l.employee_name ?? undefined}
+                      />
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
