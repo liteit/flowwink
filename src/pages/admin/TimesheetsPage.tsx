@@ -21,22 +21,18 @@ export default function TimesheetsPage() {
         <TabsList>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
           <TabsTrigger value="weekly">Timesheet</TabsTrigger>
+          <TabsTrigger value="entries">Entries</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
           <TabsTrigger value="budget">Budget</TabsTrigger>
           <TabsTrigger value="projects">Projects</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="tasks">
-          <TasksTab />
-        </TabsContent>
-        <TabsContent value="weekly">
-          <WeeklyTimesheetTab />
-        </TabsContent>
-        <TabsContent value="budget">
-          <BudgetTab />
-        </TabsContent>
-        <TabsContent value="projects">
-          <ProjectsTab />
-        </TabsContent>
+        <TabsContent value="tasks"><TasksTab /></TabsContent>
+        <TabsContent value="weekly"><WeeklyTimesheetTab /></TabsContent>
+        <TabsContent value="entries"><EntriesTab /></TabsContent>
+        <TabsContent value="reports"><ReportsTab /></TabsContent>
+        <TabsContent value="budget"><BudgetTab /></TabsContent>
+        <TabsContent value="projects"><ProjectsTab /></TabsContent>
       </Tabs>
     </div>
     </AdminLayout>
