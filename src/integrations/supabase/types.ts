@@ -6494,6 +6494,7 @@ export type Database = {
           id: string
           invoice_id: string | null
           journal_id: string | null
+          match_source: string | null
           reference_number: string | null
           source: string
           status: string
@@ -6512,6 +6513,7 @@ export type Database = {
           id?: string
           invoice_id?: string | null
           journal_id?: string | null
+          match_source?: string | null
           reference_number?: string | null
           source?: string
           status?: string
@@ -6530,6 +6532,7 @@ export type Database = {
           id?: string
           invoice_id?: string | null
           journal_id?: string | null
+          match_source?: string | null
           reference_number?: string | null
           source?: string
           status?: string
