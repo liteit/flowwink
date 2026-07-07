@@ -163,6 +163,7 @@ export default function PagesListPage() {
   const [sortField, setSortField] = useState<SortField>('updated_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [translationsSlug, setTranslationsSlug] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const { data: pages, isLoading } = usePages();
