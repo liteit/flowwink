@@ -47,6 +47,57 @@ export function JournalCsvActions({
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [wipeOpen, setWipeOpen] = useState(false);
+  const [wipeBankEvents, setWipeBankEvents] = useState(false);
+  const [wiping, setWiping] = useState(false);
+
+  async function handleWipe() {
+    setWiping(true);
+    try {
+      const { data, error } = await supabase.rpc('admin_wipe_journal', {
+        p_delete_bank_events: wipeBankEvents,
+      });
+      if (error) throw error;
+      const r = (data ?? {}) as {
+        entries_deleted?: number;
+        lines_deleted?: number;
+        bank_events?: number;
+        periods_reopened?: number;
+      };
+      const parts: string[] = [];
+      parts.push(`${r.entries_deleted ?? 0} entries`);
+      if (wipeBankEvents) {
+        parts.push(`${r.bank_events ?? 0} bank events deleted`);
+      } else {
+        parts.push(`${r.bank_events ?? 0} events reset`);
+      }
+      if ((r.periods_reopened ?? 0) > 0) {
+        parts.push(`${r.periods_reopened} periods reopened`);
+      }
+      toast({ title: 'Deleted', description: parts.join(' · ') });
+
+      queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
+      queryClient.invalidateQueries({ queryKey: ['journal-entry'] });
+      queryClient.invalidateQueries({ queryKey: ['account-balances'] });
+      queryClient.invalidateQueries({ queryKey: ['account-ledger'] });
+      queryClient.invalidateQueries({ queryKey: ['events-to-book'] });
+      queryClient.invalidateQueries({ queryKey: ['events-booked'] });
+      queryClient.invalidateQueries({ queryKey: ['events-booked-count'] });
+      queryClient.invalidateQueries({ queryKey: ['template-registry-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['accounting-periods'] });
+
+      setWipeOpen(false);
+      setWipeBankEvents(false);
+    } catch (err: any) {
+      toast({
+        title: 'Delete failed',
+        description: err.message ?? String(err),
+        variant: 'destructive',
+      });
+    } finally {
+      setWiping(false);
+    }
+  }
 
   const journalByCode = new Map((journals || []).map((j) => [j.code, j]));
   const journalById = new Map((journals || []).map((j) => [j.id, j]));
