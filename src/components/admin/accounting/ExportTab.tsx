@@ -136,43 +136,47 @@ export function ExportTab() {
         </div>
 
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {adapters.length === 0 && (
-          <Card>
-            <CardContent className="py-8 text-center text-muted-foreground">
-              No export adapters registered for {pack.label}.
-            </CardContent>
-          </Card>
-        )}
-        {adapters.map((a) => (
-          <Card key={a.id}>
-            <CardHeader>
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <CardTitle className="text-base">{a.label}</CardTitle>
+        {adapters.length === 0 ? (
+          <div className="py-16 text-center">
+            <h3 className="text-sm font-medium mb-1">No export adapters available</h3>
+            <p className="text-sm text-muted-foreground">The active locale pack ({pack.label}) does not register any export formats.</p>
+          </div>
+        ) : (
+          adapters.map((a) => (
+            <div
+              key={a.id}
+              className="flex items-center gap-4 px-6 py-3 border-b border-border/40 last:border-b-0"
+            >
+              <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-sm font-medium truncate">{a.label}</span>
+                  <span className="text-xs text-muted-foreground">.{a.extension}</span>
                 </div>
-                <Badge variant="secondary">{purposeLabel[a.purpose] ?? a.purpose}</Badge>
+                <div className="text-xs text-muted-foreground truncate">
+                  {a.description ?? purposeLabel[a.purpose] ?? a.purpose}
+                </div>
               </div>
-              <CardDescription>{a.description ?? `.${a.extension}`}</CardDescription>
-            </CardHeader>
-            <CardContent>
+              <Badge variant="outline" className="font-normal shrink-0">{purposeLabel[a.purpose] ?? a.purpose}</Badge>
               <Button
+                size="sm"
+                variant="outline"
                 onClick={() => handleDownload(a.id)}
                 disabled={busyId !== null}
-                className="w-full"
+                className="shrink-0"
               >
                 {busyId === a.id ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <Download className="h-4 w-4 mr-2" />
                 )}
-                Download .{a.extension}
+                Download
               </Button>
-            </CardContent>
-          </Card>
-        ))}
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
 }
+
