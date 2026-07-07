@@ -13,7 +13,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import {
   useUpsertAccountingTemplate,
@@ -265,10 +264,10 @@ export function EditTemplateDialog({ open, onOpenChange, template, cloneFrom }: 
               return (
                 <div
                   key={i}
-                  className="grid grid-cols-[88px_1fr_72px_auto] gap-2 items-start border rounded p-2"
+                  className="grid grid-cols-[84px_1fr_84px_32px] gap-2 items-start border rounded p-2"
                 >
                   <Select value={side} onValueChange={(v) => setSide(i, v as 'debit' | 'credit')}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -277,17 +276,20 @@ export function EditTemplateDialog({ open, onOpenChange, template, cloneFrom }: 
                     </SelectContent>
                   </Select>
 
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-w-0">
                     <Select
                       value={line.account_code}
                       onValueChange={(v) => handlePickAccount(i, v)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger
+                        className="text-sm"
+                        title={line.account_code ? `${line.account_code} — ${line.account_name}` : undefined}
+                      >
                         <SelectValue placeholder="Account" />
                       </SelectTrigger>
                       <SelectContent className="max-h-72">
                         {accounts?.map((a) => (
-                          <SelectItem key={a.account_code} value={a.account_code}>
+                          <SelectItem key={a.account_code} value={a.account_code} className="text-sm">
                             {a.account_code} — {a.account_name}
                           </SelectItem>
                         ))}
@@ -295,14 +297,10 @@ export function EditTemplateDialog({ open, onOpenChange, template, cloneFrom }: 
                     </Select>
                     <Input
                       placeholder="Description"
+                      className="text-sm"
                       value={line.description || ''}
                       onChange={(e) => updateLine(i, { description: e.target.value })}
                     />
-                    {line.account_name && (
-                      <Badge variant="outline" className="text-xs">
-                        {line.account_name}
-                      </Badge>
-                    )}
                   </div>
 
                   <div className="relative">
@@ -310,11 +308,11 @@ export function EditTemplateDialog({ open, onOpenChange, template, cloneFrom }: 
                       type="number"
                       inputMode="numeric"
                       min={0}
-                      className="tabular-nums pr-6 text-right"
+                      className="tabular-nums px-2 pr-5 text-right text-sm"
                       value={Number.isFinite(pct) ? pct : 0}
                       onChange={(e) => setPct(i, Number(e.target.value))}
                     />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                    <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
                       %
                     </span>
                   </div>
