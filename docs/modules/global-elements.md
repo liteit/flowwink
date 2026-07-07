@@ -5,12 +5,14 @@ version: "1.0.0"
 category: "system"
 autonomy: "config-required"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Global Blocks
 
 > Create reusable global content blocks (header, footer, etc.)
+
+Ships with **1 agent skill**.
 
 ## Quick Facts
 
@@ -22,8 +24,17 @@ generated_at: "2026-05-04"
 | **Autonomy** | config-required |
 | **Core** | No |
 | **Capabilities** | `content:receive`, `data:write` |
-| **MCP-exposed skills** | — |
+| **MCP-exposed skills** | 1 |
 | **Owns tables** | — |
+
+## Skills
+
+These skills are seeded into `agent_skills` when the module is enabled and exposed via MCP.
+External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can call them directly.
+
+| Skill | Scope | Description |
+|-------|-------|-------------|
+| `manage_global_blocks` | internal | Manage global blocks (header, footer, etc): list, get, update, toggle active status. Use when: changing header/footer content; reviewing active global elements; toggling visibility of a global bloc… |
 
 ## File Map
 

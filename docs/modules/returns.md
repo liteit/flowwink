@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "data"
 autonomy: "view-required"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Returns / RMA
 
 > Return-merchandise-authorization flow with line-item tracking, approval, restock-on-receive, and refund processing. Customers see their own returns; staff manages all.
 
-Ships with **5 agent skills**, an **admin UI**.
+Ships with **7 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **5 agent skills**, an **admin UI**.
 | **Autonomy** | view-required |
 | **Core** | No |
 | **Capabilities** | `data:read`, `data:write` |
-| **MCP-exposed skills** | 5 |
+| **MCP-exposed skills** | 7 |
 | **Owns tables** | — |
 
 ## Skills
@@ -39,6 +39,8 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | `approve_return` | internal | Approve a requested return so the customer can ship it back. Use when: support/admin signs off on the RMA. NOT for: actually receiving goods (use receive_return). |
 | `receive_return` | internal | Mark an approved return as received. Auto-emits stock.movement event for items flagged restock=true. Use when: warehouse confirms the package arrived. |
 | `refund_return` | internal | Process the refund for a received return. Use when: payment is being returned to the customer (Stripe, manual, or store-credit). |
+| `inspect_return` | internal | QC-inspect a received return: record inspection notes and set the restocking fee before refunding. Use when: goods arrived back and need checking; deciding a restocking fee. NOT for: refunding (ref… |
+| `return_reason_report` | internal | Return-reason analytics: counts and refunded value per reason_code over a period. Use when: spotting product quality issues, monthly returns review. NOT for: managing a single RMA (create_return/re… |
 
 ## Module API Contract
 
@@ -52,6 +54,7 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 |---------|------|
 | Module definition | `src/lib/modules/returns-module.ts` |
 | Admin page | `src/pages/admin/ReturnsPage.tsx` |
+| Migration | `supabase/migrations/20260628200000_b7c1d2e3-returns-refund-rma-hardening.sql` |
 
 ## Contributing
 

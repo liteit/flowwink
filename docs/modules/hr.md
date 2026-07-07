@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "data"
 autonomy: "agent-capable"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # HR & Employees
 
 > Employee directory, leave management, and organizational structure
 
-Ships with **3 agent skills**.
+Ships with **4 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **3 agent skills**.
 | **Autonomy** | agent-capable |
 | **Core** | No |
 | **Capabilities** | `data:write`, `data:read` |
-| **MCP-exposed skills** | 3 |
+| **MCP-exposed skills** | 4 |
 | **Owns tables** | — |
 
 ## Skills
@@ -34,6 +34,7 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 
 | Skill | Scope | Description |
 |-------|-------|-------------|
+| `auto_allocate_vacation` | internal | Allocate annual vacation days for all active employees at year-end based on age/tenure policies, including capped carry-over from previous year. Use when: rolling over to a new fiscal year, onboard… |
 | `manage_employee` | internal | Create, update, search, and deactivate employee records. Use when: adding new team members, updating roles/departments, offboarding. NOT for: leave requests (use manage_leave), documents. |
 | `manage_leave` | internal | Create, approve, reject, or list leave requests for employees. Use when: handling vacation/sick leave, reviewing pending requests, checking who is on leave. NOT for: general employee data (use mana… |
 | `onboarding_checklist` | internal | Create and manage onboarding checklists for new employees. Use when: a new employee is added and needs onboarding steps, checking onboarding progress. NOT for: general task management. |
@@ -57,6 +58,7 @@ This module participates in the following end-to-end business processes:
 | Purpose | Path |
 |---------|------|
 | Module definition | `src/lib/modules/hr-module.ts` |
+| Admin page | `src/pages/admin/HrPage.tsx` |
 
 ## Contributing
 

@@ -1,16 +1,16 @@
 ---
-title: "Pricelists Module"
-module_id: "pricelists"
+title: "Maintenance Module"
+module_id: "maintenance"
 version: "1.0.0"
 category: "data"
-autonomy: "config-required"
+autonomy: "view-required"
 generated: true
 generated_at: "2026-07-07"
 ---
 
-# Pricelists
+# Maintenance
 
-> Versioned pricing per customer, company, or period — Odoo-style price lists with fixed prices or discount %. Resolves the best applicable price for any product+customer+date.
+> Equipment registry, corrective + preventive maintenance requests, and interval-based preventive schedules with a nightly sweep. Odoo Maintenance counterpart.
 
 Ships with **3 agent skills**, an **admin UI**.
 
@@ -18,10 +18,10 @@ Ships with **3 agent skills**, an **admin UI**.
 
 | Property | Value |
 |----------|-------|
-| **Module ID** | `pricelists` |
+| **Module ID** | `maintenance` |
 | **Version** | 1.0.0 |
 | **Category** | data |
-| **Autonomy** | config-required |
+| **Autonomy** | view-required |
 | **Core** | No |
 | **Capabilities** | `data:read`, `data:write` |
 | **MCP-exposed skills** | 3 |
@@ -34,24 +34,24 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 
 | Skill | Scope | Description |
 |-------|-------|-------------|
-| `manage_pricelist` | internal | CRUD for versioned pricelists (per customer/company/period). Use when: setting up customer-specific pricing, seasonal discounts, or volume-based tiers. NOT for: applying prices to a quote line (use… |
-| `manage_pricelist_item` | internal | Add/remove/update line items in a pricelist (product → fixed price or discount %). Use when: populating a pricelist after creating it. NOT for: creating the pricelist itself (use manage_pricelist). |
-| `resolve_pricelist_price` | internal | Returns the best applicable price for a product given an optional lead/company and quantity. Use when: building a quote/invoice line and wanting customer-specific pricing. NOT for: editing pricelis… |
+| `manage_equipment` | internal | Register and manage equipment/machines: list, create, update (status: operational/under_maintenance/broken/retired). Use when: adding a machine or asset to track, changing its status or location. N… |
+| `manage_maintenance_request` | internal | Create and track maintenance work on equipment: corrective (breakdowns) and preventive jobs with priority/status/due date. Use when: something breaks, scheduling service work, closing completed job… |
+| `run_preventive_maintenance` | internal | Sweep preventive maintenance schedules: creates requests for schedules whose next_due has passed and rolls next_due forward by the interval. Use when: nightly cron, or on demand after adding schedu… |
 
 ## Module API Contract
 
-**Actions:** `resolve_price`, `list`, `list_items`
+**Actions:** `get_config`
 
-**Input fields:** `action`, `product_id`, `lead_id`, `company_id`, `quantity`, `pricelist_id`
+**Input fields:** `action`
 
-**Output fields:** `success`, `data`, `message`
+**Output fields:** `success`, `error`
 
 ## File Map
 
 | Purpose | Path |
 |---------|------|
-| Module definition | `src/lib/modules/pricelists-module.ts` |
-| Admin page | `src/pages/admin/PricelistsPage.tsx` |
+| Module definition | `src/lib/modules/maintenance-module.ts` |
+| Admin page | `src/pages/admin/MaintenancePage.tsx` |
 
 ## Contributing
 

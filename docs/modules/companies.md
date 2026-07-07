@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "data"
 autonomy: "view-required"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Companies
 
 > Create and manage company records with optional AI enrichment
 
-Ships with **1 agent skill**, an **admin UI**.
+Ships with **2 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **1 agent skill**, an **admin UI**.
 | **Autonomy** | view-required |
 | **Core** | No |
 | **Capabilities** | `content:receive`, `data:write` |
-| **MCP-exposed skills** | 1 |
+| **MCP-exposed skills** | 2 |
 | **Owns tables** | — |
 
 ## Skills
@@ -34,7 +34,8 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 
 | Skill | Scope | Description |
 |-------|-------|-------------|
-| `manage_company` | internal | Manage companies: list, get, create, update, delete. Use when: adding a new company to CRM; updating company contact info; removing an inactive company. NOT for: enriching company data (enrich_comp… |
+| `manage_company` | internal | Manage companies: list, get, create, update, delete — incl. B2B fields (org/VAT number, parent company hierarchy, employee count, revenue, credit limit, account owner, tags). Use when: adding a com… |
+| `find_duplicate_companies` | internal | Find likely duplicate companies by name similarity or identical domain (read-only). Use when: cleaning the CRM, before creating a company that might already exist. NOT for: merging (manual for now)… |
 
 ## Used in Processes
 

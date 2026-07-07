@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "data"
 autonomy: "agent-capable"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Contracts
 
 > Contract lifecycle management with renewal tracking and document storage
 
-Ships with **6 agent skills**, an **admin UI**.
+Ships with **7 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **6 agent skills**, an **admin UI**.
 | **Autonomy** | agent-capable |
 | **Core** | No |
 | **Capabilities** | `data:write`, `data:read` |
-| **MCP-exposed skills** | 6 |
+| **MCP-exposed skills** | 7 |
 | **Owns tables** | — |
 
 ## Skills
@@ -35,6 +35,7 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | Skill | Scope | Description |
 |-------|-------|-------------|
 | `manage_contract` | internal | Create, list, update, or search contracts. Use when: admin wants to create an agreement, find a contract by counterparty, change status, or update terms. NOT for: invoicing (use manage_invoice), pr… |
+| `list_contract_templates` | internal | List available contract templates (NDA, Service, MSA, SOW, etc) before creating a contract. Use when: agent or admin needs to create a contract and wants to discover existing templates instead of w… |
 | `contract_renewal_check` | internal | Check for contracts expiring soon and alert. Use when: autonomous heartbeat checks for renewal deadlines, or admin asks "which contracts are expiring soon?". NOT for: creating contracts (use manage… |
 | `get_contract_content` | internal | Fetch the full markdown body of a contract for LLM consumption. Use when: external operator (ClawWink) or agent needs to read, summarize, or analyze the actual agreement text — not just metadata. R… |
 | `search_contracts` | internal | Free-text search across contracts (title, counterparty, body content). Use when: admin or operator asks "find the contract with X", "which contracts mention the Y clause?", "search NDA with ACME". … |

@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "communication"
 autonomy: "view-required"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Chat
 
-> AI-powered visitor chat widget using FlowPilot intelligence
+> Public visitor chat — the AI-powered widget and /chat landing page for anonymous site visitors. For internal operator chat use FlowChat (/admin/flowchat); for workspace Q&A over your own data use Cowork (/admin/cowork).
 
-Ships with **2 public blocks**.
+Ships with **1 agent skill**, **2 public blocks**.
 
 ## Quick Facts
 
@@ -24,12 +24,21 @@ Ships with **2 public blocks**.
 | **Autonomy** | view-required |
 | **Core** | No |
 | **Capabilities** | `data:read` |
-| **MCP-exposed skills** | — |
+| **MCP-exposed skills** | 1 |
 | **Owns tables** | — |
 
 ## Integrations
 
 **Optional:** `openai`, `gemini`, `local_llm`, `n8n`
+
+## Skills
+
+These skills are seeded into `agent_skills` when the module is enabled and exposed via MCP.
+External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can call them directly.
+
+| Skill | Scope | Description |
+|-------|-------|-------------|
+| `get_chat_transcript` | both | Read visitor chat transcripts — list recent chat messages or fetch the full message thread of one conversation (filters.conversation_id). Use when: reviewing what a visitor discussed with the AI ch… |
 
 ## Module API Contract
 
@@ -45,9 +54,9 @@ Ships with **2 public blocks**.
 |---------|------|
 | Module definition | `src/lib/modules/chat-module.ts` |
 | Hook | `src/hooks/useChat.tsx` |
-| Public block | `src/components/public/blocks/ChatBlock.tsx` |
 | Public block | `src/components/public/blocks/ChatLauncherBlock.tsx` |
-| Migration | `supabase/migrations/20260402161500_fix_a2a_chat_instructions.sql` |
+| Public block | `src/components/public/blocks/ChatBlock.tsx` |
+| Migration | `supabase/migrations/20260704150000_a9c1d2e3-chat-lead-capture.sql` |
 
 ## Contributing
 

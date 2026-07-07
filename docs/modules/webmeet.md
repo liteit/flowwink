@@ -1,82 +1,63 @@
+---
+title: "WebMeet Module"
+module_id: "webmeet"
+version: "0.1.0"
+category: "communication"
+autonomy: "agent-capable"
+generated: true
+generated_at: "2026-07-07"
+---
+
 # WebMeet
 
-Quick 1-to-few video meetings with shareable URLs — like Google Meet, built into FlowWink.
+> Quick 1-to-few video meetings with shareable URLs and screen sharing — peer-to-peer WebRTC, no SFU required. Use for internal huddles, customer consultations (e.g. psychologist sessions), and ad-hoc calls. For 50+ viewer broadcasts, use the Webinars module instead.
 
-## What it does
+Ships with **3 agent skills**, an **admin UI**.
 
-- **Create a meeting** → get a shareable URL like `/meet/swift-river-482`.
-- **Share with anyone** — link works for logged-in users and anonymous guests. No install.
-- **Screen sharing** built in (`getDisplayMedia` → replaces the camera track on every peer connection).
-- **Camera + mic toggles**, per-participant tiles, presence sync.
-- **End the room** to revoke the link.
+## Quick Facts
 
-## Architecture
+| Property | Value |
+|----------|-------|
+| **Module ID** | `webmeet` |
+| **Version** | 0.1.0 |
+| **Category** | communication |
+| **Autonomy** | agent-capable |
+| **Core** | No |
+| **Capabilities** | `data:write` |
+| **MCP-exposed skills** | 3 |
+| **Owns tables** | — |
 
-| Concern | Implementation |
-|---|---|
-| Transport | Browser-native `RTCPeerConnection` (no `simple-peer` dep). |
-| Signaling | Supabase Realtime broadcast channel `webmeet:<slug>`. No DB signaling tables. |
-| Presence | Supabase Realtime presence on the same channel. |
-| ICE | Public Google STUN servers. Add TURN when you need to traverse strict NATs. |
-| Capacity | Mesh — good up to ~4–6 peers. Use Webinars (SFU) for larger broadcasts. |
+## Skills
 
-Only one table is persisted (`webmeet_rooms`) holding room metadata + the shareable slug. Everything else lives on the wire.
+These skills are seeded into `agent_skills` when the module is enabled and exposed via MCP.
+External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can call them directly.
 
-## Tables
+| Skill | Scope | Description |
+|-------|-------|-------------|
+| `create_webmeet_room` | internal | Create a new WebMeet video room and return a shareable URL. Use when: visitor or admin asks for a "video meeting link", "video call", "huddle", "screen share session", or any 1-to-few real-time vid… |
+| `end_webmeet_room` | internal | End an active WebMeet room — sets ended_at and stops new participants from joining. Use when: meeting is over and the host wants to close the link; cleanup after an expired session. NOT for: deleti… |
+| `list_webmeet_rooms` | internal | List WebMeet rooms (active by default). Use when: an agent or user asks "what meetings do we have right now?", "any open rooms?", or needs to surface a join link to a known participant. NOT for: we… |
 
-| Table | Purpose |
-|---|---|
-| `webmeet_rooms` | Room metadata: `slug`, `name`, `host_user_id`, `password`, `max_participants`, `expires_at`, `ended_at`. Public-readable when active so anonymous guests can join via the link. |
+## File Map
 
-## Skills (MCP exposed)
+| Purpose | Path |
+|---------|------|
+| Module definition | `src/lib/modules/webmeet-module.ts` |
+| Hook | `src/hooks/useWebMeet.ts` |
+| Hook | `src/hooks/useWebmeet.ts` |
+| Admin page | `src/pages/admin/WebMeetPage.tsx` |
 
-All three are exposed to FlowPilot **and** external agents via `mcp-server`, group `communication`.
+## Contributing
 
-| Skill | Handler | Use case |
-|---|---|---|
-| `create_webmeet_room` | `rpc:create_webmeet_room` | Mint a room + return `{ slug, url, max_participants, expires_at }`. Agents call this whenever a customer asks for a video meeting link. |
-| `end_webmeet_room` | `rpc:end_webmeet_room` | Close an active room. |
-| `list_webmeet_rooms` | `rpc:list_webmeet_rooms` | List active rooms (or include ended ones). |
+To enhance this module, see [Contributing Guide](../contributing/contributing.md).
 
-### Example MCP call
+Key rules:
+- Follow `ModuleDefinition<I, O>` contract pattern
+- All schema changes require idempotent migrations
+- Skills must be self-describing ([Law 2](../concepts/openclaw-law.md))
+- Blocks are interfaces, not pipelines ([Law 3](../concepts/openclaw-law.md))
+- New skills must pass the [Agent Contract Integrity](../../mem/architecture/agent-contract-integrity.md) checklist (`bun run lint:skills`)
 
-```jsonc
-{
-  "tool": "create_webmeet_room",
-  "arguments": {
-    "p_name": "Customer call — Acme",
-    "p_max_participants": 4,
-    "p_expires_in_minutes": 120
-  }
-}
-```
+---
 
-Response:
-```jsonc
-{ "id": "…", "slug": "swift-river-482", "url": "/meet/swift-river-482", "max_participants": 4, "expires_at": "…" }
-```
-
-Prefix `url` with the site origin when sharing externally (email/SMS/Telegram).
-
-## Pages
-
-- `/admin/webmeet` — list & create rooms (admin).
-- `/meet/:slug` — public meeting room (lobby → join with name → grid + controls).
-
-## Settings
-
-| Module flag | Effect |
-|---|---|
-| `webmeet.enabled` | Toggles admin UI + skill availability. |
-
-## When NOT to use WebMeet
-
-- **Webinars / 50+ viewers** — use the `webinars` module (SFU-backed, LiveKit/Agora runtime planned).
-- **PSTN / real phone numbers** — use the `voice` module (46elks JsSIP).
-- **Persistent text chat** — use `chat`.
-
-## Future
-
-- Optional TURN config per site for strict-NAT customers.
-- Invite fan-out — auto-send a join link via email / SMS / Telegram when a `bookings` row gets `meeting_type='webmeet'`. See `mem/features/webinars-and-webmeet-plan.md`.
-- Optional recording → push to `documents`.
+*This file is auto-generated by `scripts/generate-module-docs.ts`. Do not edit manually — re-run the script after changing the module definition.*

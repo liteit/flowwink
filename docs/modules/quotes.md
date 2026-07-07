@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "data"
 autonomy: "view-required"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Quotes
 
 > Sales quotes with line items, versioning, customer e-sign via public link, reusable templates, and approval workflow before sending high-value offers.
 
-Ships with **1 agent skill**, an **admin UI**.
+Ships with **2 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **1 agent skill**, an **admin UI**.
 | **Autonomy** | view-required |
 | **Core** | No |
 | **Capabilities** | `data:read`, `data:write` |
-| **MCP-exposed skills** | 1 |
+| **MCP-exposed skills** | 2 |
 | **Owns tables** | — |
 
 ## Integrations
@@ -39,12 +39,13 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | Skill | Scope | Description |
 |-------|-------|-------------|
 | `manage_quote` | internal | Manage sales quotes end-to-end: list pending/sent quotes, create new from a lead or template, add line items, send for approval (if above threshold) and then to the customer with a public e-sign li… |
+| `send_quote_expiry_reminders` | internal | Scan sent quotes whose valid_until is within the next 48 hours or up to 3 days past (grace window) and email the customer a reminder, reusing the existing quote reminder email pipeline (send-quote-… |
 
 ## Module API Contract
 
 **Actions:** `list`, `get`, `create`, `update`, `add_item`, `send`, `request_approval`, `list_templates`, `use_template`, `convert_to_invoice`
 
-**Input fields:** `action`, `id`, `lead_id`, `deal_id`, `template_id`, `title`, `intro_text`, `terms_text`, `notes`, `currency`, `valid_until`, `description`, `quantity`, `unit_price_cents`, `tax_rate_pct`, `status`
+**Input fields:** `action`, `id`, `lead_id`, `deal_id`, `template_id`, `title`, `intro_text`, `terms_text`, `notes`, `currency`, `valid_until`, `prepayment_pct`, `description`, `quantity`, `unit_price_cents`, `tax_rate_pct`, `discount_pct`, `status`
 
 **Output fields:** `success`, `quote_id`, `quote_number`, `public_url`, `message`, `error`, `data`
 

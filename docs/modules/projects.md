@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "data"
 autonomy: "agent-capable"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Projects
 
 > Project and task management with Kanban boards, assignments, and time tracking integration
 
-Ships with **2 agent skills**, an **admin UI**.
+Ships with **3 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **2 agent skills**, an **admin UI**.
 | **Autonomy** | agent-capable |
 | **Core** | No |
 | **Capabilities** | `data:write`, `data:read` |
-| **MCP-exposed skills** | 2 |
+| **MCP-exposed skills** | 3 |
 | **Owns tables** | — |
 
 ## Skills
@@ -36,6 +36,7 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 |-------|-------|-------------|
 | `manage_project` | internal | Create, update, search, and close projects. Use when: starting new client work, updating project status, reviewing active projects. NOT for: individual tasks (use manage_project_task), timesheets (… |
 | `manage_project_task` | internal | Create, update, move, and list tasks within a project. Use when: adding work items, moving tasks on the kanban board, checking task status. NOT for: CRM tasks (use manage_crm_tasks), project-level … |
+| `manage_project_milestone` | internal | Manage project milestones (named delivery gates with a due date and task-completion progress). Use when: planning project phases, marking a milestone reached, tracking gate progress. NOT for: indiv… |
 
 ## Module API Contract
 

@@ -5,14 +5,14 @@ version: "1.1.0"
 category: "insights"
 autonomy: "agent-capable"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # SLA Monitor
 
 > Service level agreement monitoring for order fulfillment, ticket response, lead handling, chat reply times, and booking confirmations. Auto-detects violations, auto-resolves when entities are handled.
 
-Ships with **3 agent skills**.
+Ships with **4 agent skills**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **3 agent skills**.
 | **Autonomy** | agent-capable |
 | **Core** | No |
 | **Capabilities** | `data:read`, `data:write` |
-| **MCP-exposed skills** | 3 |
+| **MCP-exposed skills** | 4 |
 | **Owns tables** | — |
 
 ## Skills
@@ -37,6 +37,7 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | `sla_check` | internal | Check all SLA policies against current data — finds overdue tickets, orders, leads, chats, and bookings. Auto-creates violations and auto-resolves when entities are handled. Use when: monitoring se… |
 | `manage_sla_policy` | internal | CRUD for SLA policies — define thresholds (in minutes) per entity_type + metric. Use when: setting up monitoring for a new entity, tightening/loosening response targets. NOT for: running checks (us… |
 | `list_sla_violations` | internal | List SLA violations — open (unresolved) by default, with optional filters by entity_type and time window. Use when: building a dashboard, asked about overdue work, investigating SLA health. |
+| `manage_business_hours` | internal | Configure the business-hours calendar (per-weekday open/close) and holidays used to measure SLA elapsed time on working hours instead of 24/7. Use when: setting office hours, adding a public holida… |
 
 ## Module API Contract
 

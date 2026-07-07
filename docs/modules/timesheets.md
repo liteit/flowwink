@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "data"
 autonomy: "agent-capable"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Timesheets
 
 > Time tracking for employees and projects with billable/non-billable categorization
 
-Ships with **2 agent skills**, an **admin UI**.
+Ships with **10 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **2 agent skills**, an **admin UI**.
 | **Autonomy** | agent-capable |
 | **Core** | No |
 | **Capabilities** | `data:write`, `data:read` |
-| **MCP-exposed skills** | 2 |
+| **MCP-exposed skills** | 10 |
 | **Owns tables** | — |
 
 ## Skills
@@ -34,8 +34,16 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 
 | Skill | Scope | Description |
 |-------|-------|-------------|
+| `lock_timesheet_period` | internal | Lock all time entries in a fiscal month so they can no longer be edited. Use when: month-end close, payroll cutoff, "lock timesheets for March". NOT for: deleting individual entries (use log_time) … |
 | `log_time` | internal | Log time entries for projects. Use when: employee reports hours worked, FlowPilot processes daily standups, user says "I worked 4 hours on X". NOT for: project management (use manage_projects), sum… |
 | `timesheet_summary` | internal | Generate timesheet summaries and reports. Use when: admin asks for weekly/monthly hours overview, billing summary, or "how much time have we spent on project X". NOT for: logging time (use log_time). |
+| `manage_timesheet_approval` | internal | Submit, approve or reject all timesheet entries in a date range (manager approval workflow). Use when: "approve last week\ |
+| `split_time_entry` | internal | Split one time entry into several entries across multiple projects on the same day (multi-project day split). Use when: an employee\ |
+| `log_indirect_time` | internal | Log indirect (non-project) time: PTO, sick, training or overhead hours. Books to the auto-created "Internal (non-billable)" project with the right category. Use when: "Anna was sick Tuesday", "log … |
+| `apply_overtime_rules` | internal | Compute and flag overtime: any hours above a daily threshold (default 8h) per person per day in a date range are stamped on the entries as overtime_hours. Use when: month-end before payroll, "how m… |
+| `timesheet_utilization_report` | internal | Utilization / productivity analytics per person for a date range: work vs billable vs indirect hours, overtime, capacity, utilization %, labor cost and revenue. Use when: "team utilization last mon… |
+| `payroll_timesheet_basis` | internal | Per-employee timesheet basis for one payroll month: work hours, overtime hours, PTO/training hours, sick days and unapproved-entry count. Use when: preparing a payroll run from logged time. NOT for… |
+| `apply_timesheet_overtime` | internal | Apply overtime pay from timesheets onto a DRAFT payroll run: sums time_entries.overtime_hours for the run month per employee, adds overtime pay (hourly = monthly salary / 168, × multiplier) and rec… |
 
 ## Module API Contract
 
@@ -59,6 +67,7 @@ This module participates in the following end-to-end business processes:
 | Module definition | `src/lib/modules/timesheets-module.ts` |
 | Hook | `src/hooks/useTimesheets.ts` |
 | Admin page | `src/pages/admin/TimesheetsPage.tsx` |
+| Migration | `supabase/migrations/20260707211000_timesheets-parity-r4.sql` |
 
 ## Contributing
 

@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "data"
 autonomy: "agent-capable"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Surveys & NPS
 
 > Capture customer satisfaction with one-click NPS, CSAT, and custom surveys. Triggered manually or automatically after orders, tickets, contracts and bookings. Detractor responses auto-route to FlowPilot for recovery; promoter responses boost lead score and surface testimonial opportunities.
 
-Ships with **3 agent skills**, an **admin UI**.
+Ships with **4 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **3 agent skills**, an **admin UI**.
 | **Autonomy** | agent-capable |
 | **Core** | No |
 | **Capabilities** | `data:read`, `data:write` |
-| **MCP-exposed skills** | 3 |
+| **MCP-exposed skills** | 4 |
 | **Owns tables** | — |
 
 ## Skills
@@ -34,7 +34,8 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 
 | Skill | Scope | Description |
 |-------|-------|-------------|
-| `create_survey_campaign` | internal | Create a new survey campaign attached to a template. Use when: launching a new NPS/CSAT program, automating feedback after an event (order delivered, ticket closed, contract renewed). NOT for: edit… |
+| `create_survey_campaign` | internal | Create a new survey campaign attached to a template. Requires an existing template_id — if none exists, call `manage_survey_template` with action=list first, and if empty, action=create to make one… |
+| `manage_survey_template` | internal | Create, list, or get survey templates — the reusable question sets that a survey campaign attaches to. Use when: you need a template_id for create_survey_campaign but none exists yet; setting up an… |
 | `send_survey` | internal | Send an active survey campaign to one or more recipients via email. Each recipient gets a unique one-click token link. Use when: a triggering event fires (order delivered, ticket closed), running a… |
 | `list_survey_responses` | internal | List responses for a campaign with optional filters (category, score range, date range). Use when: reviewing detractor feedback, building a monthly NPS report, finding promoters to ask for testimon… |
 

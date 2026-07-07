@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "insights"
 autonomy: "view-required"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Analytics
 
 > Dashboard with insights on leads, deals, and newsletter performance
 
-Ships with **4 agent skills**.
+Ships with **5 agent skills**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **4 agent skills**.
 | **Autonomy** | view-required |
 | **Core** | No |
 | **Capabilities** | `data:read` |
-| **MCP-exposed skills** | 4 |
+| **MCP-exposed skills** | 5 |
 | **Owns tables** | — |
 
 ## Integrations
@@ -38,6 +38,7 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 
 | Skill | Scope | Description |
 |-------|-------|-------------|
+| `weekly_business_digest` | internal | Generate a cross-module business summary covering views, leads, bookings, orders, posts, newsletters. Use when: weekly business review; executive summary needed; monitoring overall business health.… |
 | `analyze_analytics` | internal | Get page view analytics for a given period. Use when: reviewing website traffic; analyzing page performance; generating traffic reports. NOT for: analyzing chat feedback (analyze_chat_feedback); ge… |
 | `seo_audit_page` | internal | Run an SEO audit on a page or blog post, checking title, meta, content depth, images, links. Use when: optimizing a page for search engines; reviewing SEO before publishing; identifying SEO issues.… |
 | `kb_gap_analysis` | internal | Analyze chat data to find questions not covered by KB articles, underperforming articles, and content gaps. Use when: improving knowledge base coverage; identifying frequently asked but unanswered … |

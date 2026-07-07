@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "data"
 autonomy: "view-required"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Field Service
 
 > Dispatch on-site service orders: schedule technicians, track visits, capture signatures and auto-generate invoices on completion.
 
-Ships with **1 agent skill**, an **admin UI**.
+Ships with **8 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **1 agent skill**, an **admin UI**.
 | **Autonomy** | view-required |
 | **Core** | No |
 | **Capabilities** | `data:write`, `data:read` |
-| **MCP-exposed skills** | 1 |
+| **MCP-exposed skills** | 8 |
 | **Owns tables** | — |
 
 ## Skills
@@ -35,6 +35,13 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | Skill | Scope | Description |
 |-------|-------|-------------|
 | `manage_service_order` | internal | Create, update, schedule, complete and cancel field-service orders. Use when: a customer reports an on-site issue, technician needs to be dispatched, recurring maintenance is due. NOT for: digital … |
+| `check_technician_availability` | internal | Check whether a technician is free in a time window before scheduling a service visit. Returns conflicts (overlapping non-cancelled visits). Use when: about to schedule/reschedule a service order v… |
+| `record_visit_time` | internal | Clock a technician in/out of a service visit (writes actual_start/actual_end). Use when: technician arrives on site (start) or finishes the job (stop). NOT for: office time tracking (log_time), sch… |
+| `record_visit_proof` | internal | Attach proof of service to a visit: customer signature, photos, signer name. Use when: job done and the customer signs off / technician photographs the work. NOT for: uploading unrelated documents … |
+| `manage_service_sla` | internal | Set and track SLA targets (response/resolution deadlines) on service orders. Use when: an order must be answered or resolved within N hours; reviewing SLA breaches. NOT for: support-ticket SLAs (sl… |
+| `manage_service_package` | internal | Reusable service package templates (predefined labor/material line bundles) and applying them to orders. Use when: standard jobs like "AC install" or "annual boiler service" should prefill order li… |
+| `link_service_order` | internal | Link a service order to a contract, project and/or deal (or unlink). Use when: on-site work is covered by a service contract, belongs to a project, or originates from a deal. NOT for: creating cont… |
+| `manage_recurring_service_order` | internal | Recurring service orders: set a recurrence rule on an order and auto-generate the next occurrences (daily cron). Use when: maintenance repeats weekly/monthly/quarterly/yearly. NOT for: recurring in… |
 
 ## Module API Contract
 

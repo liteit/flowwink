@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "insights"
 autonomy: "view-required"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Calendar
 
 > Unified calendar aggregating bookings, tasks, leave and renewals
 
-Ships with **1 agent skill**, an **admin UI**.
+Ships with **3 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **1 agent skill**, an **admin UI**.
 | **Autonomy** | view-required |
 | **Core** | No |
 | **Capabilities** | `data:read` |
-| **MCP-exposed skills** | 1 |
+| **MCP-exposed skills** | 3 |
 | **Owns tables** | — |
 
 ## Skills
@@ -35,6 +35,8 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | Skill | Scope | Description |
 |-------|-------|-------------|
 | `list_events` | internal | List unified calendar events across enabled domain modules (bookings, project tasks, leave requests, contract renewals, recurring billing, SLA deadlines) within a date range. Use when: a user asks … |
+| `manage_calendar_event` | internal | Create, update, delete or list standalone calendar events (meetings, deadlines) with attendees. Use when: scheduling an internal meeting or deadline; listing what is on the calendar. NOT for: custo… |
+| `export_calendar_ics` | internal | Export calendar events as an RFC 5545 iCalendar (.ics) text — importable/subscribable in Google Calendar, Outlook and Apple Calendar. Includes VALARM blocks for events with reminders. Use when: "ex… |
 
 ## Module API Contract
 
@@ -50,6 +52,7 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 |---------|------|
 | Module definition | `src/lib/modules/calendar-module.ts` |
 | Admin page | `src/pages/admin/CalendarPage.tsx` |
+| Migration | `supabase/migrations/20260707212000_calendar-parity-r4.sql` |
 
 ## Contributing
 

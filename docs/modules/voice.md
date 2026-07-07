@@ -1,150 +1,72 @@
-# Voice Module
+---
+title: "Voice Module"
+module_id: "voice"
+version: "0.1.0"
+category: "communication"
+autonomy: "config-required"
+generated: true
+generated_at: "2026-07-07"
+---
 
-Inbound + outbound voice calls via pluggable providers (46elks native, Twilio stub,
-Telnyx/Vonage planned) plus an AI receptionist (Gemini Live) for after-hours.
+# Voice
 
-## Use cases
+> Inbound + outbound voice calls via pluggable providers (46elks, Twilio, ...). WebRTC browser-klient i admin, voicemail, missed-call-kö, callback-flöde och booking-IVR. Provider-agnostisk — välj adapter per marknad.
 
-| # | Status agent | Visitor action | System response |
-|---|---|---|---|
-| 1 | Inloggad + voice_enabled | Ringer | WebRTC ringer i admin (`Softphone.tsx`, JsSIP mot 46elks WSS) → agent svarar → samtal bryggas via SIP |
-| 2 | Inloggad men upptagen / svarar ej inom timeout | Ringer | Voicemail: greeting → record → missed-call-kö → manuell callback |
-| 3 | Utloggad (alla agenter offline) + AI receptionist av | Ringer | Samma som UC2 |
-| 4 | Utloggad (alla agenter offline) + AI receptionist på | Ringer | Gemini Live svarar. Tools preview kan boka via booking-skills; om tools-modellen nekas faller samtalet tillbaka till native-audio och sparas som callback request. |
+Ships with **3 agent skills**, an **admin UI**.
 
-## Arkitektur
+## Quick Facts
 
-Modulen är **provider-agnostisk**. Adapter-kontraktet `VoiceProvider` (i `src/lib/voice-providers/types.ts`) gör att samma UI, routing, voicemail-kö och callback-flöde fungerar med valfri provider.
-
-```
-incoming call ──► provider (46elks/Twilio) ──► POST /voice-ingest
-                                                    │
-                                                    ▼
-                                       parseIncoming() normaliserar
-                                                    │
-                                                    ▼
-                                       decideAction() läser support_agents
-                                                    │
-                                          ┌─────────┼─────────┐
-                                          ▼         ▼         ▼
-                                       SIP-bridge  Forward   Voicemail
-                                       (WebRTC)   (mobil)   (record)
-                                                    │
-                                                    ▼
-                                       persistCall() → voice_calls
-                                                    │
-                                                    ▼
-                                       serializeAction() → provider-format
-```
-
-### Inbyggda providers
-
-| Provider | Regioner | WebRTC | Status |
-|---|---|---|---|
-| `elks46` | SE/DK/FI/NO/UK | ✅ native SIP-WSS | implementerad |
-| `twilio` | global | ✅ Voice JS SDK | stub (kontrakt bevisad) |
-| `telnyx` | global | ✅ | planerad |
-| `vonage` | global | ✅ | planerad |
-
-Lägg till ny provider genom att skapa `src/lib/voice-providers/<id>.ts` som implementerar `VoiceProvider`, registrera den i `src/lib/voice-providers/index.ts`, och lägg till provider-grenen i `supabase/functions/voice-ingest/index.ts`.
-
-## Database
-
-- `voice_calls` — call log (en rad per samtal, oavsett provider)
-- `support_agents.voice_enabled` — agent vill ta voice-samtal
-- `support_agents.voice_sip_username/password/uri` — SIP-credentials för WebRTC-klienten
-- `support_agents.voice_mobile_number` — fallback för forward-to-mobile när SIP saknas
-- `support_agents.voice_provider` — vilken adapter agenten är registrerad mot
+| Property | Value |
+|----------|-------|
+| **Module ID** | `voice` |
+| **Version** | 0.1.0 |
+| **Category** | communication |
+| **Autonomy** | config-required |
+| **Core** | No |
+| **Capabilities** | `data:read`, `data:write` |
+| **MCP-exposed skills** | 3 |
+| **Owns tables** | — |
 
 ## Skills
 
-- `list_voice_calls` — filtrera på status/direction/callback_status
-- `schedule_voice_callback` — planera in återuppringning
-- `mark_voice_callback_done` — markera callback som klar
+These skills are seeded into `agent_skills` when the module is enabled and exposed via MCP.
+External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can call them directly.
 
-Alla MCP-exponerade och provider-agnostiska (skill-koden bryr sig inte om vilken provider som ligger bakom).
+| Skill | Scope | Description |
+|-------|-------|-------------|
+| `list_voice_calls` | internal | List voice calls filtered by status (missed/voicemail/answered/etc) and direction. Returns A-number, B-number, agent, duration, recording URL, callback status. Use when: reviewing missed calls; fin… |
+| `schedule_voice_callback` | internal | Schedule a callback for a missed/voicemail call. Sets callback_status=scheduled and callback_scheduled_at. Use when: agent commits to ring back a caller; UC4 booking-IVR selected a slot. NOT for: m… |
+| `mark_voice_callback_done` | internal | Mark a scheduled callback as completed (after the agent has rung back the caller). Use when: callback attempt is finished. NOT for: scheduling (schedule_voice_callback). |
 
-## Edge functions
+## Module API Contract
 
-**+1 ny:** `voice-ingest` — hanterar alla callbacks från alla providers (parsing, routing-beslut, persistence, serialisering).
+**Actions:** `list_calls`, `schedule_callback`, `mark_callback_done`
 
-Återanvänder:
-- `chat-completion` — voicemail-transkription via OpenAI/Gemini/local provider through `ai-call.ts`
-- `event-dispatcher` — fan-out av `voice.call.received` / `voice.call.missed` events
-- `agent-execute` — generic CRUD för `voice_calls` via skills
+**Input fields:** `action`, `call_id`
 
-## Decoupling från Live Support
+**Output fields:** `success`, `message`, `error`
 
-Voice-modulen **importerar inte** live-support och vice versa. Kommunikation sker via platform event bus:
+## File Map
 
-- Voice emittar `voice.call.received`, `voice.call.missed`, `voice.voicemail.recorded`
-- Live Support kan lyssna för att visa i agent-dashboard
-- Om voice-modulen är av → inga events → live-support funkar oförändrat
+| Purpose | Path |
+|---------|------|
+| Module definition | `src/lib/modules/voice-module.ts` |
+| Hook | `src/hooks/useVoice.ts` |
+| Admin page | `src/pages/admin/VoicePage.tsx` |
+| Migration | `supabase/migrations/20260705150000_fix-subscription-invoice-idempotency.sql` |
+| Migration | `supabase/migrations/20260707130000_invoice-status-enum-complete.sql` |
 
-## Fas-plan
+## Contributing
 
-**Fas 1 (klar):**
-- Schema (`voice_calls`, `support_agents.voice_*`), modul-registrering
-- Edge function `voice-ingest` (provider-agnostisk router)
-- 46elks-adapter (komplett), Twilio-stub
-- 3 MCP-skills (`list_voice_calls`, `schedule_voice_callback`, `mark_voice_callback_done`)
-- **Admin-UI `/admin/voice`** med 5 tabs: All / Missed / Voicemail / Callbacks / Settings
-- Provider-väljare, ring-timeout, voicemail-greeting, AI receptionist settings
-- Call-detalj-dialog: lyssna på recording/transkript, schemalägg callback, markera klar, `tel:` call-back
+To enhance this module, see [Contributing Guide](../contributing/contributing.md).
 
-**Fas 2 (klar):**
-- Browser WebRTC-klient i admin (`Softphone.tsx`, JsSIP mot 46elks WSS) — knapp i sidebar för agent som är voice_enabled. Se [`voice-softphone.md`](./voice-softphone.md).
-- Voicemail-transkription via STT (`chat-completion` / `ai-call.ts`).
-- Voicemail-audio proxy via `voice-recording` edge function (injicerar 46elks Basic Auth server-side så `<audio>` inte får login-popup).
-- Callback-flöde: `voice_calls.callback_status` (`pending` → `scheduled` → `completed`) + admin-UI-tab i Live Support.
-- Master switch `smsReplyEnabled` styr all utgående SMS (voicemail-reply, callback-notiser).
+Key rules:
+- Follow `ModuleDefinition<I, O>` contract pattern
+- All schema changes require idempotent migrations
+- Skills must be self-describing ([Law 2](../concepts/openclaw-law.md))
+- Blocks are interfaces, not pipelines ([Law 3](../concepts/openclaw-law.md))
+- New skills must pass the [Agent Contract Integrity](../../mem/architecture/agent-contract-integrity.md) checklist (`bun run lint:skills`)
 
-## AI Receptionist (Gemini Live)
+---
 
-När alla agenter är offline och receptionist är på tar Gemini Live över samtalet
-via WebSocket-brygga från 46elks (`voice-ingest`). Två drift-lägen väljs i
-`/admin/voice` → Settings:
-
-| Mode | Model | Tools | Beteende |
-|---|---|---|---|
-| **Native audio** | `models/gemini-2.5-flash-native-audio-latest` | ❌ | Bäst röst/språkkvalitet på svenska. Kan inte boka — instrueras att samla info och lova återuppringning. |
-| **Half-cascade (live tools + fallback)** | `models/gemini-3.1-flash-live-preview` | ✅ | Har `lookup_customer_by_phone`, `browse_services`, `check_availability`, `book_appointment`. Om Google stänger WS (1007/1008) återansluter bryggan mot native-audio-modellen så samtalet inte tappas. |
-
-Rekommenderat val i UI: **Half-cascade — Live tools with native-audio fallback**.
-
-### Digital Secretary-pattern
-
-Systempromptet instruerar agenten att först försöka lösa ärendet (info,
-bokning, kundlookup). Först om ett tool-call misslyckas eller inte finns
-erbjuds återuppringning. Alla AI-hanterade samtal flaggas automatiskt med
-`callback_status='pending'` så admin kan review i Callbacks-tabben — även om
-booking gick igenom (för kvalitetsuppföljning under MVP).
-
-### Live transcript & summering
-
-`voice-ingest` skriver kontinuerligt in transkriberade turns i
-`voice_calls.live_transcript` och genererar en `ai_summary` när samtalet slutar
-(fallback: sista N turns om Gemini inte returnerar summary-token). Visas i
-`VoicePage.tsx` → call detail.
-
-### Kontext till agenten
-
-Agenten får per samtal: `first_greeting`, systemprompt (identity + språkregler +
-mode-specifika instruktioner om tools/callback), och caller ID (A-nummer).
-Business identity kommer från `company_profile` (default: *Flowwink Business
-Operating System*).
-
-### Kända begränsningar / backlog
-
-- Tool-calling på Gemini Live `v1beta` är instabilt — därför fallback-loopen.
-- Provider-agnostisk routing: mycket 46elks-specifik logik ligger idag i
-  `voice-ingest`. Ska flyttas till adaptern under Fas 3. Se
-  [`.lovable/memory/backlog/voice-agent-routing-provider-abstraction.md`](../../.lovable/memory/backlog/voice-agent-routing-provider-abstraction.md).
-- Gemini credits/quota-visibility i integrations-vyn — backlog.
-
-**Fas 3:**
-- Multi-provider realtime voice (OpenAI Realtime som alternativ till Gemini).
-- Twilio adapter full implementation.
-- Telnyx, Vonage adapters.
-- Provider-agnostisk agent-routing (flyttas ur `voice-ingest`).
-
+*This file is auto-generated by `scripts/generate-module-docs.ts`. Do not edit manually — re-run the script after changing the module definition.*

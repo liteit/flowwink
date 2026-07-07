@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "data"
 autonomy: "agent-capable"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Consultants
 
 > Match consultant profiles against job descriptions with AI-powered scoring and cover letters
 
-Ships with **2 agent skills**.
+Ships with **7 agent skills**, **2 database tables**.
 
 ## Quick Facts
 
@@ -24,8 +24,8 @@ Ships with **2 agent skills**.
 | **Autonomy** | agent-capable |
 | **Core** | No |
 | **Capabilities** | `data:read`, `content:produce` |
-| **MCP-exposed skills** | 2 |
-| **Owns tables** | — |
+| **MCP-exposed skills** | 7 |
+| **Owns tables** | 2 |
 
 ## Integrations
 
@@ -40,6 +40,20 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 |-------|-------|-------------|
 | `manage_consultant_profile` | internal | Manage consultant/resume profiles: list, create, update, delete, deduplicate. Use when: adding a new consultant; updating skills or availability; cleaning up duplicate entries. NOT for: matching co… |
 | `match_consultant` | internal | Match consultants to a job description using AI. Use when: finding suitable candidates for an open position; a user provides a job description and needs recommendations; identifying best-fit consul… |
+| `consultant_checkin_update` | external | Save updated consultant profile information gathered during a check-in interview. |
+| `reindex_consultants` | internal | Re-embed consultant profiles whose semantic-search index is stale. Use when: an automation or admin wants to refresh embeddings after bulk profile changes; keeping vector search up to date. NOT for… |
+| `manage_consultant_assignment` | internal | Track consultant assignments/engagements: which client a consultant works for, allocation %, rate, period, linked contract/SOW. Use when: staffing a consultant on a client engagement; updating or e… |
+| `consultant_utilization_report` | internal | Utilization report for the consultant pool: allocation % per consultant over a date window, with assignment breakdown — spot bench time and overbooking. Use when: "who is free next month?", staffin… |
+| `manage_consultant_rates` | internal | Per-skill hourly-rate matrix for consultants (e.g. React 1200 kr/h, DevOps 1400 kr/h) on top of the profile default rate. Use when: quoting engagements per competence, maintaining the rate card, co… |
+
+## Data Model
+
+Tables created by this module (from migrations):
+
+- `public.consultant_assignments`
+- `public.consultant_skill_rates`
+
+All tables ship with Row-Level Security policies. See migration files for the exact rules.
 
 ## Module API Contract
 
@@ -52,6 +66,7 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | Purpose | Path |
 |---------|------|
 | Module definition | `src/lib/modules/resume-module.ts` |
+| Migration | `supabase/migrations/20260707215000_resume-parity-r5.sql` |
 
 ## Contributing
 

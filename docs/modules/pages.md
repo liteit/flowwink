@@ -1,16 +1,16 @@
 ---
-title: "Pages Module"
+title: "Website Module"
 module_id: "pages"
 version: "1.0.0"
 category: "content"
 autonomy: "config-required"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
-# Pages
+# Website
 
-> Create and publish CMS pages
+> Create and publish website pages, header, footer, branding and navigation
 
 Ships with **10 agent skills**.
 
@@ -57,7 +57,6 @@ This module participates in the following end-to-end business processes:
 |---------|------|
 | Module definition | `src/lib/modules/pages-module.ts` |
 | Hook | `src/hooks/usePages.tsx` |
-| Migration | `supabase/migrations/20260207130000_soft_delete_pages.sql` |
 
 ## Contributing
 

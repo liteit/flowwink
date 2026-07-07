@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "data"
 autonomy: "config-required"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Booking
 
 > Create and manage bookings/appointments
 
-Ships with **5 agent skills**, **2 public blocks**, an **admin UI**.
+Ships with **6 agent skills**, **2 public blocks**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **5 agent skills**, **2 public blocks**, an **admin UI**.
 | **Autonomy** | config-required |
 | **Core** | No |
 | **Capabilities** | `content:receive`, `data:write`, `webhook:trigger` |
-| **MCP-exposed skills** | 5 |
+| **MCP-exposed skills** | 6 |
 | **Owns tables** | — |
 
 ## Integrations
@@ -38,11 +38,12 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 
 | Skill | Scope | Description |
 |-------|-------|-------------|
-| `book_appointment` | both | Create a booking for a customer. Use when: a customer wants to schedule an appointment; confirming a service reservation; creating a booking from a chat conversation. NOT for: checking availability… |
+| `book_appointment` | both | Create a simple booking WITHOUT overlap protection — PREFER book_appointment_slot for normal bookings (it derives the end from the service duration and rejects double-bookings). Use when: booking w… |
 | `check_availability` | both | Check booking availability for a specific date. Use when: a customer wants to know if a slot is open; determining if a service can be booked; verifying potential appointment times. NOT for: creatin… |
 | `browse_services` | both | List available booking services. Use when: a user asks what services are offered; displaying service options; selecting a service for booking. NOT for: checking availability (check_availability); m… |
 | `manage_booking_availability` | internal | Manage booking hours and blocked dates. Use when: setting up service availability; blocking holiday dates; adjusting operating hours. NOT for: checking availability (check_availability); creating b… |
-| `manage_bookings` | internal | List, view, update or cancel bookings. Use when: reviewing scheduled appointments; modifying a booking time; cancelling an appointment. NOT for: managing availability settings (manage_booking_avail… |
+| `manage_bookings` | internal | List, view, update status/no-show, assign staff, or cancel EXISTING bookings — find a customer\ |
+| `book_appointment_slot` | internal | PREFERRED way to book an appointment: books a service at a start time — the end is derived from the service duration and double-bookings are rejected. Use when: a customer/caller wants to book a ti… |
 
 ## File Map
 

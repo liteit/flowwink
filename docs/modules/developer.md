@@ -1,31 +1,43 @@
 ---
 title: "Developer Module"
 module_id: "developer"
-version: "1.0.0"
+version: "1.1.0"
 category: "system"
 autonomy: "config-required"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Developer
 
-> API explorer, webhooks, and developer tools for integrating with external systems
+> API explorer, webhooks, and developer tools for integrating with external systems. Also hosts platform-level skills (e.g. global_search).
 
-Ships with an **admin UI**.
+Ships with **4 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
 | Property | Value |
 |----------|-------|
 | **Module ID** | `developer` |
-| **Version** | 1.0.0 |
+| **Version** | 1.1.0 |
 | **Category** | system |
 | **Autonomy** | config-required |
 | **Core** | No |
 | **Capabilities** | `webhook:trigger`, `data:read` |
-| **MCP-exposed skills** | — |
+| **MCP-exposed skills** | 4 |
 | **Owns tables** | — |
+
+## Skills
+
+These skills are seeded into `agent_skills` when the module is enabled and exposed via MCP.
+External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can call them directly.
+
+| Skill | Scope | Description |
+|-------|-------|-------------|
+| `lint_skill` | internal | Run the Agent Contract Integrity pre-release checklist on one or all agent skills (arg-mapping, NOT NULL coverage, description quality, MCP exposure). Use when: user asks to lint, verify, audit, or… |
+| `reset_module_data` | internal | Removes demo/simulation data previously created by seed_module_demo (only rows registered in demo_run_items). Use when: clearing demo data before going live; resetting a module to a clean state. NO… |
+| `seed_module_demo` | internal | Seeds realistic demo/simulation data into a specific module, tagging every row with a demo run ID for clean removal later. Use when: a game-master agent wants to set up a scenario for testing or sh… |
+| `global_search` | internal | Unified search across all major business entities: companies, leads, deals, orders, invoices, quotes, tickets, contracts, documents, kb_articles, products, pages, blog_posts, employees, vendors, pr… |
 
 ## Module API Contract
 

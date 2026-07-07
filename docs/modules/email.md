@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "system"
 autonomy: "agent-capable"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Email
 
 > Provider-agnostic email sender. Routes system emails through SMTP or Resend.
 
-Ships with **1 agent skill**.
+Ships with **6 agent skills**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **1 agent skill**.
 | **Autonomy** | agent-capable |
 | **Core** | Yes |
 | **Capabilities** | `data:write` |
-| **MCP-exposed skills** | 1 |
+| **MCP-exposed skills** | 6 |
 | **Owns tables** | — |
 
 ## Integrations
@@ -38,7 +38,12 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 
 | Skill | Scope | Description |
 |-------|-------|-------------|
+| `send_email` | both | Send a one-off email through the provider-agnostic gateway (SMTP/Resend/Composio — whichever the site has configured). Logs to outbound_communications; with no provider configured the send is simul… |
 | `scan_gmail_inbox` | internal | Scan connected Gmail inbox for business signals — new leads, partnership inquiries, support requests. Use when: identifying incoming business opportunities from email; automating email categorizati… |
+| `list_communications` | both | List entries from the outbound communications gateway log (email/sms/slack/signing). Use when: following up on whether a message actually went out, debugging silent failures, checking which provide… |
+| `get_communication` | both | Fetch the full body, error details and metadata for one outbound communication log entry. Use when: inspecting exactly what was sent (or would have been sent), reading provider error messages on a … |
+| `email_to_ticket` | both | Convert an inbound email into a support ticket — creates a new ticket or appends a comment if the email is a reply to an existing thread. Idempotent on Gmail message_id. Use when: an `email.receive… |
+| `reply_to_ticket_via_email` | both | Send an email reply on a ticket that was opened from Gmail. Preserves threading via In-Reply-To/References + Gmail thread_id, sends from the same Composio-connected mailbox, logs a public ticket co… |
 
 ## Module API Contract
 
@@ -51,6 +56,7 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | Purpose | Path |
 |---------|------|
 | Module definition | `src/lib/modules/email-module.ts` |
+| Migration | `supabase/migrations/20260703210000_email-lead-association.sql` |
 
 ## Contributing
 

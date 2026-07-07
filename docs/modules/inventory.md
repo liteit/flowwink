@@ -5,14 +5,14 @@ version: "2.1.0"
 category: "data"
 autonomy: "agent-capable"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Inventory
 
 > Multi-location inventory: locations, lots/serials, quants, reservations, transfers, MRP scheduler, and a full Pick & Pack flow that fulfills paid orders end-to-end.
 
-Ships with **12 agent skills**, an **admin UI**.
+Ships with **16 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **12 agent skills**, an **admin UI**.
 | **Autonomy** | agent-capable |
 | **Core** | No |
 | **Capabilities** | `data:read`, `data:write` |
-| **MCP-exposed skills** | 12 |
+| **MCP-exposed skills** | 16 |
 | **Owns tables** | — |
 
 ## Skills
@@ -41,11 +41,15 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | `adjust_quant` | internal | Manual stock adjustment at a specific location (positive or negative delta). Use when: stocktake correction, breakage, or initial seed. NOT for: vendor receipts (use receive_goods). |
 | `procurement_run` | internal | Run the MRP scheduler: scans all active reorder rules, computes virtual stock (on_hand − reserved + incoming PO), and creates pending procurement_suggestions for products below min_qty. Skips produ… |
 | `approve_procurement_suggestion` | internal | Materialize a pending procurement suggestion into a real Purchase Order (buy) or Manufacturing Order (manufacture). Use when: admin/agent has reviewed a suggestion and wants to act on it. Admin-only. |
-| `reject_procurement_suggestion` | internal | Reject a pending procurement suggestion with an optional reason. Admin-only. |
+| `reject_procurement_suggestion` | internal | Reject a pending procurement suggestion with an optional reason. Admin-only. Use when: buyer declines an auto-generated reorder suggestion / "reject procurement" / "avvisa förslag". NOT for: approv… |
 | `allocate_picking` | both | Create a pick-list for a paid order: generates a picking_order, reserves stock per order line, and flags stockouts. Idempotent — reuses existing open picking_order for the same order. Use when: an … |
 | `confirm_pick` | both | Operator confirms a single pick line: records picked quantity and optional lot/serial. Auto-advances the picking_order status when all lines are picked or short. Use when: warehouse operator scans/… |
 | `ship_picking` | both | Ship a fully-picked picking_order: consumes reservations into real outbound stock_moves, sets order.status=shipped, emits picking.shipped event with tracking info. Use when: package leaves the ware… |
 | `cancel_picking` | both | Cancel an open picking_order and release all its reservations. Use when: order is cancelled or stock is unavailable. Idempotent. |
+| `inventory_valuation_report` | internal | Stock valuation report: on-hand quantity, average unit cost and total value per product from the valuation layers (FIFO/average costing). Use when: reviewing inventory value for the balance sheet, … |
+| `allocate_landed_cost` | internal | Allocate freight/duty/customs onto a receipt: distributes the amount across the valuation layers of a purchase receipt (by value or quantity), raising unit costs, and posts Dt 1460 / Cr 5710. Use w… |
+| `inventory_gl_reconciliation` | internal | Reconciliation check: does GL account 1460 tie out to the inventory valuation layers? Returns both balances, the difference, and how much is explained by non-purchase receipts. Use when: month-end … |
+| `manage_inventory_count` | internal | Run a physical cycle count: open a count for a location, snapshot system quantities, record counted quantities, and post variances to stock. Use when: stocktake, periodic cycle count, reconciling o… |
 
 ## Module API Contract
 

@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "data"
 autonomy: "agent-capable"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Approvals
 
 > Generic approval engine — define rules (entity type + amount threshold + required role) and route requests for sign-off. Used by Purchasing, Expenses, Invoicing and Quotes.
 
-Ships with **1 agent skill**, an **admin UI**.
+Ships with **10 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **1 agent skill**, an **admin UI**.
 | **Autonomy** | agent-capable |
 | **Core** | No |
 | **Capabilities** | `data:read`, `data:write` |
-| **MCP-exposed skills** | 1 |
+| **MCP-exposed skills** | 10 |
 | **Owns tables** | — |
 
 ## Skills
@@ -34,7 +34,16 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 
 | Skill | Scope | Description |
 |-------|-------|-------------|
+| `reject_pending_operation` | internal | Reject a staged operation with a reason. Use when: preview from a staged skill call is wrong or unsafe. NOT for: approving it (approve_pending_operation) or listing the queue (list_pending_operatio… |
+| `approve_pending_operation` | internal | Approve a staged operation so it can be executed. Use when: a previous skill call returned staged=true and the preview is acceptable. NOT for: rejecting it (reject_pending_operation) or listing the… |
+| `list_pending_operations` | internal | List pending staged operations awaiting approval/rejection. Use when: agent or admin needs to see the queue. NOT for: approving (approve_pending_operation) or rejecting (reject_pending_operation) a… |
 | `manage_approvals` | internal | Generic approval workflow engine: request approval for an entity, list pending requests, approve/reject/cancel, and evaluate whether an entity needs approval based on amount thresholds. Use when: a… |
+| `manage_approval_chain` | internal | Configure multi-step approval chains and approver groups (e.g. manager → CFO, or any-2-of-finance). Use when: setting up sequential sign-off for an entity type, defining approver groups. NOT for: a… |
+| `advance_approval_step` | internal | Record an approve/reject decision on a chain-based approval request. Use when: an approver signs off on the current step of a multi-step chain. The request is approved only when the final step clea… |
+| `request_entity_approval` | internal | Start the chain approval for a business entity (purchase order, expense report). Use when: sending a PO or approving an expense fails with "requires chain approval"; proactively before sending high… |
+| `manage_approval_delegation` | internal | Delegate approval authority while someone is away: list, create, or revoke delegations. The delegate may act on any step the delegator is authorized for. Use when: an approver is on vacation; cover… |
+| `check_approval_escalations` | internal | Sweep pending chain approvals whose current step exceeded its escalate_after_hours and advance them to the next step (final-step breaches are logged, never auto-approved). Use when: heartbeat/cron … |
+| `bulk_advance_approvals` | internal | Approve or reject MANY chain approval requests in one call. Use when: clearing an approval backlog, batch sign-off after review. NOT for: a single request (advance_approval_step) or staged operatio… |
 
 ## Module API Contract
 

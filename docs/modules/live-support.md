@@ -1,31 +1,35 @@
 ---
-title: "Live Support Module"
+title: "Contact Center Module"
 module_id: "liveSupport"
-version: "1.0.0"
+version: "1.1.0"
 category: "communication"
 autonomy: "view-required"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
-# Live Support
+# Contact Center
 
-> Human agent takeover for escalated chat conversations
+> Omnichannel contact center: human-agent takeover across web chat, Telegram (and future SMS/voice), with presence-aware routing, callbacks, and voicemail triage. Built on the shared conversation hub.
 
-Ships with **3 agent skills**, an **admin UI**.
+Ships with **9 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
 | Property | Value |
 |----------|-------|
 | **Module ID** | `liveSupport` |
-| **Version** | 1.0.0 |
+| **Version** | 1.1.0 |
 | **Category** | communication |
 | **Autonomy** | view-required |
 | **Core** | No |
 | **Capabilities** | `data:read`, `data:write` |
-| **MCP-exposed skills** | 3 |
+| **MCP-exposed skills** | 9 |
 | **Owns tables** | — |
+
+## Integrations
+
+**Optional:** `telegram`
 
 ## Skills
 
@@ -35,8 +39,14 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | Skill | Scope | Description |
 |-------|-------|-------------|
 | `support_list_conversations` | internal | List support conversations filtered by status. Returns customer name, email, priority, sentiment, and escalation reason. Use when: reviewing support queue; monitoring overall support load; identify… |
+| `list_support_agents` | internal | List support agents with their availability: status (online/away/busy/offline), current load and max capacity. Use when: checking who is available before assigning/transferring a conversation; moni… |
 | `support_assign_conversation` | internal | Assign or reassign a support conversation to an agent. Use when: a customer query needs agent attention; re-routing a conversation to a specialist; ensuring no support ticket is unassigned. NOT for… |
 | `support_get_feedback` | internal | Retrieve chat feedback ratings and comments. Useful for monitoring customer satisfaction and identifying knowledge gaps. Use when: pulling raw feedback data; building satisfaction reports; reviewin… |
+| `route_conversation` | internal | Route a conversation to a human agent: assigns the least-loaded online agent that handles the conversation\ |
+| `manage_channel` | internal | Configure or test an inbound channel (Telegram). action=test verifies the bot token; action=configure stores it and registers the webhook; action=list shows configured channels. Use when: connectin… |
+| `send_channel_message` | internal | Send an outbound message on a conversation\ |
+| `request_callback` | internal | Manage a callback request (rides the bookings table, metadata.kind=callback). action=create schedules one; action=mark_attempted records an outreach attempt; action=list returns open callbacks. Use… |
+| `handle_voicemail` | internal | FlowPilot-analyze a voicemail transcript: extracts summary, intent, sentiment, and whether a callback was requested, and stores them on the voicemail. Use when: a voicemail has a transcript and nee… |
 
 ## Module API Contract
 

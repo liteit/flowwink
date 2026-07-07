@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "data"
 autonomy: "view-required"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # CRM
 
 > Create and manage leads
 
-Ships with **11 agent skills**, an **admin UI**.
+Ships with **14 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **11 agent skills**, an **admin UI**.
 | **Autonomy** | view-required |
 | **Core** | No |
 | **Capabilities** | `content:receive`, `data:write`, `webhook:trigger` |
-| **MCP-exposed skills** | 11 |
+| **MCP-exposed skills** | 14 |
 | **Owns tables** | — |
 
 ## Skills
@@ -44,7 +44,10 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | `competitor_monitor` | internal | Scan a competitor website and analyze their content strategy and positioning. Use when: user wants competitive analysis, studying competitor content. NOT for: migrating competitor sites (use migrat… |
 | `contact_finder` | internal | Find business contacts by company domain. Use when: prospecting by company domain, finding email addresses for outreach. NOT for: managing existing leads (use manage_leads). |
 | `send_email_to_lead` | internal | Send a one-to-one outreach, follow-up, or nurture email to a single lead via Resend. AI-drafts subject + body if not provided. Use when: reaching out to a specific lead, following up after lead act… |
-| `lead_pipeline_review` | internal | Reviews leads by status and score, suggests follow-up. Use when: heartbeat pipeline review, prioritizing lead outreach. NOT for: updating lead status (use manage_leads). |
+| `lead_pipeline_review` | internal | Reviews leads by status and score, suggests follow-up, and returns the weighted deal forecast (deal value × stage probability from the pipeline stage engine). Use when: heartbeat pipeline review, p… |
+| `manage_pipeline_stage` | internal | Manage configurable pipeline stages for leads, deals, or tickets (the shared stage engine). Use when: customizing a sales/support pipeline, adding/renaming stages, setting win probability. NOT for:… |
+| `find_duplicate_leads` | internal | Find likely duplicate leads by name similarity or matching email — normalizes plus-addressing and case so aliases collapse (anna+x@d ≡ anna+y@d ≡ anna@d) (read-only). Use when: cleaning the CRM, be… |
+| `merge_leads` | internal | Merge a duplicate lead into a primary one; reassigns every child record (tasks, deals, activities, invoices, quotes, tickets, webinar registrations) then deletes the duplicate. Pass the record to K… |
 
 ## Used in Processes
 

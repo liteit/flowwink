@@ -1,30 +1,30 @@
 ---
-title: "Templates Module"
-module_id: "templates"
+title: "Visitor Intelligence Module"
+module_id: "visitorIntelligence"
 version: "1.0.0"
-category: "system"
-autonomy: "config-required"
+category: "insights"
+autonomy: "agent-capable"
 generated: true
 generated_at: "2026-07-07"
 ---
 
-# Templates
+# Visitor Intelligence
 
-> Template gallery, export current site as reusable template, and import templates from file
+> Behavioral signals from anonymous browsing — identity stitching, rule-based scoring, and a per-lead visitor timeline in the CRM.
 
-Ships with **1 agent skill**.
+Ships with **2 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
 | Property | Value |
 |----------|-------|
-| **Module ID** | `templates` |
+| **Module ID** | `visitorIntelligence` |
 | **Version** | 1.0.0 |
-| **Category** | system |
-| **Autonomy** | config-required |
+| **Category** | insights |
+| **Autonomy** | agent-capable |
 | **Core** | No |
 | **Capabilities** | `data:read`, `data:write` |
-| **MCP-exposed skills** | 1 |
+| **MCP-exposed skills** | 2 |
 | **Owns tables** | — |
 
 ## Skills
@@ -34,21 +34,23 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 
 | Skill | Scope | Description |
 |-------|-------|-------------|
-| `list_templates` | internal | List the starter-template catalog (static JSON in /templates) plus which template (if any) is currently installed on this site. Use when: a user asks "what templates are available?", "what site am … |
+| `score_visitor_intent` | internal | Run visitor-intelligence rules to detect behavioral signals (return visits, pricing interest, deep engagement, reawakening) and bump lead scores. Use when: refreshing lead priority based on browsin… |
+| `get_visitor_timeline` | internal | Fetch a lead\ |
 
 ## Module API Contract
 
-**Actions:** `export`, `import`, `install`
+**Actions:** `score`, `get_timeline`
 
-**Input fields:** `action`, `templateId`, `meta`
+**Input fields:** `action`, `lead_id`
 
-**Output fields:** `success`, `error`, `templateId`
+**Output fields:** `success`, `message`, `error`
 
 ## File Map
 
 | Purpose | Path |
 |---------|------|
-| Module definition | `src/lib/modules/templates-module.ts` |
+| Module definition | `src/lib/modules/visitor-intelligence-module.ts` |
+| Admin page | `src/pages/admin/VisitorIntelligencePage.tsx` |
 
 ## Contributing
 

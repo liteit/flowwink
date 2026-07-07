@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "communication"
 autonomy: "agent-capable"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Tickets
 
 > Helpdesk ticket management with Kanban pipeline
 
-Ships with **1 agent skill**, an **admin UI**.
+Ships with **4 agent skills**, **1 database table**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,8 +24,8 @@ Ships with **1 agent skill**, an **admin UI**.
 | **Autonomy** | agent-capable |
 | **Core** | No |
 | **Capabilities** | `content:receive`, `data:write`, `webhook:trigger` |
-| **MCP-exposed skills** | 1 |
-| **Owns tables** | — |
+| **MCP-exposed skills** | 4 |
+| **Owns tables** | 1 |
 
 ## Skills
 
@@ -34,7 +34,18 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 
 | Skill | Scope | Description |
 |-------|-------|-------------|
-| `ticket_triage` | internal | Auto-categorize incoming tickets, match against KB articles, and propose solutions. Use when: triaging new support requests, automated ticket routing. NOT for: escalating conversations (use escalat… |
+| `manage_ticket` | both | List, view, update, resolve/close, reopen, reassign, or re-prioritize helpdesk tickets. Use when: closing a resolved ticket, changing status/priority, assigning a ticket to an agent, or reviewing t… |
+| `search_tickets` | both | Full-text search across ticket subjects, descriptions and tags, ranked by relevance. Use when: finding tickets about a topic ("all tickets mentioning login errors"), locating a customer issue witho… |
+| `manage_canned_response` | internal | CRUD for canned responses (reusable reply templates for support tickets). Use when: creating a standard answer for a recurring question, updating template wording, retiring an outdated template. NO… |
+| `ticket_triage` | both | Auto-classify a helpdesk ticket: set priority + category, attach up to 3 relevant KB article suggestions, write a 1-sentence internal summary. Use when: a new ticket needs triage, an existing ticke… |
+
+## Data Model
+
+Tables created by this module (from migrations):
+
+- `public.public`
+
+All tables ship with Row-Level Security policies. See migration files for the exact rules.
 
 ## Module API Contract
 
@@ -55,6 +66,7 @@ This module participates in the following end-to-end business processes:
 | Module definition | `src/lib/modules/tickets-module.ts` |
 | Hook | `src/hooks/useTickets.ts` |
 | Admin page | `src/pages/admin/TicketsPage.tsx` |
+| Migration | `supabase/migrations/20260707120000_parity-r3-shipping-tickets-subscriptions.sql` |
 
 ## Contributing
 

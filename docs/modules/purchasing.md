@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "data"
 autonomy: "agent-capable"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Purchasing
 
 > Procure-to-pay lifecycle: purchase orders, vendor management, and goods receipt
 
-Ships with **9 agent skills**.
+Ships with **14 agent skills**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **9 agent skills**.
 | **Autonomy** | agent-capable |
 | **Core** | No |
 | **Capabilities** | `data:write`, `data:read` |
-| **MCP-exposed skills** | 9 |
+| **MCP-exposed skills** | 14 |
 | **Owns tables** | — |
 
 ## Integrations
@@ -38,6 +38,11 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 
 | Skill | Scope | Description |
 |-------|-------|-------------|
+| `pay_vendor_invoice` | internal | Record the OUTGOING payment of an approved vendor invoice: posts Dt 2440 leverantörsskuld / Cr bank and marks the invoice paid. Use when: a supplier bill is due/approved and being paid — the final … |
+| `register_vendor_invoice` | internal | Register an incoming vendor invoice (AP inbox). Use when: a vendor bill arrives that needs 3-way matching against a PO before payment. NOT for: customer invoices (use create_invoice). |
+| `match_po_to_invoice` | internal | 3-way match a vendor invoice against its PO and goods receipts within tolerance. Use when: a registered vendor invoice needs validation before approval. NOT for: customer reconciliation or listing … |
+| `flag_invoice_variance` | internal | List vendor invoices flagged with price/quantity variance against their PO that need manual review. Use when: admin wants to see what failed automated 3-way matching. NOT for: inspecting a single i… |
+| `list_reorder_candidates` | external | List products at or below their reorder point with preferred vendor info. Use when: reviewing what needs reordering, "vad behöver beställas?". NOT for: actually placing orders (use auto_generate_pu… |
 | `manage_vendor` | internal | Create, list, update, or deactivate vendors/suppliers. Use when: admin asks to add a new supplier, update vendor details, or review the vendor list. NOT for: creating purchase orders (use create_pu… |
 | `create_purchase_order` | internal | Create a new purchase order (draft) for a vendor with line items. Use when: stock is low and reorder is needed, admin requests a purchase, or purchase_reorder_check suggests items to order. NOT for… |
 | `send_purchase_order` | internal | Mark a draft purchase order as sent to the vendor. Use when: admin approves a PO and wants to notify the vendor. NOT for: creating POs (use create_purchase_order). |

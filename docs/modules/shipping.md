@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "data"
 autonomy: "config-required"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Shipping
 
 > Outbound shipping with multi-parcel support and carrier integrations. Built-in: PostNord, DHL, Bring. Tracking URLs are auto-rendered from per-carrier templates.
 
-Ships with **2 agent skills**, **1 public block**, an **admin UI**.
+Ships with **5 agent skills**, **1 database table**, **1 public block**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,8 +24,8 @@ Ships with **2 agent skills**, **1 public block**, an **admin UI**.
 | **Autonomy** | config-required |
 | **Core** | No |
 | **Capabilities** | `data:read`, `data:write` |
-| **MCP-exposed skills** | 2 |
-| **Owns tables** | — |
+| **MCP-exposed skills** | 5 |
+| **Owns tables** | 1 |
 
 ## Integrations
 
@@ -40,6 +40,17 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 |-------|-------|-------------|
 | `manage_carrier` | internal | CRUD for shipping carriers (PostNord, DHL, Bring, custom). Use when: enabling/disabling a carrier, updating tracking-URL templates, or rotating API credentials. NOT for: creating shipments (use man… |
 | `manage_shipment` | internal | Create/list/update shipments (parcels) for an order. Use when: warehouse books a parcel with a carrier and gets a tracking number. NOT for: marking the whole order as shipped (use manage_orders ful… |
+| `manage_shipping_rate` | internal | Manage a carrier\ |
+| `calc_shipping_rate` | internal | Compute a shipment\ |
+| `list_shipping_options` | internal | Rate-shop across ALL active carriers: cheapest matching weight band per carrier for a parcel, sorted by price. Use when: comparing carriers for a shipment, quoting delivery options at checkout, pic… |
+
+## Data Model
+
+Tables created by this module (from migrations):
+
+- `public.public`
+
+All tables ship with Row-Level Security policies. See migration files for the exact rules.
 
 ## Module API Contract
 
@@ -54,6 +65,7 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | Module definition | `src/lib/modules/shipping-module.ts` |
 | Admin page | `src/pages/admin/ShippingPage.tsx` |
 | Public block | `src/components/public/blocks/ShippingInfoBlock.tsx` |
+| Migration | `supabase/migrations/20260707120000_parity-r3-shipping-tickets-subscriptions.sql` |
 
 ## Contributing
 

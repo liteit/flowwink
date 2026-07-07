@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "insights"
 autonomy: "agent-capable"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Business Identity
 
 > Unified business identity, financials, and market positioning. Feeds Sales Intelligence, Chat AI, SEO, and FlowAgent with company context.
 
-Ships with an **admin UI**.
+Ships with **2 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,12 +24,22 @@ Ships with an **admin UI**.
 | **Autonomy** | agent-capable |
 | **Core** | No |
 | **Capabilities** | `data:read`, `data:write` |
-| **MCP-exposed skills** | — |
+| **MCP-exposed skills** | 2 |
 | **Owns tables** | — |
 
 ## Integrations
 
 **Optional:** `firecrawl`
+
+## Skills
+
+These skills are seeded into `agent_skills` when the module is enabled and exposed via MCP.
+External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can call them directly.
+
+| Skill | Scope | Description |
+|-------|-------|-------------|
+| `get_company_profile` | both | Read the FlowWink site\ |
+| `update_company_profile` | both | Update the FlowWink site\ |
 
 ## Module API Contract
 

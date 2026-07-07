@@ -5,14 +5,14 @@ version: "1.0.0"
 category: "data"
 autonomy: "agent-capable"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Manufacturing
 
 > MRP-light: Bills of Materials, Manufacturing Orders, component reservation, and the link from production demand to procurement.
 
-Ships with **9 agent skills**, an **admin UI**.
+Ships with **13 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,7 +24,7 @@ Ships with **9 agent skills**, an **admin UI**.
 | **Autonomy** | agent-capable |
 | **Core** | No |
 | **Capabilities** | `data:write`, `data:read` |
-| **MCP-exposed skills** | 9 |
+| **MCP-exposed skills** | 13 |
 | **Owns tables** | — |
 
 ## Skills
@@ -43,6 +43,10 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | `complete_manufacturing_order` | internal | Finish an in-progress MO: post mo_consumption stock moves for components, mo_production for the finished good, set status=done, emit mo.completed. Use when: build is finished. NOT for: cancelling (… |
 | `cancel_manufacturing_order` | internal | Cancel a draft, confirmed, or in-progress MO with a reason. Idempotent — safe to call on already-cancelled or done MOs. Use when: order is no longer needed or build is abandoned. NOT for: finishing… |
 | `list_manufacturing_orders` | internal | List Manufacturing Orders, optionally filtered by status. Read-only. Use when: building a dashboard, triaging the queue, or summarizing factory load. NOT for: detailed component view (read mo_compo… |
+| `manage_work_center` | internal | Manage work centers (production resources with an hourly cost + capacity). Use when: defining the shop floor (cutting, assembly, packing), setting labor rates. NOT for: routing steps (manage_routin… |
+| `manage_routing_operation` | internal | Manage the ordered routing operations of a BOM (which work center, how many minutes per unit). Use when: defining how a product is made step by step. NOT for: work centers (manage_work_center) or g… |
+| `generate_mo_work_orders` | internal | Materialise a manufacturing order\ |
+| `mrp_reorder_run` | internal | Scan manufactured products (those with an active BOM) at/below their reorder point and create draft manufacturing orders to replenish. Use when: MRP planning, auto-replenishing made-in-house stock.… |
 
 ## Module API Contract
 

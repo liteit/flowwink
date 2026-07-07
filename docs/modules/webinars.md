@@ -1,31 +1,31 @@
 ---
 title: "Webinars Module"
 module_id: "webinars"
-version: "1.1.0"
+version: "1.2.0"
 category: "communication"
 autonomy: "config-required"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Webinars
 
-> Plan, promote, run and follow up webinars — lifecycle automation + lead-loop integration
+> Plan, promote, run and follow up webinars — lifecycle, lead-loop, reminders and content-loop
 
-Ships with **7 agent skills**, **2 database tables**, an **admin UI**.
+Ships with **9 agent skills**, an **admin UI**.
 
 ## Quick Facts
 
 | Property | Value |
 |----------|-------|
 | **Module ID** | `webinars` |
-| **Version** | 1.1.0 |
+| **Version** | 1.2.0 |
 | **Category** | communication |
 | **Autonomy** | config-required |
 | **Core** | No |
 | **Capabilities** | `content:receive`, `data:write` |
-| **MCP-exposed skills** | 7 |
-| **Owns tables** | 2 |
+| **MCP-exposed skills** | 9 |
+| **Owns tables** | — |
 
 ## Integrations
 
@@ -39,21 +39,14 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | Skill | Scope | Description |
 |-------|-------|-------------|
 | `manage_webinar` | internal | Manage webinars and registrations. Use when: setting up a new webinar; updating webinar details; reviewing registered attendees. NOT for: managing bookings (manage_bookings); creating events (N/A). |
+| `send_webinar_reminders` | internal | Sweep webinar registrations and send the due reminder emails: registration confirmation, T-24h, T-1h, and post-webinar follow-up (thanks vs missed-you, with recording link when set). Each reminder … |
 | `register_webinar` | external | Register a visitor for an upcoming webinar. Auto-links to existing lead by email or creates a new lead with source=webinar (+15 score). Use when: visitor wants to sign up for a webinar. NOT for: ma… |
-| `publish_webinar` | internal | Publish a draft webinar so it becomes visible and registrable. Emits webinar.published event. |
-| `start_webinar` | internal | Manually flip a webinar to live status. Normally automatic via cron when date passes. |
-| `complete_webinar` | internal | Close a webinar after it has run. Optionally attach the recording URL. Emits webinar.completed event. |
-| `cancel_webinar` | internal | Cancel a webinar. Emits webinar.cancelled event so automations can notify registrants. |
-| `mark_webinar_attendance` | internal | Flag a registration as attended (or not). Boosts lead score +10 on attended=true. Emits webinar.attended event. |
-
-## Data Model
-
-Tables created by this module (from migrations):
-
-- `public.webinar_registrations`
-- `public.webinars`
-
-All tables ship with Row-Level Security policies. See migration files for the exact rules.
+| `publish_webinar` | internal | Publish a draft webinar so it becomes visible and registrable. Emits webinar.published event. Use when: a draft webinar is ready to go live for registration / "publish webinar" / "publicera webinar… |
+| `start_webinar` | internal | Manually flip a webinar to live status. Normally automatic via cron when date passes. Use when: host wants to start broadcast early / "start webinar now" / "kör igång webinariet". NOT for: publishi… |
+| `complete_webinar` | internal | Close a webinar after it has run. Optionally attach the recording URL. Emits webinar.completed event. Use when: live session ended and we want to mark it done + share recording / "complete webinar"… |
+| `cancel_webinar` | internal | Cancel a webinar. Emits webinar.cancelled event so automations can notify registrants. Use when: webinar will not run and registrants must be informed / "cancel webinar" / "ställ in webinariet". NO… |
+| `mark_webinar_attendance` | internal | Flag a registration as attended (or not). Boosts lead score +10 on attended=true. Emits webinar.attended event. Use when: post-webinar bookkeeping of who showed up / "mark attendance" / "registrera… |
+| `generate_blog_from_webinar` | internal | Turn a completed webinar into a blog post draft (title, slug, excerpt, markdown body, tags) and insert it as a draft in blog_posts. Use when: a webinar is completed and we want evergreen content fr… |
 
 ## File Map
 
@@ -62,7 +55,6 @@ All tables ship with Row-Level Security policies. See migration files for the ex
 | Module definition | `src/lib/modules/webinars-module.ts` |
 | Hook | `src/hooks/useWebinars.ts` |
 | Admin page | `src/pages/admin/WebinarsPage.tsx` |
-| Migration | `supabase/migrations/20260208173000_create_webinars.sql` |
 
 ## Contributing
 

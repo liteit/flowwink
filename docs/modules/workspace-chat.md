@@ -5,14 +5,14 @@ version: "1.1.0"
 category: "communication"
 autonomy: "view-required"
 generated: true
-generated_at: "2026-05-04"
+generated_at: "2026-07-07"
 ---
 
 # Cowork Chat
 
 > Internal authenticated chat that blends your workspace data with the model\
 
-Ships with an **admin UI**.
+Ships with **1 agent skill**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,12 +24,21 @@ Ships with an **admin UI**.
 | **Autonomy** | view-required |
 | **Core** | No |
 | **Capabilities** | `data:read` |
-| **MCP-exposed skills** | — |
+| **MCP-exposed skills** | 1 |
 | **Owns tables** | — |
 
 ## Integrations
 
 **Optional:** `openai`, `gemini`, `local_llm`, `firecrawl`
+
+## Skills
+
+These skills are seeded into `agent_skills` when the module is enabled and exposed via MCP.
+External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can call them directly.
+
+| Skill | Scope | Description |
+|-------|-------|-------------|
+| `post_to_cowork_chat` | internal | Post a message into the Cowork Chat as the agent — heartbeat insights, daily summaries, "I just did X" notices for the team. Use when: FlowPilot wants to proactively tell the team something; surfac… |
 
 ## Module API Contract
 
