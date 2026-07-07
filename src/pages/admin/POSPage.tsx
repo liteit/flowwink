@@ -120,17 +120,48 @@ export default function POSPage() {
 
   async function checkout() {
     if (!effectiveRegisterId || !openSession || lines.length === 0 || payments.length === 0) return;
-    await recordSale$.mutateAsync({
-      register_id: effectiveRegisterId,
-      session_id: openSession.id,
-      lines,
-      payments,
-      customer_email: customerEmail || undefined,
-    });
-    setLines([]);
-    setPayments([]);
-    setCustomerEmail('');
-    setSearch('');
+    try {
+      const result = await recordSale$.mutateAsync({
+        register_id: effectiveRegisterId,
+        session_id: openSession.id,
+        lines,
+        payments,
+        customer_email: customerEmail || undefined,
+      });
+      const primaryMethod = payments[0]?.method ?? 'card';
+      setTipDialog({
+        sale_id: result.sale_id,
+        receipt_number: result.receipt_number,
+        total_cents: result.total_cents,
+        method: primaryMethod,
+        currency: activeRegister?.currency ?? 'SEK',
+      });
+      setCustomTip('');
+      setLines([]);
+      setPayments([]);
+      setCustomerEmail('');
+      setSearch('');
+    } catch (err) {
+      logger.error('POS checkout failed', err);
+    }
+  }
+
+  async function applyTip(tipCents: number) {
+    if (!tipDialog) return;
+    if (tipCents <= 0) {
+      setTipDialog(null);
+      return;
+    }
+    try {
+      await addTip$.mutateAsync({
+        sale_id: tipDialog.sale_id,
+        tip_cents: tipCents,
+        method: tipDialog.method,
+      });
+      setTipDialog(null);
+    } catch (err) {
+      logger.error('POS add tip failed', err);
+    }
   }
 
   const canCheckout = !!openSession && lines.length > 0 && payments.length > 0 && paid >= total;
