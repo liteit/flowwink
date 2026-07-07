@@ -1,9 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -12,16 +14,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   useRegisters, useOpenSession, useTodaySales, useRecentSales,
   useOpenSessionMutation, useCloseSession, useRecordSale, useAddTip,
-  usePosProducts,
-  type PosSaleLine, type PosPayment, type PosProduct,
+  usePosProducts, useCreateInvoiceFromSale, useUpdateRegisterReceipt,
+  lookupPosProduct,
+  type PosSaleLine, type PosPayment, type PosProduct, type PosSale,
 } from '@/hooks/usePOS';
-import { Plus, Trash2, Receipt, Banknote, CreditCard, Smartphone, Search, X } from 'lucide-react';
+import { Plus, Trash2, Receipt, Banknote, CreditCard, Smartphone, Search, X, Settings, ScanBarcode, FileText, Undo2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { GiftCardsTab } from '@/components/admin/pos/GiftCardsTab';
+import { LoyaltyTab } from '@/components/admin/pos/LoyaltyTab';
+import { TablesTab } from '@/components/admin/pos/TablesTab';
+import { RefundDialog } from '@/components/admin/pos/RefundDialog';
+import { ReceiptDialog } from '@/components/admin/pos/ReceiptDialog';
 import { logger } from '@/lib/logger';
+
 
 function fmtMoney(cents: number, currency = 'SEK') {
   return `${(cents / 100).toFixed(2)} ${currency}`;
@@ -51,6 +60,24 @@ export default function POSPage() {
   const closeSession$ = useCloseSession();
   const recordSale$ = useRecordSale();
   const addTip$ = useAddTip();
+  const createInvoice$ = useCreateInvoiceFromSale();
+  const updateRegister$ = useUpdateRegisterReceipt();
+
+  // History action state
+  const [refundSale, setRefundSale] = useState<PosSale | null>(null);
+  const [receiptSaleId, setReceiptSaleId] = useState<string | null>(null);
+  const [invoicePrompt, setInvoicePrompt] = useState<PosSale | null>(null);
+  const [invoiceEmail, setInvoiceEmail] = useState('');
+
+  // Register receipt settings (edited in popover)
+  const [receiptHeader, setReceiptHeader] = useState('');
+  const [receiptFooter, setReceiptFooter] = useState('');
+
+  // Barcode / quick-add
+  const [barcode, setBarcode] = useState('');
+  const barcodeError = useRef<string | null>(null);
+  const [barcodeMsg, setBarcodeMsg] = useState<string | null>(null);
+
 
   // Tip dialog state (post-checkout)
   const [tipDialog, setTipDialog] = useState<{
@@ -97,6 +124,32 @@ export default function POSPage() {
     }
     setSearch('');
   }
+
+  async function quickAddByBarcode(q: string) {
+    const s = q.trim();
+    if (!s) return;
+    try {
+      const match = await lookupPosProduct(s);
+      if (match) {
+        addLineFromProduct(match as unknown as PosProduct);
+        setBarcode('');
+        setBarcodeMsg(null);
+      } else {
+        setBarcodeMsg(`No match for "${s}"`);
+      }
+    } catch (e) {
+      logger.error('barcode lookup', e);
+      setBarcodeMsg('Lookup failed');
+    }
+  }
+
+  // Sync register receipt template into local state when the active register changes
+  useEffect(() => {
+    setReceiptHeader(activeRegister?.receipt_header ?? '');
+    setReceiptFooter(activeRegister?.receipt_footer ?? '');
+  }, [activeRegister?.id]);
+  void barcodeError;
+
   function addBlankLine() {
     setLines([...lines, { product_name: '', quantity: 1, unit_price_cents: 0 }]);
   }
@@ -187,7 +240,41 @@ export default function POSPage() {
                 </SelectContent>
               </Select>
             )}
+            {activeRegister && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon" title="Register receipt template">
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-96 space-y-3" align="end">
+                  <div className="text-sm font-medium">Receipt template · {activeRegister.name}</div>
+                  <div>
+                    <Label className="text-xs">Header</Label>
+                    <Textarea rows={3} value={receiptHeader}
+                      onChange={(e) => setReceiptHeader(e.target.value)}
+                      placeholder="Welcome to our shop!" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Footer</Label>
+                    <Textarea rows={3} value={receiptFooter}
+                      onChange={(e) => setReceiptFooter(e.target.value)}
+                      placeholder="Thank you — see you soon!" />
+                  </div>
+                  <Button
+                    size="sm" className="w-full"
+                    disabled={updateRegister$.isPending}
+                    onClick={() => updateRegister$.mutate({
+                      register_id: activeRegister.id,
+                      receipt_header: receiptHeader || null,
+                      receipt_footer: receiptFooter || null,
+                    })}
+                  >Save template</Button>
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
+
         </div>
 
         {!registers || registers.length === 0 ? (
@@ -206,8 +293,11 @@ export default function POSPage() {
               <TabsTrigger value="register">Register</TabsTrigger>
               <TabsTrigger value="session">Session</TabsTrigger>
               <TabsTrigger value="history">History</TabsTrigger>
+              <TabsTrigger value="tables">Tables</TabsTrigger>
+              <TabsTrigger value="loyalty">Loyalty</TabsTrigger>
               <TabsTrigger value="gift-cards">Gift Cards</TabsTrigger>
             </TabsList>
+
 
             {/* Register / sale */}
             <TabsContent value="register" className="space-y-4">
@@ -245,16 +335,35 @@ export default function POSPage() {
                       <CardTitle className="text-base">Catalog</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
+                      <div className="space-y-1">
+                        <div className="relative">
+                          <ScanBarcode className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            className="pl-9 font-mono"
+                            placeholder="Scan barcode or type SKU/name + Enter…"
+                            value={barcode}
+                            autoFocus
+                            onChange={(e) => { setBarcode(e.target.value); setBarcodeMsg(null); }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                quickAddByBarcode(barcode);
+                              }
+                            }}
+                          />
+                        </div>
+                        {barcodeMsg && <div className="text-xs text-destructive px-1">{barcodeMsg}</div>}
+                      </div>
                       <div className="relative">
                         <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <Input
                           className="pl-9"
-                          placeholder="Search by name or scan barcode…"
+                          placeholder="Browse catalog…"
                           value={search}
                           onChange={(e) => setSearch(e.target.value)}
-                          autoFocus
                         />
                       </div>
+
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 max-h-64 overflow-y-auto">
                         {(products ?? []).map((p) => (
                           <button
@@ -440,21 +549,50 @@ export default function POSPage() {
                     <div className="space-y-2">
                       {recent.map((s) => {
                         const tip = s.tip_cents ?? 0;
+                        const isRefund = !!s.refund_of;
                         const grand = s.total_cents + tip;
                         return (
-                          <div key={s.id} className="flex items-center justify-between border rounded p-3">
-                            <div>
-                              <div className="font-mono text-sm">{s.receipt_number}</div>
+                          <div key={s.id} className="flex items-center justify-between border rounded p-3 gap-3">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-mono text-sm">{s.receipt_number}</span>
+                                {isRefund && <Badge variant="destructive" className="text-[10px]">Refund</Badge>}
+                                {s.status === 'refunded' && <Badge variant="secondary" className="text-[10px]">refunded</Badge>}
+                                {s.status === 'partially_refunded' && <Badge variant="secondary" className="text-[10px]">partial refund</Badge>}
+                                {s.invoice_id && (
+                                  <Link to="/admin/invoices" className="text-xs text-primary underline">invoiced</Link>
+                                )}
+                              </div>
                               <div className="text-xs text-muted-foreground">{format(new Date(s.created_at), 'PPp')}</div>
                             </div>
                             <div className="text-right">
-                              <div className="font-medium">{fmtMoney(grand, s.currency)}</div>
-                              {tip > 0 && (
+                              <div className={`font-medium ${isRefund ? 'text-destructive' : ''}`}>
+                                {isRefund ? '-' : ''}{fmtMoney(Math.abs(grand), s.currency)}
+                              </div>
+                              {tip > 0 && !isRefund && (
                                 <div className="text-xs text-muted-foreground">
                                   {fmtMoney(s.total_cents, s.currency)} + tip {fmtMoney(tip, s.currency)}
                                 </div>
                               )}
                               <Badge variant="outline" className="text-xs mt-1">{s.payment_method}</Badge>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <Button size="sm" variant="outline" onClick={() => setReceiptSaleId(s.id)}>
+                                <Receipt className="h-3 w-3 mr-1" /> Receipt
+                              </Button>
+                              {!isRefund && s.status !== 'refunded' && (
+                                <Button size="sm" variant="outline" onClick={() => setRefundSale(s)}>
+                                  <Undo2 className="h-3 w-3 mr-1" /> Refund
+                                </Button>
+                              )}
+                              {!isRefund && !s.invoice_id && (
+                                <Button size="sm" variant="outline" onClick={() => {
+                                  setInvoiceEmail(s.customer_email ?? '');
+                                  setInvoicePrompt(s);
+                                }}>
+                                  <FileText className="h-3 w-3 mr-1" /> Invoice
+                                </Button>
+                              )}
                             </div>
                           </div>
                         );
@@ -465,10 +603,21 @@ export default function POSPage() {
               </Card>
             </TabsContent>
 
+            {/* Tables */}
+            <TabsContent value="tables">
+              <TablesTab registerId={effectiveRegisterId} currentSaleId={null} />
+            </TabsContent>
+
+            {/* Loyalty */}
+            <TabsContent value="loyalty">
+              <LoyaltyTab />
+            </TabsContent>
+
             {/* Gift Cards */}
             <TabsContent value="gift-cards">
               <GiftCardsTab />
             </TabsContent>
+
           </Tabs>
         )}
 
@@ -539,6 +688,54 @@ export default function POSPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Refund / Receipt / Invoice dialogs */}
+        <RefundDialog
+          sale={refundSale}
+          sessionId={openSession?.id}
+          onClose={() => setRefundSale(null)}
+        />
+        <ReceiptDialog
+          saleId={receiptSaleId}
+          onClose={() => setReceiptSaleId(null)}
+        />
+
+        <Dialog open={!!invoicePrompt} onOpenChange={(o) => { if (!o) setInvoicePrompt(null); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create invoice from sale</DialogTitle>
+              <DialogDescription>
+                Sale {invoicePrompt?.receipt_number} — {fmtMoney(invoicePrompt?.total_cents ?? 0, invoicePrompt?.currency)}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label className="text-xs">Customer email</Label>
+              <Input
+                type="email"
+                value={invoiceEmail}
+                onChange={(e) => setInvoiceEmail(e.target.value)}
+                placeholder="customer@example.com"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setInvoicePrompt(null)}>Cancel</Button>
+              <Button
+                disabled={!invoiceEmail || createInvoice$.isPending}
+                onClick={async () => {
+                  if (!invoicePrompt) return;
+                  try {
+                    await createInvoice$.mutateAsync({
+                      sale_id: invoicePrompt.id,
+                      customer_email: invoiceEmail,
+                    });
+                    setInvoicePrompt(null);
+                  } catch (e) { logger.error('create invoice', e); }
+                }}
+              >Create invoice</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
       </div>
     </AdminLayout>
   );
