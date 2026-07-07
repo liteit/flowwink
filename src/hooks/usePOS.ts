@@ -9,7 +9,10 @@ export interface PosRegister {
   currency: string;
   default_tax_rate: number;
   active: boolean;
+  receipt_header?: string | null;
+  receipt_footer?: string | null;
 }
+
 
 export interface PosSession {
   id: string;
