@@ -1270,3 +1270,38 @@ its runtime aborts work on client disconnect (no `background` mode — improveme
 Long missions must be phased/bite-sized; with the idempotency guard, retries are harmless by design.
 Completion state: 17 events re-imported and sitting safely unmatched in the queue — bookable any time
 (agent rerun, FlowPilot, or one "Batch book" click in the UI).
+
+---
+
+## How Accounted makes the agent propose correctly (source study, 2026-07-07)
+
+Read-only study of the AGPL source (approach only — no code copied). **Headline: the LLM NEVER picks
+accounts.** Claude (Bedrock) only extracts document fields; their schema forcibly nulls any
+accountSuggestion from the AI. Kontering comes from a deterministic multi-signal engine:
+
+- **~130 curated booking templates** with VAT treatment class (standard_25/reduced/reverse_charge/
+  exempt/export), risk_level (NONE→HIGH ⇒ requires_review), AB-vs-EF account variants, deductibility
+  rules, Swedish specifics (representation caps, milk 12→6% 2026, mileage brackets).
+- **Multi-signal matching:** MCC code +0.40, keywords +0.30 (capped), direction +0.10, × template
+  confidence; bank-noise stripped pre-match. Direction is a STRUCTURAL filter (expense templates never
+  see inflows) — same fix we shipped tonight.
+- **Counterparty memory:** per-merchant category histogram; confidence 0.5+0.06×count capped 0.85
+  ("booked X times before for this counterparty"); direction-checked; empty history = honest no-signal
+  (they explicitly rejected global-frequency padding).
+- **Risk gates orthogonal to confidence:** HIGH-risk templates always require human review regardless
+  of match score. They NEVER auto-book — every suggestion is human-confirmed.
+- **Learning loop:** every successful booking upserts the counterparty template + boosts mapping-rule
+  confidence. Duplicate guard on (date, amount) with explicit allowDuplicate override.
+- Their stated tradeoff: curated templates cost maintenance but keyword-only scoring produces expensive
+  errors (reverse-charge, VAT deduction, entity-type). Compliance pays for the curation.
+
+**Validation + BR2 adoption list (approach, not code):**
+1. Graduated counterparty confidence (0.56→0.85 by count) replacing our binary vendor-default-98 —
+   show "booked N times before" in the review UI.
+2. Per-TEMPLATE risk_level ⇒ requires_review (orthogonal to confidence; complements our per-skill HIL
+   dial) — representation/internal-transfer/reverse-charge templates always reviewed.
+3. Richer template metadata as DATA: VAT treatment class, deductibility, AB/EF variants.
+4. (date, amount) duplicate guard beside the bank-link idempotency key.
+5. MCC signal when card feeds arrive.
+Where we deliberately differ: our autonomy dial (auto-book ≥95 with HIL off) — they never auto-book;
+their risk gates become our safety complement, not a replacement for autonomy.
