@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Sheet,
   SheetContent,
@@ -7,9 +7,23 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { TicketKbSuggestions } from "@/components/admin/tickets/TicketKbSuggestions";
 import { EntityActivityTimeline } from "@/components/admin/EntityActivityTimeline";
 import {
@@ -24,16 +38,16 @@ import {
   type TicketStatus,
   type TicketPriority,
   TICKET_STATUS_LABELS,
-  TICKET_STATUS_COLORS,
   TICKET_PRIORITY_LABELS,
-  TICKET_PRIORITY_COLORS,
   TICKET_CATEGORY_LABELS,
   useUpdateTicket,
+  useUpdateTicketTags,
   useTicketComments,
   useAddTicketComment,
 } from "@/hooks/useTickets";
+import { useCannedResponses, useIncrementCannedUsage } from "@/hooks/useCannedResponses";
 import { formatDistanceToNow, format } from "date-fns";
-import { MessageSquare, Send, Building2, User, Mail, Clock, Tag } from "lucide-react";
+import { MessageSquare, Send, Building2, User, Mail, Clock, Tag, X, Plus, MessageSquareQuote } from "lucide-react";
 
 interface TicketDetailDrawerProps {
   ticket: Ticket | null;
@@ -43,11 +57,18 @@ interface TicketDetailDrawerProps {
 
 export function TicketDetailDrawer({ ticket, open, onOpenChange }: TicketDetailDrawerProps) {
   const updateTicket = useUpdateTicket();
+  const updateTags = useUpdateTicketTags();
   const { data: comments = [] } = useTicketComments(ticket?.id);
   const addComment = useAddTicketComment();
+  const { data: cannedResponses = [] } = useCannedResponses(true);
+  const incrementUsage = useIncrementCannedUsage();
   const [newComment, setNewComment] = useState("");
+  const [tagInput, setTagInput] = useState("");
+
+  const tags = useMemo(() => ticket?.tags ?? [], [ticket]);
 
   if (!ticket) return null;
+
 
   const handleStatusChange = (status: TicketStatus) => {
     const updates: Partial<Ticket> & { id: string } = { id: ticket.id, status };
