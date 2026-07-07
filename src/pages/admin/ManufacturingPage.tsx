@@ -232,10 +232,12 @@ export default function ManufacturingPage() {
           <TabsList>
             <TabsTrigger value="orders">Manufacturing Orders</TabsTrigger>
             <TabsTrigger value="boms">Bills of Materials</TabsTrigger>
+            <TabsTrigger value="work-centers">Work Centers</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
           <TabsContent value="orders" className="mt-4"><MoList /></TabsContent>
           <TabsContent value="boms" className="mt-4"><BomList /></TabsContent>
+          <TabsContent value="work-centers" className="mt-4"><WorkCentersTab /></TabsContent>
           <TabsContent value="activity" className="mt-4"><MoActivityFeed /></TabsContent>
         </Tabs>
       </div>
