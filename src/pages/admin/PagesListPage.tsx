@@ -389,6 +389,7 @@ export default function PagesListPage() {
                         onDuplicate={handleDuplicate}
                         onDelete={setDeleteId}
                         onSetHomepage={handleSetAsHomepage}
+                        onOpenTranslations={(slug) => setTranslationsSlug(slug)}
                       />
                     ))}
                   </div>
