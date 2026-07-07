@@ -1,7 +1,7 @@
 {
   "module": "multi-currency",
   "odoo_app": "Accounting multi-currency",
-  "current_maturity": "L2",
+  "current_maturity": "L4",
   "target_maturity": "L4",
   "capabilities": [
     {
@@ -57,33 +57,33 @@
       "id": "subsidiary_ledgers",
       "name": "Local-currency subsidiary ledgers",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 2,
-      "verify": "local-currency subsidiary ledgers"
+      "verify": "subsidiaries table + journal_entries.subsidiary_id + manage_subsidiary (create/list/update/tag_entry) + subsidiary_ledger_report (per-account local-currency totals) (20260708060000). LIVE VERIFIED on rzhj 2026-07-07 via gateway: NOK entry tagged to NO01 reported 1930 +500000 / 3000 −500000 in NOK."
     },
     {
       "id": "consolidation_translation",
       "name": "Consolidation currency translation",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 2,
-      "verify": "consolidation currency translation"
+      "verify": "consolidation_report: closing-rate (fx_rate_at, inverse-pair fallback) translation of per-account nets for HQ + active subsidiaries into a presentation currency, missing rates flagged (20260708060000). LIVE VERIFIED 2026-07-07: NO01 translated at 0.95 (500000 NOK → 475000 SEK per account)."
     },
     {
       "id": "forward_contracts",
       "name": "Hedging/forward contracts",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "hedging/forward contracts"
+      "verify": "fx_forward_contracts + manage_fx_forward (create/list/get/settle/cancel/mark_to_market); settle posts realized gain/loss (Dt 1930/Cr 3960 or Dt 7960/Cr 1930) (20260708060000). LIVE VERIFIED 2026-07-07: buy 1000 USD @10.00 vs spot 10.80 → MTM +80000, settle posted a balanced 80000 JE."
     },
     {
       "id": "historical_rate_import",
       "name": "Bulk historical rate import",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "bulk historical rate import"
+      "verify": "import_exchange_rates(p_rates jsonb) bulk upsert on (base,quote,rate_date) with per-row validation (20260708060000). LIVE VERIFIED 2026-07-07: 3 imported, 1 invalid row skipped and reported."
     }
   ]
 }

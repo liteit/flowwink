@@ -198,6 +198,203 @@ const SKILLS: SkillSeed[] = [
     },
     instructions: 'Statutory model: employer pays days 1–14 (cap), 80% of daily salary, minus one karensavdrag (= 0.8 × daily). Returns sick_pay_cents (net), gross_sick_pay_cents, karensavdrag_cents, paid_sick_days, capped. Read-only.',
   },
+  {
+    name: 'manage_salary_structure',
+    description:
+      'Configure reusable salary structures (base salary + components: fixed or % of base, earning/benefit/deduction) and assign them to employees. Assigned structures are applied automatically on the next payroll run. Use when: standardizing pay packages (e.g. "Senior Engineer" = base + 5% bonus + car benefit). NOT for: one-off per-employee items (payroll_components table via manage_employee flows).',
+    category: 'system',
+    handler: 'rpc:manage_salary_structure',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'manage_salary_structure',
+        description: 'create/update/delete/list/get structures; add_component/update_component/remove_component; assign/unassign employees. Components: p_amount_cents fixed OR p_pct_of_base.',
+        parameters: {
+          type: 'object',
+          required: ['p_action'],
+          properties: {
+            p_action: { type: 'string', enum: ['create', 'update', 'delete', 'list', 'get', 'add_component', 'update_component', 'remove_component', 'assign', 'unassign'] },
+            p_structure_id: { type: 'string', format: 'uuid' },
+            p_name: { type: 'string', description: 'Structure name (create; also resolves get)' },
+            p_description: { type: 'string' },
+            p_base_salary_cents: { type: 'integer', description: 'Fallback base when the employee has no monthly_salary_cents' },
+            p_active: { type: 'boolean' },
+            p_component_id: { type: 'string', format: 'uuid' },
+            p_label: { type: 'string', description: 'Component label, e.g. "Performance bonus"' },
+            p_component_type: { type: 'string', enum: ['salary', 'bonus', 'overtime', 'benefit', 'deduction'] },
+            p_amount_cents: { type: 'integer', description: 'Fixed component amount' },
+            p_pct_of_base: { type: 'number', description: 'Percentage of the base salary (overrides p_amount_cents)' },
+            p_taxable: { type: 'boolean', default: true },
+            p_employee_id: { type: 'string', format: 'uuid', description: 'assign/unassign target' },
+          },
+        },
+      },
+    },
+    instructions:
+      'Structure components are added on top of the employee\'s own salary and recurring payroll_components at create_payroll_run time (tagged source:"structure" on the line). The structure\'s base_salary_cents is only used when the employee\'s monthly_salary_cents is 0. Admin/service-role only.',
+  },
+  {
+    name: 'manage_payroll_country',
+    description:
+      'Multi-country payroll: manage per-country statutory profiles (employer social fee %, default tax %, currency) and assign a payroll country to employees. Seeded with SE/NO/DK/FI/DE. Use when: employing staff outside Sweden, adjusting statutory rates for a new year. NOT for: per-employee tax overrides (employees.tax_rate_pct wins).',
+    category: 'system',
+    handler: 'rpc:manage_payroll_country',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'manage_payroll_country',
+        description: 'upsert/list/delete payroll_country_profiles; assign_employee sets employees.payroll_country. The profile drives the employer social fee on run creation and sick pay.',
+        parameters: {
+          type: 'object',
+          required: ['p_action'],
+          properties: {
+            p_action: { type: 'string', enum: ['upsert', 'list', 'delete', 'assign_employee'] },
+            p_country_code: { type: 'string', description: 'ISO-2, e.g. NO' },
+            p_name: { type: 'string' },
+            p_employer_social_pct: { type: 'number', description: 'Employer social fee % of taxable pay' },
+            p_default_tax_pct: { type: 'number', description: 'Default PAYE % for employees in this country' },
+            p_currency: { type: 'string' },
+            p_notes: { type: 'string' },
+            p_employee_id: { type: 'string', format: 'uuid', description: 'assign_employee target' },
+          },
+        },
+      },
+    },
+    instructions:
+      'create_payroll_run reads the employee\'s payroll_country profile for the employer social fee (SE 31.42% fallback). The per-employee tax_rate_pct still wins over the country default. SE cannot be deleted. Admin/service-role only.',
+  },
+  {
+    name: 'manage_salary_advance',
+    description:
+      'Salary advances/loans: grant an advance (posts Dt 1610 / Cr 1930), list per employee, cancel (posts the reversal). Open advances are deducted from net pay on the next payroll run and settled (Cr 1610) when the run is approved. Use when: an employee requests part of their salary early. NOT for: expense advances (expenses module).',
+    category: 'system',
+    handler: 'rpc:manage_salary_advance',
+    scope: 'internal',
+    trust_level: 'approve',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'manage_salary_advance',
+        description: 'grant/list/cancel salary_advances. Lifecycle: open → repaying (deducted on a draft run) → repaid (run approved). Only open advances can be cancelled.',
+        parameters: {
+          type: 'object',
+          required: ['p_action'],
+          properties: {
+            p_action: { type: 'string', enum: ['grant', 'list', 'cancel'] },
+            p_advance_id: { type: 'string', format: 'uuid' },
+            p_employee_id: { type: 'string', format: 'uuid' },
+            p_amount_cents: { type: 'integer', description: 'grant: advance amount (> 0)' },
+            p_reason: { type: 'string' },
+            p_granted_date: { type: 'string', description: 'YYYY-MM-DD (default today)' },
+            p_post_journal: { type: 'boolean', default: true, description: 'grant: post the disbursement journal' },
+          },
+        },
+      },
+    },
+    instructions:
+      'The full open amount is deducted from net on the next created run (skipped with advances_skipped_cents when it exceeds the month\'s net — cancel and re-grant a smaller advance for partial repayment). Approving the run marks the advance repaid and credits 1610. Admin/service-role only.',
+  },
+  {
+    name: 'apply_tax_correction',
+    description:
+      'Apply a preliminary-tax correction to one employee\'s line on a DRAFT payroll run (positive delta withholds more, negative refunds too-much-withheld tax). Use when: fixing a wrong tax table, jämkning decisions, retro corrections carried into the current month. NOT for: posted runs (correct on next month\'s draft) or changing the standing rate (employees.tax_rate_pct).',
+    category: 'system',
+    handler: 'rpc:apply_tax_correction',
+    scope: 'internal',
+    trust_level: 'notify',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'apply_tax_correction',
+        description: 'tax_cents += delta, net_cents −= delta on the employee\'s draft line; run totals recomputed; correction logged in components and tax_correction_cents. Cumulative per call.',
+        parameters: {
+          type: 'object',
+          required: ['p_run_id', 'p_employee_id', 'p_tax_delta_cents'],
+          properties: {
+            p_run_id: { type: 'string', format: 'uuid', description: 'Draft payroll run' },
+            p_employee_id: { type: 'string', format: 'uuid' },
+            p_tax_delta_cents: { type: 'integer', description: 'Positive = withhold more, negative = refund' },
+            p_reason: { type: 'string', description: 'Shown on the payslip' },
+          },
+        },
+      },
+    },
+    instructions:
+      'Corrections are cumulative — each call adds its delta (send the opposite delta to undo). Draft runs only. Survives apply_sick_pay recomputes (tracked in tax_correction_cents). Admin/service-role only.',
+  },
+  {
+    name: 'get_payslip',
+    description:
+      'Structured payslip for one employee+run (employer, period, all components, gross→net breakdown incl. pension/sick pay/advances/tax corrections, YTD totals) — or, without a run id, the list of available payslips. Employees can fetch their OWN payslips (self-service via employees.user_id); admins can fetch anyone\'s. Use when: an employee asks for their payslip, rendering the payslip view, portal self-service. NOT for: run-level auditing (list_payroll_lines).',
+    category: 'system',
+    handler: 'rpc:get_payslip',
+    scope: 'internal',
+    trust_level: 'auto',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'get_payslip',
+        description: 'Payslip JSON for run+employee, or the employee\'s payslip list when p_run_id is omitted. Non-admin callers are locked to their own employee record and to approved/paid runs.',
+        parameters: {
+          type: 'object',
+          properties: {
+            p_run_id: { type: 'string', format: 'uuid', description: 'Omit to list available payslips' },
+            p_employee_id: { type: 'string', format: 'uuid', description: 'Required for admins; ignored/own for employees' },
+          },
+        },
+      },
+    },
+    instructions:
+      'Self-service resolves the employee via employees.user_id = auth.uid(). YTD covers approved/paid runs in the same calendar year up to the requested period. Render with amounts in cents; employer block comes from site_settings site_name.',
+  },
+  {
+    name: 'year_end_payroll_summary',
+    description:
+      'Year-end tax certification data: per-employee annual gross, benefits, withheld tax, employer social fees, pension and net over all approved/paid runs of a year (KU/kontrolluppgift-style income statements). Use when: closing the payroll year, answering "what did we pay X in 2026". NOT for: the monthly Skatteverket declaration (generate_agi_export).',
+    category: 'system',
+    handler: 'rpc:year_end_payroll_summary',
+    scope: 'internal',
+    trust_level: 'auto',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'year_end_payroll_summary',
+        description: 'Per-employee + total annual payroll aggregates for a calendar year.',
+        parameters: {
+          type: 'object',
+          properties: {
+            p_year: { type: 'integer', description: 'Calendar year (default: current year)' },
+          },
+        },
+      },
+    },
+  },
+  {
+    name: 'generate_agi_export',
+    description:
+      'Tax-authority integration: generate the monthly AGI declaration (arbetsgivardeklaration på individnivå) as Skatteverket-style XML — HU totals (social fees FK487, withheld tax FK497) plus one IU per employee (FK215/FK011/FK001). Use when: monthly employer declaration after approving payroll. NOT for: bank/Fortnox salary files (Fortnox CSV + PAXML export) or year-end summaries (year_end_payroll_summary).',
+    category: 'system',
+    handler: 'rpc:generate_agi',
+    scope: 'internal',
+    trust_level: 'notify',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'generate_agi_export',
+        description: 'AGI XML + totals for the approved/paid run(s) of one month. Fails with reason no_data until the run is approved.',
+        parameters: {
+          type: 'object',
+          properties: {
+            p_period: { type: 'string', description: 'YYYY-MM-DD anywhere in the target month (default: current month)' },
+          },
+        },
+      },
+    },
+    instructions:
+      'Amounts are whole SEK (öre rounded) per AGI convention. Set site_settings key org_number for a complete file; employees without personal_number are marked SAKNAS — fix and regenerate before filing. Upload the XML via Skatteverket\'s file transfer service.',
+  },
 ];
 
 export const payrollModule = defineModule<Input, Output>({
@@ -205,17 +402,17 @@ export const payrollModule = defineModule<Input, Output>({
   name: 'Payroll',
   version: '1.0.0',
   processes: ['hire-to-retire', 'record-to-report'],
-  maturity: 'L2',
+  maturity: 'L4',
   description:
-    'Monthly payroll runs (SE-locale): snapshots employees + recurring components, applies pension (tjänstepension) and statutory sick pay (sjuklön) adjustments on draft runs, posts wage journals (BAS 7210/7410/7510/2710/2731/2890/2950), and tracks net wage payment. 31.42% employer social fee default, per-employee tax rate override.',
+    'Monthly payroll runs: snapshots employees + recurring components + salary structures, per-country statutory profiles (SE default: 31.42% social fee), pension (tjänstepension), statutory sick pay (sjuklön), tax corrections and salary advances on draft runs, wage journals (BAS 7210/7410/7510/1610/2710/2731/2890/2950), payslips with employee self-service, year-end certification summaries, and AGI XML export to Skatteverket.',
   requires: ['hr'],
   capabilities: ['data:read', 'data:write'],
   tier: 'extended',
   inputSchema,
   outputSchema,
-  skills: ['create_payroll_run', 'approve_payroll_run', 'mark_payroll_paid', 'list_payroll_runs', 'list_payroll_lines', 'apply_pension', 'apply_sick_pay', 'calc_sick_pay'],
+  skills: ['create_payroll_run', 'approve_payroll_run', 'mark_payroll_paid', 'list_payroll_runs', 'list_payroll_lines', 'apply_pension', 'apply_sick_pay', 'calc_sick_pay', 'manage_salary_structure', 'manage_payroll_country', 'manage_salary_advance', 'apply_tax_correction', 'get_payslip', 'year_end_payroll_summary', 'generate_agi_export'],
   data: {
-    tables: ['payroll_export_lines', 'payroll_exports', 'payroll_lines', 'payroll_runs', 'payroll_components'],
+    tables: ['payroll_export_lines', 'payroll_exports', 'payroll_lines', 'payroll_runs', 'payroll_components', 'salary_structure_components', 'salary_structures', 'salary_advances', 'payroll_country_profiles'],
   },
   skillSeeds: SKILLS,
   // No publish() — Payroll exposes its behaviour exclusively through MCP skills

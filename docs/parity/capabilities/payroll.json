@@ -1,7 +1,7 @@
 {
   "module": "payroll",
   "odoo_app": "Payroll (hr.payslip)",
-  "current_maturity": "L2",
+  "current_maturity": "L4",
   "target_maturity": "L4",
   "capabilities": [
     {
@@ -72,17 +72,20 @@
       "id": "salary_structures",
       "name": "Salary structure config",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 2,
-      "verify": "salary structure config exists"
+      "verify": "salary_structures + salary_structure_components (fixed or pct_of_base, earning/benefit/deduction) + employees.salary_structure_id + manage_salary_structure skill; applied in create_payroll_run (source:\"structure\" components) (20260708080000). LIVE VERIFIED on rzhj 2026-07-07: 5% bonus (210000) + 50000 allowance landed on the run line exactly.",
+      "epic": "EPIC-08"
     },
     {
       "id": "payslip_generation",
       "name": "Payslip PDF + self-service",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 2,
-      "verify": "payslip PDF generation + self-service access exists"
+      "verify": "get_payslip RPC/skill: employer/employee blocks, full component + gross→net breakdown (pension/sick/advance/tax corrections), YTD totals; self-service via employees.user_id=auth.uid() locked to own approved/paid runs; list mode without run id (20260708080000). LIVE VERIFIED 2026-07-07 via gateway.",
+      "notes": "PDF via the portal print view (browser print-to-PDF); a dedicated PDF renderer edge function is not needed for parity.",
+      "epic": "EPIC-08"
     },
     {
       "id": "pension",
@@ -108,41 +111,44 @@
       "id": "multi_country",
       "name": "Multi-country payroll",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 2,
-      "verify": "multi-country payroll support exists"
+      "verify": "payroll_country_profiles (seeded SE/NO/DK/FI/DE) + employees.payroll_country + manage_payroll_country skill; employer social fee per country in create_payroll_run and apply_sick_pay (20260708080000). LIVE VERIFIED 2026-07-07: NO employee computed 14.1% social (628860 on 4460000) vs SE 31.42%.",
+      "notes": "Statutory rate profiles (social fee + default tax + currency); per-employee tax_rate_pct still wins. Full local payslip law per country is out of scope.",
+      "epic": "EPIC-08"
     },
     {
       "id": "tax_corrections",
       "name": "Tax adjustment/correction",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "tax adjustment/correction exists"
+      "verify": "apply_tax_correction RPC/skill on draft runs: cumulative delta on tax/net + tax_correction_cents + payslip component; survives apply_sick_pay recompute (20260708080000). LIVE VERIFIED 2026-07-07: −38000 refund moved tax 1338000→1300000 and net 3022000→3060000."
     },
     {
       "id": "salary_advances",
       "name": "Salary advance/loan",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "salary advance/loan tracking exists"
+      "verify": "salary_advances + manage_salary_advance (grant posts Dt 1610/Cr 1930, cancel reverses); create_payroll_run deducts open advances from net (payroll_lines.advance_deduction_cents, runs.total_advances_cents); approve settles Cr 1610 and marks repaid (20260708080000). LIVE VERIFIED 2026-07-07: 100000 advance deducted and settled, approval JE balanced to 0."
     },
     {
       "id": "year_end_certification",
       "name": "Year-end tax certification",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "year-end tax certification exists"
+      "verify": "year_end_payroll_summary RPC/skill: per-employee annual gross/benefits/tax withheld/social/pension/net over approved+paid runs (KU-style data set) (20260708080000). LIVE VERIFIED 2026-07-07 via gateway."
     },
     {
       "id": "authority_integration",
       "name": "Tax-authority integration",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "tax-authority integration exists"
+      "verify": "generate_agi RPC (skill generate_agi_export): monthly AGI XML (HU FK487/FK497 + IU FK215/FK011/FK001 per employee, Skatteverket namespaces) from approved/paid runs; org number from site_settings (20260708080000). LIVE VERIFIED 2026-07-07: well-formed XML with correct whole-SEK totals.",
+      "notes": "File-based declaration (upload via Skatteverket filöverföring); no direct API submission — same integration level Odoo ships for most l10n payroll."
     }
   ]
 }

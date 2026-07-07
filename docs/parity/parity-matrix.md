@@ -9,18 +9,14 @@ category: reference
 > **GENERATED FILE.** Run `bun run scripts/parity-report.ts` to refresh.
 > Edit `docs/parity/capabilities/<module>.json` to change scores.
 
-**Benchmarked modules:** 55  ·  **Mean parity:** 75%  ·  **Differentiators (no Odoo benchmark):** 10  ·  **Unscored:** 4
+**Benchmarked modules:** 55  ·  **Mean parity:** 78%  ·  **Differentiators (no Odoo benchmark):** 10  ·  **Unscored:** 4
 
 ## Scored modules
 
 | Module | Odoo app | Maturity → target | Parity | Done/Partial/Missing | Open epics |
 |---|---|---|---|---|---|
 | **contact-center** | Live Chat + Helpdesk (omnichannel routing, VOIP voicemail) | L1 → L3 | `████░░░░░░` 41% | 0/5/1 | EPIC-07 |
-| **pricelists** | Sales pricelists (product.pricelist) | L3 → L4 | `█████░░░░░` 54% | 6/0/6 | — |
-| **payroll** | Payroll (hr.payslip) | L2 → L4 | `██████░░░░` 55% | 10/0/7 | — |
 | **media** | Website media library | L2 → L4 | `██████░░░░` 57% | 2/3/1 | EPIC-06 |
-| **multi-currency** | Accounting multi-currency | L2 → L4 | `██████░░░░` 57% | 6/0/4 | — |
-| **wiki** | Knowledge (knowledge.article) | L2 → L4 | `██████░░░░` 57% | 3/0/3 | — |
 | **accounting** | Accounting (account.move, account.account) | L3 → L4 | `██████░░░░` 58% | 10/0/6 | — |
 | **analytics** | Website analytics / Dashboards | L3 → L4 | `██████░░░░` 58% | 2/1/2 | — |
 | **chat** | Livechat + chatbot | L3 → L4 | `██████░░░░` 58% | 1/4/0 | EPIC-06, EPIC-07 |
@@ -64,12 +60,16 @@ category: reference
 | **docs** | Knowledge (documentation) | L4 → L4 | `██████████` 100% | 5/0/0 | — |
 | **forms** | Website forms | L4 → L4 | `██████████` 100% | 7/0/0 | — |
 | **global-blocks** | Website building blocks/snippets | L3 → L4 | `██████████` 100% | 4/0/0 | — |
+| **multi-currency** | Accounting multi-currency | L4 → L4 | `██████████` 100% | 10/0/0 | — |
+| **payroll** | Payroll (hr.payslip) | L4 → L4 | `██████████` 100% | 17/0/0 | — |
+| **pricelists** | Sales pricelists (product.pricelist) | L4 → L4 | `██████████` 100% | 12/0/0 | — |
 | **projects** | Project (project.project/project.task) | L4 → L4 | `██████████` 100% | 13/0/0 | — |
 | **resume** | Employees → Skills / niche consultant pool | L3 → L4 | `██████████` 100% | 6/0/0 | — |
 | **sales-intelligence** | CRM lead scoring (partial counterpart) | L4 → L4 | `██████████` 100% | 1/0/0 | — |
 | **shipping** | Inventory → Delivery/Shipping connectors | L4 → L4 | `██████████` 100% | 15/0/0 | — |
 | **sla** | Helpdesk SLA policies | L4 → L4 | `██████████` 100% | 15/0/0 | — |
 | **timesheets** | Timesheets (account.analytic.line) | L4 → L4 | `██████████` 100% | 14/0/0 | — |
+| **wiki** | Knowledge (knowledge.article) | L4 → L4 | `██████████` 100% | 6/0/0 | — |
 
 ## Differentiators (no Odoo counterpart — excluded from the mean)
 

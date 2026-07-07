@@ -1,7 +1,7 @@
 {
   "module": "pricelists",
   "odoo_app": "Sales pricelists (product.pricelist)",
-  "current_maturity": "L3",
+  "current_maturity": "L4",
   "target_maturity": "L4",
   "capabilities": [
     {
@@ -58,49 +58,49 @@
       "id": "dynamic_pricing",
       "name": "Time-based dynamic pricing",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "time-based dynamic pricing rules"
+      "verify": "pricelist_items.days_of_week/time_start/time_end + resolve_pricelist_price p_at_time (migration 20260708050000). LIVE VERIFIED on rzhj 2026-07-07 via MCP gateway: 50%-off item with 06:00–08:00 window resolved 12500 at 06:30 and fell back to 25000 base at 12:00."
     },
     {
       "id": "segment_pricing",
       "name": "Customer-segment/country pricing",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "segment/country-based pricing rules"
+      "verify": "pricelists.segment (matches companies.tags) + pricelists.country (matches companies.country, added column) with +300/+200 specificity (20260708050000). LIVE VERIFIED 2026-07-07: segment=enterprise country=SE list matched only the lead whose company carries the enterprise tag + SE country (420000), anonymous resolution fell through to product_base."
     },
     {
       "id": "supplier_pricelists",
       "name": "Supplier/vendor pricelists",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "supplier/vendor pricelist records"
+      "verify": "resolve_vendor_price + manage_vendor_price skills over existing vendor_products (validity dates + price_tier_min_qty tiers, preferred-first) (20260708050000). LIVE VERIFIED 2026-07-07: two tiers (200000 @1, 180000 @50) resolved correctly at qty 10 and 60 via the gateway."
     },
     {
       "id": "formula_pricing",
       "name": "Formula (cost+margin) pricing",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "cost+margin formula pricing rule"
+      "verify": "pricelist_items.formula_base(cost|list)/margin_pct/surcharge_cents/rounding_cents; pricelist_items_price_or_discount constraint widened to admit formula rows (20260708050000). LIVE VERIFIED 2026-07-07: cost 300000 × 1.4 rounded to 10000 → 420000 source=pricelist."
     },
     {
       "id": "pos_subscription_application",
       "name": "Apply to POS/subscriptions",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "pricelist applied to POS and subscriptions"
+      "verify": "record_pos_sale_v2 resolves omitted line unit prices via resolve_pricelist_price (customer_id as lead, register currency); create_manual_subscription resolves a NULL unit_amount_cents from the customer pricelist (lead by email) and stamps metadata.pricelist_id (20260708050000). LIVE VERIFIED 2026-07-07: POS line without unit price billed the happy-hour 12500 (total 31250 w/ 25% tax); subscription without amount created at the pricelist 420000."
     },
     {
       "id": "version_history",
       "name": "Pricelist version history",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "pricelist version history records"
+      "verify": "pricelist_revisions + AFTER INSERT/UPDATE/DELETE triggers on pricelists+pricelist_items + get_pricelist_history skill (20260708050000). LIVE VERIFIED 2026-07-07: create revisions listed with full snapshots via the gateway."
     }
   ]
 }

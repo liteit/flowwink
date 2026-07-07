@@ -10,9 +10,9 @@ generated_at: "2026-07-07"
 
 # Pricelists
 
-> Versioned pricing per customer, company, or period — Odoo-style price lists with fixed prices or discount %. Resolves the best applicable price for any product+customer+date.
+> Versioned pricing per customer, company, segment, country, or period — Odoo-style price lists with fixed prices, discount %, formula (cost+margin) rules, qty tiers, and time-window rules. Resolves the best applicable price for any product+customer+date, applies to POS sales and subscriptions, resolves supplier prices from vendor pricelists, and keeps a full revision history.
 
-Ships with **3 agent skills**, an **admin UI**.
+Ships with **6 agent skills**, **1 database table**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,8 +24,8 @@ Ships with **3 agent skills**, an **admin UI**.
 | **Autonomy** | config-required |
 | **Core** | No |
 | **Capabilities** | `data:read`, `data:write` |
-| **MCP-exposed skills** | 3 |
-| **Owns tables** | — |
+| **MCP-exposed skills** | 6 |
+| **Owns tables** | 1 |
 
 ## Skills
 
@@ -37,6 +37,17 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | `manage_pricelist` | internal | CRUD for versioned pricelists (per customer/company/period). Use when: setting up customer-specific pricing, seasonal discounts, or volume-based tiers. NOT for: applying prices to a quote line (use… |
 | `manage_pricelist_item` | internal | Add/remove/update line items in a pricelist (product → fixed price or discount %). Use when: populating a pricelist after creating it. NOT for: creating the pricelist itself (use manage_pricelist). |
 | `resolve_pricelist_price` | internal | Returns the best applicable price for a product given an optional lead/company and quantity. Use when: building a quote/invoice line and wanting customer-specific pricing. NOT for: editing pricelis… |
+| `resolve_vendor_price` | internal | Returns the best supplier/vendor purchase price for a product+quantity from vendor_products (validity dates + qty tiers, preferred vendor first). Use when: choosing a vendor for a purchase order, c… |
+| `manage_vendor_price` | internal | CRUD for supplier/vendor pricelist rows (vendor_products): per-vendor product prices with validity dates, qty tiers, lead time and MOQ. Use when: recording a negotiated purchase price or supplier p… |
+| `get_pricelist_history` | internal | Version history for pricelists: every create/update/delete of a pricelist or its items is captured as a revision snapshot. Use when: auditing who changed a price and when, or reviewing how a pricel… |
+
+## Data Model
+
+Tables created by this module (from migrations):
+
+- `public.pricelist_revisions`
+
+All tables ship with Row-Level Security policies. See migration files for the exact rules.
 
 ## Module API Contract
 
@@ -52,6 +63,7 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 |---------|------|
 | Module definition | `src/lib/modules/pricelists-module.ts` |
 | Admin page | `src/pages/admin/PricelistsPage.tsx` |
+| Migration | `supabase/migrations/20260708050000_pricelists-parity-r7.sql` |
 
 ## Contributing
 

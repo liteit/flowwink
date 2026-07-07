@@ -1,14 +1,57 @@
 {
   "module": "wiki",
   "odoo_app": "Knowledge (knowledge.article)",
-  "current_maturity": "L2",
+  "current_maturity": "L4",
   "target_maturity": "L4",
   "capabilities": [
-    { "id": "page_crud", "name": "Wiki page CRUD", "odoo": true, "status": "done", "weight": 2, "verify": "manage_wiki_page skill (list/get/create/update/delete); admin WikiPage.tsx at /admin/wiki/:slug" },
-    { "id": "hierarchy", "name": "Page hierarchy/tree", "odoo": true, "status": "missing", "weight": 1, "verify": "wiki_pages is flat (slug PK); no parent/tree fields in wiki-module" },
-    { "id": "search", "name": "Search", "odoo": true, "status": "done", "weight": 1, "verify": "search_wiki skill (ILIKE over title + content_md); search box in admin WikiPage.tsx" },
-    { "id": "internal_links", "name": "Internal linking", "odoo": true, "status": "done", "weight": 1, "verify": "[[WikiWord]]/CamelCase auto-linking documented in manage_wiki_page content_md param; WikiMarkdown.tsx renders links and auto-creates missing pages" },
-    { "id": "history", "name": "Version history", "odoo": true, "status": "missing", "weight": 1, "verify": "no revision table, skill, or UI for wiki_pages" },
-    { "id": "permissions", "name": "Access permissions", "odoo": true, "status": "missing", "weight": 1, "verify": "no permission management skill or UI", "notes": "Only fixed RLS (authenticated read+write, admin delete); no per-page permissions surface." }
+    {
+      "id": "page_crud",
+      "name": "Wiki page CRUD",
+      "odoo": true,
+      "status": "done",
+      "weight": 2,
+      "verify": "manage_wiki_page skill (list/get/create/update/delete); admin WikiPage.tsx at /admin/wiki/:slug"
+    },
+    {
+      "id": "hierarchy",
+      "name": "Page hierarchy/tree",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "wiki_pages.parent_slug (FK, ON DELETE SET NULL) + manage_wiki_hierarchy skill (set_parent/tree/children, cycle guard) (20260708070000). LIVE VERIFIED on rzhj 2026-07-07 via gateway: parent set, children listed, cycle rejected with explicit error."
+    },
+    {
+      "id": "search",
+      "name": "Search",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "search_wiki skill (ILIKE over title + content_md); search box in admin WikiPage.tsx"
+    },
+    {
+      "id": "internal_links",
+      "name": "Internal linking",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "[[WikiWord]]/CamelCase auto-linking documented in manage_wiki_page content_md param; WikiMarkdown.tsx renders links and auto-creates missing pages"
+    },
+    {
+      "id": "history",
+      "name": "Version history",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "wiki_page_revisions + BEFORE UPDATE/DELETE capture trigger + wiki_page_history skill (list/get/restore, restore recreates deleted pages) (20260708070000). LIVE VERIFIED 2026-07-07: edit captured revision 1, restore returned the page to v1 content."
+    },
+    {
+      "id": "permissions",
+      "name": "Access permissions",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "wiki_pages.visibility(internal|admin) + editable_by(authenticated|admin), enforced in RLS read/update policies + manage_wiki_permissions skill (20260708070000). LIVE VERIFIED 2026-07-07: set/get admin-only visibility via the gateway.",
+      "notes": "Page-level (not per-user ACL): visibility internal/admin + edit lock authenticated/admin, enforced at the database layer."
+    }
   ]
 }
