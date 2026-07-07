@@ -98,6 +98,8 @@ export function EventsToBookTab() {
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['events-to-book'],
     queryFn: () => invokeSkill<ProposalsResult>('propose_bookkeeping', {}),
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: bookedData, refetch: refetchBooked } = useQuery({
@@ -153,6 +155,7 @@ export function EventsToBookTab() {
         description: p.description,
         reference_number: p.counterparty,
         bank_transaction_id: p.bank_transaction_id,
+        entry_date: p.transaction_date,
         auto_confirm: true,
       };
       const first = await invokeSkill<any>('manage_journal_entry', args);
