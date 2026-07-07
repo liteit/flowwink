@@ -1025,3 +1025,310 @@ export default function NewsletterPage() {
     </AdminLayout>
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Schedule dialog (draft newsletters)
+// ─────────────────────────────────────────────────────────────────────────
+
+function ScheduleDialog({
+  newsletter,
+  onSchedule,
+  pending,
+}: {
+  newsletter: Newsletter;
+  onSchedule: (isoUtc: string) => void;
+  pending: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  // datetime-local default: 30 minutes from now, in the user's local time.
+  const defaultLocal = () => {
+    const d = new Date(Date.now() + 30 * 60 * 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+  const [when, setWhen] = useState(defaultLocal);
+
+  const localDate = when ? new Date(when) : null;
+  const isFuture = !!localDate && !isNaN(localDate.getTime()) && localDate.getTime() > Date.now();
+
+  const submit = () => {
+    if (!isFuture || !localDate) {
+      toast.error("Schedule time must be in the future");
+      return;
+    }
+    onSchedule(localDate.toISOString());
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Calendar className="h-4 w-4 mr-1" />
+          Schedule
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Schedule "{newsletter.subject}"</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <label className="text-sm font-medium">Send at (your local time)</label>
+          <Input
+            type="datetime-local"
+            value={when}
+            onChange={(e) => setWhen(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            A background dispatcher checks every 5 minutes and sends any newsletters whose
+            scheduled time has passed.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={submit} disabled={!isFuture || pending}>
+            {pending ? "Scheduling…" : "Schedule"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Flows tab — lead_nurture_sequence automations
+// ─────────────────────────────────────────────────────────────────────────
+
+interface Automation {
+  id: string;
+  name: string;
+  trigger_type: string;
+  trigger_config: any;
+  skill_name: string;
+  skill_arguments: any;
+  enabled: boolean;
+  executor: string;
+  created_at: string;
+}
+
+const FLOW_PRESETS: Record<
+  string,
+  { label: string; name: string; trigger_type: "event" | "cron"; trigger_config: any; sequence_type: string; description: string }
+> = {
+  welcome: {
+    label: "Welcome",
+    name: "Welcome sequence",
+    trigger_type: "event",
+    trigger_config: { event: "lead.created" },
+    sequence_type: "welcome",
+    description: "Triggers on lead.created — introduces new subscribers to your brand.",
+  },
+  re_engage: {
+    label: "Re-engage",
+    name: "Re-engagement sequence",
+    trigger_type: "cron",
+    trigger_config: { schedule: "0 9 * * 1" },
+    sequence_type: "re_engage",
+    description: "Runs every Monday at 09:00 — wakes up cold subscribers.",
+  },
+  upsell: {
+    label: "Upsell",
+    name: "Post-purchase upsell",
+    trigger_type: "event",
+    trigger_config: { event: "order.completed" },
+    sequence_type: "upsell",
+    description: "Triggers on order.completed — offers related products.",
+  },
+};
+
+function FlowsTab() {
+  const qc = useQueryClient();
+  const [newOpen, setNewOpen] = useState(false);
+  const [preset, setPreset] = useState<keyof typeof FLOW_PRESETS>("welcome");
+
+  const { data: flows = [], isLoading } = useQuery({
+    queryKey: ["newsletter-flows"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("agent_automations")
+        .select("*")
+        .eq("skill_name", "lead_nurture_sequence")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Automation[];
+    },
+  });
+
+  const toggleEnabled = useMutation({
+    mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
+      const { error } = await supabase
+        .from("agent_automations")
+        .update({ enabled })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["newsletter-flows"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const createFlow = useMutation({
+    mutationFn: async (presetKey: keyof typeof FLOW_PRESETS) => {
+      const p = FLOW_PRESETS[presetKey];
+      const { error } = await supabase.from("agent_automations").insert({
+        name: p.name,
+        trigger_type: p.trigger_type,
+        trigger_config: p.trigger_config,
+        skill_name: "lead_nurture_sequence",
+        skill_arguments: { sequence_type: p.sequence_type },
+        executor: "platform",
+        enabled: false,
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["newsletter-flows"] });
+      setNewOpen(false);
+      toast.success("Flow created (disabled — enable to activate)");
+    },
+    onError: (e: Error) => {
+      logger.error("Create flow failed", e);
+      toast.error(e.message);
+    },
+  });
+
+  const deleteFlow = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("agent_automations").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["newsletter-flows"] });
+      toast.success("Flow removed");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const describeTrigger = (a: Automation): string => {
+    if (a.trigger_type === "event") return `event: ${a.trigger_config?.event ?? "—"}`;
+    if (a.trigger_type === "cron") return `cron: ${a.trigger_config?.schedule ?? "—"}`;
+    return a.trigger_type;
+  };
+
+  return (
+    <>
+      <div className="flex justify-end">
+        <Dialog open={newOpen} onOpenChange={setNewOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              New flow
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>New automation flow</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <p className="text-sm text-muted-foreground">
+                Pick a preset. Flows are created disabled — review and enable them
+                consciously.
+              </p>
+              <div className="space-y-2">
+                {(Object.keys(FLOW_PRESETS) as Array<keyof typeof FLOW_PRESETS>).map((k) => {
+                  const p = FLOW_PRESETS[k];
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => setPreset(k)}
+                      className={`w-full text-left rounded-md border px-3 py-2 hover:bg-accent transition-colors ${
+                        preset === k ? "border-primary bg-accent/50" : ""
+                      }`}
+                    >
+                      <div className="font-medium text-sm">{p.label}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {p.description}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setNewOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => createFlow.mutate(preset)}
+                disabled={createFlow.isPending}
+              >
+                {createFlow.isPending ? "Creating…" : "Create flow"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Trigger</TableHead>
+              <TableHead>Sequence</TableHead>
+              <TableHead className="text-right">Enabled</TableHead>
+              <TableHead className="w-16"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8">
+                  Loading…
+                </TableCell>
+              </TableRow>
+            ) : flows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <Workflow className="h-6 w-6 mx-auto mb-2 opacity-60" />
+                  No flows yet. Use "New flow" to add one.
+                </TableCell>
+              </TableRow>
+            ) : (
+              flows.map((f) => (
+                <TableRow key={f.id}>
+                  <TableCell className="font-medium">{f.name}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground font-mono">
+                    {describeTrigger(f)}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {f.skill_arguments?.sequence_type ?? "—"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Switch
+                      checked={f.enabled}
+                      onCheckedChange={(v) => toggleEnabled.mutate({ id: f.id, enabled: v })}
+                    />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteFlow.mutate(f.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </Card>
+    </>
+  );
+}
