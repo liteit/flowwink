@@ -49,10 +49,11 @@ export function ProfitLossTab() {
   if (!report) return null;
 
   return (
-    <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">
-        Income earned and expenses incurred during the fiscal year. The bottom line is the year's result.
-      </p>
+    <div className="space-y-4">
+      <AccountingTabHeader
+        title="Profit & Loss"
+        description="Income earned and expenses incurred during the fiscal year. The bottom line is the year's result."
+      />
     <div className="rounded-lg border bg-card">
       <div className="flex items-center gap-6 px-6 py-4 border-b">
         <div className="text-sm font-medium">{fiscalYear}</div>
