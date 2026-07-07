@@ -85,6 +85,10 @@ export function JournalTab() {
 
   return (
     <div className="space-y-4">
+      <AccountingTabHeader
+        title="Journal"
+        description="Every voucher posted to the books, in chronological order. Click a row to inspect the debit/credit lines and template provenance."
+      />
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[220px]">
