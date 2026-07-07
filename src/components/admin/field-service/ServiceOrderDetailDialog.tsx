@@ -41,16 +41,16 @@ export function ServiceOrderDetailDialog({ orderId, onClose }: Props) {
           </DialogTitle>
           <DialogDescription>
             {order?.customer_name}
-            {order?.parent_order_id && (
+            {(order as any)?.parent_order_id && (
               <span className="ml-2 inline-flex items-center gap-1">
                 <Badge variant="secondary" className="text-[10px]">Recurring child</Badge>
-                <button
-                  className="text-primary underline text-xs"
-                  onClick={() => { if (order.parent_order_id) window.location.hash = `#order-${order.parent_order_id}`; }}
-                >parent</button>
+                <span className="text-xs text-muted-foreground">
+                  parent {String((order as any).parent_order_id).slice(0, 8)}
+                </span>
               </span>
             )}
           </DialogDescription>
+
         </DialogHeader>
 
         {orderId && (
