@@ -193,29 +193,28 @@ function AssignmentDialog({ open, assignment, onClose }: {
   const { data: contracts } = useContracts();
   const [form, setForm] = useState<any>({});
 
-  // reset on open
-  useState(() => 0);
-  if (assignment && (form as any)._id !== assignment.id) {
-    setForm({
-      _id: assignment.id,
-      consultant_id: assignment.consultant_id,
-      client_name: assignment.client_name ?? '',
-      role_title: assignment.role_title ?? '',
-      start_date: assignment.start_date ?? '',
-      end_date: assignment.end_date ?? '',
-      allocation_pct: assignment.allocation_pct ?? 100,
-      hourly_rate_cents: assignment.hourly_rate_cents ?? 0,
-      currency: assignment.currency ?? 'SEK',
-      contract_id: assignment.contract_id ?? '',
-      sow_url: assignment.sow_url ?? '',
-      status: assignment.status ?? 'planned',
-      notes: assignment.notes ?? '',
-    });
-  }
-  if (!assignment && open && !(form as any)._new) {
-    setForm({ _new: true, allocation_pct: 100, currency: 'SEK', status: 'planned' });
-  }
-  if (!open && (form as any)._id) setForm({});
+  useEffect(() => {
+    if (!open) return;
+    if (assignment) {
+      setForm({
+        consultant_id: assignment.consultant_id,
+        client_name: assignment.client_name ?? '',
+        role_title: assignment.role_title ?? '',
+        start_date: assignment.start_date ?? '',
+        end_date: assignment.end_date ?? '',
+        allocation_pct: assignment.allocation_pct ?? 100,
+        hourly_rate_cents: assignment.hourly_rate_cents ?? 0,
+        currency: assignment.currency ?? 'SEK',
+        contract_id: assignment.contract_id ?? '',
+        sow_url: assignment.sow_url ?? '',
+        status: assignment.status ?? 'planned',
+        notes: assignment.notes ?? '',
+      });
+    } else {
+      setForm({ allocation_pct: 100, currency: 'SEK', status: 'planned' });
+    }
+  }, [open, assignment?.id]);
+
 
   async function save() {
     try {
