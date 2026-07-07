@@ -438,18 +438,27 @@ export default function POSPage() {
                     <p className="text-sm text-muted-foreground py-8 text-center">No sales yet.</p>
                   ) : (
                     <div className="space-y-2">
-                      {recent.map((s) => (
-                        <div key={s.id} className="flex items-center justify-between border rounded p-3">
-                          <div>
-                            <div className="font-mono text-sm">{s.receipt_number}</div>
-                            <div className="text-xs text-muted-foreground">{format(new Date(s.created_at), 'PPp')}</div>
+                      {recent.map((s) => {
+                        const tip = s.tip_cents ?? 0;
+                        const grand = s.total_cents + tip;
+                        return (
+                          <div key={s.id} className="flex items-center justify-between border rounded p-3">
+                            <div>
+                              <div className="font-mono text-sm">{s.receipt_number}</div>
+                              <div className="text-xs text-muted-foreground">{format(new Date(s.created_at), 'PPp')}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-medium">{fmtMoney(grand, s.currency)}</div>
+                              {tip > 0 && (
+                                <div className="text-xs text-muted-foreground">
+                                  {fmtMoney(s.total_cents, s.currency)} + tip {fmtMoney(tip, s.currency)}
+                                </div>
+                              )}
+                              <Badge variant="outline" className="text-xs mt-1">{s.payment_method}</Badge>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <div className="font-medium">{fmtMoney(s.total_cents, s.currency)}</div>
-                            <Badge variant="outline" className="text-xs">{s.payment_method}</Badge>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </CardContent>
