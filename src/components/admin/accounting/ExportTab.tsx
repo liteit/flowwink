@@ -118,28 +118,23 @@ export function ExportTab() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Standardised accounting export</CardTitle>
-          <CardDescription>
-            Export the general ledger in the standard format your auditor or new
-            accounting system expects. Formats are provided by the active locale
-            pack ({pack.label}).
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4 max-w-md">
-            <div className="space-y-2">
-              <Label htmlFor="from">From</Label>
-              <Input id="from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="to">To</Label>
-              <Input id="to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-            </div>
+      <AccountingTabHeader
+        title="Standardised Export"
+        description={<>Export the general ledger in the standard format your auditor or new accounting system expects. Formats are provided by the active locale pack ({pack.label}).</>}
+      />
+
+      <div className="rounded-lg border bg-card">
+        <div className="flex flex-wrap items-center gap-4 px-6 py-4 border-b">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="from" className="text-xs text-muted-foreground">From</Label>
+            <Input id="from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-40 h-9" />
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="to" className="text-xs text-muted-foreground">To</Label>
+            <Input id="to" type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-40 h-9" />
+          </div>
+        </div>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {adapters.length === 0 && (
