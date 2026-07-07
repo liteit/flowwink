@@ -234,163 +234,39 @@ export const useCheckAvailability = () =>
 export const useTriggerProcurement = () =>
   useMoMutation<{ p_mo_id: string }>('trigger_procurement_for_mo', 'Procurement requested');
 
-// ---------------------------------------------------------------------------
-// Shop floor: work centers, routing operations, MO work orders
-// ---------------------------------------------------------------------------
-
-export interface WorkCenter {
-  id: string;
-  code: string;
-  name: string;
-  cost_per_hour_cents: number;
-  capacity_per_hour: number;
-  is_active: boolean;
-  created_at: string;
+export interface MrpCandidate {
+  product_id: string;
+  product_name: string;
+  quantity_on_hand: number;
+  reorder_point: number;
+  suggested_qty: number;
+  bom_id: string;
 }
 
-export function useWorkCenters() {
-  return useQuery({
-    queryKey: ['work_centers'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('work_centers' as never)
-        .select('*')
-        .order('code', { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as unknown as WorkCenter[];
-    },
-  });
+export interface MrpRunResult {
+  success: boolean;
+  dry_run: boolean;
+  candidate_count: number;
+  created: number;
+  candidates: MrpCandidate[];
 }
 
-export function useManageWorkCenter() {
+export function useMrpRun() {
   const qc = useQueryClient();
   const { toast } = useToast();
   return useMutation({
-    mutationFn: async (args: {
-      p_action: 'create' | 'update' | 'delete';
-      p_id?: string;
-      p_code?: string;
-      p_name?: string;
-      p_cost_per_hour_cents?: number;
-      p_capacity_per_hour?: number;
-    }) => {
-      const { data, error } = await supabase.rpc('manage_work_center' as never, args as never);
+    mutationFn: async (p_dry_run: boolean): Promise<MrpRunResult> => {
+      const { data, error } = await supabase.rpc('mrp_reorder_run' as never, { p_dry_run } as never);
       if (error) throw error;
-      return data;
+      return data as unknown as MrpRunResult;
     },
-    onSuccess: (_d, vars) => {
-      toast({ title: `Work center ${vars.p_action}d ✓` });
-      qc.invalidateQueries({ queryKey: ['work_centers'] });
+    onSuccess: (data) => {
+      if (!data.dry_run) {
+        toast({ title: `Created ${data.created} draft MO(s) ✓` });
+        qc.invalidateQueries({ queryKey: ['manufacturing_orders'] });
+      }
     },
     onError: (e: Error) =>
-      toast({ title: 'Work center action failed', description: e.message, variant: 'destructive' }),
+      toast({ title: 'MRP run failed', description: e.message, variant: 'destructive' }),
   });
 }
-
-export interface RoutingOperation {
-  id: string;
-  sequence: number;
-  name: string;
-  work_center_id: string;
-  duration_minutes: number;
-}
-
-export function useRoutingOperations(bomId: string | undefined) {
-  return useQuery({
-    queryKey: ['routing_operations', bomId],
-    enabled: !!bomId,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc('manage_routing_operation' as never, {
-        p_action: 'list',
-        p_bom_id: bomId,
-      } as never);
-      if (error) throw error;
-      const payload = data as { operations?: RoutingOperation[] } | null;
-      return (payload?.operations ?? []).slice().sort((a, b) => a.sequence - b.sequence);
-    },
-  });
-}
-
-export function useManageRoutingOperation() {
-  const qc = useQueryClient();
-  const { toast } = useToast();
-  return useMutation({
-    mutationFn: async (args: {
-      p_action: 'create' | 'update' | 'delete';
-      p_id?: string;
-      p_bom_id?: string;
-      p_sequence?: number;
-      p_name?: string;
-      p_work_center_id?: string;
-      p_duration_minutes?: number;
-    }) => {
-      const { data, error } = await supabase.rpc('manage_routing_operation' as never, args as never);
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (_d, vars) => {
-      qc.invalidateQueries({ queryKey: ['routing_operations'] });
-      if (vars.p_action !== 'update') toast({ title: `Operation ${vars.p_action}d ✓` });
-    },
-    onError: (e: Error) =>
-      toast({ title: 'Operation failed', description: e.message, variant: 'destructive' }),
-  });
-}
-
-export interface MoWorkOrder {
-  id: string;
-  mo_id: string;
-  routing_operation_id: string | null;
-  sequence: number;
-  name: string;
-  work_center_id: string | null;
-  status: string;
-  planned_minutes: number;
-  actual_minutes: number | null;
-  planned_labor_cost_cents: number;
-  started_at: string | null;
-  completed_at: string | null;
-}
-
-export function useMoWorkOrders(moId: string | undefined) {
-  return useQuery({
-    queryKey: ['mo_work_orders', moId],
-    enabled: !!moId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('mo_work_orders' as never)
-        .select('*')
-        .eq('mo_id', moId as string)
-        .order('sequence', { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as unknown as MoWorkOrder[];
-    },
-  });
-}
-
-export function useGenerateMoWorkOrders() {
-  const qc = useQueryClient();
-  const { toast } = useToast();
-  return useMutation({
-    mutationFn: async (args: { p_mo_id: string }) => {
-      const { data, error } = await supabase.rpc('generate_mo_work_orders' as never, args as never);
-      if (error) throw error;
-      return data as {
-        success: boolean;
-        work_orders_created: number;
-        total_planned_minutes: number;
-        total_planned_labor_cost_cents: number;
-      };
-    },
-    onSuccess: (data, vars) => {
-      toast({
-        title: `Generated ${data.work_orders_created} work order(s)`,
-        description: `Planned labor ${(data.total_planned_labor_cost_cents / 100).toFixed(2)}`,
-      });
-      qc.invalidateQueries({ queryKey: ['mo_work_orders', vars.p_mo_id] });
-    },
-    onError: (e: Error) =>
-      toast({ title: 'Generate work orders failed', description: e.message, variant: 'destructive' }),
-  });
-}
-

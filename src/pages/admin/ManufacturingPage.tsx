@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Plus, Pencil, CheckCircle2 } from 'lucide-react';
+import { Plus, Pencil, CheckCircle2, PackageSearch } from 'lucide-react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,13 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BomEditorDialog } from '@/components/admin/manufacturing/BomEditorDialog';
 import { MoStatusBadge } from '@/components/admin/manufacturing/MoStatusBadge';
 import { MoTimeline } from '@/components/admin/manufacturing/MoTimeline';
 import { MoActivityFeed } from '@/components/admin/manufacturing/MoActivityFeed';
-import { WorkCentersTab } from '@/components/admin/manufacturing/WorkCentersTab';
-import { MoWorkOrdersPanel } from '@/components/admin/manufacturing/MoWorkOrdersPanel';
 import { useProducts } from '@/hooks/useProducts';
+import { logger } from '@/lib/logger';
 import {
   useManufacturingOrders,
   useManufacturingOrdersRealtime,
@@ -25,8 +25,10 @@ import {
   useCancelMo,
   useCheckAvailability,
   useTriggerProcurement,
+  useMrpRun,
   type MoStatus,
   type BomHeader,
+  type MrpRunResult,
 } from '@/hooks/useManufacturing';
 
 function MoActions({ mo }: { mo: Record<string, unknown> }) {
@@ -118,7 +120,6 @@ function MoList() {
                 completedAt={mo.completed_at as string | null | undefined}
                 cancelledAt={(mo as { cancelled_at?: string | null }).cancelled_at ?? null}
               />
-              <MoWorkOrdersPanel moId={String(mo.id)} />
             </CardContent>
           </Card>
         );
@@ -220,6 +221,98 @@ function BomList() {
   );
 }
 
+function MrpTab() {
+  const run = useMrpRun();
+  const [result, setResult] = useState<MrpRunResult | null>(null);
+
+  async function check() {
+    try {
+      const res = await run.mutateAsync(true);
+      setResult(res);
+    } catch (e) {
+      logger.error('mrp dry run failed', e);
+    }
+  }
+
+  async function apply() {
+    try {
+      const res = await run.mutateAsync(false);
+      // Refresh candidate view with a follow-up dry run
+      const fresh = await run.mutateAsync(true);
+      setResult({ ...fresh, created: res.created, dry_run: false });
+    } catch (e) {
+      logger.error('mrp apply failed', e);
+    }
+  }
+
+  const candidates = result?.candidates ?? [];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <p className="text-sm text-muted-foreground">
+          Scans manufactured products at or below their reorder point and drafts replenishment orders.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={check} disabled={run.isPending}>
+            <PackageSearch className="mr-1 h-4 w-4" /> Check shortages
+          </Button>
+          {candidates.length > 0 && (
+            <Button size="sm" onClick={apply} disabled={run.isPending}>
+              Create draft MOs
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {result && (
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <Badge variant={result.dry_run ? 'outline' : 'default'}>
+            {result.dry_run ? 'Dry run' : 'Applied'}
+          </Badge>
+          <span>{result.candidate_count} candidate(s)</span>
+          {!result.dry_run && <span>· {result.created} draft MO(s) created</span>}
+        </div>
+      )}
+
+      {result && candidates.length === 0 && (
+        <Card>
+          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+            No shortages — all manufactured products are above their reorder points.
+          </CardContent>
+        </Card>
+      )}
+
+      {candidates.length > 0 && (
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead className="text-right">On hand</TableHead>
+                  <TableHead className="text-right">Reorder point</TableHead>
+                  <TableHead className="text-right">Suggested qty</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {candidates.map((c) => (
+                  <TableRow key={c.product_id}>
+                    <TableCell className="font-medium">{c.product_name}</TableCell>
+                    <TableCell className="text-right tabular-nums">{c.quantity_on_hand}</TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">{c.reorder_point}</TableCell>
+                    <TableCell className="text-right tabular-nums font-medium">{c.suggested_qty}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
 export default function ManufacturingPage() {
   return (
     <AdminLayout>
@@ -232,12 +325,12 @@ export default function ManufacturingPage() {
           <TabsList>
             <TabsTrigger value="orders">Manufacturing Orders</TabsTrigger>
             <TabsTrigger value="boms">Bills of Materials</TabsTrigger>
-            <TabsTrigger value="work-centers">Work Centers</TabsTrigger>
+            <TabsTrigger value="mrp">MRP</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
           <TabsContent value="orders" className="mt-4"><MoList /></TabsContent>
           <TabsContent value="boms" className="mt-4"><BomList /></TabsContent>
-          <TabsContent value="work-centers" className="mt-4"><WorkCentersTab /></TabsContent>
+          <TabsContent value="mrp" className="mt-4"><MrpTab /></TabsContent>
           <TabsContent value="activity" className="mt-4"><MoActivityFeed /></TabsContent>
         </Tabs>
       </div>
