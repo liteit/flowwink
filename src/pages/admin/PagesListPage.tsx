@@ -410,10 +410,26 @@ export default function PagesListPage() {
             <BrandingTab />
           </TabsContent>
 
+          <TabsContent value="redirects" className="mt-0">
+            <RedirectsTab />
+          </TabsContent>
+
+          <TabsContent value="experiments" className="mt-0">
+            <PageExperimentsTab />
+          </TabsContent>
+
           <TabsContent value="trash" className="mt-0">
             <PagesTrashTab />
           </TabsContent>
         </Tabs>
+
+        {translationsSlug && (
+          <PageTranslationsDialog
+            slug={translationsSlug}
+            open={!!translationsSlug}
+            onOpenChange={(v) => { if (!v) setTranslationsSlug(null); }}
+          />
+        )}
       </AdminPageContainer>
 
       {/* Delete Confirmation Dialog */}
