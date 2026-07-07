@@ -37,6 +37,7 @@ interface Newsletter {
   content_html: string | null;
   status: string;
   sent_at: string | null;
+  scheduled_at: string | null;
   sent_count: number;
   unique_opens: number | null;
   open_count: number | null;
@@ -44,6 +45,7 @@ interface Newsletter {
   click_count: number | null;
   created_at: string;
 }
+
 
 interface EmailOpen {
   id: string;
