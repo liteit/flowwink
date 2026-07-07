@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Plus, Search, Filter, MoreHorizontal, Edit, Trash2, Copy, ArrowUpDown, Clock, Home, FileText, Navigation, PanelBottom, Palette, Eye } from 'lucide-react';
+import { Plus, Search, Filter, MoreHorizontal, Edit, Trash2, Copy, ArrowUpDown, Clock, Home, FileText, Navigation, PanelBottom, Palette, Eye, Languages, ArrowRightLeft, FlaskConical } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { AdminLayout } from '@/components/admin/AdminLayout';
@@ -10,6 +10,9 @@ import PagesTrashTab from '@/components/admin/pages/PagesTrashTab';
 import HeaderTab from '@/components/admin/pages/HeaderTab';
 import FooterTab from '@/components/admin/pages/FooterTab';
 import BrandingTab from '@/components/admin/pages/BrandingTab';
+import RedirectsTab from '@/components/admin/pages/RedirectsTab';
+import PageExperimentsTab from '@/components/admin/pages/PageExperimentsTab';
+import { PageTranslationsDialog } from '@/components/admin/pages/PageTranslationsDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
