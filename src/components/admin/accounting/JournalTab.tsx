@@ -13,10 +13,11 @@ import { NewJournalEntryDialog } from './NewJournalEntryDialog';
 import { JournalEntryDetail } from './JournalEntryDetail';
 import { JournalCsvActions } from './JournalCsvActions';
 import { cn } from '@/lib/utils';
+import { AccountingTabHeader } from './AccountingTabHeader';
 
 const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
-  posted: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
+  posted: 'bg-success/15 text-success',
   voided: 'bg-destructive/10 text-destructive',
 };
 
