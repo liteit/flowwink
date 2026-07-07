@@ -471,6 +471,74 @@ export default function POSPage() {
             </TabsContent>
           </Tabs>
         )}
+
+        {/* Post-checkout tip prompt */}
+        <Dialog open={!!tipDialog} onOpenChange={(o) => { if (!o) setTipDialog(null); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add a tip?</DialogTitle>
+              <DialogDescription>
+                {tipDialog && (
+                  <>
+                    Receipt <span className="font-mono">{tipDialog.receipt_number}</span> ·{' '}
+                    total {fmtMoney(tipDialog.total_cents, tipDialog.currency)} · charged to{' '}
+                    <span className="capitalize">{tipDialog.method}</span>
+                  </>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+
+            {tipDialog && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-2">
+                  {[5, 10, 15].map((pct) => {
+                    const cents = Math.round((tipDialog.total_cents * pct) / 100);
+                    return (
+                      <Button
+                        key={pct}
+                        variant="outline"
+                        disabled={addTip$.isPending}
+                        onClick={() => applyTip(cents)}
+                        className="flex flex-col h-auto py-3"
+                      >
+                        <span className="font-semibold">{pct}%</span>
+                        <span className="text-xs text-muted-foreground">
+                          {fmtMoney(cents, tipDialog.currency)}
+                        </span>
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs">Custom amount ({tipDialog.currency})</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={customTip}
+                      onChange={(e) => setCustomTip(e.target.value)}
+                      placeholder="0.00"
+                    />
+                    <Button
+                      variant="secondary"
+                      disabled={!customTip || addTip$.isPending}
+                      onClick={() => applyTip(Math.round(Number(customTip) * 100))}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setTipDialog(null)} disabled={addTip$.isPending}>
+                No tip
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
