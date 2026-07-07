@@ -44,11 +44,15 @@ const PRIORITY_COLOR: Record<string, string> = {
 };
 
 export default function FieldServicePage() {
-  const [activeTab, setActiveTab] = useState<'all' | ServiceOrderStatus>('all');
+  const [activeTab, setActiveTab] = useState<'all' | ServiceOrderStatus | 'packages'>('all');
   const [newOpen, setNewOpen] = useState(false);
+  const [scheduleOrderId, setScheduleOrderId] = useState<string | null>(null);
+  const [detailOrderId, setDetailOrderId] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const filter = activeTab === 'all' ? undefined : (activeTab as ServiceOrderStatus);
+  const filter = activeTab === 'all' || activeTab === 'packages' ? undefined : (activeTab as ServiceOrderStatus);
   const { data: orders = [], isLoading } = useServiceOrders(filter);
+  const { data: breaches } = useSlaBreaches();
+
 
   useEffect(() => {
     if (searchParams.get('new') === '1') {
