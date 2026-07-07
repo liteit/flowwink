@@ -44,6 +44,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { AccountingTabHeader } from './AccountingTabHeader';
 
 type SortKey = 'uses' | 'entries' | 'corrections' | 'last_used' | 'name';
 type SortDir = 'asc' | 'desc';
