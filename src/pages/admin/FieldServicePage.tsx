@@ -172,12 +172,13 @@ function KpiCard({ label, value, icon }: { label: string; value: number; icon: R
   );
 }
 
-function ServiceOrderRow({ order }: { order: ServiceOrder }) {
-  const updateStatus = useUpdateServiceOrderStatus();
+function ServiceOrderRow({ order, breached, onSchedule, onOpen }: {
+  order: ServiceOrder; breached: boolean; onSchedule: () => void; onOpen: () => void;
+}) {
   const complete = useCompleteServiceOrder();
 
   return (
-    <Card>
+    <Card className="cursor-pointer hover:bg-accent/40" onClick={onOpen}>
       <CardContent className="py-4 flex items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -185,6 +186,14 @@ function ServiceOrderRow({ order }: { order: ServiceOrder }) {
             <span className="font-semibold truncate">{order.title}</span>
             <Badge variant={STATUS_VARIANT[order.status]}>{order.status}</Badge>
             <span className={`text-xs uppercase ${PRIORITY_COLOR[order.priority]}`}>{order.priority}</span>
+            {(order as any).parent_order_id && (
+              <Badge variant="secondary" className="text-[10px]">Recurring</Badge>
+            )}
+            {breached && (
+              <Badge variant="destructive" className="text-[10px] gap-1">
+                <AlertTriangle className="h-3 w-3" /> SLA breach
+              </Badge>
+            )}
           </div>
           <div className="text-sm text-muted-foreground mt-1">
             {order.customer_name}
@@ -192,12 +201,12 @@ function ServiceOrderRow({ order }: { order: ServiceOrder }) {
             {order.scheduled_start && ` · ${format(new Date(order.scheduled_start), 'PP HH:mm')}`}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <span className="text-sm font-mono">
             {order.total_amount.toFixed(2)} {order.currency}
           </span>
-          {order.status === 'draft' && (
-            <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: order.id, status: 'scheduled' })}>
+          {(order.status === 'draft' || order.status === 'scheduled') && (
+            <Button size="sm" variant="outline" onClick={onSchedule}>
               Schedule
             </Button>
           )}
@@ -211,6 +220,7 @@ function ServiceOrderRow({ order }: { order: ServiceOrder }) {
     </Card>
   );
 }
+
 
 function NewServiceOrderDialog({ onClose }: { onClose: () => void }) {
   const create = useCreateServiceOrder();
