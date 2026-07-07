@@ -155,6 +155,7 @@ export function EventsToBookTab() {
         description: p.description,
         reference_number: p.counterparty,
         bank_transaction_id: p.bank_transaction_id,
+        entry_date: p.transaction_date,
         auto_confirm: true,
       };
       const first = await invokeSkill<any>('manage_journal_entry', args);
