@@ -17,6 +17,10 @@ import { writeFileSync, mkdirSync, existsSync } from 'fs';
 // Use dynamic import to load the templates with proper path resolution
 const ROOT = resolve(import.meta.dir, '..');
 const OUT_DIR = join(ROOT, 'templates');
+// Server-side bundle for the agent-execute edge function (install_template /
+// list_templates skills). Emitted as ONE compact JSON map keyed by template id
+// so the Deno bundler picks it up via a static `with { type: "json" }` import.
+const EDGE_BUNDLE = join(ROOT, 'supabase', 'functions', 'agent-execute', '_templates.json');
 
 async function main() {
   console.log('🔄 Exporting templates to JSON...\n');
@@ -51,6 +55,15 @@ async function main() {
   console.log(`  ✅ blank.json (${(blankJson.length / 1024).toFixed(1)} KB)`);
 
   console.log(`\n✨ Exported ${count + 1} templates to /templates/`);
+
+  // Regenerate the agent-execute edge bundle (compact — bundled into the
+  // deployed function, keep it small).
+  const edgeMap: Record<string, unknown> = {};
+  for (const template of ALL_TEMPLATES) edgeMap[template.id] = template;
+  edgeMap[BLANK_TEMPLATE.id] = BLANK_TEMPLATE;
+  const edgeJson = JSON.stringify(edgeMap);
+  writeFileSync(EDGE_BUNDLE, edgeJson, 'utf-8');
+  console.log(`  ✅ supabase/functions/agent-execute/_templates.json (${(edgeJson.length / 1024).toFixed(1)} KB, ${Object.keys(edgeMap).length} templates)`);
 }
 
 main().catch((err) => {

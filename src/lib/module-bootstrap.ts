@@ -28,6 +28,13 @@ export interface SkillSeed {
   instructions?: string;
   /** Approval gating. 'auto' = silent execute, 'notify' = execute + log (default), 'approve' = block until admin approves. */
   trust_level?: 'auto' | 'notify' | 'approve';
+  /**
+   * Staged-envelope protocol (ledger-perimeter treatment). When true, agent-execute
+   * returns a pending-operation envelope on first call; the caller must
+   * approve_pending_operation and re-invoke with _approved_operation_id.
+   * Like trust_level, only applied on INSERT — runtime overrides survive resync.
+   */
+  requires_staging?: boolean;
 }
 
 export interface AutomationSeed {
@@ -212,6 +219,7 @@ export async function bootstrapModule(
               mcp_exposed: true,
               origin: 'bundled' as const,
               trust_level: skill.trust_level ?? ('notify' as const),
+              requires_staging: skill.requires_staging ?? false,
             }]);
           if (error) throw error;
         }
