@@ -16,6 +16,10 @@ import { AttendancePanel } from "@/components/admin/hr/AttendancePanel";
 import { SkillsPanel } from "@/components/admin/hr/SkillsPanel";
 import { ContractsPanel } from "@/components/admin/hr/ContractsPanel";
 import { LeaveBalancesPanel } from "@/components/admin/hr/LeaveBalancesPanel";
+import { CompensationPanel } from "@/components/admin/hr/CompensationPanel";
+import { TrainingPanel } from "@/components/admin/hr/TrainingPanel";
+import { DisciplinaryPanel } from "@/components/admin/hr/DisciplinaryPanel";
+import { ShiftsPanel } from "@/components/admin/hr/ShiftsPanel";
 import { Users, CalendarOff, AlertTriangle } from "lucide-react";
 
 export default function HRPage() {
