@@ -98,6 +98,8 @@ export function EventsToBookTab() {
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['events-to-book'],
     queryFn: () => invokeSkill<ProposalsResult>('propose_bookkeeping', {}),
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: bookedData, refetch: refetchBooked } = useQuery({
