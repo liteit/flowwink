@@ -549,21 +549,50 @@ export default function POSPage() {
                     <div className="space-y-2">
                       {recent.map((s) => {
                         const tip = s.tip_cents ?? 0;
+                        const isRefund = !!s.refund_of;
                         const grand = s.total_cents + tip;
                         return (
-                          <div key={s.id} className="flex items-center justify-between border rounded p-3">
-                            <div>
-                              <div className="font-mono text-sm">{s.receipt_number}</div>
+                          <div key={s.id} className="flex items-center justify-between border rounded p-3 gap-3">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-mono text-sm">{s.receipt_number}</span>
+                                {isRefund && <Badge variant="destructive" className="text-[10px]">Refund</Badge>}
+                                {s.status === 'refunded' && <Badge variant="secondary" className="text-[10px]">refunded</Badge>}
+                                {s.status === 'partially_refunded' && <Badge variant="secondary" className="text-[10px]">partial refund</Badge>}
+                                {s.invoice_id && (
+                                  <Link to="/admin/invoices" className="text-xs text-primary underline">invoiced</Link>
+                                )}
+                              </div>
                               <div className="text-xs text-muted-foreground">{format(new Date(s.created_at), 'PPp')}</div>
                             </div>
                             <div className="text-right">
-                              <div className="font-medium">{fmtMoney(grand, s.currency)}</div>
-                              {tip > 0 && (
+                              <div className={`font-medium ${isRefund ? 'text-destructive' : ''}`}>
+                                {isRefund ? '-' : ''}{fmtMoney(Math.abs(grand), s.currency)}
+                              </div>
+                              {tip > 0 && !isRefund && (
                                 <div className="text-xs text-muted-foreground">
                                   {fmtMoney(s.total_cents, s.currency)} + tip {fmtMoney(tip, s.currency)}
                                 </div>
                               )}
                               <Badge variant="outline" className="text-xs mt-1">{s.payment_method}</Badge>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <Button size="sm" variant="outline" onClick={() => setReceiptSaleId(s.id)}>
+                                <Receipt className="h-3 w-3 mr-1" /> Receipt
+                              </Button>
+                              {!isRefund && s.status !== 'refunded' && (
+                                <Button size="sm" variant="outline" onClick={() => setRefundSale(s)}>
+                                  <Undo2 className="h-3 w-3 mr-1" /> Refund
+                                </Button>
+                              )}
+                              {!isRefund && !s.invoice_id && (
+                                <Button size="sm" variant="outline" onClick={() => {
+                                  setInvoiceEmail(s.customer_email ?? '');
+                                  setInvoicePrompt(s);
+                                }}>
+                                  <FileText className="h-3 w-3 mr-1" /> Invoice
+                                </Button>
+                              )}
                             </div>
                           </div>
                         );
@@ -574,10 +603,21 @@ export default function POSPage() {
               </Card>
             </TabsContent>
 
+            {/* Tables */}
+            <TabsContent value="tables">
+              <TablesTab registerId={effectiveRegisterId} currentSaleId={null} />
+            </TabsContent>
+
+            {/* Loyalty */}
+            <TabsContent value="loyalty">
+              <LoyaltyTab />
+            </TabsContent>
+
             {/* Gift Cards */}
             <TabsContent value="gift-cards">
               <GiftCardsTab />
             </TabsContent>
+
           </Tabs>
         )}
 
