@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Upload, Download, Calculator } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useFiscalYear } from './FiscalYearContext';
 import { useAccountingLocale } from '@/hooks/useAccountingLocale';
 import { useChartOfAccounts } from '@/hooks/useAccounting';
 import { useOpeningBalances, useUpsertOpeningBalance, useDeleteOpeningBalance, OpeningBalance } from '@/hooks/useOpeningBalances';
@@ -17,8 +18,12 @@ const formatCents = (cents: number) =>
 
 export function OpeningBalancesTab() {
   const { locale } = useAccountingLocale();
+  // ONE year truth: follow the global fiscal-year selector. A local
+  // useState(currentYear) here made a 2025 IB look "gone" while the page
+  // showed 2026 (dual-axis class, 2026-07-07). Local dropdown still works —
+  // it drives the same global context.
+  const { year: fiscalYear, setYear: setFiscalYear } = useFiscalYear();
   const currentYear = new Date().getFullYear();
-  const [fiscalYear, setFiscalYear] = useState(currentYear);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState('');
   const [amount, setAmount] = useState('');
