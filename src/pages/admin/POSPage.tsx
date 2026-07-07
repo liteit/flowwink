@@ -10,14 +10,18 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
+} from '@/components/ui/dialog';
+import {
   useRegisters, useOpenSession, useTodaySales, useRecentSales,
-  useOpenSessionMutation, useCloseSession, useRecordSale,
+  useOpenSessionMutation, useCloseSession, useRecordSale, useAddTip,
   usePosProducts,
   type PosSaleLine, type PosPayment, type PosProduct,
 } from '@/hooks/usePOS';
 import { Plus, Trash2, Receipt, Banknote, CreditCard, Smartphone, Search, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { GiftCardsTab } from '@/components/admin/pos/GiftCardsTab';
+import { logger } from '@/lib/logger';
 
 function fmtMoney(cents: number, currency = 'SEK') {
   return `${(cents / 100).toFixed(2)} ${currency}`;
@@ -46,6 +50,17 @@ export default function POSPage() {
   const openSession$ = useOpenSessionMutation();
   const closeSession$ = useCloseSession();
   const recordSale$ = useRecordSale();
+  const addTip$ = useAddTip();
+
+  // Tip dialog state (post-checkout)
+  const [tipDialog, setTipDialog] = useState<{
+    sale_id: string;
+    receipt_number: string;
+    total_cents: number;
+    method: string;
+    currency: string;
+  } | null>(null);
+  const [customTip, setCustomTip] = useState('');
 
   // Cart + payments state
   const [lines, setLines] = useState<PosSaleLine[]>([]);
@@ -105,17 +120,48 @@ export default function POSPage() {
 
   async function checkout() {
     if (!effectiveRegisterId || !openSession || lines.length === 0 || payments.length === 0) return;
-    await recordSale$.mutateAsync({
-      register_id: effectiveRegisterId,
-      session_id: openSession.id,
-      lines,
-      payments,
-      customer_email: customerEmail || undefined,
-    });
-    setLines([]);
-    setPayments([]);
-    setCustomerEmail('');
-    setSearch('');
+    try {
+      const result = await recordSale$.mutateAsync({
+        register_id: effectiveRegisterId,
+        session_id: openSession.id,
+        lines,
+        payments,
+        customer_email: customerEmail || undefined,
+      });
+      const primaryMethod = payments[0]?.method ?? 'card';
+      setTipDialog({
+        sale_id: result.sale_id,
+        receipt_number: result.receipt_number,
+        total_cents: result.total_cents,
+        method: primaryMethod,
+        currency: activeRegister?.currency ?? 'SEK',
+      });
+      setCustomTip('');
+      setLines([]);
+      setPayments([]);
+      setCustomerEmail('');
+      setSearch('');
+    } catch (err) {
+      logger.error('POS checkout failed', err);
+    }
+  }
+
+  async function applyTip(tipCents: number) {
+    if (!tipDialog) return;
+    if (tipCents <= 0) {
+      setTipDialog(null);
+      return;
+    }
+    try {
+      await addTip$.mutateAsync({
+        sale_id: tipDialog.sale_id,
+        tip_cents: tipCents,
+        method: tipDialog.method,
+      });
+      setTipDialog(null);
+    } catch (err) {
+      logger.error('POS add tip failed', err);
+    }
   }
 
   const canCheckout = !!openSession && lines.length > 0 && payments.length > 0 && paid >= total;
@@ -392,18 +438,27 @@ export default function POSPage() {
                     <p className="text-sm text-muted-foreground py-8 text-center">No sales yet.</p>
                   ) : (
                     <div className="space-y-2">
-                      {recent.map((s) => (
-                        <div key={s.id} className="flex items-center justify-between border rounded p-3">
-                          <div>
-                            <div className="font-mono text-sm">{s.receipt_number}</div>
-                            <div className="text-xs text-muted-foreground">{format(new Date(s.created_at), 'PPp')}</div>
+                      {recent.map((s) => {
+                        const tip = s.tip_cents ?? 0;
+                        const grand = s.total_cents + tip;
+                        return (
+                          <div key={s.id} className="flex items-center justify-between border rounded p-3">
+                            <div>
+                              <div className="font-mono text-sm">{s.receipt_number}</div>
+                              <div className="text-xs text-muted-foreground">{format(new Date(s.created_at), 'PPp')}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-medium">{fmtMoney(grand, s.currency)}</div>
+                              {tip > 0 && (
+                                <div className="text-xs text-muted-foreground">
+                                  {fmtMoney(s.total_cents, s.currency)} + tip {fmtMoney(tip, s.currency)}
+                                </div>
+                              )}
+                              <Badge variant="outline" className="text-xs mt-1">{s.payment_method}</Badge>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <div className="font-medium">{fmtMoney(s.total_cents, s.currency)}</div>
-                            <Badge variant="outline" className="text-xs">{s.payment_method}</Badge>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </CardContent>
@@ -416,6 +471,74 @@ export default function POSPage() {
             </TabsContent>
           </Tabs>
         )}
+
+        {/* Post-checkout tip prompt */}
+        <Dialog open={!!tipDialog} onOpenChange={(o) => { if (!o) setTipDialog(null); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add a tip?</DialogTitle>
+              <DialogDescription>
+                {tipDialog && (
+                  <>
+                    Receipt <span className="font-mono">{tipDialog.receipt_number}</span> ·{' '}
+                    total {fmtMoney(tipDialog.total_cents, tipDialog.currency)} · charged to{' '}
+                    <span className="capitalize">{tipDialog.method}</span>
+                  </>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+
+            {tipDialog && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-2">
+                  {[5, 10, 15].map((pct) => {
+                    const cents = Math.round((tipDialog.total_cents * pct) / 100);
+                    return (
+                      <Button
+                        key={pct}
+                        variant="outline"
+                        disabled={addTip$.isPending}
+                        onClick={() => applyTip(cents)}
+                        className="flex flex-col h-auto py-3"
+                      >
+                        <span className="font-semibold">{pct}%</span>
+                        <span className="text-xs text-muted-foreground">
+                          {fmtMoney(cents, tipDialog.currency)}
+                        </span>
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs">Custom amount ({tipDialog.currency})</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={customTip}
+                      onChange={(e) => setCustomTip(e.target.value)}
+                      placeholder="0.00"
+                    />
+                    <Button
+                      variant="secondary"
+                      disabled={!customTip || addTip$.isPending}
+                      onClick={() => applyTip(Math.round(Number(customTip) * 100))}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setTipDialog(null)} disabled={addTip$.isPending}>
+                No tip
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
