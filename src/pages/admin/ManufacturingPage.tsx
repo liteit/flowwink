@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Plus, Pencil, CheckCircle2 } from 'lucide-react';
+import { Plus, Pencil, CheckCircle2, PackageSearch } from 'lucide-react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,11 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BomEditorDialog } from '@/components/admin/manufacturing/BomEditorDialog';
 import { MoStatusBadge } from '@/components/admin/manufacturing/MoStatusBadge';
 import { MoTimeline } from '@/components/admin/manufacturing/MoTimeline';
 import { MoActivityFeed } from '@/components/admin/manufacturing/MoActivityFeed';
 import { useProducts } from '@/hooks/useProducts';
+import { logger } from '@/lib/logger';
 import {
   useManufacturingOrders,
   useManufacturingOrdersRealtime,
@@ -23,8 +25,10 @@ import {
   useCancelMo,
   useCheckAvailability,
   useTriggerProcurement,
+  useMrpRun,
   type MoStatus,
   type BomHeader,
+  type MrpRunResult,
 } from '@/hooks/useManufacturing';
 
 function MoActions({ mo }: { mo: Record<string, unknown> }) {
