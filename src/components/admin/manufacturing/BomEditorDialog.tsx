@@ -403,6 +403,19 @@ export function BomEditorDialog({ open, onOpenChange, bom }: Props) {
               </div>
             </div>
 
+            <div className="border-t pt-4">
+              {isEdit && bom ? (
+                <RoutingEditor bomId={bom.id} />
+              ) : (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold">Routing</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Save the BOM first — routing operations can be added after the BOM exists.
+                  </p>
+                </div>
+              )}
+            </div>
+
             {errors.length > 0 && (
               <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
                 <ul className="list-disc pl-5 space-y-1">
