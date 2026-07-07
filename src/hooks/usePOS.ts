@@ -30,6 +30,7 @@ export interface PosSale {
   receipt_number: string | null;
   register_id: string;
   total_cents: number;
+  tip_cents: number;
   currency: string;
   payment_method: string;
   status: string;
