@@ -6930,7 +6930,11 @@ async function executeDbAction(
           reference_number: reference_number || null,
           status: 'posted',
           source: resolvedSource,
-
+          // Template provenance: which template produced this entry and how it
+          // was matched — the hook for registry curation (error rate per template).
+          template_id: explicitTemplateId || null,
+          match_source: (args as any).match_source
+            || (explicitTemplateId ? 'keyword' : 'manual'),
         }).select('id').single();
       if (entryErr) throw new Error(`Create entry failed: ${entryErr.message}`);
 

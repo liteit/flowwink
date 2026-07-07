@@ -113,4 +113,12 @@ describe('dual-axis guardrails', () => {
     expect(src).toContain('Math.min(98, 88 + 5 * confirmed)');
     expect(src).toContain('Auto-learned from agentic bookkeeping');
   });
+
+  it('provenance: booked entries record their originating template + match source', () => {
+    const src = read('supabase/functions/agent-execute/index.ts');
+    expect(src).toContain('template_id: explicitTemplateId || null');
+    expect(src).toContain('match_source');
+    const migs = readdirSync(join(ROOT, 'supabase/migrations'));
+    expect(migs.some((f) => f.includes('journal-entry-template-provenance'))).toBe(true);
+  });
 });
