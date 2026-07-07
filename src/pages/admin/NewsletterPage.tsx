@@ -314,6 +314,9 @@ export default function NewsletterPage() {
         return <Badge variant="outline">Unsubscribed</Badge>;
       case "draft":
         return <Badge variant="secondary">Draft</Badge>;
+      case "scheduled":
+        return <Badge variant="outline" className="border-primary text-primary"><Clock className="h-3 w-3 mr-1" />Scheduled</Badge>;
+
       case "sent":
         return <Badge className="bg-green-500">Sent</Badge>;
       case "sending":
