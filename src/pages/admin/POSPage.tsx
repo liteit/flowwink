@@ -1,9 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -12,16 +14,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   useRegisters, useOpenSession, useTodaySales, useRecentSales,
   useOpenSessionMutation, useCloseSession, useRecordSale, useAddTip,
-  usePosProducts,
-  type PosSaleLine, type PosPayment, type PosProduct,
+  usePosProducts, useCreateInvoiceFromSale, useUpdateRegisterReceipt,
+  lookupPosProduct,
+  type PosSaleLine, type PosPayment, type PosProduct, type PosSale,
 } from '@/hooks/usePOS';
-import { Plus, Trash2, Receipt, Banknote, CreditCard, Smartphone, Search, X } from 'lucide-react';
+import { Plus, Trash2, Receipt, Banknote, CreditCard, Smartphone, Search, X, Settings, ScanBarcode, FileText, Undo2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { GiftCardsTab } from '@/components/admin/pos/GiftCardsTab';
+import { LoyaltyTab } from '@/components/admin/pos/LoyaltyTab';
+import { TablesTab } from '@/components/admin/pos/TablesTab';
+import { RefundDialog } from '@/components/admin/pos/RefundDialog';
+import { ReceiptDialog } from '@/components/admin/pos/ReceiptDialog';
 import { logger } from '@/lib/logger';
+
 
 function fmtMoney(cents: number, currency = 'SEK') {
   return `${(cents / 100).toFixed(2)} ${currency}`;
