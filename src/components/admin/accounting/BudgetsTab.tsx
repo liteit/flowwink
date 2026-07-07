@@ -275,66 +275,67 @@ export function BudgetsTab() {
               </Select>
             </div>
           </div>
+        </div>
 
-          <div className="rounded-lg border overflow-x-auto">
-            <Table>
-              <TableHeader>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Account</TableHead>
+                <TableHead className="text-right">Budget</TableHead>
+                <TableHead className="text-right">Actual</TableHead>
+                <TableHead className="text-right">Variance</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {bva.isLoading ? (
                 <TableRow>
-                  <TableHead>Account</TableHead>
-                  <TableHead className="text-right">Budget</TableHead>
-                  <TableHead className="text-right">Actual</TableHead>
-                  <TableHead className="text-right">Variance</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    Loading…
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {bva.isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                      Loading…
+              ) : (bva.data ?? []).length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    No data for the selected period.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                (bva.data ?? []).map((r) => (
+                  <TableRow key={r.account_code}>
+                    <TableCell>
+                      <span className="font-mono font-medium">{r.account_code}</span>
+                      {r.account_name && (
+                        <span className="text-muted-foreground ml-2 text-sm">{r.account_name}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-sm tabular-nums">
+                      {fmtSEK(r.budget_cents)}
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-sm tabular-nums">
+                      {fmtSEK(r.actual_cents)}
+                    </TableCell>
+                    <TableCell className={`text-right font-mono text-sm tabular-nums ${varianceClass(r.variance_cents)}`}>
+                      {fmtSEK(r.variance_cents)}
+                    </TableCell>
+                    <TableCell>
+                      {r.variance_cents > 0 ? (
+                        <span className="text-success text-sm">Under budget</span>
+                      ) : r.variance_cents < 0 ? (
+                        <span className="text-destructive text-sm">Over budget</span>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">On budget</span>
+                      )}
                     </TableCell>
                   </TableRow>
-                ) : (bva.data ?? []).length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                      No data for the selected period.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  (bva.data ?? []).map((r) => (
-                    <TableRow key={r.account_code}>
-                      <TableCell>
-                        <span className="font-mono font-medium">{r.account_code}</span>
-                        {r.account_name && (
-                          <span className="text-muted-foreground ml-2 text-sm">{r.account_name}</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-sm">
-                        {fmtSEK(r.budget_cents)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-sm">
-                        {fmtSEK(r.actual_cents)}
-                      </TableCell>
-                      <TableCell className={`text-right font-mono text-sm ${varianceClass(r.variance_cents)}`}>
-                        {fmtSEK(r.variance_cents)}
-                      </TableCell>
-                      <TableCell>
-                        {r.variance_cents > 0 ? (
-                          <span className="text-emerald-600 text-sm">Under budget</span>
-                        ) : r.variance_cents < 0 ? (
-                          <span className="text-destructive text-sm">Over budget</span>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">On budget</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-lg">
