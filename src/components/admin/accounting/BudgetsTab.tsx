@@ -134,7 +134,7 @@ export function BudgetsTab() {
 
   const varianceClass = (variance: number) =>
     variance > 0
-      ? 'text-emerald-600'
+      ? 'text-success'
       : variance < 0
         ? 'text-destructive'
         : 'text-muted-foreground';
@@ -143,23 +143,20 @@ export function BudgetsTab() {
   const yearOptions = Array.from({ length: 6 }, (_, i) => currentYear - 3 + i);
 
   return (
-    <div className="space-y-6 mt-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <div>
-            <CardTitle>Budgets</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              Set per-account budgets for the whole fiscal year or a single month. Annual budgets
-              are compared against the full year in Budget vs Actual.
-            </p>
-          </div>
-          <Button onClick={openCreate}>
-            <Plus className="h-4 w-4 mr-2" />
+    <div className="space-y-4">
+      <AccountingTabHeader
+        title="Budgets"
+        description="Set per-account budgets for the whole fiscal year or a single month. Annual budgets are compared against the full year in Budget vs Actual."
+        actions={
+          <Button size="sm" variant="outline" onClick={openCreate}>
+            <Plus className="h-4 w-4 mr-1" />
             New budget
           </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-lg border overflow-x-auto">
+        }
+      />
+
+      <div className="rounded-lg border bg-card">
+        <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
