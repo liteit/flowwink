@@ -12,7 +12,7 @@ generated_at: "2026-07-07"
 
 > Project and task management with Kanban boards, assignments, and time tracking integration
 
-Ships with **3 agent skills**, an **admin UI**.
+Ships with **10 agent skills**, **2 database tables**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,8 +24,8 @@ Ships with **3 agent skills**, an **admin UI**.
 | **Autonomy** | agent-capable |
 | **Core** | No |
 | **Capabilities** | `data:write`, `data:read` |
-| **MCP-exposed skills** | 3 |
-| **Owns tables** | — |
+| **MCP-exposed skills** | 10 |
+| **Owns tables** | 2 |
 
 ## Skills
 
@@ -37,6 +37,22 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | `manage_project` | internal | Create, update, search, and close projects. Use when: starting new client work, updating project status, reviewing active projects. NOT for: individual tasks (use manage_project_task), timesheets (… |
 | `manage_project_task` | internal | Create, update, move, and list tasks within a project. Use when: adding work items, moving tasks on the kanban board, checking task status. NOT for: CRM tasks (use manage_crm_tasks), project-level … |
 | `manage_project_milestone` | internal | Manage project milestones (named delivery gates with a due date and task-completion progress). Use when: planning project phases, marking a milestone reached, tracking gate progress. NOT for: indiv… |
+| `manage_project_template` | internal | Reusable project templates: snapshot an existing project (tasks + milestones with day offsets) or author a spec, then instantiate new projects from it. Use when: the same project structure repeats … |
+| `manage_project_member` | internal | Team and stakeholder roles on a project: add/update/remove members with a role, rate override and time-tracking flag. Use when: staffing a project, setting a member\ |
+| `project_cost_forecast` | internal | Cost forecasting and burn rate for a project: hours logged, cost (member rate overrides honored), 4-week burn rate, weeks until budget exhaustion, over-budget risk from open task estimates. Use whe… |
+| `manage_task_workflow` | internal | Stage-workflow gating per project: restrict which task status transitions are allowed, require sub-tasks done before a parent closes, and block starting tasks with unfinished dependencies. Use when… |
+| `manage_task_dependency` | internal | Task dependencies (finish-to-start edges) within a project, with cycle detection. Use when: task B cannot start before task A is done; building a Gantt/dependency plan. NOT for: sub-task hierarchy … |
+| `get_project_schedule` | internal | Gantt-ready schedule for a project: every task with start/due dates, estimated hours, dependency edges and topological depth, plus milestones. Use when: rendering a timeline/Gantt, planning order o… |
+| `resource_capacity_report` | internal | Resource/capacity planning: per person — open tasks, estimated hours of backlog, hours logged, utilization % against weekly capacity, overload flag. Use when: "who has room for this?", spotting ove… |
+
+## Data Model
+
+Tables created by this module (from migrations):
+
+- `public.project_task_dependencies`
+- `public.project_templates`
+
+All tables ship with Row-Level Security policies. See migration files for the exact rules.
 
 ## Module API Contract
 
@@ -59,6 +75,7 @@ This module participates in the following end-to-end business processes:
 | Module definition | `src/lib/modules/projects-module.ts` |
 | Hook | `src/hooks/useProjects.ts` |
 | Admin page | `src/pages/admin/ProjectsPage.tsx` |
+| Migration | `supabase/migrations/20260708020000_projects-parity-r6.sql` |
 
 ## Contributing
 

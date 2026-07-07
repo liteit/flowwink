@@ -1,7 +1,7 @@
 {
   "module": "sla",
   "odoo_app": "Helpdesk SLA policies",
-  "current_maturity": "L3",
+  "current_maturity": "L4",
   "target_maturity": "L4",
   "capabilities": [
     {
@@ -18,7 +18,7 @@
       "odoo": true,
       "status": "done",
       "weight": 1,
-      "verify": "Violation detection sweep runs"
+      "verify": "Sweep ported to SQL 2026-07-07: run_sla_sweep RPC (sla_check skill flipped edge:sla-check → rpc:run_sla_sweep; edge function now a thin delegate). Same open/auto-resolve semantics, business-hours clock, plus tiers/pauses/priority filters (migration 20260708030000). Stage-3 live via gateway."
     },
     {
       "id": "multi_entity",
@@ -64,9 +64,9 @@
       "id": "escalation_actions",
       "name": "Escalation actions on breach",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 2,
-      "verify": "Escalation actions fired on SLA breach"
+      "verify": "Dual-surface DONE 2026-07-07. sla_policies.escalation_actions jsonb + manage_sla_escalation RPC/skill (set/get/clear, action validation) + apply_sla_escalation AFTER INSERT trigger on sla_violations: bump_priority (ticket low→medium…), notify (emit_platform_event sla.violation.escalated), create_task (crm_tasks, high, due +1d), accrue_credit (service_credits) — per-action error isolation, results in escalation_log + escalated_at (migration 20260708030000). Stage-3 live: all four actions fired on a real sweep breach and logged."
     },
     {
       "id": "business_hours",
@@ -82,49 +82,49 @@
       "id": "performance_dashboards",
       "name": "Compliance dashboards",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "SLA compliance dashboards"
+      "verify": "Dual-surface DONE 2026-07-07. Skill: sla_compliance_report RPC (violations opened/resolved/open, avg_overage_ratio, escalations fired, credits accrued, by-entity compliance % from entities created vs breached, severity breakdown; migration 20260708030000) — Stage-3 live: ticket compliance 0% vs chat/lead/order/booking 100% reported. UI: Compliance tab in SlaMonitorPage (Lovable build 2026-07-07)."
     },
     {
       "id": "remediation_workflow",
       "name": "Remediation workflow",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "Remediation workflow on breach"
+      "verify": "Dual-surface DONE 2026-07-07. manage_sla_remediation RPC/skill (open/complete/list): open creates a high-priority crm_tasks row linked via sla_violations.remediation_task_id; complete closes both sides with a note (migration 20260708030000). Stage-3 live: remediation opened + completed on the sweep's test violation."
     },
     {
       "id": "severity_thresholds",
       "name": "Severity-based thresholds",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "Severity-based SLA thresholds"
+      "verify": "Dual-surface DONE 2026-07-07. run_sla_sweep treats policy.priority ≠ 'all' as an entity-priority FILTER for tickets/chats (previously only a severity label) and labels severity from the entity priority when policy is 'all' (migration 20260708030000). Stage-3 live: low-priority test ticket breached with severity 'low'."
     },
     {
       "id": "per_customer_tiers",
       "name": "Per-customer SLA tiers",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "Per-customer SLA tier assignment"
+      "verify": "Dual-surface DONE 2026-07-07. sla_tiers (threshold_multiplier) + sla_tier_assignments (company_id | customer_email, one tier per customer) + manage_sla_tier RPC/skill; run_sla_sweep multiplies thresholds by sla_tier_multiplier(company,email) — company match beats email (migration 20260708030000). Stage-3 live: gold-r6 (×0.5) assigned to test email → violation opened at threshold_minutes 30 instead of 60."
     },
     {
       "id": "clock_stop",
       "name": "Clock-stop on waiting",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "SLA clock stops while waiting on customer"
+      "verify": "Dual-surface DONE 2026-07-07. sla_clock_pauses + manage_sla_clock RPC/skill (pause/resume/list, one open pause per entity) + auto-pause trigger on tickets.status='waiting' (resumes on leaving waiting); sweep subtracts sla_paused_minutes measured on the same clock (business hours aware) (migration 20260708030000). Stage-3 live: ticket→waiting auto-paused, skill resume closed the pause."
     },
     {
       "id": "breach_credits",
       "name": "Service-credit accounting",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "Service-credit accounting on breach"
+      "verify": "Dual-surface DONE 2026-07-07. service_credits table + manage_service_credit RPC/skill (accrue/apply/waive/list with total_accrued_cents) + automatic accrual via escalation action accrue_credit (customer resolved from the entity) (migration 20260708030000). Stage-3 live: 5000 öre credit auto-accrued on breach, then applied via skill."
     }
   ]
 }

@@ -1,25 +1,136 @@
 {
   "module": "recruitment",
   "odoo_app": "Recruitment (hr.applicant)",
-  "current_maturity": "L3",
+  "current_maturity": "L4",
   "target_maturity": "L4",
   "capabilities": [
-    { "id": "job_postings", "name": "Job postings", "odoo": true, "status": "done", "weight": 1, "verify": "job postings exist" },
-    { "id": "applications", "name": "Applications w/ stages", "odoo": true, "status": "done", "weight": 1, "verify": "applications with stages exist" },
-    { "id": "stage_history", "name": "Stage history log", "odoo": true, "status": "done", "weight": 1, "verify": "stage history log exists" },
-    { "id": "candidate_notes", "name": "Candidate notes/rating", "odoo": true, "status": "done", "weight": 1, "verify": "candidate notes/rating exist" },
-    { "id": "ai_resume_parse", "name": "AI resume parsing", "odoo": true, "status": "done", "weight": 1, "verify": "AI resume parsing exists" },
-    { "id": "ai_scoring", "name": "AI candidate scoring", "odoo": true, "status": "done", "weight": 1, "verify": "AI candidate scoring exists" },
-    { "id": "ai_outreach", "name": "AI outreach drafting", "odoo": true, "status": "done", "weight": 1, "verify": "AI outreach drafting exists" },
-    { "id": "hiring_workflow", "name": "Hire→employee+contract+onboarding", "odoo": true, "status": "done", "weight": 1, "verify": "hire to employee+contract+onboarding workflow exists" },
-    { "id": "pipeline_dashboard", "name": "Pipeline dashboard", "odoo": true, "status": "done", "weight": 1, "verify": "pipeline dashboard exists" },
-    { "id": "internal_mobility_match", "name": "Internal mobility matching", "odoo": true, "status": "missing", "weight": 1, "verify": "internal mobility matching exists", "notes": "No skill, table, or code implements internal mobility matching anywhere in the repo (term only appears in this capability file). recruitment-module.ts has no such skill." },
-
-    { "id": "interview_scheduling", "name": "Interview scheduling/calendar", "odoo": true, "status": "missing", "weight": 2, "verify": "interview scheduling/calendar exists" },
-    { "id": "assessment_tests", "name": "Assessment/test integration", "odoo": true, "status": "missing", "weight": 1, "verify": "assessment/test integration exists" },
-    { "id": "offer_letter_generation", "name": "Offer letter from template", "odoo": true, "status": "missing", "weight": 1, "verify": "offer letter generation from template exists" },
-    { "id": "reference_checks", "name": "Reference/background checks", "odoo": true, "status": "missing", "weight": 1, "verify": "reference/background checks exist" },
-    { "id": "recruitment_analytics", "name": "Time-to-hire/source ROI", "odoo": true, "status": "missing", "weight": 1, "verify": "time-to-hire / source ROI analytics exist" },
-    { "id": "job_board_multipost", "name": "Job-board multiposting", "odoo": true, "status": "missing", "weight": 1, "verify": "job-board multiposting exists" }
+    {
+      "id": "job_postings",
+      "name": "Job postings",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "job postings exist"
+    },
+    {
+      "id": "applications",
+      "name": "Applications w/ stages",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "applications with stages exist"
+    },
+    {
+      "id": "stage_history",
+      "name": "Stage history log",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "stage history log exists"
+    },
+    {
+      "id": "candidate_notes",
+      "name": "Candidate notes/rating",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "candidate notes/rating exist"
+    },
+    {
+      "id": "ai_resume_parse",
+      "name": "AI resume parsing",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "AI resume parsing exists"
+    },
+    {
+      "id": "ai_scoring",
+      "name": "AI candidate scoring",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "AI candidate scoring exists"
+    },
+    {
+      "id": "ai_outreach",
+      "name": "AI outreach drafting",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "AI outreach drafting exists"
+    },
+    {
+      "id": "hiring_workflow",
+      "name": "Hire→employee+contract+onboarding",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "hire to employee+contract+onboarding workflow exists"
+    },
+    {
+      "id": "pipeline_dashboard",
+      "name": "Pipeline dashboard",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "pipeline dashboard exists"
+    },
+    {
+      "id": "internal_mobility_match",
+      "name": "Internal mobility matching",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "Dual-surface DONE 2026-07-07. match_internal_candidates RPC/skill (migration 20260708040000): employee_skills × skills_catalog vs job_postings.required_skills, match_score + matching/missing skills. Stage-3 live: QA Hire matched 0.67 (typescript+postgresql, missing react)."
+    },
+    {
+      "id": "interview_scheduling",
+      "name": "Interview scheduling/calendar",
+      "odoo": true,
+      "status": "done",
+      "weight": 2,
+      "verify": "Dual-surface DONE 2026-07-07. interviews table + schedule_interview RPC/skill (schedule/reschedule/complete/cancel/no_show/list; migration 20260708040000): creates a linked team calendar_events row, interviewer double-booking check, complete writes feedback/rating into candidate_notes. Stage-3 live: phone screen booked, overlapping slot rejected with interviewer_conflict, completed with rating 4."
+    },
+    {
+      "id": "assessment_tests",
+      "name": "Assessment/test integration",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "Dual-surface DONE 2026-07-07. candidate_assessments table + manage_candidate_assessment RPC/skill (assign/record_result/list/delete; migration 20260708040000). Stage-3 live: coding challenge assigned, result 87/100 passed recorded → [assessment] candidate note."
+    },
+    {
+      "id": "offer_letter_generation",
+      "name": "Offer letter from template",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "Dual-surface DONE 2026-07-07. job_offers table + manage_job_offer RPC/skill (generate/send/record_response/get/list; migration 20260708040000): merges {{candidate_name}}/{{job_title}}/{{salary}}/{{start_date}}/{{expires_at}} from employment_contract_templates (built-in fallback body). Stage-3 live: offer generated for Kim Kandidat (52,000 SEK, start 2026-09-01), sent, accepted with hire_application next-step hint."
+    },
+    {
+      "id": "reference_checks",
+      "name": "Reference/background checks",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "Dual-surface DONE 2026-07-07. reference_checks table + manage_reference_check RPC/skill (add/record/list/delete; migration 20260708040000); completed checks write a [reference] candidate note. Stage-3 live: referee added, completed with rating 5."
+    },
+    {
+      "id": "recruitment_analytics",
+      "name": "Time-to-hire/source ROI",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "Dual-surface DONE 2026-07-07. recruitment_analytics RPC/skill (migration 20260708040000): time-to-hire avg/median, source ROI (applications/hires/hire-rate/avg ai_score per source), stage funnel, interview stats, open positions. Stage-3 live: linkedin source + interview avg_rating 4 reported."
+    },
+    {
+      "id": "job_board_multipost",
+      "name": "Job-board multiposting",
+      "odoo": true,
+      "status": "missing",
+      "weight": 1,
+      "verify": "job-board multiposting exists"
+    }
   ]
 }

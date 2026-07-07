@@ -1,7 +1,7 @@
 {
   "module": "shipping",
   "odoo_app": "Inventory → Delivery/Shipping connectors",
-  "current_maturity": "L2",
+  "current_maturity": "L4",
   "target_maturity": "L4",
   "capabilities": [
     {
@@ -59,9 +59,9 @@
       "id": "international_customs",
       "name": "International/customs handling",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 2,
-      "verify": "international/customs handling"
+      "verify": "Dual-surface DONE 2026-07-07. manage_shipment_customs RPC/skill: customs columns on shipments (value/currency/incoterm/contents_type/destination_country/items) + CN22-style declaration generation with completeness validation (migration 20260708010000). Stage-3 live 2026-07-07: set NO destination + HS-coded items, declare → CN22 payload with items_total 39600."
     },
     {
       "id": "dimensional_weight",
@@ -77,58 +77,61 @@
       "id": "address_validation",
       "name": "Address validation",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "address validation"
+      "verify": "Dual-surface DONE 2026-07-07. validate_address RPC/skill + postal_code_rules reference table (16 countries seeded): required fields + per-country postal regex, normalized output (migration 20260708010000). Stage-3 live 2026-07-07: '114 55' SE valid; '1145' rejected with format hint."
     },
     {
       "id": "delivery_estimation",
       "name": "Delivery-date estimation",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "delivery-date estimation",
-      "epic": "EPIC-08"
+      "verify": "Dual-surface DONE 2026-07-07. estimate_delivery_date RPC/skill (migration 20260708010000): next-business-day ship date + carriers.transit_days_min/max counted in business days (weekends + business_holidays skipped). Stage-3 live 2026-07-07: Fri 2026-07-10 ship → earliest Mon 07-13, latest Wed 07-15.",
+      "epic": "EPIC-08",
+      "notes": "Transit windows per carrier (manage_carrier); shares the business_holidays calendar with SLA."
     },
     {
       "id": "pickup_scheduling",
       "name": "Carrier pickup scheduling",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "carrier pickup scheduling"
+      "verify": "Dual-surface DONE 2026-07-07. shipping_pickups table + manage_carrier_pickup RPC/skill (request/assign_shipments/update_status/cancel/get/list; migration 20260708010000). Stage-3 live 2026-07-07: pickup requested (PostNord, 09:00–12:00 window) with 1 shipment attached.",
+      "notes": "Status flow requested → confirmed (confirmation_ref) → completed; cancel detaches parcels."
     },
     {
       "id": "proof_of_delivery",
       "name": "Proof of delivery",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "proof of delivery capture"
+      "verify": "Dual-surface DONE 2026-07-07. record_delivery_proof RPC/skill: pod_signature_url/pod_signed_by/pod_signed_at/pod_photo_urls/pod_notes columns, sets shipment delivered and bubbles orders.fulfillment_status=delivered when all outbound parcels delivered (migration 20260708010000). Stage-3 live 2026-07-07: signed_by + photo recorded, order_marked_delivered=true."
     },
     {
       "id": "multicarrier_failover",
       "name": "Multi-carrier failover",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "multi-carrier failover"
+      "verify": "Dual-surface DONE 2026-07-07. select_shipping_carrier RPC/skill: preferred carrier first, then failover through active carriers by carriers.priority until a matching rate; returns fallback_used + attempted[] (migration 20260708010000). Stage-3 live 2026-07-07: DHL preferred chosen at 800g; 9999999g → no_carrier_available with both carriers attempted."
     },
     {
       "id": "return_labels",
       "name": "Return shipping labels",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "return shipping label generation"
+      "verify": "Dual-surface DONE 2026-07-07. create_return_label RPC/skill: kind=return shipment linked via return_of_shipment_id, RET- tracking number rendered through the carrier tracking template, label payload (customer→merchant) stored in metadata.return_label (migration 20260708010000). Stage-3 live 2026-07-07: RET-8550E945AE created off the test shipment.",
+      "notes": "Label PDF generation stays delegated per carrier, same as outbound labels."
     },
     {
       "id": "batch_labels",
       "name": "Batch label printing",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "batch label printing"
+      "verify": "Dual-surface DONE 2026-07-07. batch_shipping_labels RPC/skill: print-queue collection (default pending/labeled), returns labels[] + missing_label_shipment_ids (migration 20260708010000). Stage-3 live 2026-07-07: returned the return-label parcel, empty missing list."
     }
   ]
 }

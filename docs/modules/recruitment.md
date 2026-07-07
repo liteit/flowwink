@@ -12,7 +12,7 @@ generated_at: "2026-07-07"
 
 > Applicant Tracking System — job postings, candidate pipeline, AI scoring and outreach. FlowPilot runs the daily pipeline review.
 
-Ships with **8 agent skills**, an **admin UI**.
+Ships with **14 agent skills**, **4 database tables**, an **admin UI**.
 
 ## Quick Facts
 
@@ -24,8 +24,8 @@ Ships with **8 agent skills**, an **admin UI**.
 | **Autonomy** | agent-capable |
 | **Core** | No |
 | **Capabilities** | `data:write`, `data:read` |
-| **MCP-exposed skills** | 8 |
-| **Owns tables** | — |
+| **MCP-exposed skills** | 14 |
+| **Owns tables** | 4 |
 
 ## Skills
 
@@ -42,6 +42,23 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | `hire_candidate` | internal | Hire a candidate: convert their application into an HR employee record and seed an onboarding checklist. Use when: candidate has accepted offer and should be moved into HR. NOT for: stage changes a… |
 | `hire_application` | internal | Full hire transaction: convert application → employee + create draft employment contract from a template (with token substitution) + seed onboarding checklist, all in one atomic RPC. Use when: cand… |
 | `summarize_candidate_pipeline` | internal | Summarize current pipeline state: per-job counts by stage, candidates stuck >X days, top-scored unreviewed candidates. Use when: admin asks "how is recruiting going?" or for daily briefing. NOT for… |
+| `schedule_interview` | internal | Schedule, reschedule and record candidate interviews — creates a linked calendar event and checks the interviewer for double-booking. Use when: moving a candidate to interview, booking a phone scre… |
+| `manage_candidate_assessment` | internal | Assign tests/assessments to a candidate (coding, personality, case study, …) and record results. Use when: sending a take-home test, logging an external assessment score. NOT for: AI resume scoring… |
+| `manage_job_offer` | internal | Generate offer letters from employment contract templates (merge fields filled from the application + job posting), track send/response. Use when: extending an offer to a candidate, recording their… |
+| `manage_reference_check` | internal | Track reference/background checks per candidate: add referees, record outcomes with a rating. Use when: final-stage vetting before an offer. NOT for: assessments (manage_candidate_assessment) or in… |
+| `recruitment_analytics` | internal | Recruitment analytics: time-to-hire (avg/median days), source ROI (applications vs hires per source), stage funnel, interview stats, open positions. Use when: "how effective is our hiring?", channe… |
+| `match_internal_candidates` | internal | Internal mobility: rank existing employees against a job posting\ |
+
+## Data Model
+
+Tables created by this module (from migrations):
+
+- `public.candidate_assessments`
+- `public.interviews`
+- `public.job_offers`
+- `public.reference_checks`
+
+All tables ship with Row-Level Security policies. See migration files for the exact rules.
 
 ## Module API Contract
 
@@ -64,6 +81,7 @@ This module participates in the following end-to-end business processes:
 | Module definition | `src/lib/modules/recruitment-module.ts` |
 | Hook | `src/hooks/useRecruitment.ts` |
 | Admin page | `src/pages/admin/RecruitmentPage.tsx` |
+| Migration | `supabase/migrations/20260708040000_recruitment-parity-r6.sql` |
 
 ## Contributing
 

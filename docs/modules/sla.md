@@ -12,7 +12,7 @@ generated_at: "2026-07-07"
 
 > Service level agreement monitoring for order fulfillment, ticket response, lead handling, chat reply times, and booking confirmations. Auto-detects violations, auto-resolves when entities are handled.
 
-Ships with **4 agent skills**.
+Ships with **10 agent skills**, **4 database tables**.
 
 ## Quick Facts
 
@@ -24,8 +24,8 @@ Ships with **4 agent skills**.
 | **Autonomy** | agent-capable |
 | **Core** | No |
 | **Capabilities** | `data:read`, `data:write` |
-| **MCP-exposed skills** | 4 |
-| **Owns tables** | — |
+| **MCP-exposed skills** | 10 |
+| **Owns tables** | 4 |
 
 ## Skills
 
@@ -38,6 +38,23 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | `manage_sla_policy` | internal | CRUD for SLA policies — define thresholds (in minutes) per entity_type + metric. Use when: setting up monitoring for a new entity, tightening/loosening response targets. NOT for: running checks (us… |
 | `list_sla_violations` | internal | List SLA violations — open (unresolved) by default, with optional filters by entity_type and time window. Use when: building a dashboard, asked about overdue work, investigating SLA health. |
 | `manage_business_hours` | internal | Configure the business-hours calendar (per-weekday open/close) and holidays used to measure SLA elapsed time on working hours instead of 24/7. Use when: setting office hours, adding a public holida… |
+| `manage_sla_tier` | internal | Per-customer SLA tiers: define tiers with a threshold multiplier (0.5 = twice as fast for premium customers) and assign them to companies or customer emails. Use when: a customer has contractual SL… |
+| `manage_sla_clock` | internal | Pause/resume the SLA clock for an entity (clock-stop while waiting on the customer). Paused minutes never count toward a breach. Use when: work is blocked on the customer\ |
+| `manage_sla_escalation` | internal | Configure what happens automatically when an SLA breach opens: bump ticket priority, emit a platform notify event, create a follow-up task, accrue a service credit. Use when: breaches must trigger … |
+| `manage_service_credit` | internal | Service-credit accounting for SLA breaches: accrue a credit (manually or via escalation), then apply it to the customer or waive it. Use when: contract promises compensation for missed SLAs. NOT fo… |
+| `manage_sla_remediation` | internal | Remediation workflow for SLA breaches: open a tracked remediation (creates a high-priority CRM task), complete it with a note, list all remediations. Use when: a breach needs an owner and follow-th… |
+| `sla_compliance_report` | internal | SLA compliance dashboard data for a period: violations opened/resolved/open, average overage, escalations fired, credits accrued, per-entity compliance % (entities created vs breached) and severity… |
+
+## Data Model
+
+Tables created by this module (from migrations):
+
+- `public.service_credits`
+- `public.sla_clock_pauses`
+- `public.sla_tier_assignments`
+- `public.sla_tiers`
+
+All tables ship with Row-Level Security policies. See migration files for the exact rules.
 
 ## Module API Contract
 
@@ -59,6 +76,7 @@ This module participates in the following end-to-end business processes:
 |---------|------|
 | Module definition | `src/lib/modules/sla-module.ts` |
 | Hook | `src/hooks/useSla.ts` |
+| Migration | `supabase/migrations/20260708030000_sla-parity-r6.sql` |
 
 ## Contributing
 

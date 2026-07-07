@@ -74,6 +74,13 @@ const RECRUITMENT_SKILLS = [
   'hire_candidate',
   'hire_application',
   'summarize_candidate_pipeline',
+  // parity r6 (migration 20260708040000)
+  'schedule_interview',
+  'manage_candidate_assessment',
+  'manage_job_offer',
+  'manage_reference_check',
+  'recruitment_analytics',
+  'match_internal_candidates',
 ];
 
 const allModulesEnabled = {
@@ -92,7 +99,7 @@ afterEach(() => {
 });
 
 describe('recruitment module — end-to-end autonomy contract', () => {
-  it('declares exactly the 8 ClawWink-callable skills in its manifest', () => {
+  it('declares exactly the 14 ClawWink-callable skills in its manifest', () => {
     expect(recruitmentModule.skills).toEqual(RECRUITMENT_SKILLS);
     expect(recruitmentModule.skillSeeds).toBeDefined();
     expect(recruitmentModule.skillSeeds!.map((s) => s.name).sort()).toEqual(
@@ -100,7 +107,7 @@ describe('recruitment module — end-to-end autonomy contract', () => {
     );
   });
 
-  it('on enable: inserts all 8 skills with enabled=true AND mcp_exposed=true', async () => {
+  it('on enable: inserts all 14 skills with enabled=true AND mcp_exposed=true', async () => {
     // None exist yet → INSERT path
     const result = await bootstrapModule('recruitment', allModulesEnabled);
 
@@ -110,7 +117,7 @@ describe('recruitment module — end-to-end autonomy contract', () => {
       .filter((c) => c.table === 'agent_skills')
       .flatMap((c) => c.rows);
 
-    expect(inserted).toHaveLength(8);
+    expect(inserted).toHaveLength(RECRUITMENT_SKILLS.length);
     for (const name of RECRUITMENT_SKILLS) {
       const row = inserted.find((r) => r.name === name);
       expect(row, `skill ${name} must be inserted`).toBeTruthy();
@@ -130,14 +137,14 @@ describe('recruitment module — end-to-end autonomy contract', () => {
     const perSkillUpdates = updateCalls.filter(
       (c) => c.table === 'agent_skills' && c.filter.col === 'id',
     );
-    expect(perSkillUpdates.length).toBe(8);
+    expect(perSkillUpdates.length).toBe(RECRUITMENT_SKILLS.length);
     for (const u of perSkillUpdates) {
       expect(u.values.enabled).toBe(true);
       expect(u.values.mcp_exposed).toBe(true);
     }
   });
 
-  it('teardown disables the 8 skills (without deleting them)', async () => {
+  it('teardown disables the 14 skills (without deleting them)', async () => {
     await teardownModule('recruitment');
     const disable = updateCalls.find(
       (c) =>

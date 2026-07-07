@@ -1,7 +1,7 @@
 {
   "module": "projects",
   "odoo_app": "Project (project.project/project.task)",
-  "current_maturity": "L3",
+  "current_maturity": "L4",
   "target_maturity": "L4",
   "capabilities": [
     {
@@ -57,9 +57,9 @@
       "id": "gantt",
       "name": "Gantt/dependencies",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 2,
-      "verify": "Gantt chart with task dependencies"
+      "verify": "Dual-surface DONE 2026-07-07. Skill: project_task_dependencies table + manage_task_dependency RPC/skill (add/remove/list, same-project + recursive cycle detection — cycle add rejected live) + get_project_schedule RPC/skill (tasks with start/due dates, estimated hours, dependency edges, topological depth, milestones; project_tasks.start_date column added) (migration 20260708020000). UI: Timeline (Gantt) view in ProjectsPage rendering get_project_schedule with status-colored bars, depth ordering, blocked-by chips and milestone markers (Lovable build 2026-07-07)."
     },
     {
       "id": "subtasks",
@@ -74,41 +74,41 @@
       "id": "resource_planning",
       "name": "Resource/capacity planning",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 2,
-      "verify": "Resource allocation/capacity planning view"
+      "verify": "Dual-surface DONE 2026-07-07. Skill: resource_capacity_report RPC/skill (per person: open tasks, backlog hours, hours logged, utilization %, weeks_of_backlog, overloaded; scoped or global) — Stage-3 live via gateway. UI: Capacity view in ProjectsPage with utilization bars + overloaded badges (Lovable build 2026-07-07)."
     },
     {
       "id": "templates",
       "name": "Project templates",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "Reusable project templates"
+      "verify": "Dual-surface DONE 2026-07-07. project_templates table + manage_project_template RPC/skill (create/create_from_project/instantiate/list/get/delete; migration 20260708020000): snapshot tasks+milestones with offset_days, instantiate re-dates from a start date. Stage-3 live: template snapshotted from test project, instantiated as new project with 2 tasks."
     },
     {
       "id": "status_workflow",
       "name": "Stage workflow gating",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "Stage transition gating rules"
+      "verify": "Dual-surface DONE 2026-07-07. projects.task_workflow jsonb + manage_task_workflow RPC/skill (set/get/clear) + enforce_task_workflow BEFORE UPDATE trigger: allowed-transition gate, require_subtasks_done gate, enforce_dependencies gate; no config = no gating (migration 20260708020000). Stage-3 live: todo→done blocked by transition rule, dependency-blocked start rejected, legal path passed."
     },
     {
       "id": "team_roles",
       "name": "Team/stakeholder roles",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "Team/stakeholder role assignment on project"
+      "verify": "Dual-surface DONE 2026-07-07. manage_project_member RPC/skill over project_members (add/update/remove/list, role + hourly_rate_override_cents + tracks_time; migration 20260708020000); overrides feed project_cost_forecast. Stage-3 live: manager added with 95000 rate override, listed."
     },
     {
       "id": "cost_forecasting",
       "name": "Cost forecasting/burn rate",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "Cost forecasting/burn-rate reporting"
+      "verify": "Dual-surface DONE 2026-07-07. project_cost_forecast RPC/skill (migration 20260708020000): hours logged, cost with member rate overrides, 28-day burn rate, weeks-to-budget-exhaustion, over_budget_risk vs open task estimates. Stage-3 live on test project (budget 100h)."
     }
   ]
 }
