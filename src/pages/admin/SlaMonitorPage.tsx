@@ -14,9 +14,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Shield, AlertTriangle, CheckCircle2, Clock, Plus, Trash2, Activity, TrendingUp, CalendarClock,
+  Shield, AlertTriangle, CheckCircle2, Clock, Plus, Trash2, Activity, TrendingUp, CalendarClock, BarChart3,
 } from 'lucide-react';
 import { BusinessHoursTab } from '@/components/admin/sla/BusinessHoursTab';
+import { ComplianceTab } from '@/components/admin/sla/ComplianceTab';
 import { formatDistanceToNow } from 'date-fns';
 import {
   useSlaPolicies, useSlaViolations, useSlaStats,
