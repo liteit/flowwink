@@ -13,6 +13,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useProjects, useCreateProject, useProjectTasks, useCreateProjectTask, useUpdateProjectTask, useUpdateProject, useDeleteProject, useDeleteProjectTask, type Project } from "@/hooks/useProjects";
 import { ProjectMilestonesPanel } from "@/components/admin/projects/ProjectMilestonesPanel";
+import { ProjectGantt } from "@/components/admin/projects/ProjectGantt";
+import { ProjectCapacity } from "@/components/admin/projects/ProjectCapacity";
+import { TaskEditDialog } from "@/components/admin/projects/TaskEditDialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Plus, FolderKanban, CheckCircle2, Clock, Circle, Pencil, Trash2, X } from "lucide-react";
 import { format } from "date-fns";
 
