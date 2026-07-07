@@ -50,6 +50,17 @@ export default function POSPage() {
   const openSession$ = useOpenSessionMutation();
   const closeSession$ = useCloseSession();
   const recordSale$ = useRecordSale();
+  const addTip$ = useAddTip();
+
+  // Tip dialog state (post-checkout)
+  const [tipDialog, setTipDialog] = useState<{
+    sale_id: string;
+    receipt_number: string;
+    total_cents: number;
+    method: string;
+    currency: string;
+  } | null>(null);
+  const [customTip, setCustomTip] = useState('');
 
   // Cart + payments state
   const [lines, setLines] = useState<PosSaleLine[]>([]);
