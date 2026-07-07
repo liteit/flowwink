@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Plus, Search, Filter, MoreHorizontal, Edit, Trash2, Copy, ArrowUpDown, Clock, Home, FileText, Navigation, PanelBottom, Palette, Eye } from 'lucide-react';
+import { Plus, Search, Filter, MoreHorizontal, Edit, Trash2, Copy, ArrowUpDown, Clock, Home, FileText, Navigation, PanelBottom, Palette, Eye, Languages, ArrowRightLeft, FlaskConical } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { AdminLayout } from '@/components/admin/AdminLayout';
@@ -10,6 +10,9 @@ import PagesTrashTab from '@/components/admin/pages/PagesTrashTab';
 import HeaderTab from '@/components/admin/pages/HeaderTab';
 import FooterTab from '@/components/admin/pages/FooterTab';
 import BrandingTab from '@/components/admin/pages/BrandingTab';
+import RedirectsTab from '@/components/admin/pages/RedirectsTab';
+import PageExperimentsTab from '@/components/admin/pages/PageExperimentsTab';
+import { PageTranslationsDialog } from '@/components/admin/pages/PageTranslationsDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -56,13 +59,14 @@ const STATUS_ORDER: Record<PageStatus, number> = {
   archived: 4,
 };
 
-function PageRow({ page, homepageSlug, isAdmin, onDuplicate, onDelete, onSetHomepage }: {
+function PageRow({ page, homepageSlug, isAdmin, onDuplicate, onDelete, onSetHomepage, onOpenTranslations }: {
   page: Page;
   homepageSlug: string;
   isAdmin: boolean;
   onDuplicate: (page: { title: string; slug: string }) => void;
   onDelete: (id: string) => void;
   onSetHomepage: (slug: string) => void;
+  onOpenTranslations: (slug: string) => void;
 }) {
   const showInMenu = page.show_in_menu;
 
@@ -125,6 +129,10 @@ function PageRow({ page, homepageSlug, isAdmin, onDuplicate, onDelete, onSetHome
             <Copy className="h-4 w-4 mr-2" />
             Duplicate
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onOpenTranslations(page.slug)}>
+            <Languages className="h-4 w-4 mr-2" />
+            Translations
+          </DropdownMenuItem>
           {page.slug !== homepageSlug && (
             <DropdownMenuItem onClick={() => onSetHomepage(page.slug)}>
               <Home className="h-4 w-4 mr-2" />
@@ -155,6 +163,7 @@ export default function PagesListPage() {
   const [sortField, setSortField] = useState<SortField>('updated_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [translationsSlug, setTranslationsSlug] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const { data: pages, isLoading } = usePages();
@@ -257,6 +266,14 @@ export default function PagesListPage() {
                 <TabsTrigger value="branding" className="gap-1.5">
                   <Palette className="h-3.5 w-3.5" />
                   Branding
+                </TabsTrigger>
+                <TabsTrigger value="redirects" className="gap-1.5">
+                  <ArrowRightLeft className="h-3.5 w-3.5" />
+                  Redirects
+                </TabsTrigger>
+                <TabsTrigger value="experiments" className="gap-1.5">
+                  <FlaskConical className="h-3.5 w-3.5" />
+                  Experiments
                 </TabsTrigger>
                 <TabsTrigger value="trash" className="gap-1.5">
                   <Trash2 className="h-3.5 w-3.5" />
@@ -372,6 +389,7 @@ export default function PagesListPage() {
                         onDuplicate={handleDuplicate}
                         onDelete={setDeleteId}
                         onSetHomepage={handleSetAsHomepage}
+                        onOpenTranslations={(slug) => setTranslationsSlug(slug)}
                       />
                     ))}
                   </div>
@@ -392,10 +410,26 @@ export default function PagesListPage() {
             <BrandingTab />
           </TabsContent>
 
+          <TabsContent value="redirects" className="mt-0">
+            <RedirectsTab />
+          </TabsContent>
+
+          <TabsContent value="experiments" className="mt-0">
+            <PageExperimentsTab />
+          </TabsContent>
+
           <TabsContent value="trash" className="mt-0">
             <PagesTrashTab />
           </TabsContent>
         </Tabs>
+
+        {translationsSlug && (
+          <PageTranslationsDialog
+            slug={translationsSlug}
+            open={!!translationsSlug}
+            onOpenChange={(v) => { if (!v) setTranslationsSlug(null); }}
+          />
+        )}
       </AdminPageContainer>
 
       {/* Delete Confirmation Dialog */}
