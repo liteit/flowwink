@@ -688,6 +688,54 @@ export default function POSPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Refund / Receipt / Invoice dialogs */}
+        <RefundDialog
+          sale={refundSale}
+          sessionId={openSession?.id}
+          onClose={() => setRefundSale(null)}
+        />
+        <ReceiptDialog
+          saleId={receiptSaleId}
+          onClose={() => setReceiptSaleId(null)}
+        />
+
+        <Dialog open={!!invoicePrompt} onOpenChange={(o) => { if (!o) setInvoicePrompt(null); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create invoice from sale</DialogTitle>
+              <DialogDescription>
+                Sale {invoicePrompt?.receipt_number} — {fmtMoney(invoicePrompt?.total_cents ?? 0, invoicePrompt?.currency)}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label className="text-xs">Customer email</Label>
+              <Input
+                type="email"
+                value={invoiceEmail}
+                onChange={(e) => setInvoiceEmail(e.target.value)}
+                placeholder="customer@example.com"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setInvoicePrompt(null)}>Cancel</Button>
+              <Button
+                disabled={!invoiceEmail || createInvoice$.isPending}
+                onClick={async () => {
+                  if (!invoicePrompt) return;
+                  try {
+                    await createInvoice$.mutateAsync({
+                      sale_id: invoicePrompt.id,
+                      customer_email: invoiceEmail,
+                    });
+                    setInvoicePrompt(null);
+                  } catch (e) { logger.error('create invoice', e); }
+                }}
+              >Create invoice</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
       </div>
     </AdminLayout>
   );
