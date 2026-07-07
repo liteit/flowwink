@@ -132,6 +132,7 @@ function TaskRow({
   const deleteTask = useDeleteProjectTask();
   const doneCount = subtasks.filter((s) => s.status === "done").length;
 
+  const [editOpen, setEditOpen] = useState(false);
   return (
     <Card
       className="group hover:shadow-sm transition-shadow"
@@ -179,6 +180,14 @@ function TaskRow({
             </button>
           )}
           <button
+            onClick={() => setEditOpen(true)}
+            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition-opacity"
+            aria-label="Edit task"
+            title="Edit task"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button
             onClick={() => deleteTask.mutate({ id: task.id, project_id: projectId })}
             className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
             aria-label="Delete task"
@@ -187,6 +196,9 @@ function TaskRow({
           </button>
         </div>
       </CardContent>
+      {editOpen && (
+        <TaskEditDialog task={task} projectId={projectId} onOpenChange={setEditOpen} />
+      )}
     </Card>
   );
 }
