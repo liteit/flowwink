@@ -266,7 +266,7 @@ export default function PageExperimentsTab() {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </FragmentWithKey>
                 );
               })}
             </TableBody>
