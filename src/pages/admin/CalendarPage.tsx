@@ -96,6 +96,34 @@ export default function CalendarPage() {
           </div>
           <div className="flex items-center gap-2">
             <NewCalendarEventDialog />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      const { data, error } = await supabase.rpc('export_calendar_ics' as any, {});
+                      if (error) { toast.error(error.message); return; }
+                      const ics = typeof data === 'string' ? data : (data as any)?.ics ?? '';
+                      if (!ics) { toast.error('No calendar data'); return; }
+                      const blob = new Blob([ics], { type: 'text/calendar' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = 'flowwink-calendar.ics';
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      URL.revokeObjectURL(url);
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-1" /> Export .ics
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Import into Google/Outlook/Apple Calendar</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <Button variant="outline" size="sm" onClick={() => calendarRef.current?.getApi().today()}>
               Today
             </Button>
