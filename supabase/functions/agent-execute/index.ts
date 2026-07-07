@@ -52,6 +52,20 @@ function acctNetBaseFromGross(tplLines: any[], grossCents: number): number {
   const grossPct = (tplLines || []).reduce((s: number, l: any) => s + (l.debit_pct ?? 0), 0);
   return grossPct > 0 ? Math.round(grossCents / (grossPct / 100)) : grossCents;
 }
+// Direction of a template's bank leg: a template that CREDITS a 19xx account
+// pays money OUT (expense/payment); one that DEBITS 19xx takes money IN
+// (revenue/refund). Templates with no 19xx leg are not bank-event-bookable
+// (accruals, year-end adjustments). Matching an outflow to a revenue template
+// books bank fees as income — the real-data failure this guards against.
+function acctTemplateBankDirection(tplLines: any[]): 'inflow' | 'outflow' | null {
+  for (const l of tplLines || []) {
+    const code = String(l.account_code || '');
+    if (!code.startsWith('19')) continue;
+    if ((l.credit_pct ?? 0) > 0 || (l.credit_cents ?? 0) > 0) return 'outflow';
+    if ((l.debit_pct ?? 0) > 0 || (l.debit_cents ?? 0) > 0) return 'inflow';
+  }
+  return null;
+}
 function acctScoreTemplates(
   allTemplates: any[],
   searchTerms: string,
@@ -6223,7 +6237,19 @@ async function executeDbAction(
             reason: !searchTerms ? 'No counterparty/description to match on' : 'No accounting templates exist',
             suggested_amount_cents: grossCents, proposed_lines: [], top_candidates: [] };
         }
-        const scored = acctScoreTemplates(allTemplates, searchTerms);
+        // Direction filter: an outflow may only match templates that pay OUT
+        // of the bank (credit 19xx); an inflow only templates that take money
+        // IN. Prevents "bank fee booked as revenue" class of mismatches.
+        const evDirection: 'inflow' | 'outflow' = (ev.amount_cents || 0) >= 0 ? 'inflow' : 'outflow';
+        const directionCompatible = allTemplates.filter(
+          (t: any) => acctTemplateBankDirection(t.template_lines) === evDirection,
+        );
+        if (directionCompatible.length === 0) {
+          return { ...base, status: 'escalate', confidence: 0,
+            reason: `No ${evDirection}-direction template exists — create one via manage_accounting_template`,
+            suggested_amount_cents: grossCents, proposed_lines: [], top_candidates: [] };
+        }
+        const scored = acctScoreTemplates(directionCompatible, searchTerms);
         const best = scored[0];
         const status = best.confidence >= 95 ? 'auto' : best.confidence >= 70 ? 'propose' : 'escalate';
         const isPct = acctIsPctTemplate(best.template.template_lines);

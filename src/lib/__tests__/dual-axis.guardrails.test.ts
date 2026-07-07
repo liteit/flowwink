@@ -94,4 +94,10 @@ describe('dual-axis guardrails', () => {
     expect(src).toContain("entry_date || bankTxDate");
     expect(src).toMatch(/not found — the event list is stale/);
   });
+
+  it('matching: proposals are direction-filtered (outflow never matches revenue templates)', () => {
+    const src = read('supabase/functions/agent-execute/index.ts');
+    expect(src).toContain('acctTemplateBankDirection');
+    expect(src).toContain('directionCompatible');
+  });
 });
