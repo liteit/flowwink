@@ -42,13 +42,15 @@ export function RoutingEditor({ bomId }: { bomId: string }) {
   const manage = useManageRoutingOperation();
 
   const [drafts, setDrafts] = useState<DraftOp[]>([]);
-  const [hydratedFor, setHydratedFor] = useState<string | null>(null);
+  const [signature, setSignature] = useState<string>('');
 
-  // Hydrate drafts from server whenever the ops list changes (new bomId or refetch).
-  if (ops && hydratedFor !== `${bomId}:${ops.map((o) => o.id).join(',')}`) {
+  useEffect(() => {
+    if (!ops) return;
+    const sig = `${bomId}:${ops.map((o) => `${o.id}:${o.sequence}:${o.name}:${o.work_center_id}:${o.duration_minutes}`).join('|')}`;
+    if (sig === signature) return;
     setDrafts(ops.map(toDraft));
-    setHydratedFor(`${bomId}:${ops.map((o) => o.id).join(',')}`);
-  }
+    setSignature(sig);
+  }, [ops, bomId, signature]);
 
   function updateDraft(key: string, patch: Partial<DraftOp>) {
     setDrafts((prev) => prev.map((d) => (d.key === key ? { ...d, ...patch, dirty: true } : d)));
