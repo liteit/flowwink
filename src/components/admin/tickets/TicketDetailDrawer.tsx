@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Sheet,
   SheetContent,
@@ -7,9 +7,23 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { TicketKbSuggestions } from "@/components/admin/tickets/TicketKbSuggestions";
 import { EntityActivityTimeline } from "@/components/admin/EntityActivityTimeline";
 import {
@@ -24,16 +38,16 @@ import {
   type TicketStatus,
   type TicketPriority,
   TICKET_STATUS_LABELS,
-  TICKET_STATUS_COLORS,
   TICKET_PRIORITY_LABELS,
-  TICKET_PRIORITY_COLORS,
   TICKET_CATEGORY_LABELS,
   useUpdateTicket,
+  useUpdateTicketTags,
   useTicketComments,
   useAddTicketComment,
 } from "@/hooks/useTickets";
+import { useCannedResponses, useIncrementCannedUsage } from "@/hooks/useCannedResponses";
 import { formatDistanceToNow, format } from "date-fns";
-import { MessageSquare, Send, Building2, User, Mail, Clock, Tag } from "lucide-react";
+import { MessageSquare, Send, Building2, User, Mail, Clock, Tag, X, Plus, MessageSquareQuote } from "lucide-react";
 
 interface TicketDetailDrawerProps {
   ticket: Ticket | null;
@@ -43,11 +57,18 @@ interface TicketDetailDrawerProps {
 
 export function TicketDetailDrawer({ ticket, open, onOpenChange }: TicketDetailDrawerProps) {
   const updateTicket = useUpdateTicket();
+  const updateTags = useUpdateTicketTags();
   const { data: comments = [] } = useTicketComments(ticket?.id);
   const addComment = useAddTicketComment();
+  const { data: cannedResponses = [] } = useCannedResponses(true);
+  const incrementUsage = useIncrementCannedUsage();
   const [newComment, setNewComment] = useState("");
+  const [tagInput, setTagInput] = useState("");
+
+  const tags = useMemo(() => ticket?.tags ?? [], [ticket]);
 
   if (!ticket) return null;
+
 
   const handleStatusChange = (status: TicketStatus) => {
     const updates: Partial<Ticket> & { id: string } = { id: ticket.id, status };
@@ -67,6 +88,24 @@ export function TicketDetailDrawer({ ticket, open, onOpenChange }: TicketDetailD
       { onSuccess: () => setNewComment("") }
     );
   };
+
+  const addTag = (raw: string) => {
+    const t = raw.trim();
+    if (!t) return;
+    if (tags.includes(t)) return;
+    updateTags.mutate({ id: ticket.id, tags: [...tags, t] });
+    setTagInput("");
+  };
+
+  const removeTag = (t: string) => {
+    updateTags.mutate({ id: ticket.id, tags: tags.filter((x) => x !== t) });
+  };
+
+  const insertCanned = (id: string, body: string) => {
+    setNewComment((prev) => (prev ? `${prev}\n\n${body}` : body));
+    incrementUsage.mutate(id);
+  };
+
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -136,6 +175,48 @@ export function TicketDetailDrawer({ ticket, open, onOpenChange }: TicketDetailD
             </div>
           </div>
 
+          {/* Tags */}
+          <Separator className="my-4" />
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+              <h4 className="text-sm font-medium">Tags</h4>
+            </div>
+            <div className="flex flex-wrap gap-1.5 items-center">
+              {tags.map((t) => (
+                <Badge key={t} variant="outline" className="text-[10px] gap-1 pl-2 pr-1">
+                  {t}
+                  <button
+                    type="button"
+                    onClick={() => removeTag(t)}
+                    className="hover:bg-muted rounded p-0.5"
+                    aria-label={`Remove tag ${t}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+              <Input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addTag(tagInput);
+                  }
+                }}
+                placeholder="Add tag…"
+                className="h-6 w-28 text-xs"
+              />
+              {tagInput.trim() && (
+                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => addTag(tagInput)}>
+                  <Plus className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+          </div>
+
+
           {/* Description */}
           {ticket.description && (
             <>
@@ -204,7 +285,41 @@ export function TicketDetailDrawer({ ticket, open, onOpenChange }: TicketDetailD
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleAddComment();
             }}
           />
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button size="sm" variant="outline" className="gap-1.5 h-8" disabled={cannedResponses.length === 0}>
+                  <MessageSquareQuote className="h-3.5 w-3.5" />
+                  Canned
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[320px] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Search canned responses…" />
+                  <CommandList>
+                    <CommandEmpty>No responses.</CommandEmpty>
+                    <CommandGroup>
+                      {cannedResponses.map((r) => (
+                        <CommandItem
+                          key={r.id}
+                          value={`${r.title} ${r.shortcut ?? ""} ${r.category ?? ""}`}
+                          onSelect={() => insertCanned(r.id, r.body_md)}
+                          className="flex flex-col items-start gap-0.5"
+                        >
+                          <div className="flex w-full items-center justify-between gap-2">
+                            <span className="font-medium text-sm truncate">{r.title}</span>
+                            {r.category && (
+                              <Badge variant="outline" className="text-[10px]">{r.category}</Badge>
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground line-clamp-2">{r.body_md}</span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
             <Button
               size="sm"
               onClick={handleAddComment}
@@ -215,6 +330,7 @@ export function TicketDetailDrawer({ ticket, open, onOpenChange }: TicketDetailD
             </Button>
           </div>
         </div>
+
       </SheetContent>
     </Sheet>
   );
