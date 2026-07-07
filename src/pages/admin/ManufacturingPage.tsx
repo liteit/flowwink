@@ -11,6 +11,8 @@ import { BomEditorDialog } from '@/components/admin/manufacturing/BomEditorDialo
 import { MoStatusBadge } from '@/components/admin/manufacturing/MoStatusBadge';
 import { MoTimeline } from '@/components/admin/manufacturing/MoTimeline';
 import { MoActivityFeed } from '@/components/admin/manufacturing/MoActivityFeed';
+import { WorkCentersTab } from '@/components/admin/manufacturing/WorkCentersTab';
+import { MoWorkOrdersPanel } from '@/components/admin/manufacturing/MoWorkOrdersPanel';
 import { useProducts } from '@/hooks/useProducts';
 import {
   useManufacturingOrders,
