@@ -350,6 +350,8 @@ export function useAccountBalances() {
           debit_total: balType === 'debit' ? amountCents : 0,
           credit_total: balType === 'credit' ? amountCents : 0,
           balance: 0,
+          opening_cents: 0,
+          closing_cents: 0,
         });
       }
 
