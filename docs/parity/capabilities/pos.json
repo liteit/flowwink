@@ -1,7 +1,7 @@
 {
   "module": "pos",
   "odoo_app": "Point of Sale (pos.order)",
-  "current_maturity": "L3",
+  "current_maturity": "L4",
   "target_maturity": "L4",
   "capabilities": [
     {
@@ -117,9 +117,10 @@
       "id": "barcode_scanning",
       "name": "Barcode scanning UI",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "barcode scanning UI"
+      "verify": "Barcode/SKU quick-add input in POSPage Register tab: scan/type + Enter looks up products by barcode (products.barcode) or name and adds straight to the basket (Lovable build d64de92c, quickAddByBarcode in POSPage + lookupProductByCode in usePOS.ts)",
+      "notes": "Keyboard-first scanner input (autofocus, clears after add, inline no-match message). Built 2026-07-07."
     },
     {
       "id": "gift_card_balance",
