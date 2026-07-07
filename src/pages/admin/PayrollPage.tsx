@@ -298,11 +298,18 @@ function RunDetails({ run }: { run: PayrollRun }) {
     queryKey: ['payroll_lines', run.id, open],
     enabled: open,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('list_payroll_lines' as any, { p_run_id: run.id });
+      const { data, error } = await supabase
+        .from('payroll_lines' as any)
+        .select('id, employee_id, gross_cents, benefits_cents, deductions_cents, taxable_cents, tax_cents, social_fee_cents, net_cents, sick_days, sick_pay_cents, sick_deduction_cents, pension_employer_cents, pension_employee_cents, employees:employee_id(name)')
+        .eq('run_id', run.id);
       if (error) throw error;
-      return ((data as any)?.lines ?? []) as PayrollLine[];
+      return ((data ?? []) as any[]).map((l) => ({
+        ...l,
+        employee_name: l.employees?.name ?? null,
+      })) as PayrollLine[];
     },
   });
+
 
   const period = run.period_date.slice(0, 7);
   const sorted = [...(lines ?? [])].sort((a, b) =>
