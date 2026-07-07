@@ -25,6 +25,8 @@ interface PayrollRun {
   total_tax_cents: number;
   total_social_fee_cents: number;
   total_net_cents: number;
+  total_pension_employer_cents?: number;
+  total_pension_employee_cents?: number;
   approved_at: string | null;
   paid_at: string | null;
 }
@@ -39,7 +41,13 @@ interface PayrollLine {
   tax_cents: number;
   social_fee_cents: number;
   net_cents: number;
+  sick_days?: number | null;
+  sick_pay_cents?: number | null;
+  sick_deduction_cents?: number | null;
+  pension_employer_cents?: number | null;
+  pension_employee_cents?: number | null;
 }
+
 interface Employee {
   id: string;
   full_name: string;
