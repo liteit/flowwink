@@ -6689,7 +6689,22 @@ async function executeDbAction(
           );
         }
 
-        return { voided: true, original_id: entry_id, reversal_id: reversal.id };
+        // Void coherence: if the voided entry was booked from a bank event,
+        // release the link so the event returns to the queue and can be
+        // re-booked correctly (otherwise the idempotency guard blocks the
+        // correction path — found via the GEN3/25 correction, 2026-07-07).
+        const { data: linkedTx } = await supabase.from('bank_transactions')
+          .update({ journal_entry_id: null, status: 'unmatched' })
+          .eq('journal_entry_id', entry_id)
+          .select('id');
+
+        return {
+          voided: true, original_id: entry_id, reversal_id: reversal.id,
+          bank_events_released: (linkedTx || []).length,
+          ...(linkedTx && linkedTx.length > 0 ? {
+            note: 'Linked bank event(s) returned to the events-to-book queue — re-book with the correct template and bank_transaction_id.',
+          } : {}),
+        };
       }
 
       // action === 'create'

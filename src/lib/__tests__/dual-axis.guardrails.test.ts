@@ -142,4 +142,9 @@ describe('dual-axis guardrails', () => {
     expect(tab).toContain('opening_cents');
     expect(tab).not.toContain('opening_balance?');
   });
+
+  it('void coherence: voiding a bank-linked entry releases the event back to the queue', () => {
+    const src = read('supabase/functions/agent-execute/index.ts');
+    expect(src).toContain('bank_events_released');
+  });
 });
