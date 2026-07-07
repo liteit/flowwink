@@ -32,6 +32,7 @@ import {
   type BomHeader,
   type CreateBomLineInput,
 } from '@/hooks/useManufacturing';
+import { RoutingEditor } from '@/components/admin/manufacturing/RoutingEditor';
 
 interface Props {
   open: boolean;
@@ -400,6 +401,19 @@ export function BomEditorDialog({ open, onOpenChange, bom }: Props) {
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div className="border-t pt-4">
+              {isEdit && bom ? (
+                <RoutingEditor bomId={bom.id} />
+              ) : (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold">Routing</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Save the BOM first — routing operations can be added after the BOM exists.
+                  </p>
+                </div>
+              )}
             </div>
 
             {errors.length > 0 && (

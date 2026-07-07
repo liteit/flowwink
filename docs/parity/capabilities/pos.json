@@ -80,10 +80,10 @@
       "id": "tipping",
       "name": "Tipping",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 1,
       "verify": "pos_sales.tip_cents + add_tip RPC/skill (records tip + tip payment row) (migration 20260613050000)",
-      "notes": "Verified on LOCAL Supabase 2026-06-13 (add_tip accumulates tip + payment row; grand_total = goods + tip). Pending: tip prompt in POS UI + Stage-3 before done."
+      "notes": "Dual-surface DONE 2026-07-07. Skill: add_tip RPC verified LIVE on dev (rzhj): sale R-20260707-87201 tip 500 -> grand_total 5500. Admin UI: post-checkout 'Add a tip?' dialog (5/10/15%/custom) in POSPage Register tab via useAddTip hook; History shows '+ tip' and grand total (commit eb8b51d6)."
     },
     {
       "id": "receipt_templates",

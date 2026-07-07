@@ -72,20 +72,20 @@
       "id": "work_centers_routing",
       "name": "Work centers + routing operations",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 3,
       "verify": "work_centers + routing_operations tables + manage_work_center/manage_routing_operation skills (migration 20260613040000)",
-      "notes": "Built + verified on LOCAL Supabase 2026-06-13 (2 WOs: Cut 150min/15000, Assemble 300min/45000; idempotent). Pending: shop-floor/work-order admin UI + Stage-3 fleet deploy before done.",
+      "notes": "Dual-surface DONE 2026-07-07. Skills: manage_work_center + manage_routing_operation verified LIVE on dev (CUT/ASM centers, 2 routing ops on Sensor Housing BOM). Admin UI: Work Centers tab (CRUD dialog) + Routing section in BomEditorDialog (WorkCentersTab.tsx, RoutingEditor.tsx; evil-merge clobber restored in this commit).",
       "epic": "EPIC-08"
     },
     {
       "id": "work_orders",
       "name": "Work-order generation",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 2,
       "verify": "mo_work_orders + generate_mo_work_orders (materialises a MO's work orders from BOM routing) (migration 20260613040000)",
-      "notes": "Built + verified on LOCAL Supabase 2026-06-13 (2 WOs: Cut 150min/15000, Assemble 300min/45000; idempotent). Pending: shop-floor/work-order admin UI + Stage-3 fleet deploy before done.",
+      "notes": "Dual-surface DONE 2026-07-07. Skill: generate_mo_work_orders verified LIVE on dev: MO-2026-0002 -> 2 WOs, 135 min, 180000 cents labor (idempotent). Admin UI: MoWorkOrdersPanel on each MO card with Generate button + WO list + totals (evil-merge clobber restored in this commit).",
       "epic": "EPIC-08"
     },
     {
@@ -100,10 +100,10 @@
       "id": "mrp_reorder",
       "name": "Auto-MO on reorder point",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 2,
       "verify": "mrp_reorder_run(dry_run) — draft MOs for active-BOM products below reorder point with no open MO (migration 20260614070000)",
-      "notes": "Built + scratch-Postgres verified 2026-06-14: 1 candidate (on_hand 2 ≤ reorder 10, has BOM), live created MO qty 8 draft/reorder; bought item + above-reorder skipped; rerun=0 (open-MO guard). Pending: MRP UI + Stage-3 before done.",
+      "notes": "Single-surface threshold MRP DONE 2026-07-07 (min/max two-bin still out of scope). Skill: mrp_reorder_run verified LIVE on dev: dry run -> 1 candidate (Sensor Housing V2, on hand -5, reorder 10, suggested 15); open-MO guard + BOM join confirmed. Admin UI: MRP tab with Check shortages (dry run), candidate table, Create draft MOs (commit 64538743).",
       "epic": "EPIC-08"
     },
     {
@@ -142,10 +142,10 @@
       "id": "labor_cost",
       "name": "Labor/overhead cost",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 1,
       "verify": "work_centers.cost_per_hour_cents → mo_work_orders.planned_labor_cost_cents via generate_mo_work_orders",
-      "notes": "Built + verified on LOCAL Supabase 2026-06-13 (2 WOs: Cut 150min/15000, Assemble 300min/45000; idempotent). Pending: shop-floor/work-order admin UI + Stage-3 fleet deploy before done."
+      "notes": "Dual-surface DONE 2026-07-07. Planned labor = minutes/60 x work-center rate, verified LIVE on dev (135 min -> 1800.00 across CUT 600/h + ASM 900/h). Admin UI: per-WO planned labor cost + total in MoWorkOrdersPanel; work-center hourly rates editable in Work Centers tab."
     },
     {
       "id": "quality_inspection",

@@ -22,15 +22,14 @@ category: reference
 | **fixed-assets** | Accounting → Assets | L3 → L4 | `████░░░░░░` 44% | 7/0/7 | — |
 | **timesheets** | Timesheets (account.analytic.line) | L3 → L4 | `████░░░░░░` 44% | 7/0/7 | — |
 | **payroll** | Payroll (hr.payslip) | L2 → L4 | `█████░░░░░` 45% | 8/2/7 | EPIC-08 |
-| **pos** | Point of Sale (pos.order) | L3 → L4 | `█████░░░░░` 47% | 8/1/7 | — |
 | **subscriptions** | Subscriptions (sale.subscription) | L3 → L4 | `█████░░░░░` 47% | 7/0/7 | — |
 | **tickets** | Helpdesk (helpdesk.ticket) | L3 → L4 | `█████░░░░░` 48% | 8/0/9 | EPIC-07 |
 | **calendar** | Calendar (calendar.event) | L3 → L4 | `█████░░░░░` 50% | 2/0/3 | — |
 | **chat** | Livechat + chatbot | L3 → L4 | `█████░░░░░` 50% | 0/5/0 | EPIC-06, EPIC-07 |
 | **global-blocks** | Website building blocks/snippets | L3 → L4 | `█████░░░░░` 50% | 0/4/0 | EPIC-06 |
+| **pos** | Point of Sale (pos.order) | L3 → L4 | `█████░░░░░` 50% | 9/0/7 | — |
 | **resume** | Employees → Skills / niche consultant pool | L2 → L4 | `█████░░░░░` 50% | 3/0/3 | — |
 | **templates** | Website themes | L3 → L4 | `█████░░░░░` 50% | 0/4/0 | EPIC-06 |
-| **manufacturing** | Manufacturing (mrp.production) | L2 → L4 | `█████░░░░░` 52% | 8/4/6 | EPIC-08 |
 | **projects** | Project (project.project/project.task) | L3 → L4 | `█████░░░░░` 53% | 7/0/6 | — |
 | **recruitment** | Recruitment (hr.applicant) | L3 → L4 | `█████░░░░░` 53% | 9/0/7 | — |
 | **sla** | Helpdesk SLA policies | L3 → L4 | `█████░░░░░` 53% | 8/0/7 | — |
@@ -55,6 +54,7 @@ category: reference
 | **deals** | CRM/Sales (crm.lead opportunities) | L4 → L4 | `███████░░░` 68% | 6/1/4 | — |
 | **inventory** | Inventory (stock) | L3 → L4 | `███████░░░` 69% | 10/1/5 | — |
 | **returns** | Inventory returns / RMA | L2 → L4 | `███████░░░` 69% | 9/0/4 | — |
+| **manufacturing** | Manufacturing (mrp.production) | L2 → L4 | `███████░░░` 70% | 12/0/6 | — |
 | **pages** | Website (website.page) | L4 → L4 | `███████░░░` 70% | 5/0/3 | — |
 | **crm** | CRM (crm.lead, crm.stage) | L4 → L4 | `███████░░░` 72% | 8/1/3 | — |
 | **hr** | Employees + Time Off + Attendances + Appraisals (hr.employee) | L3 → L4 | `████████░░` 76% | 15/0/5 | — |
@@ -97,6 +97,5 @@ category: reference
 | Module | Capability | Status | Epic |
 |---|---|---|---|
 | contact-center | Presence-aware routing → queue → escalation | partial | EPIC-07 |
-| manufacturing | Work centers + routing operations | partial | EPIC-08 |
 | reconciliation | Live bank feeds (Plaid/Tink/GoCardless) | missing | — |
 

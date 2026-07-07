@@ -12,6 +12,8 @@ import { BomEditorDialog } from '@/components/admin/manufacturing/BomEditorDialo
 import { MoStatusBadge } from '@/components/admin/manufacturing/MoStatusBadge';
 import { MoTimeline } from '@/components/admin/manufacturing/MoTimeline';
 import { MoActivityFeed } from '@/components/admin/manufacturing/MoActivityFeed';
+import { WorkCentersTab } from '@/components/admin/manufacturing/WorkCentersTab';
+import { MoWorkOrdersPanel } from '@/components/admin/manufacturing/MoWorkOrdersPanel';
 import { useProducts } from '@/hooks/useProducts';
 import { logger } from '@/lib/logger';
 import {
@@ -120,6 +122,7 @@ function MoList() {
                 completedAt={mo.completed_at as string | null | undefined}
                 cancelledAt={(mo as { cancelled_at?: string | null }).cancelled_at ?? null}
               />
+              <MoWorkOrdersPanel moId={String(mo.id)} />
             </CardContent>
           </Card>
         );
@@ -325,11 +328,13 @@ export default function ManufacturingPage() {
           <TabsList>
             <TabsTrigger value="orders">Manufacturing Orders</TabsTrigger>
             <TabsTrigger value="boms">Bills of Materials</TabsTrigger>
+            <TabsTrigger value="work-centers">Work Centers</TabsTrigger>
             <TabsTrigger value="mrp">MRP</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
           <TabsContent value="orders" className="mt-4"><MoList /></TabsContent>
           <TabsContent value="boms" className="mt-4"><BomList /></TabsContent>
+          <TabsContent value="work-centers" className="mt-4"><WorkCentersTab /></TabsContent>
           <TabsContent value="mrp" className="mt-4"><MrpTab /></TabsContent>
           <TabsContent value="activity" className="mt-4"><MoActivityFeed /></TabsContent>
         </Tabs>
