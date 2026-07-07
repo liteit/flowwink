@@ -16,6 +16,10 @@ import { AttendancePanel } from "@/components/admin/hr/AttendancePanel";
 import { SkillsPanel } from "@/components/admin/hr/SkillsPanel";
 import { ContractsPanel } from "@/components/admin/hr/ContractsPanel";
 import { LeaveBalancesPanel } from "@/components/admin/hr/LeaveBalancesPanel";
+import { CompensationPanel } from "@/components/admin/hr/CompensationPanel";
+import { TrainingPanel } from "@/components/admin/hr/TrainingPanel";
+import { DisciplinaryPanel } from "@/components/admin/hr/DisciplinaryPanel";
+import { ShiftsPanel } from "@/components/admin/hr/ShiftsPanel";
 import { Users, CalendarOff, AlertTriangle } from "lucide-react";
 
 export default function HRPage() {
@@ -75,6 +79,10 @@ export default function HRPage() {
             <TabsTrigger value="attendance">Attendance</TabsTrigger>
             <TabsTrigger value="skills">Skills & Certs</TabsTrigger>
             <TabsTrigger value="contracts">Contracts</TabsTrigger>
+            <TabsTrigger value="compensation">Compensation</TabsTrigger>
+            <TabsTrigger value="training">Training</TabsTrigger>
+            <TabsTrigger value="disciplinary">Disciplinary</TabsTrigger>
+            <TabsTrigger value="shifts">Shifts</TabsTrigger>
           </TabsList>
           <TabsContent value="employees">
             <Card>
@@ -133,6 +141,18 @@ export default function HRPage() {
           </TabsContent>
           <TabsContent value="contracts">
             <ContractsPanel />
+          </TabsContent>
+          <TabsContent value="compensation">
+            <CompensationPanel />
+          </TabsContent>
+          <TabsContent value="training">
+            <TrainingPanel />
+          </TabsContent>
+          <TabsContent value="disciplinary">
+            <DisciplinaryPanel />
+          </TabsContent>
+          <TabsContent value="shifts">
+            <ShiftsPanel />
           </TabsContent>
         </Tabs>
       </AdminPageContainer>
