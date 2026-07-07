@@ -89,6 +89,8 @@ export function LedgerTab() {
               key={account.account_code}
               code={account.account_code}
               name={account.account_name}
+              opening_cents={account.opening_cents}
+              closing_cents={account.closing_cents}
               fmt={fmt}
             />
           ))}
