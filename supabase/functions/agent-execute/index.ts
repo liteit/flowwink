@@ -6233,6 +6233,19 @@ async function executeDbAction(
         (vendorRows || []).map((v: any) => [String(v.name).toLowerCase().trim(), v.last_used_template_id]),
       );
 
+      // Graduated counterparty confidence (Accounted-style trust ramp): a set
+      // default starts at 88 (review lane), +5 per CONFIRMED booking of this
+      // counterparty, capped 98 — after two confirmations it books itself.
+      const { data: bookedCounts } = await supabase.from('bank_transactions')
+        .select('counterparty')
+        .not('journal_entry_id', 'is', null)
+        .not('counterparty', 'is', null);
+      const confirmedByCounterparty = new Map<string, number>();
+      for (const r of bookedCounts || []) {
+        const k = String(r.counterparty).toLowerCase().trim();
+        confirmedByCounterparty.set(k, (confirmedByCounterparty.get(k) || 0) + 1);
+      }
+
       const proposals = (events || []).map((ev: any) => {
         const searchTerms = `${ev.counterparty || ''} ${ev.description || ''} ${ev.reference || ''}`.trim();
         const grossCents = Math.abs(ev.amount_cents || 0);
@@ -6271,19 +6284,21 @@ async function executeDbAction(
         if (vendorTpl) {
           const isPctV = acctIsPctTemplate(vendorTpl.template_lines);
           const netBaseV = isPctV ? acctNetBaseFromGross(vendorTpl.template_lines, grossCents) : grossCents;
+          const confirmed = confirmedByCounterparty.get(String(ev.counterparty || '').toLowerCase().trim()) || 0;
+          const vendorConfidence = Math.min(98, 88 + 5 * confirmed);
           return {
             ...base,
-            status: 'auto',
-            confidence: 98,
+            status: vendorConfidence >= 95 ? 'auto' : 'propose',
+            confidence: vendorConfidence,
             suggested_template_id: vendorTpl.id,
             suggested_template_name: vendorTpl.template_name,
             suggested_amount_cents: netBaseV,
-            match_details: ['vendor-default'],
+            match_details: ['vendor-default', `booked ${confirmed} time(s) before for this counterparty`],
             proposed_lines: isPctV
               ? acctExpandTemplateLines(vendorTpl.template_lines, netBaseV)
               : vendorTpl.template_lines,
             top_candidates: [
-              { template_id: vendorTpl.id, name: vendorTpl.template_name, confidence: 98 },
+              { template_id: vendorTpl.id, name: vendorTpl.template_name, confidence: vendorConfidence },
               ...scored.slice(0, 2).map((s) => ({ template_id: s.template.id, name: s.template.template_name, confidence: s.confidence })),
             ],
           };
@@ -6851,9 +6866,10 @@ async function executeDbAction(
       // transport failures hit this instead of creating duplicates.
       const bankTxIdForGuard = (args as any).bank_transaction_id;
       let bankTxDate: string | null = null;
+      let bankTxCounterparty: string | null = null;
       if (bankTxIdForGuard) {
         const { data: existingTx } = await supabase.from('bank_transactions')
-          .select('journal_entry_id, transaction_date').eq('id', bankTxIdForGuard).maybeSingle();
+          .select('journal_entry_id, transaction_date, counterparty').eq('id', bankTxIdForGuard).maybeSingle();
         // Stale-reference guard: booking against a bank event that no longer
         // exists means the caller is working from stale data (cached proposals
         // after a wipe/re-import). Refuse instead of creating an orphan entry.
@@ -6872,6 +6888,7 @@ async function executeDbAction(
         // must not land on today's date (it would fall outside the fiscal
         // year and vanish from year-filtered views).
         bankTxDate = existingTx.transaction_date as string;
+        bankTxCounterparty = (existingTx.counterparty as string) || null;
       }
 
       // Explicit period-lock check (sweep finding #B3). The DB trigger
@@ -6937,6 +6954,26 @@ async function executeDbAction(
           .update({ journal_entry_id: entry.id, status: 'matched' })
           .eq('id', bankTxId);
         if (linkErr) console.warn(`[accounting] bank_transaction link failed: ${linkErr.message}`);
+
+        // LEARNING LOOP (Accounted-style): every confirmed booking of a bank
+        // event teaches the counterparty its template. Next proposal for this
+        // counterparty rides the vendor-default trust ramp (88 + 5×confirmed).
+        if (bankTxCounterparty && explicitTemplateId) {
+          const { data: existingVendor } = await supabase.from('vendors')
+            .select('id').ilike('name', bankTxCounterparty).maybeSingle();
+          if (existingVendor) {
+            await supabase.from('vendors')
+              .update({ last_used_template_id: explicitTemplateId })
+              .eq('id', existingVendor.id);
+          } else {
+            await supabase.from('vendors').insert({
+              name: bankTxCounterparty,
+              is_active: true,
+              last_used_template_id: explicitTemplateId,
+              notes: 'Auto-learned from agentic bookkeeping (counterparty → template).',
+            });
+          }
+        }
       }
 
       return {

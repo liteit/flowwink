@@ -106,4 +106,11 @@ describe('dual-axis guardrails', () => {
     expect(src).toContain('vendorDefaults');
     expect(src).toContain("match_details: ['vendor-default']");
   });
+
+  it('learning loop: confirmed bookings teach the counterparty its template (graduated trust ramp)', () => {
+    const src = read('supabase/functions/agent-execute/index.ts');
+    expect(src).toContain('confirmedByCounterparty');
+    expect(src).toContain('Math.min(98, 88 + 5 * confirmed)');
+    expect(src).toContain('Auto-learned from agentic bookkeeping');
+  });
 });
