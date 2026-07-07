@@ -104,7 +104,213 @@ const FIELD_SERVICE_SKILLS: SkillSeed[] = [
       },
     },
     instructions:
-      'Lifecycle: draft → scheduled (assign technician + slot) → in_progress (auto when visit starts) → completed (sets completed_at, emits service_order.completed) → invoiced (when invoice is generated). Use add_line to append labor/material before completion. After completion, the platform event triggers invoicing automation.',
+      'Lifecycle: draft → scheduled (assign technician + slot) → in_progress (auto when visit starts) → completed (sets completed_at, emits service_order.completed) → invoiced (when invoice is generated). Use add_line to append labor/material before completion. After completion, the platform event triggers invoicing automation. Before scheduling, call check_technician_availability to avoid double-booking.',
+  },
+  {
+    name: 'check_technician_availability',
+    description:
+      'Check whether a technician is free in a time window before scheduling a service visit. Returns conflicts (overlapping non-cancelled visits). Use when: about to schedule/reschedule a service order visit. NOT for: booking appointments (manage_booking), calendar events (manage_calendar_event).',
+    category: 'system',
+    handler: 'rpc:check_technician_availability',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'check_technician_availability',
+        description: 'Overlap check against service_visits. Returns { available, conflicts[] }.',
+        parameters: {
+          type: 'object',
+          required: ['p_technician_id', 'p_start', 'p_end'],
+          properties: {
+            p_technician_id: { type: 'string', format: 'uuid' },
+            p_start: { type: 'string', description: 'ISO timestamp — window start' },
+            p_end: { type: 'string', description: 'ISO timestamp — window end' },
+            p_exclude_visit_id: { type: 'string', format: 'uuid', description: 'Ignore this visit (when rescheduling it)' },
+          },
+        },
+      },
+    },
+    instructions:
+      'Call before manage_service_order(schedule). available=false comes with a conflicts array (visit_id, order_number, scheduled window). When rescheduling an existing visit, pass p_exclude_visit_id so it does not conflict with itself.',
+  },
+  {
+    name: 'record_visit_time',
+    description:
+      'Clock a technician in/out of a service visit (writes actual_start/actual_end). Use when: technician arrives on site (start) or finishes the job (stop). NOT for: office time tracking (log_time), scheduling the visit (manage_service_order).',
+    category: 'system',
+    handler: 'rpc:record_visit_time',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'record_visit_time',
+        description: 'start: sets actual_start + visit/order in_progress + order first_response_at. stop: sets actual_end + visit done, returns duration_minutes.',
+        parameters: {
+          type: 'object',
+          required: ['p_visit_id', 'p_action'],
+          properties: {
+            p_visit_id: { type: 'string', format: 'uuid' },
+            p_action: { type: 'string', enum: ['start', 'stop'] },
+            p_at: { type: 'string', description: 'ISO timestamp (default now) — backfill an earlier clock-in/out' },
+          },
+        },
+      },
+    },
+    instructions:
+      'start before stop; each can only happen once per visit. start also bubbles the service order to in_progress and stamps first_response_at (feeds SLA response tracking). Get visit ids via manage_service_order(list_visits).',
+  },
+  {
+    name: 'record_visit_proof',
+    description:
+      'Attach proof of service to a visit: customer signature, photos, signer name. Use when: job done and the customer signs off / technician photographs the work. NOT for: uploading unrelated documents (upload_document).',
+    category: 'system',
+    handler: 'rpc:record_visit_proof',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'record_visit_proof',
+        description: 'Writes signature_url/signed_by (+signed_at) and appends photo URLs to proof_photos on a service visit.',
+        parameters: {
+          type: 'object',
+          required: ['p_visit_id'],
+          properties: {
+            p_visit_id: { type: 'string', format: 'uuid' },
+            p_signature_url: { type: 'string', description: 'URL of the captured signature image' },
+            p_photo_urls: { type: 'array', items: { type: 'string' }, description: 'Photo URLs to append as proof' },
+            p_signed_by: { type: 'string', description: 'Name of the person who signed' },
+            p_notes: { type: 'string', description: 'Appended to technician_notes' },
+          },
+        },
+      },
+    },
+    instructions:
+      'At least one of p_signature_url / p_photo_urls / p_signed_by is required. signed_at is stamped automatically the first time a signature or signer is recorded. Upload images first (e.g. manage_media/upload_document) and pass the resulting URLs.',
+  },
+  {
+    name: 'manage_service_sla',
+    description:
+      'Set and track SLA targets (response/resolution deadlines) on service orders. Use when: an order must be answered or resolved within N hours; reviewing SLA breaches. NOT for: support-ticket SLAs (sla module), scheduling (manage_service_order).',
+    category: 'system',
+    handler: 'rpc:manage_service_sla',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'manage_service_sla',
+        description: 'set: compute sla_response_due/sla_resolution_due from created_at + hours. status: SLA state for one order. list_breaches: open orders past a due date.',
+        parameters: {
+          type: 'object',
+          required: ['p_action'],
+          properties: {
+            p_action: { type: 'string', enum: ['set', 'status', 'list_breaches'] },
+            p_order_id: { type: 'string', format: 'uuid', description: 'Required for set/status' },
+            p_response_hours: { type: 'number', description: 'Hours from order creation to first response' },
+            p_resolution_hours: { type: 'number', description: 'Hours from order creation to completion' },
+          },
+        },
+      },
+    },
+    instructions:
+      'Deadlines are computed from the order created_at. first_response_at is stamped by record_visit_time(start); resolution is met when completed_at <= sla_resolution_due. status returns response_met/resolution_met (null = pending).',
+  },
+  {
+    name: 'manage_service_package',
+    description:
+      'Reusable service package templates (predefined labor/material line bundles) and applying them to orders. Use when: standard jobs like "AC install" or "annual boiler service" should prefill order lines. NOT for: product bundles in the shop (manage_product).',
+    category: 'system',
+    handler: 'rpc:manage_service_package',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'manage_service_package',
+        description: 'create/update/list/get/delete packages; apply copies package lines onto a service order (order total recomputes automatically).',
+        parameters: {
+          type: 'object',
+          required: ['p_action'],
+          properties: {
+            p_action: { type: 'string', enum: ['create', 'update', 'list', 'get', 'delete', 'apply'] },
+            p_package_id: { type: 'string', format: 'uuid' },
+            p_order_id: { type: 'string', format: 'uuid', description: 'Target order for apply' },
+            p_name: { type: 'string' },
+            p_description: { type: 'string' },
+            p_lines: {
+              type: 'array',
+              description: 'Package lines',
+              items: {
+                type: 'object',
+                properties: {
+                  kind: { type: 'string', enum: ['labor', 'material', 'expense', 'other'] },
+                  description: { type: 'string' },
+                  quantity: { type: 'number' },
+                  unit_price: { type: 'number' },
+                  product_id: { type: 'string', format: 'uuid' },
+                },
+              },
+            },
+            p_active: { type: 'boolean' },
+          },
+        },
+      },
+    },
+    instructions:
+      'apply requires p_package_id + p_order_id and appends the package lines to the order (idempotency is the caller\'s responsibility — applying twice duplicates lines). Material lines with product_id will draw stock on completion.',
+  },
+  {
+    name: 'link_service_order',
+    description:
+      'Link a service order to a contract, project and/or deal (or unlink). Use when: on-site work is covered by a service contract, belongs to a project, or originates from a deal. NOT for: creating contracts (manage_contract).',
+    category: 'system',
+    handler: 'rpc:link_service_order',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'link_service_order',
+        description: 'Sets contract_id/project_id/deal_id on a service order after validating the target exists. p_unlink clears one link.',
+        parameters: {
+          type: 'object',
+          required: ['p_order_id'],
+          properties: {
+            p_order_id: { type: 'string', format: 'uuid' },
+            p_contract_id: { type: 'string', format: 'uuid' },
+            p_project_id: { type: 'string', format: 'uuid' },
+            p_deal_id: { type: 'string', format: 'uuid' },
+            p_unlink: { type: 'string', enum: ['contract', 'project', 'deal'], description: 'Clear this link instead of setting one' },
+          },
+        },
+      },
+    },
+    instructions:
+      'Find the contract via manage_contract(list)/search first, then link by uuid. Recurring orders inherit links onto generated child orders.',
+  },
+  {
+    name: 'manage_recurring_service_order',
+    description:
+      'Recurring service orders: set a recurrence rule on an order and auto-generate the next occurrences (daily cron). Use when: maintenance repeats weekly/monthly/quarterly/yearly. NOT for: recurring invoices (subscriptions module), one-off scheduling (manage_service_order).',
+    category: 'system',
+    handler: 'rpc:manage_recurring_service_order',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'manage_recurring_service_order',
+        description: 'set: rule weekly|biweekly|monthly|quarterly|yearly (+ optional until date). clear: stop recurrence. list: all recurring orders. generate: spawn due occurrences now (also runs via daily cron).',
+        parameters: {
+          type: 'object',
+          required: ['p_action'],
+          properties: {
+            p_action: { type: 'string', enum: ['set', 'clear', 'list', 'generate'] },
+            p_order_id: { type: 'string', format: 'uuid', description: 'Required for set/clear' },
+            p_rule: { type: 'string', enum: ['weekly', 'biweekly', 'monthly', 'quarterly', 'yearly'] },
+            p_until: { type: 'string', description: 'YYYY-MM-DD — stop generating after this date' },
+          },
+        },
+      },
+    },
+    instructions:
+      'Generated children are draft orders cloned from the source (lines, links, customer) with parent_order_id set; schedule them normally afterwards. The service-recurring-orders cron runs generate daily at 05:10.',
   },
 ];
 
@@ -132,9 +338,18 @@ const fieldServiceModule = defineModule<Input, Output>({
   tier: 'extended',
   inputSchema,
   outputSchema,
-  skills: ['manage_service_order'],
+  skills: [
+    'manage_service_order',
+    'check_technician_availability',
+    'record_visit_time',
+    'record_visit_proof',
+    'manage_service_sla',
+    'manage_service_package',
+    'link_service_order',
+    'manage_recurring_service_order',
+  ],
   data: {
-    tables: ['service_order_lines', 'service_visits', 'service_orders'],
+    tables: ['service_order_lines', 'service_visits', 'service_orders', 'service_packages'],
   },
   skillSeeds: FIELD_SERVICE_SKILLS,
   automations: FIELD_SERVICE_AUTOMATIONS,

@@ -1,7 +1,7 @@
 {
   "module": "field-service",
   "odoo_app": "Field Service (industry_fsm)",
-  "current_maturity": "L2",
+  "current_maturity": "L3",
   "target_maturity": "L4",
   "capabilities": [
     {
@@ -48,61 +48,64 @@
       "id": "technician_availability",
       "name": "Technician availability check",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 2,
-      "verify": "Technician availability check before scheduling"
+      "verify": "check_technician_availability RPC/skill (migration 20260707213000): overlap check against non-cancelled service_visits, p_exclude_visit_id for reschedules",
+      "notes": "Verified LIVE on dev 2026-07-07 via gateway: available=true before scheduling SO-00001, available=false with conflict payload after."
     },
     {
       "id": "signature_proof",
       "name": "Signature/photo proof",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 2,
-      "verify": "Signature/photo capture as proof of service",
-      "notes": "service_visits has signature_url + signed_at columns, but no skill/handler/UI writes them — schema only, no capture flow."
+      "verify": "record_visit_proof RPC/skill writes signature_url + signed_by + signed_at + proof_photos (new jsonb column) + technician_notes append (migration 20260707213000)",
+      "notes": "Verified LIVE on dev 2026-07-07: signature URL, signer name, 2 photos and notes persisted on visit bd93c5a8."
     },
     {
       "id": "parts_inventory_deduction",
       "name": "Material stock deduction",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 2,
-      "verify": "emit_service_order_event trigger emits stock.movement (negative qty) per material line on completion (migration 20260614010000); consumed by the existing trg_agent_events_stock_movement trigger -> handle_stock_movement_event() -> apply_stock_movement_event() (baseline migration, same generic agent_events listener pos.stock_movement_events already relies on)",
-      "notes": "Built + scratch-Postgres verified 2026-06-14: completing an order emits one stock.movement per material line (-2, -5), labor lines none, no double-deduct on re-save. Confirmed by code read that the consuming trigger (trg_agent_events_stock_movement) is real, generic infrastructure already in the schema baseline and is the identical mechanism used by pos.stock_movement_events (status: done) — no bespoke field-service listener needed. Pending: Stage-3 runtime verify (actual quant decrement on a live instance) before done.",
-      "epic": "EPIC-05"
+      "verify": "emit_service_order_event emits stock.movement per material line on completion; consumer apply_stock_movement_event(jsonb) now accepts qty_delta|quantity_delta|quantity|qty (migration 20260707213000)",
+      "notes": "Stage-3 LIVE verified on dev 2026-07-07: completing SO-00001 (2× material w/ product) decremented products.stock_quantity 20→18 and stock_quants by -2. Two drift bugs fixed in-round: (1) dev still ran the pre-20260614010000 emitter (backdated migration silently skipped); (2) the live consumer only read qty_delta while emitters (incl. record_pos_sale_v2) send quantity — every deduction platform-wide was a silent no-op."
     },
     {
       "id": "visit_time_tracking",
       "name": "Actual visit time tracking",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 1,
-      "verify": "Actual on-site visit time tracked",
-      "notes": "service_visits has actual_start + actual_end columns, but no skill/handler/UI writes them — schema only, no clock-in/out flow."
+      "verify": "record_visit_time RPC/skill: start/stop clock writes actual_start/actual_end, bubbles order to in_progress, stamps first_response_at (migration 20260707213000)",
+      "notes": "Verified LIVE on dev 2026-07-07: clock-in/out on visit bd93c5a8 with duration returned."
     },
     {
       "id": "sla_targets",
       "name": "Service SLA targets",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "Service SLA targets on orders"
+      "verify": "manage_service_sla RPC/skill: set (response/resolution hours from created_at), status (response_met/resolution_met), list_breaches; sla_response_due/sla_resolution_due/first_response_at columns (migration 20260707213000)",
+      "notes": "Verified LIVE on dev 2026-07-07: set 4h/48h on SO-00001; after clock-in + completion status returned response_met=true, resolution_met=true."
     },
     {
       "id": "service_packages",
       "name": "Service package templates",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "Reusable service package templates"
+      "verify": "service_packages table + manage_service_package RPC/skill (create/update/list/get/delete/apply); apply copies lines onto the order, total recomputes via existing trigger (migration 20260707213000)",
+      "notes": "Verified LIVE on dev 2026-07-07: AC Service Package (labor+material) applied to SO-00001, 2 lines added, order_total 2400."
     },
     {
       "id": "recurring_orders",
       "name": "Recurring service orders",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "Recurring service order generation"
+      "verify": "recurrence_rule/recurrence_until/next_occurrence_at/parent_order_id columns + manage_recurring_service_order RPC/skill (set/clear/list/generate) + service-recurring-orders pg_cron daily 05:10 (migration 20260707213000)",
+      "notes": "Verified LIVE on dev 2026-07-07: monthly rule set on SO-00001, generate spawned draft child 443a436c with cloned lines/links. Cron registered on dev."
     },
     {
       "id": "territory_routing",
@@ -116,9 +119,10 @@
       "id": "contract_linking",
       "name": "Service contract linking",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "Orders link to service contracts"
+      "verify": "link_service_order RPC/skill sets contract_id/project_id/deal_id (existing columns) with existence validation + unlink (migration 20260707213000)",
+      "notes": "Verified LIVE on dev 2026-07-07: SO-00001 linked to contract 626b6c00. Recurring children inherit links."
     }
   ]
 }

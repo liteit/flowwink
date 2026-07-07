@@ -205,6 +205,93 @@ AI-powered matching of consultants to a job description.
     },
     instructions: `## reindex_consultants\n### What\nProcesses stale consultant profile embeddings in batches.\n### When to use\n- Scheduled background job (every 10 min by default).\n- After importing many consultants.\n### Parameters\n- action: only \"reindex_stale\" is supported today.\n- limit: defaults to 25, max 100.`,
   },
+  {
+    name: 'manage_consultant_assignment',
+    description: 'Track consultant assignments/engagements: which client a consultant works for, allocation %, rate, period, linked contract/SOW. Use when: staffing a consultant on a client engagement; updating or ending an assignment; listing who works where. NOT for: profile edits (manage_consultant_profile), employee records (hr module).',
+    category: 'content',
+    handler: 'rpc:manage_consultant_assignment',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'manage_consultant_assignment',
+        description: 'create/update/end/get/list consultant assignments. list filters by p_consultant_id and/or p_status.',
+        parameters: {
+          type: 'object',
+          required: ['p_action'],
+          properties: {
+            p_action: { type: 'string', enum: ['create', 'update', 'end', 'get', 'list'] },
+            p_assignment_id: { type: 'string', format: 'uuid', description: 'Required for update/end/get' },
+            p_consultant_id: { type: 'string', format: 'uuid', description: 'Required for create; list filter' },
+            p_client_name: { type: 'string', description: 'Required for create' },
+            p_company_id: { type: 'string', format: 'uuid', description: 'Link to a companies row' },
+            p_contract_id: { type: 'string', format: 'uuid', description: 'Link to the engagement contract/SOW in the contracts module' },
+            p_project_id: { type: 'string', format: 'uuid' },
+            p_role_title: { type: 'string', description: 'e.g. "Senior Backend Developer"' },
+            p_start_date: { type: 'string', description: 'YYYY-MM-DD (default today)' },
+            p_end_date: { type: 'string', description: 'YYYY-MM-DD' },
+            p_allocation_pct: { type: 'number', description: '1-100, default 100' },
+            p_hourly_rate_cents: { type: 'number', description: 'Defaults to the consultant profile rate' },
+            p_currency: { type: 'string' },
+            p_status: { type: 'string', enum: ['planned', 'active', 'ended'] },
+            p_sow_url: { type: 'string', description: 'Statement-of-work document URL' },
+            p_notes: { type: 'string' },
+          },
+        },
+      },
+    },
+    instructions: 'Contract/SOW tracking: link p_contract_id (create the contract via manage_contract first) and/or attach p_sow_url. end sets status=ended with end_date (default today). Feeds consultant_utilization_report.',
+  },
+  {
+    name: 'consultant_utilization_report',
+    description: 'Utilization report for the consultant pool: allocation % per consultant over a date window, with assignment breakdown — spot bench time and overbooking. Use when: "who is free next month?", staffing reviews, utilization KPIs. NOT for: matching skills to a job (match_consultant).',
+    category: 'content',
+    handler: 'rpc:consultant_utilization_report',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'consultant_utilization_report',
+        description: 'Per active consultant: utilization_pct (allocation weighted by assignment overlap with the window; >100 = overbooked, 0 = bench) + assignments. Defaults to the current month.',
+        parameters: {
+          type: 'object',
+          properties: {
+            p_from: { type: 'string', description: 'YYYY-MM-DD (default: first of current month)' },
+            p_to: { type: 'string', description: 'YYYY-MM-DD (default: last of current month)' },
+            p_consultant_id: { type: 'string', format: 'uuid', description: 'Limit to one consultant' },
+          },
+        },
+      },
+    },
+    instructions: 'planned assignments are excluded; active and ended ones count for the days they overlap the window. Sorted by utilization descending — the tail is the bench.',
+  },
+  {
+    name: 'manage_consultant_rates',
+    description: 'Per-skill hourly-rate matrix for consultants (e.g. React 1200 kr/h, DevOps 1400 kr/h) on top of the profile default rate. Use when: quoting engagements per competence, maintaining the rate card, comparing rates across the pool. NOT for: product price lists (pricelists module).',
+    category: 'content',
+    handler: 'rpc:manage_consultant_rates',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'manage_consultant_rates',
+        description: 'set (upsert consultant+skill rate), delete, list, matrix (consultants × skills rate grid incl. profile default rate).',
+        parameters: {
+          type: 'object',
+          required: ['p_action'],
+          properties: {
+            p_action: { type: 'string', enum: ['set', 'delete', 'list', 'matrix'] },
+            p_consultant_id: { type: 'string', format: 'uuid', description: 'Required for set/delete; list filter' },
+            p_skill: { type: 'string', description: 'Skill name, e.g. "React" — one rate per consultant+skill' },
+            p_level: { type: 'string', enum: ['junior', 'mid', 'senior', 'expert'] },
+            p_hourly_rate_cents: { type: 'number', description: 'Required for set (minor units, e.g. öre)' },
+            p_currency: { type: 'string', description: 'Default SEK' },
+          },
+        },
+      },
+    },
+    instructions: 'set upserts on (consultant_id, skill). matrix returns every active consultant with default_hourly_rate_cents (profile) plus a {skill: rate} map — use it for quoting and rate-card exports.',
+  },
 ];
 
 
@@ -225,7 +312,13 @@ export const resumeModule = defineModule<ResumeMatchInput, ResumeMatchOutput>({
     'match_consultant',
     'consultant_checkin_update',
     'reindex_consultants',
+    'manage_consultant_assignment',
+    'consultant_utilization_report',
+    'manage_consultant_rates',
   ],
+  data: {
+    tables: ['consultant_profiles', 'consultant_assignments', 'consultant_skill_rates'],
+  },
   skillSeeds: RESUME_SKILLS,
 
   automations: [

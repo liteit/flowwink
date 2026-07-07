@@ -37,10 +37,10 @@
       "id": "theme_settings",
       "name": "Theme/brand settings",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 1,
-      "verify": "BrandingSettingsPage.tsx; site_branding_get/site_branding_update skills",
-      "notes": "Branding skills live in pages-module skillSeeds, not templates-module.",
+      "verify": "BrandingSettingsPage.tsx (admin UI) + site_branding_get/site_branding_update skills — both surfaces live and gateway-callable on dev",
+      "notes": "Flipped 2026-07-07: the only remaining nit was skill homing (branding skills seed from pages-module, not templates-module). Per the naming & skill-homing policy branding is a platform/pages-owned primitive consumed by templates — the capability itself (read + write theme/brand settings via UI and agent) is fully delivered, so homing is not a functional gap.",
       "epic": "EPIC-06"
     },
     {

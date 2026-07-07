@@ -274,6 +274,146 @@ const POS_SKILLS: SkillSeed[] = [
     },
     instructions: 'Redeems against an active card; raises on insufficient balance. Pair with a pos payment of method gift_card for the same amount. Admin/writer/service-role only.',
   },
+  {
+    name: 'manage_loyalty',
+    description: 'Loyalty/points program: enroll customers, check balances, earn/redeem/adjust points. Enrolled customers auto-earn 1 point per 10 currency units on completed sales. Use when: signing a customer up for the loyalty program, checking points, redeeming a reward. NOT for: gift cards (manage_gift_card).',
+    category: 'commerce',
+    handler: 'rpc:manage_loyalty',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'manage_loyalty',
+        description: 'enroll (by email), get (account + recent transactions), list, earn, redeem, adjust. Tiers bronze/silver/gold from lifetime points (5000/15000).',
+        parameters: {
+          type: 'object',
+          required: ['p_action'],
+          properties: {
+            p_action: { type: 'string', enum: ['enroll', 'get', 'list', 'earn', 'redeem', 'adjust'] },
+            p_customer_email: { type: 'string', description: 'Account key (required except for list)' },
+            p_customer_name: { type: 'string' },
+            p_points: { type: 'number', description: 'Points to earn/redeem (positive) or adjust (signed)' },
+            p_sale_id: { type: 'string', format: 'uuid', description: 'Related pos sale' },
+            p_note: { type: 'string' },
+          },
+        },
+      },
+    },
+    instructions: 'Auto-earn happens via DB trigger on completed pos_sales with a customer_email matching an enrolled account — earn manually only for out-of-band promotions. redeem raises on insufficient balance. Refunds via refund_pos_sale automatically claw back the proportional points.',
+  },
+  {
+    name: 'refund_pos_sale',
+    description: 'Refund a POS sale, fully or per line (creates a negative sale linked via refund_of, restocks returned products, reverses loyalty points). Use when: customer returns in-store goods / receipt correction. NOT for: e-commerce RMAs (create_return/refund_return), invoice credit notes.',
+    category: 'commerce',
+    handler: 'rpc:refund_pos_sale',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'refund_pos_sale',
+        description: 'Creates a refund sale (negative totals, RF- receipt) referencing the original. Omit p_lines for a full refund of everything remaining; over-refunds are rejected. Original status becomes refunded/partially_refunded.',
+        parameters: {
+          type: 'object',
+          required: ['p_sale_id'],
+          properties: {
+            p_sale_id: { type: 'string', format: 'uuid', description: 'The ORIGINAL sale id' },
+            p_lines: {
+              type: 'array',
+              description: 'Partial refund: which lines and quantities. Omit for full refund.',
+              items: {
+                type: 'object',
+                required: ['sale_line_id', 'quantity'],
+                properties: {
+                  sale_line_id: { type: 'string', format: 'uuid' },
+                  quantity: { type: 'number', description: 'Units to refund (positive)' },
+                },
+              },
+            },
+            p_reason: { type: 'string' },
+            p_method: { type: 'string', enum: ['cash', 'card', 'swish', 'klarna', 'gift_card', 'other'], description: 'Refund tender (default: original payment method)' },
+            p_session_id: { type: 'string', format: 'uuid', description: 'Open session to book the refund against' },
+          },
+        },
+      },
+    },
+    instructions: 'Get sale_line_ids from list_pos_sales / render_pos_receipt first. Products with product_id are restocked via stock.movement events. Per-line remaining quantities are tracked — refunding the same line twice beyond the sold quantity errors.',
+  },
+  {
+    name: 'pos_sale_to_invoice',
+    description: 'Convert a POS receipt into a draft invoice linked back to the sale (B2B customers who pay on invoice or need a formal invoice for a store purchase). Use when: "can I get an invoice for this receipt?". NOT for: refunds (refund_pos_sale), subscriptions.',
+    category: 'commerce',
+    handler: 'rpc:pos_sale_to_invoice',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'pos_sale_to_invoice',
+        description: 'Creates a draft invoice (POS-YYYYMMDD-#####) from the sale lines and stores invoice_id on the sale. Idempotent: returns the existing link if already invoiced.',
+        parameters: {
+          type: 'object',
+          required: ['p_sale_id'],
+          properties: {
+            p_sale_id: { type: 'string', format: 'uuid' },
+            p_customer_name: { type: 'string' },
+            p_customer_email: { type: 'string', description: 'Required if the sale has no customer_email on record' },
+            p_due_in_days: { type: 'number', description: 'Payment terms (default 30)' },
+          },
+        },
+      },
+    },
+    instructions: 'The invoice is created as draft — review and send via the invoicing skills/UI. Refund sales cannot be invoiced.',
+  },
+  {
+    name: 'render_pos_receipt',
+    description: 'Render a branded receipt for a POS sale: lines, payments, tax, tip, plus register receipt header/footer and site branding. Use when: printing/emailing a receipt, showing receipt details. NOT for: invoices (generate_invoice_pdf).',
+    category: 'commerce',
+    handler: 'rpc:render_pos_receipt',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'render_pos_receipt',
+        description: 'Returns { receipt: {lines, payments, totals, tip, refund info, invoice link}, template: {header, footer, register, site_branding} } for rendering.',
+        parameters: {
+          type: 'object',
+          required: ['p_sale_id'],
+          properties: {
+            p_sale_id: { type: 'string', format: 'uuid' },
+          },
+        },
+      },
+    },
+    instructions: 'Set per-register branding by updating pos_registers.receipt_header / receipt_footer. The template block carries site branding (logo, colors) from site_settings so any renderer can produce a branded receipt.',
+  },
+  {
+    name: 'manage_pos_table',
+    description: 'Table/seat management for food & beverage POS: create tables, seat guests (link a sale/tab), release. Use when: restaurant/café floor management, open tabs per table. NOT for: booking appointments (manage_booking).',
+    category: 'commerce',
+    handler: 'rpc:manage_pos_table',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'manage_pos_table',
+        description: 'create/update/list/delete tables; seat marks occupied (optionally linking a sale), release frees the table.',
+        parameters: {
+          type: 'object',
+          required: ['p_action'],
+          properties: {
+            p_action: { type: 'string', enum: ['create', 'update', 'list', 'delete', 'seat', 'release'] },
+            p_table_id: { type: 'string', format: 'uuid' },
+            p_name: { type: 'string', description: 'e.g. "Table 4"' },
+            p_area: { type: 'string', description: 'e.g. "Terrace"' },
+            p_seats: { type: 'number' },
+            p_register_id: { type: 'string', format: 'uuid' },
+            p_sale_id: { type: 'string', format: 'uuid', description: 'Sale/tab to link when seating' },
+            p_status: { type: 'string', enum: ['free', 'occupied', 'reserved'] },
+          },
+        },
+      },
+    },
+    instructions: 'Seating an occupied table errors — release it first. delete is a soft-deactivate. list includes the current sale receipt per table.',
+  },
 ];
 
 export const posModule = defineModule<Input, Output>({
@@ -288,9 +428,9 @@ export const posModule = defineModule<Input, Output>({
   inputSchema,
   outputSchema,
 
-  skills: ['open_pos_session', 'close_pos_session', 'record_pos_sale', 'list_pos_sales', 'record_pos_sale_v2', 'close_pos_session_v2', 'add_tip', 'manage_gift_card', 'redeem_gift_card'],
+  skills: ['open_pos_session', 'close_pos_session', 'record_pos_sale', 'list_pos_sales', 'record_pos_sale_v2', 'close_pos_session_v2', 'add_tip', 'manage_gift_card', 'redeem_gift_card', 'manage_loyalty', 'refund_pos_sale', 'pos_sale_to_invoice', 'render_pos_receipt', 'manage_pos_table'],
   data: {
-    tables: ['pos_payments', 'pos_sale_lines', 'pos_sales', 'pos_sessions', 'pos_registers'],
+    tables: ['pos_payments', 'pos_sale_lines', 'pos_sales', 'pos_sessions', 'pos_registers', 'pos_tables', 'loyalty_accounts', 'loyalty_transactions'],
   },
   skillSeeds: POS_SKILLS,
 

@@ -64,9 +64,10 @@
       "id": "loyalty",
       "name": "Loyalty/points",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 2,
-      "verify": "loyalty/points program"
+      "verify": "loyalty_accounts + loyalty_transactions tables, manage_loyalty RPC/skill (enroll/get/list/earn/redeem/adjust, bronze/silver/gold tiers), auto-earn trigger on completed pos_sales (1 pt / 10 units) (migration 20260707214000)",
+      "notes": "Verified LIVE on dev 2026-07-07: enroll → sale R-20260707-99397 auto-earned 62 pts via trigger → partial refund clawed back 31 pts (balance 31)."
     },
     {
       "id": "offline_sync",
@@ -89,25 +90,28 @@
       "id": "receipt_templates",
       "name": "Branded receipt templates",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "branded receipt templates"
+      "verify": "pos_registers.receipt_header/receipt_footer + render_pos_receipt RPC/skill returning receipt (lines/payments/totals/tip/refund/invoice) + template block (register header/footer + site branding from site_settings) (migration 20260707214000)",
+      "notes": "Verified LIVE on dev 2026-07-07: full receipt payload incl. site branding rendered for R-20260707-99397."
     },
     {
       "id": "invoice_linking",
       "name": "Receipt→invoice linking",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "receipt→invoice linking"
+      "verify": "pos_sales.invoice_id column + pos_sale_to_invoice RPC/skill (draft invoice POS-YYYYMMDD-##### from sale lines, idempotent re-link) (migration 20260707214000)",
+      "notes": "Verified LIVE on dev 2026-07-07: sale ea72bb6c → invoice POS-20260707-39122, linked back on the sale."
     },
     {
       "id": "refund_workflow",
       "name": "Refund/return workflow",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "pos refund/return workflow"
+      "verify": "refund_pos_sale RPC/skill: negative sale linked via refund_of (RF- receipt), per-line partial refunds with over-refund guard, restock stock.movement, loyalty clawback, original → refunded/partially_refunded (migration 20260707214000)",
+      "notes": "Verified LIVE on dev 2026-07-07: partial refund of 1/2 units (-31250) restocked the product (16→17) and set original to partially_refunded. In-round fix: pos_payments CHECK (amount_cents > 0) blocked negative refund payments → relaxed to <> 0."
     },
     {
       "id": "barcode_scanning",
@@ -130,9 +134,10 @@
       "id": "table_management",
       "name": "Table/seat management (F&B)",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "table/seat management"
+      "verify": "pos_tables table + manage_pos_table RPC/skill (create/update/list/delete/seat/release), pos_sales.table_id link (migration 20260707214000)",
+      "notes": "Verified LIVE on dev 2026-07-07: Table 1 created, seated with sale (list shows current receipt), released."
     }
   ]
 }

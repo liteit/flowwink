@@ -1,19 +1,83 @@
 {
   "module": "resume",
   "odoo_app": "Employees → Skills / niche consultant pool",
-  "current_maturity": "L2",
+  "current_maturity": "L3",
   "target_maturity": "L4",
   "capabilities": [
-    { "id": "profile_crud", "name": "Consultant profile CRUD", "odoo": true, "status": "done", "weight": 1, "verify": "consultant profile CRUD exists" },
-    { "id": "checkin_update", "name": "Check-in profile update", "odoo": true, "status": "done", "weight": 1, "verify": "check-in profile update exists" },
-    { "id": "dedup", "name": "Duplicate detection", "odoo": true, "status": "done", "weight": 1, "verify": "duplicate detection exists" },
-
-    { "id": "semantic_search", "name": "Semantic search (pgvector)", "odoo": false, "status": "done", "weight": 1, "verify": "semantic search via pgvector exists" },
-    { "id": "ai_matching", "name": "AI job matching", "odoo": false, "status": "done", "weight": 2, "verify": "AI job matching exists" },
-    { "id": "gdpr_anonymization", "name": "GDPR anonymization", "odoo": false, "status": "done", "weight": 1, "verify": "GDPR anonymization exists" },
-
-    { "id": "consultant_contracts", "name": "Consultant contract/SOW tracking", "odoo": true, "status": "missing", "weight": 1, "verify": "consultant contract/SOW tracking exists" },
-    { "id": "utilization_tracking", "name": "Utilization/assignment tracking", "odoo": true, "status": "missing", "weight": 1, "verify": "utilization/assignment tracking exists" },
-    { "id": "rate_matrix", "name": "Skill/hourly-rate matrix", "odoo": true, "status": "missing", "weight": 1, "verify": "skill/hourly-rate matrix exists" }
+    {
+      "id": "profile_crud",
+      "name": "Consultant profile CRUD",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "consultant profile CRUD exists"
+    },
+    {
+      "id": "checkin_update",
+      "name": "Check-in profile update",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "check-in profile update exists"
+    },
+    {
+      "id": "dedup",
+      "name": "Duplicate detection",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "duplicate detection exists"
+    },
+    {
+      "id": "semantic_search",
+      "name": "Semantic search (pgvector)",
+      "odoo": false,
+      "status": "done",
+      "weight": 1,
+      "verify": "semantic search via pgvector exists"
+    },
+    {
+      "id": "ai_matching",
+      "name": "AI job matching",
+      "odoo": false,
+      "status": "done",
+      "weight": 2,
+      "verify": "AI job matching exists"
+    },
+    {
+      "id": "gdpr_anonymization",
+      "name": "GDPR anonymization",
+      "odoo": false,
+      "status": "done",
+      "weight": 1,
+      "verify": "GDPR anonymization exists"
+    },
+    {
+      "id": "consultant_contracts",
+      "name": "Consultant contract/SOW tracking",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "consultant_assignments.contract_id (FK contracts) + sow_url; manage_consultant_assignment RPC/skill create/update links engagements to contracts/SOW docs (migration 20260707215000)",
+      "notes": "Verified LIVE on dev 2026-07-07: assignment fda9f6e8 created with contract 626b6c00 + SOW URL over the gateway."
+    },
+    {
+      "id": "utilization_tracking",
+      "name": "Utilization/assignment tracking",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "consultant_assignments table (allocation_pct, period, status) + consultant_utilization_report RPC/skill (per-consultant utilization % over a window with assignment breakdown) (migration 20260707215000)",
+      "notes": "Verified LIVE on dev 2026-07-07: July report returned utilization_pct 80 for the 80%-allocated assignment."
+    },
+    {
+      "id": "rate_matrix",
+      "name": "Skill/hourly-rate matrix",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "consultant_skill_rates table (unique consultant+skill, level) + manage_consultant_rates RPC/skill (set/delete/list/matrix — consultants × skills grid incl. profile default rate) (migration 20260707215000)",
+      "notes": "Verified LIVE on dev 2026-07-07: React 1200 kr/h + DevOps 1400 kr/h set; matrix returned the grid + distinct skill list."
+    }
   ]
 }
