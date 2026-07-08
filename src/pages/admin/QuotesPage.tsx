@@ -7,11 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus } from 'lucide-react';
 import { useQuotes, getQuoteCustomerName, getQuoteCustomerEmail, getQuoteCompanyName, type QuoteStatus } from '@/hooks/useQuotes';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
 import { QuoteDetailSheet } from '@/components/admin/quotes/QuoteDetailSheet';
 import { CreateQuoteDialog } from '@/components/admin/quotes/CreateQuoteDialog';
+import { RecurringQuotesTab } from '@/components/admin/quotes/RecurringQuotesTab';
 
 const STATUS_COLORS: Record<QuoteStatus, string> = {
   draft: 'bg-muted text-muted-foreground',
