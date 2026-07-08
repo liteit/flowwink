@@ -206,6 +206,26 @@ function SubscriptionRow({
     : '—';
   const [changeOpen, setChangeOpen] = useState(false);
   const canChangePlan = isManual && sub.status === 'active';
+  const convertTrial = useConvertTrial();
+
+  const trialDaysLeft = sub.trial_end
+    ? Math.max(0, differenceInDays(new Date(sub.trial_end), new Date()))
+    : null;
+  const commitmentMonthsLeft = sub.commitment_end
+    ? Math.max(0, differenceInCalendarMonths(new Date(sub.commitment_end), new Date()))
+    : null;
+  const isEarly = sub.commitment_end && new Date(sub.commitment_end) > new Date();
+
+  const handleCancel = () => {
+    if (isEarly) {
+      const ok = confirm(
+        `Early termination: this subscription has a commitment until ${format(new Date(sub.commitment_end!), 'MMM d, yyyy')} (${commitmentMonthsLeft} month(s) remaining). Continue?`
+      );
+      if (!ok) return;
+    }
+    onCancel();
+  };
+
   return (
     <TableRow>
       <TableCell>
@@ -224,10 +244,16 @@ function SubscriptionRow({
       </TableCell>
       <TableCell>{formatMoney(sub.unit_amount_cents * sub.quantity, sub.currency)}</TableCell>
       <TableCell>
-        <Badge variant={status.variant}>{status.label}</Badge>
-        {sub.cancel_at_period_end && (
-          <Badge variant="outline" className="ml-2">Ends soon</Badge>
-        )}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge variant={status.variant}>{status.label}</Badge>
+          {sub.cancel_at_period_end && <Badge variant="outline">Ends soon</Badge>}
+          {sub.status === 'trialing' && trialDaysLeft !== null && (
+            <Badge variant="outline" className="text-[10px]">Trial · {trialDaysLeft}d left</Badge>
+          )}
+          {isEarly && (
+            <Badge variant="outline" className="text-[10px]">Committed · {commitmentMonthsLeft}mo</Badge>
+          )}
+        </div>
       </TableCell>
       <TableCell>
         {isManual && nextInvoice ? (
@@ -248,6 +274,11 @@ function SubscriptionRow({
             <DropdownMenuItem onClick={onPortal}>
               <ExternalLink className="h-4 w-4 mr-2" />Customer portal
             </DropdownMenuItem>
+            {sub.status === 'trialing' && (
+              <DropdownMenuItem onClick={() => convertTrial.mutate(sub.id)}>
+                <PlayCircle className="h-4 w-4 mr-2" />Convert trial → active
+              </DropdownMenuItem>
+            )}
             {canChangePlan && (
               <DropdownMenuItem onClick={() => setChangeOpen(true)}>
                 <ArrowUpDown className="h-4 w-4 mr-2" />Change plan
@@ -259,8 +290,9 @@ function SubscriptionRow({
               </DropdownMenuItem>
             ) : (
               ['active', 'trialing', 'past_due'].includes(sub.status) && (
-                <DropdownMenuItem onClick={onCancel} className="text-destructive">
-                  <XCircle className="h-4 w-4 mr-2" />Cancel at period end
+                <DropdownMenuItem onClick={handleCancel} className="text-destructive">
+                  <XCircle className="h-4 w-4 mr-2" />
+                  {isEarly ? 'Cancel (early termination)' : 'Cancel at period end'}
                 </DropdownMenuItem>
               )
             )}
