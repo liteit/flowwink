@@ -295,6 +295,18 @@ export function QuoteDetailSheet({ quoteId, open, onOpenChange }: Props) {
             />
           </div>
 
+          {/* Attachments */}
+          <QuoteAttachmentsPanel quoteId={quote.id} />
+
+          {/* Revisions */}
+          <QuoteRevisionsPanel
+            quoteId={quote.id}
+            currency={quote.currency}
+            currentSnapshot={{ line_items: lineItems, tax_rate: taxRate, notes, valid_until: validUntil, ...totals }}
+            currentTotalCents={totals.total_cents}
+            isSent={quote.status === 'sent'}
+          />
+
           {/* Invoice link */}
           {quote.invoice_id && (
             <div className="rounded-md border p-3 text-sm flex items-center gap-2 bg-muted/50">
