@@ -118,7 +118,7 @@ export const MODULE_EDGE_FUNCTIONS: Partial<Record<ModuleId, readonly string[]>>
   ecommerce: ['create-checkout', 'send-order-confirmation'],
   invoicing: ['send-invoice-email', 'generate-invoice-pdf', 'create-invoice-payment'],
   quotes: ['quote-sign', 'quote-pay', 'send-quote-email', 'quote-expiry-reminders'],
-  contracts: ['contract-sign'],
+  contracts: ['contract-sign', 'contract-billing-cron'],
   bookings: ['send-booking-confirmation', 'send-booking-reminders'],
   calendar: ['send-calendar-reminders'],
   subscriptions: ['subscriptions', 'subscription-billing-cron', 'dunning-processor'],
