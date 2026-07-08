@@ -12855,6 +12855,7 @@ export type Database = {
       }
       return_items: {
         Row: {
+          chosen_action: string | null
           condition: string | null
           created_at: string
           id: string
@@ -12864,9 +12865,11 @@ export type Database = {
           quantity: number
           restock: boolean
           return_id: string
+          suggested_action: string | null
           unit_refund_cents: number | null
         }
         Insert: {
+          chosen_action?: string | null
           condition?: string | null
           created_at?: string
           id?: string
@@ -12876,9 +12879,11 @@ export type Database = {
           quantity?: number
           restock?: boolean
           return_id: string
+          suggested_action?: string | null
           unit_refund_cents?: number | null
         }
         Update: {
+          chosen_action?: string | null
           condition?: string | null
           created_at?: string
           id?: string
@@ -12888,6 +12893,7 @@ export type Database = {
           quantity?: number
           restock?: boolean
           return_id?: string
+          suggested_action?: string | null
           unit_refund_cents?: number | null
         }
         Relationships: [
@@ -12910,6 +12916,154 @@ export type Database = {
             columns: ["return_id"]
             isOneToOne: false
             referencedRelation: "returns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      return_pickups: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          carrier: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          pickup_date: string
+          pickup_number: string
+          pickup_window: string | null
+          postal_code: string | null
+          rma_id: string
+          status: string
+          tracking_reference: string | null
+          updated_at: string
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          carrier?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          pickup_date: string
+          pickup_number?: string
+          pickup_window?: string | null
+          postal_code?: string | null
+          rma_id: string
+          status?: string
+          tracking_reference?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          carrier?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          pickup_date?: string
+          pickup_number?: string
+          pickup_window?: string | null
+          postal_code?: string | null
+          rma_id?: string
+          status?: string
+          tracking_reference?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "return_pickups_rma_id_fkey"
+            columns: ["rma_id"]
+            isOneToOne: false
+            referencedRelation: "returns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      return_to_vendor: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          credit_memo_id: string | null
+          credited_at: string | null
+          expected_credit_cents: number
+          id: string
+          items: Json
+          notes: string | null
+          rma_id: string
+          rtv_number: string
+          sent_at: string | null
+          status: string
+          updated_at: string
+          vendor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          credit_memo_id?: string | null
+          credited_at?: string | null
+          expected_credit_cents?: number
+          id?: string
+          items?: Json
+          notes?: string | null
+          rma_id: string
+          rtv_number?: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          credit_memo_id?: string | null
+          credited_at?: string | null
+          expected_credit_cents?: number
+          id?: string
+          items?: Json
+          notes?: string | null
+          rma_id?: string
+          rtv_number?: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "return_to_vendor_credit_memo_id_fkey"
+            columns: ["credit_memo_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_credit_memos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_to_vendor_rma_id_fkey"
+            columns: ["rma_id"]
+            isOneToOne: false
+            referencedRelation: "returns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_to_vendor_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "v_vendor_scorecard"
+            referencedColumns: ["vendor_id"]
+          },
+          {
+            foreignKeyName: "return_to_vendor_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -17819,6 +17973,46 @@ export type Database = {
         Returns: Json
       }
       ar_aging_report: { Args: { p_as_of?: string }; Returns: Json }
+      attach_return_label: {
+        Args: {
+          p_carrier_code?: string
+          p_label_url?: string
+          p_return_id: string
+          p_tracking_number?: string
+        }
+        Returns: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          customer_notes: string | null
+          id: string
+          inspected_at: string | null
+          inspection_notes: string | null
+          internal_notes: string | null
+          order_id: string
+          reason: string | null
+          reason_code: string | null
+          received_at: string | null
+          refund_amount_cents: number | null
+          refund_currency: string | null
+          refund_method: string | null
+          refund_processed_at: string | null
+          restocking_fee_cents: number
+          return_carrier_code: string | null
+          return_label_url: string | null
+          return_tracking_number: string | null
+          rma_number: string
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "returns"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       audit_logs_retention_status: { Args: never; Returns: Json }
       auto_allocate_vacation: {
         Args: { p_dry_run?: boolean; p_year: number }
@@ -18296,6 +18490,37 @@ export type Database = {
           p_weight_grams?: number
         }
         Returns: Json
+      }
+      create_rtv: {
+        Args: {
+          p_expected_credit_cents?: number
+          p_items?: Json
+          p_notes?: string
+          p_rma_id: string
+          p_vendor_id?: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          credit_memo_id: string | null
+          credited_at: string | null
+          expected_credit_cents: number
+          id: string
+          items: Json
+          notes: string | null
+          rma_id: string
+          rtv_number: string
+          sent_at: string | null
+          status: string
+          updated_at: string
+          vendor_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "return_to_vendor"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       create_webmeet_room: {
         Args: {
@@ -20423,6 +20648,45 @@ export type Database = {
         }
         Returns: Json
       }
+      schedule_return_pickup: {
+        Args: {
+          p_address_line1?: string
+          p_address_line2?: string
+          p_carrier?: string
+          p_city?: string
+          p_country?: string
+          p_notes?: string
+          p_pickup_date: string
+          p_pickup_window?: string
+          p_postal_code?: string
+          p_rma_id: string
+        }
+        Returns: {
+          address_line1: string | null
+          address_line2: string | null
+          carrier: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          pickup_date: string
+          pickup_number: string
+          pickup_window: string | null
+          postal_code: string | null
+          rma_id: string
+          status: string
+          tracking_reference: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "return_pickups"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       search_memories_hybrid: {
         Args: {
           filter_category?: Database["public"]["Enums"]["agent_memory_category"]
@@ -20644,6 +20908,29 @@ export type Database = {
       set_quote_item_selection: {
         Args: { _accept_token: string; _item_id: string; _selected: boolean }
         Returns: Json
+      }
+      set_return_item_action: {
+        Args: { p_action: string; p_return_item_id: string }
+        Returns: {
+          chosen_action: string | null
+          condition: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          order_item_id: string | null
+          product_id: string | null
+          quantity: number
+          restock: boolean
+          return_id: string
+          suggested_action: string | null
+          unit_refund_cents: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "return_items"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       ship_picking: {
         Args: {
@@ -20895,6 +21182,64 @@ export type Database = {
           p_total_expected_units?: number
         }
         Returns: Json
+      }
+      update_return_pickup: {
+        Args: {
+          p_pickup_date?: string
+          p_pickup_id: string
+          p_status?: string
+          p_tracking_reference?: string
+        }
+        Returns: {
+          address_line1: string | null
+          address_line2: string | null
+          carrier: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          pickup_date: string
+          pickup_number: string
+          pickup_window: string | null
+          postal_code: string | null
+          rma_id: string
+          status: string
+          tracking_reference: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "return_pickups"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      update_rtv_status: {
+        Args: { p_credit_memo_id?: string; p_rtv_id: string; p_status: string }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          credit_memo_id: string | null
+          credited_at: string | null
+          expected_credit_cents: number
+          id: string
+          items: Json
+          notes: string | null
+          rma_id: string
+          rtv_number: string
+          sent_at: string | null
+          status: string
+          updated_at: string
+          vendor_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "return_to_vendor"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       validate_address: {
         Args: {

@@ -12,9 +12,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Undo2, CheckCircle2, PackageCheck, ClipboardCheck, DollarSign, Plus } from 'lucide-react';
+import { Undo2, CheckCircle2, PackageCheck, ClipboardCheck, DollarSign, Plus, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { ReturnDetailDrawer } from '@/components/admin/returns/ReturnDetailDrawer';
 
 interface ReturnRow {
   id: string;
@@ -28,6 +29,9 @@ interface ReturnRow {
   restocking_fee_cents: number | null;
   total_amount_cents: number | null;
   refunded_cents: number | null;
+  return_label_url: string | null;
+  return_tracking_number: string | null;
+  return_carrier_code: string | null;
   created_at: string;
 }
 
@@ -313,6 +317,7 @@ function ReasonsWidget() {
 
 export default function ReturnsPage() {
   const qc = useQueryClient();
+  const [detailRow, setDetailRow] = useState<ReturnRow | null>(null);
   const { data, isLoading } = useQuery({
     queryKey: ['returns'],
     queryFn: async () => {
@@ -422,6 +427,9 @@ export default function ReturnsPage() {
                         {(r.status === 'received' || r.status === 'inspected' || r.status === 'partially_refunded') && (
                           <RefundDialog returnRow={r} />
                         )}
+                        <Button size="sm" variant="ghost" onClick={() => setDetailRow(r)}>
+                          <Settings2 className="h-3 w-3 mr-1" /> Manage
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -430,6 +438,7 @@ export default function ReturnsPage() {
             )}
           </CardContent>
         </Card>
+        <ReturnDetailDrawer returnRow={detailRow} onClose={() => setDetailRow(null)} />
       </div>
     </AdminLayout>
   );
