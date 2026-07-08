@@ -4,16 +4,21 @@ import {
   useGenerateMonthlyReport,
   useSubmitExpenseReport,
   useApproveExpenseReport,
+  useRejectExpenseReport,
   useBookExpenseReport,
   useMarkExpenseReportPaid,
+  useBulkApproveReports,
+  useBulkRejectReports,
   type ExpenseReport,
 } from '@/hooks/useExpenses';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
@@ -21,7 +26,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, Loader2, Send, Check, RefreshCw, BookOpen, Wallet } from 'lucide-react';
+import { FileText, Loader2, Send, Check, X, RefreshCw, BookOpen, Wallet } from 'lucide-react';
 import { format } from 'date-fns';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -47,14 +52,42 @@ export function ExpenseReportsTab() {
   const generate = useGenerateMonthlyReport();
   const submit = useSubmitExpenseReport();
   const approve = useApproveExpenseReport();
+  const reject = useRejectExpenseReport();
   const book = useBookExpenseReport();
   const pay = useMarkExpenseReportPaid();
+  const bulkApprove = useBulkApproveReports();
+  const bulkReject = useBulkRejectReports();
 
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [payTarget, setPayTarget] = useState<ExpenseReport | null>(null);
   const [payMethod, setPayMethod] = useState('manual');
   const [payReference, setPayReference] = useState('');
 
+  const [rejectTarget, setRejectTarget] = useState<{ ids: string[]; single?: boolean } | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+
   const currentPeriod = new Date().toISOString().slice(0, 7);
+
+  const submittedReports = reports?.filter((r) => r.status === 'submitted') ?? [];
+  const allSubmittedSelected =
+    submittedReports.length > 0 && submittedReports.every((r) => selected.has(r.id));
+
+  const toggleOne = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const toggleAllSubmitted = () => {
+    if (allSubmittedSelected) setSelected(new Set());
+    else setSelected(new Set(submittedReports.map((r) => r.id)));
+  };
+
+  const selectedAmount = reports
+    ?.filter((r) => selected.has(r.id))
+    .reduce((s, r) => s + r.total_cents, 0) ?? 0;
 
   const handleConfirmPay = () => {
     if (!payTarget) return;
@@ -68,6 +101,23 @@ export function ExpenseReportsTab() {
         },
       },
     );
+  };
+
+  const openReject = (ids: string[], single = false) => {
+    setRejectTarget({ ids, single });
+    setRejectReason('');
+  };
+
+  const handleConfirmReject = async () => {
+    if (!rejectTarget) return;
+    if (rejectTarget.single) {
+      await reject.mutateAsync({ reportId: rejectTarget.ids[0], reason: rejectReason });
+    } else {
+      await bulkReject.mutateAsync({ ids: rejectTarget.ids, reason: rejectReason });
+      setSelected(new Set());
+    }
+    setRejectTarget(null);
+    setRejectReason('');
   };
 
   return (
@@ -93,11 +143,50 @@ export function ExpenseReportsTab() {
         </Button>
       </div>
 
+      {/* Bulk action bar (admins only, when submitted reports selected) */}
+      {isAdmin && selected.size > 0 && (
+        <div className="flex items-center justify-between rounded-md border border-border bg-muted/40 px-3 py-2">
+          <div className="text-sm">
+            <strong>{selected.size}</strong> selected · {formatCents(selectedAmount)}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => openReject(Array.from(selected))}
+              disabled={bulkReject.isPending}
+            >
+              <X className="h-4 w-4 mr-1.5" /> Reject selected
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                bulkApprove.mutate(Array.from(selected), {
+                  onSuccess: () => setSelected(new Set()),
+                });
+              }}
+              disabled={bulkApprove.isPending}
+            >
+              <Check className="h-4 w-4 mr-1.5" /> Approve selected
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Card>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  {isAdmin && submittedReports.length > 0 && (
+                    <Checkbox
+                      checked={allSubmittedSelected}
+                      onCheckedChange={toggleAllSubmitted}
+                      aria-label="Select all submitted reports"
+                    />
+                  )}
+                </TableHead>
                 <TableHead>Period</TableHead>
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead>Submitted</TableHead>
@@ -109,13 +198,13 @@ export function ExpenseReportsTab() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     Loading reports...
                   </TableCell>
                 </TableRow>
               ) : !reports?.length ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     <div className="flex flex-col items-center gap-2">
                       <FileText className="h-8 w-8 text-muted-foreground/50" />
                       <p>No reports yet</p>
@@ -127,7 +216,16 @@ export function ExpenseReportsTab() {
                 </TableRow>
               ) : (
                 reports.map((report) => (
-                  <TableRow key={report.id}>
+                  <TableRow key={report.id} className={selected.has(report.id) ? 'bg-primary/5' : ''}>
+                    <TableCell>
+                      {isAdmin && report.status === 'submitted' && (
+                        <Checkbox
+                          checked={selected.has(report.id)}
+                          onCheckedChange={() => toggleOne(report.id)}
+                          aria-label={`Select ${report.period}`}
+                        />
+                      )}
+                    </TableCell>
                     <TableCell className="font-medium">{report.period}</TableCell>
                     <TableCell className="text-right font-medium">
                       {formatCents(report.total_cents, report.currency)}
@@ -161,14 +259,24 @@ export function ExpenseReportsTab() {
                           </Button>
                         )}
                         {isAdmin && report.status === 'submitted' && (
-                          <Button
-                            size="sm"
-                            onClick={() => approve.mutate(report.id)}
-                            disabled={approve.isPending}
-                          >
-                            <Check className="h-3.5 w-3.5 mr-1" />
-                            Approve
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => openReject([report.id], true)}
+                            >
+                              <X className="h-3.5 w-3.5 mr-1" />
+                              Reject
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => approve.mutate(report.id)}
+                              disabled={approve.isPending}
+                            >
+                              <Check className="h-3.5 w-3.5 mr-1" />
+                              Approve
+                            </Button>
+                          </>
                         )}
                         {isAdmin && report.status === 'approved' && (
                           <Button
@@ -199,6 +307,42 @@ export function ExpenseReportsTab() {
         </CardContent>
       </Card>
 
+      {/* Reject dialog */}
+      <Dialog open={!!rejectTarget} onOpenChange={(o) => !o && setRejectTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Reject {rejectTarget?.ids.length ?? 0} report(s)
+            </DialogTitle>
+            <DialogDescription>
+              The employee will see the reason and can resubmit after fixing.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="reject-reason">Reason</Label>
+            <Textarea
+              id="reject-reason"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={3}
+              placeholder="Missing receipt for the lunch on 2025-05-14…"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRejectTarget(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmReject}
+              disabled={reject.isPending || bulkReject.isPending}
+            >
+              <X className="h-4 w-4 mr-1.5" />
+              Reject
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Pay dialog */}
       <Dialog open={!!payTarget} onOpenChange={(o) => !o && setPayTarget(null)}>
         <DialogContent>
           <DialogHeader>
