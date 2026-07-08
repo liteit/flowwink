@@ -49,7 +49,8 @@ interface Proposal {
   suggested_amount_cents: number;
   proposed_lines: ProposedLine[];
   top_candidates: Candidate[];
-  match_details?: string | null;
+  /** backend returns a string[] (e.g. ['vendor-default', 'booked 2 time(s)…']) */
+  match_details?: string[] | string | null;
 }
 
 interface ProposalsResult {
@@ -149,7 +150,12 @@ export function EventsToBookTab() {
   const bookMutation = useMutation({
     mutationFn: async (p: Proposal) => {
       const templateId = templateOverrides[p.bank_transaction_id] ?? p.suggested_template_id;
-      const matchSource = (p.match_details ?? '').toLowerCase().includes('vendor-default')
+      // match_details is a string[] from the backend; guard against the array
+      // (a raw .toLowerCase() on it threw and broke every Book/Batch-book).
+      const md = Array.isArray(p.match_details)
+        ? p.match_details.join(' ')
+        : (p.match_details ?? '');
+      const matchSource = md.toLowerCase().includes('vendor-default')
         ? 'vendor-default'
         : 'keyword';
       const args: Record<string, unknown> = {

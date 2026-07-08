@@ -52,8 +52,17 @@ function acctIsPctTemplate(tplLines: any[]): boolean {
 // NET base. A bank line is GROSS (incl. VAT), so the NET base to feed the
 // template = gross / (sum(debit_pct)/100). E.g. 1000 gross, 125% total → 800.
 function acctNetBaseFromGross(tplLines: any[], grossCents: number): number {
-  const grossPct = (tplLines || []).reduce((s: number, l: any) => s + (l.debit_pct ?? 0), 0);
-  return grossPct > 0 ? Math.round(grossCents / (grossPct / 100)) : grossCents;
+  // The gross that hit the bank IS the 19xx bank leg's percentage of the net
+  // base — NOT the sum of the debit side. Using Σ debit_pct mis-scaled any
+  // compound template whose bank leg ≠ full debit side: net salary (bank leg
+  // 70%) was off 1.88×, VAT settlement (bank leg 20%) off 5× (sweep finding B1).
+  let bankPct = 0;
+  for (const l of tplLines || []) {
+    if (!String(l.account_code || '').startsWith('19')) continue;
+    bankPct = Math.max(l.debit_pct ?? 0, l.credit_pct ?? 0);
+    break;
+  }
+  return bankPct > 0 ? Math.round(grossCents / (bankPct / 100)) : grossCents;
 }
 // Direction of a template's bank leg: a template that CREDITS a 19xx account
 // pays money OUT (expense/payment); one that DEBITS 19xx takes money IN
@@ -129,7 +138,15 @@ function acctScoreTemplates(
     const confidence = score <= 0 ? 0 : Math.min(100, Math.round(55 + score * 0.5));
     return { template: t, score, confidence, matchDetails: details };
   });
-  scored.sort((a, b) => b.score - a.score);
+  // Deterministic ordering: score, then most-used, then name, then id — so
+  // near-duplicate templates never resolve to an arbitrary account by insertion
+  // order (sweep finding B5: Milersättning 5860 vs 7331 posted at random).
+  scored.sort((a, b) =>
+    b.score - a.score ||
+    (b.template.usage_count || 0) - (a.template.usage_count || 0) ||
+    String(a.template.template_name || '').localeCompare(String(b.template.template_name || '')) ||
+    String(a.template.id || '').localeCompare(String(b.template.id || '')),
+  );
   return scored;
 }
 
