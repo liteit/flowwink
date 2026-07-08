@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashCard, Subline, QuietEmpty } from './_shared';
+import { useFiscalYear } from '../FiscalYearContext';
 import { cn } from '@/lib/utils';
 
 interface Result {
@@ -10,7 +11,7 @@ interface Result {
 }
 
 export function PeriodStatusCard({ onNavigate }: { onNavigate?: (tabId: string) => void }) {
-  const year = new Date().getFullYear();
+  const { year } = useFiscalYear();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['dash', 'period-status', year],

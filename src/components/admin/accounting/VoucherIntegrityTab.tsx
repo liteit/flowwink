@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -6,9 +6,12 @@ import { Input } from '@/components/ui/input';
 import { CheckCircle, Search } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AccountingTabHeader } from './AccountingTabHeader';
+import { useFiscalYear } from './FiscalYearContext';
 
 export function VoucherIntegrityTab() {
-  const [year, setYear] = useState(new Date().getFullYear());
+  const { year: ctxYear } = useFiscalYear();
+  const [year, setYear] = useState(ctxYear);
+  useEffect(() => setYear(ctxYear), [ctxYear]);
   const [series, setSeries] = useState('');
   const [explainGap, setExplainGap] = useState<any | null>(null);
 

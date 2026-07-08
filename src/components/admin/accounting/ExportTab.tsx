@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { AccountingTabHeader } from './AccountingTabHeader';
+import { useFiscalYear } from './FiscalYearContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,9 +21,16 @@ import type { AccountingExportPayload } from '@/lib/locale-packs/types';
 export function ExportTab() {
   const { pack } = useAccountingLocale();
   const { toast } = useToast();
-  const [from, setFrom] = useState(() => `${new Date().getFullYear()}-01-01`);
-  const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
+  const { year, fromDate, toDate } = useFiscalYear();
+  const [from, setFrom] = useState(fromDate);
+  const [to, setTo] = useState(toDate);
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  // Follow the global fiscal-year selector; the user can still override the range.
+  useEffect(() => {
+    setFrom(fromDate);
+    setTo(toDate);
+  }, [year, fromDate, toDate]);
 
   const adapters = useMemo(() => pack.accounting_export_adapters ?? [], [pack]);
 
@@ -45,7 +53,7 @@ export function ExportTab() {
     const { data: entries, error: entryErr } = await supabase
       .from('journal_entries')
       .select(`
-        id, entry_number, entry_date, description, status,
+        id, voucher_series, voucher_number, entry_date, description, status,
         journal_entry_lines (account_code, debit_cents, credit_cents, description)
       `)
       .gte('entry_date', from)
@@ -69,7 +77,10 @@ export function ExportTab() {
       fiscal_year: { start: from, end: to },
       chart: (chart ?? []) as any,
       entries: (entries ?? []).map((e: any) => ({
-        entry_number: e.entry_number ?? e.id,
+        entry_number:
+          e.voucher_number != null
+            ? `${e.voucher_series ?? ''}${e.voucher_number}`
+            : e.id,
         entry_date: e.entry_date,
         description: e.description ?? '',
         lines: (e.journal_entry_lines ?? []).map((l: any) => ({

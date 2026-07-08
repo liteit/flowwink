@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
 import { AccountingTabHeader } from './AccountingTabHeader';
+import { useFiscalYear } from './FiscalYearContext';
 
 export function YearEndTab() {
-  const [year, setYear] = useState(new Date().getFullYear() - 1);
+  const { year: ctxYear } = useFiscalYear();
+  const [year, setYear] = useState(ctxYear);
+  useEffect(() => setYear(ctxYear), [ctxYear]);
 
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['year-end-readiness', year],

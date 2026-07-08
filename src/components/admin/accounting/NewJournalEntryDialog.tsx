@@ -67,12 +67,12 @@ export function NewJournalEntryDialog({ open, onOpenChange }: Props) {
     if (!template) return;
 
     setDescription(template.template_name);
-    const templateLines: LineInput[] = (template.template_lines as TemplateLine[]).map((tl) => ({
+    const templateLines: LineInput[] = ((template.template_lines as TemplateLine[] | null) ?? []).map((tl) => ({
       account_code: tl.account_code,
       account_name: tl.account_name,
       debit_cents: 0,
       credit_cents: 0,
-      description: tl.description,
+      description: tl.description ?? '',
       analytic_account_id: null,
     }));
     setLines(templateLines);

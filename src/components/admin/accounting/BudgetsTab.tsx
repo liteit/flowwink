@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AccountingTabHeader } from './AccountingTabHeader';
+import { useFiscalYear } from './FiscalYearContext';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -69,11 +70,12 @@ export function BudgetsTab() {
   const upsert = useUpsertBudget();
   const del = useDeleteBudget();
 
+  const { year: ctxYear } = useFiscalYear();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>(emptyDraft());
 
-  const currentYear = new Date().getFullYear();
-  const [bvaYear, setBvaYear] = useState<number>(currentYear);
+  const [bvaYear, setBvaYear] = useState<number>(ctxYear);
+  useEffect(() => setBvaYear(ctxYear), [ctxYear]);
   const [bvaMonth, setBvaMonth] = useState<string>(''); // '' = full year
 
   const bva = useBudgetVsActual(
@@ -82,7 +84,7 @@ export function BudgetsTab() {
   );
 
   const openCreate = () => {
-    setDraft(emptyDraft());
+    setDraft({ ...emptyDraft(), fiscal_year: String(ctxYear) });
     setOpen(true);
   };
   const openEdit = (b: Budget) => {
