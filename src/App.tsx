@@ -361,6 +361,8 @@ const router = createBrowserRouter([
       { path: "/admin/flowtable/:baseSlug/:tableSlug", element: <FlowtablePage /> },
       { path: "/admin/company-insights", element: <CompanyInsightsPage /> },
       { path: "/admin/growth", element: <GrowthDashboardPage /> },
+      { path: "/admin/growth/attribution", element: <AttributionReportPage /> },
+      { path: "/admin/growth/social", element: <SocialPostsPage /> },
       
       { path: "/admin/tickets", element: <TicketsPage /> },
       { path: "/admin/invoices", element: <InvoicesPage /> },
