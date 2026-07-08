@@ -203,11 +203,11 @@ export default function DealDetailPage() {
 
           {/* Universal activity timeline (notes / todos / calls / meetings) */}
           <EntityActivityTimeline entityType="deal" entityId={deal.id} title="Notes & Tasks" />
-        </div>
 
           {/* Change history */}
           <DealHistoryTimeline dealId={deal.id} />
         </div>
+
 
         {/* Sidebar */}
         <div className="space-y-6">
