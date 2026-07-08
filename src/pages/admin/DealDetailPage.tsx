@@ -14,8 +14,10 @@ import { EntityActivityTimeline } from '@/components/admin/EntityActivityTimelin
 import { EntityTags } from '@/components/admin/EntityTags';
 import { EntityFollowers } from '@/components/admin/EntityFollowers';
 import { DealQuotesCard } from '@/components/admin/deals/DealQuotesCard';
+import { DealHistoryTimeline } from '@/components/admin/deals/DealHistoryTimeline';
 import { LostReasonDialog, lostReasonLabel } from '@/components/admin/crm/LostReasonDialog';
-import { ArrowLeft, Calendar, DollarSign, User, Package, Building } from 'lucide-react';
+import { useDealTeams, useLatestExchangeRates, useBaseCurrency, convertAmount } from '@/hooks/useDealsParity';
+import { ArrowLeft, Calendar, DollarSign, User, Package, Building, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
