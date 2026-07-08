@@ -142,9 +142,9 @@
       "id": "multilevel_assignment",
       "name": "Queue/team assignment",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "Queue/team-based ticket assignment"
+      "verify": "DONE 2026-07-08. Tables ticket_teams + ticket_team_members; tickets.team_id FK. UI: Teams tab on /admin/tickets to create teams + add members; TicketDetailDrawer team selector routes a ticket to a queue."
     }
   ]
 }
