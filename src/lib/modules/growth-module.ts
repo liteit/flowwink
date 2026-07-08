@@ -15,7 +15,7 @@ const GROWTH_SKILLS: SkillSeed[] = [
   {
     name: 'ad_campaign_create',
     description: 'Create a new ad campaign with objective, budget, target audience, and platform. Requires approval due to budget commitment. Use when: launching a marketing initiative; defining advertising parameters; allocating ad budget. NOT for: generating ad creatives (ad_creative_generate); optimizing existing campaigns (ad_optimize).',
-    category: 'automation',
+    category: 'growth',
     handler: 'db:ad_campaigns',
     scope: 'internal',
     tool_definition: {
@@ -98,7 +98,7 @@ Creates a new ad campaign with objective, budget, target audience, and platform.
   {
     name: 'ad_creative_generate',
     description: 'Generate ad creative (headline, body, CTA) using AI based on campaign objective and target audience. Use when: creating ad copy for a campaign; generating variations for A/B testing; needing creative inspiration. NOT for: creating campaigns (ad_campaign_create); checking ad performance (ad_performance_check).',
-    category: 'automation',
+    category: 'growth',
     handler: 'internal:ad_creative_generate',
     scope: 'internal',
     tool_definition: {
@@ -167,7 +167,7 @@ Generates ad creative (headline, body, CTA) using AI based on campaign objective
   {
     name: 'ad_performance_check',
     description: 'Check ad campaign performance metrics: spend, impressions, clicks, CTR, CPC, conversions. Use when: monitoring campaign metrics; building performance reports; evaluating ROI. NOT for: optimizing campaigns (ad_optimize); creating campaigns (ad_campaign_create).',
-    category: 'automation',
+    category: 'growth',
     handler: 'db:ad_campaigns',
     scope: 'internal',
     tool_definition: {
@@ -213,7 +213,7 @@ Checks ad campaign performance metrics: spend, impressions, clicks, CTR, CPC, co
   {
     name: 'ad_optimize',
     description: 'Analyze campaign performance and recommend optimizations: pause underperformers, scale winners, adjust budgets. Requires approval. Use when: reviewing campaign results; optimizing ad spend; identifying underperforming ads. NOT for: creating campaigns (ad_campaign_create); generating creatives (ad_creative_generate).',
-    category: 'automation',
+    category: 'growth',
     handler: 'internal:ad_optimize',
     scope: 'internal',
     // Budget-affecting actions (pause/scale/rebalance) must be human-approved before execution.
@@ -270,7 +270,7 @@ Analyzes campaign performance and recommends optimizations. Requires approval fo
   {
     name: 'get_attribution_report',
     description: 'Return campaign/source/medium attribution over a window: visits, unique visitors, leads, orders, and revenue by UTM. Use when: reviewing which campaigns actually drive conversions; comparing paid vs organic sources.',
-    category: 'analytics',
+    category: 'growth',
     handler: 'rpc:utm_attribution_report',
     scope: 'internal',
     tool_definition: {
@@ -294,7 +294,7 @@ Analyzes campaign performance and recommends optimizations. Requires approval fo
   {
     name: 'schedule_social_post',
     description: 'Create or schedule an organic social post (linkedin/x/instagram/facebook). If scheduled_at is set, status becomes "scheduled"; otherwise "draft". Actual channel publish requires per-channel credentials — this stores + queues the post; mark_social_post_posted records the external ref once published.',
-    category: 'content',
+    category: 'growth',
     handler: 'db:social_posts',
     scope: 'internal',
     tool_definition: {
@@ -321,7 +321,7 @@ Analyzes campaign performance and recommends optimizations. Requires approval fo
   {
     name: 'list_social_posts',
     description: 'List organic social posts filtered by status/channel — inspect the calendar or moderation queue.',
-    category: 'content',
+    category: 'growth',
     handler: 'db:social_posts',
     scope: 'internal',
     tool_definition: {
@@ -344,7 +344,7 @@ Analyzes campaign performance and recommends optimizations. Requires approval fo
   {
     name: 'mark_social_post_posted',
     description: 'Mark an organic social post as posted with the external ref/url returned by the channel.',
-    category: 'content',
+    category: 'growth',
     handler: 'rpc:mark_social_post_posted',
     scope: 'internal',
     tool_definition: {
