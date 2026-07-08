@@ -142,6 +142,7 @@ export function BudgetsTab() {
         : 'text-muted-foreground';
 
   // Year options: current-3 … current+2
+  const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 6 }, (_, i) => currentYear - 3 + i);
 
   return (
