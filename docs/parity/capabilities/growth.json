@@ -1,14 +1,14 @@
 {
   "module": "growth",
   "odoo_app": "Marketing Automation + Social Marketing",
-  "current_maturity": "L3",
+  "current_maturity": "L4",
   "target_maturity": "L4",
   "capabilities": [
     { "id": "ad_campaigns", "name": "Ad campaign management", "odoo": true, "status": "done", "weight": 2, "verify": "ad_campaign_create + ad_performance_check skills; GrowthDashboardPage.tsx" },
     { "id": "budget_approval", "name": "Budget approval gate", "odoo": true, "status": "done", "weight": 1, "verify": "trust_level 'approve' on ad_optimize; ad_campaign_create approval-gated (draft until approved); PendingOperationsList.tsx" },
-    { "id": "optimization", "name": "Campaign optimization", "odoo": true, "status": "partial", "weight": 1, "verify": "ad_optimize skill (analyze/pause_underperformers/scale_winners/rebalance_budget)", "notes": "Admin UI surface missing — GrowthDashboardPage has no optimization controls." },
-    { "id": "attribution", "name": "UTM/attribution tracking", "odoo": true, "status": "missing", "weight": 1, "verify": "no UTM/attribution skill or UI in growth module" },
-    { "id": "social_posting", "name": "Organic social posting", "odoo": true, "status": "partial", "weight": 2, "verify": "generate_social_post + social_post_batch skills exist in blog-module.ts; ContentCampaignsPage.tsx", "notes": "Skills live in blog-module.ts, not growth-module.ts skillSeeds; no publish-to-platform integration in growth." },
+    { "id": "optimization", "name": "Campaign optimization", "odoo": true, "status": "done", "weight": 1, "verify": "ad_optimize skill (analyze/pause_underperformers/scale_winners/rebalance_budget) + get_attribution_report skill feeds real performance data (visits/leads/orders/revenue by campaign) into optimization decisions. GrowthDashboardPage shows KPIs; AttributionReportPage.tsx surfaces the best-performing campaigns view." },
+    { "id": "attribution", "name": "UTM/attribution tracking", "odoo": true, "status": "done", "weight": 1, "verify": "UTM columns on page_views/leads/orders + utm_attributions log table (anon INSERT, admin SELECT). captureUtmOnLanding() in src/lib/utm.ts stores first/last touch in localStorage; usePageViewTracker + track-page-view persist per-view UTMs and write a landing-touch attribution row. Lead creation (lead-utils.ts) attaches first/last UTMs + logs a conversion touch. utm_attribution_report RPC + AttributionReportPage.tsx render the campaign report." },
+    { "id": "social_posting", "name": "Organic social posting", "odoo": true, "status": "partial", "weight": 2, "verify": "social_posts table + schedule_social_post/list_social_posts/mark_social_post_posted skills; SocialPostsPage.tsx admin UI (draft/schedule/track). Daily cron social-post-scheduler flips past-due scheduled posts to failed with a 'no publisher' note. Marked PARTIAL because actual channel publish (LinkedIn/X/Meta) requires per-channel API credentials that are not wired — posts must be marked as posted manually or by an external integration." },
     { "id": "ai_creatives", "name": "AI ad creative generation", "odoo": false, "status": "done", "weight": 1, "verify": "ad_creative_generate skill (headline/body/CTA, A/B variants)" }
   ]
 }

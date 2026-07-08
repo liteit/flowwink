@@ -1,6 +1,7 @@
 import { logger } from '@/lib/logger';
 import { useEffect, useRef } from 'react';
 import { hasConsent } from '@/lib/visitor-consent';
+import { captureUtmOnLanding } from '@/lib/utm';
 
 interface PageViewData {
   pageId?: string;
@@ -70,7 +71,8 @@ export function usePageViewTracker({ pageId, pageSlug, pageTitle }: PageViewData
         tracked.current = true;
 
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        
+        const utm = captureUtmOnLanding();
+
         await fetch(`${supabaseUrl}/functions/v1/track-page-view`, {
           method: 'POST',
           headers: {
@@ -86,6 +88,8 @@ export function usePageViewTracker({ pageId, pageSlug, pageTitle }: PageViewData
             userAgent: navigator.userAgent,
             deviceType: getDeviceType(),
             browser: getBrowser(),
+            landingUrl: typeof window !== 'undefined' ? window.location.href : null,
+            utm,
           }),
         });
       } catch (error) {
