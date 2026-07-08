@@ -253,6 +253,7 @@ const router = createBrowserRouter([
       { path: "/blog", element: <BlogArchivePage /> },
       { path: "/blog/category/:slug", element: <BlogCategoryPage /> },
       { path: "/blog/tag/:slug", element: <BlogTagPage /> },
+      { path: "/blog/author/:slug", element: <BlogAuthorPage /> },
       { path: "/blog/:slug", element: <BlogPostPage /> },
       { path: "/jobs", element: <JobsPage /> },
       { path: "/jobs/:slug", element: <JobDetailPage /> },
