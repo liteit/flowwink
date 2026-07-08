@@ -709,6 +709,31 @@ export default function MediaLibraryPage() {
           )}
         </DialogContent>
       </Dialog>
+      <MediaDetailsSheet
+        open={!!detailsFor}
+        onOpenChange={(open) => !open && setDetailsFor(null)}
+        storagePath={detailsFor?.storagePath ?? null}
+        filename={detailsFor?.filename ?? null}
+        publicUrl={detailsFor?.publicUrl ?? null}
+        asset={detailsFor ? (assetMap?.get(`cms-images|${detailsFor.storagePath}`) ?? null) : null}
+      />
     </AdminLayout>
   );
 }
+
+async function probeImageDimensions(blob: Blob): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.onerror = (e) => {
+      URL.revokeObjectURL(url);
+      reject(e);
+    };
+    img.src = url;
+  });
+}
+
