@@ -391,6 +391,7 @@ export default function ReconciliationPage() {
                                   onClick={() => { setPartialTx(tx); setPartialOpen(true); }}
                                 >
                                   <Scale className="h-4 w-4" />
+                                </Button>
                                 <Button
                                   variant="ghost"
                                   size="icon"
