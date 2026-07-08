@@ -317,6 +317,7 @@ function ReasonsWidget() {
 
 export default function ReturnsPage() {
   const qc = useQueryClient();
+  const [detailRow, setDetailRow] = useState<ReturnRow | null>(null);
   const { data, isLoading } = useQuery({
     queryKey: ['returns'],
     queryFn: async () => {
