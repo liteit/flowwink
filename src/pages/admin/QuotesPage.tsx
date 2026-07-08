@@ -146,6 +146,8 @@ export default function QuotesPage() {
             </TableBody>
           </Table>
         </div>
+        </>
+        )}
 
         <QuoteDetailSheet
           quoteId={selectedId}
