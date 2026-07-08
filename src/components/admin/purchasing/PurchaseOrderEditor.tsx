@@ -14,6 +14,7 @@ import { ArrowLeft, Plus, Trash2, Send, CheckCircle, PackageCheck } from 'lucide
 import { GoodsReceiptDialog } from './GoodsReceiptDialog';
 import { PoInvoicesDrilldown } from './PoInvoicesDrilldown';
 import { LandedCostPanel } from './LandedCostDialog';
+import { PoRevisionsPanel } from './PoRevisionsPanel';
 
 interface POLine {
   id?: string;
@@ -346,6 +347,15 @@ export function PurchaseOrderEditor({ poId, onClose }: Props) {
           )}
         </div>
       </div>
+
+      {poId && status !== 'draft' && (
+        <PoRevisionsPanel
+          purchaseOrderId={poId}
+          currency={currency}
+          currentSnapshot={{ vendor_id: vendorId, order_date: orderDate, expected_delivery: expectedDelivery, notes, currency, lines, subtotal_cents: subtotal, tax_cents: tax, total_cents: total }}
+          currentTotalCents={total}
+        />
+      )}
 
       {poId && (
         <PoInvoicesDrilldown purchaseOrderId={poId} currency={currency} />
