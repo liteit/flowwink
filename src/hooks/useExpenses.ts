@@ -264,6 +264,91 @@ export function useApproveExpenseReport() {
   });
 }
 
+/**
+ * Reject a submitted expense report. There's no server RPC for this yet, so
+ * we write the status directly and stash the reason in `notes`. RLS restricts
+ * this to admins.
+ */
+export function useRejectExpenseReport() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (input: { reportId: string; reason: string }) => {
+      const { error } = await supabase
+        .from('expense_reports')
+        .update({
+          status: 'rejected',
+          notes: input.reason ? `Rejected: ${input.reason}` : 'Rejected',
+        })
+        .eq('id', input.reportId)
+        .eq('status', 'submitted');
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expense-reports'] });
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      toast({ title: 'Report rejected' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Reject failed', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
+/** Bulk approve — runs the approve RPC once per id, aggregates errors. */
+export function useBulkApproveReports() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const results = await Promise.allSettled(
+        ids.map((id) => supabase.rpc('approve_expense_report', { p_report_id: id })),
+      );
+      const failed = results.filter((r) => r.status === 'rejected').length;
+      return { ok: ids.length - failed, failed };
+    },
+    onSuccess: ({ ok, failed }) => {
+      queryClient.invalidateQueries({ queryKey: ['expense-reports'] });
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      toast({
+        title: `Approved ${ok} report(s)`,
+        description: failed > 0 ? `${failed} failed` : undefined,
+        variant: failed > 0 ? 'destructive' : 'default',
+      });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Bulk approve failed', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
+/** Bulk reject — direct table update guarded by RLS. */
+export function useBulkRejectReports() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (input: { ids: string[]; reason: string }) => {
+      const { error, count } = await supabase
+        .from('expense_reports')
+        .update(
+          { status: 'rejected', notes: input.reason ? `Rejected: ${input.reason}` : 'Rejected' },
+          { count: 'exact' },
+        )
+        .in('id', input.ids)
+        .eq('status', 'submitted');
+      if (error) throw error;
+      return { count: count ?? 0 };
+    },
+    onSuccess: ({ count }) => {
+      queryClient.invalidateQueries({ queryKey: ['expense-reports'] });
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      toast({ title: `Rejected ${count} report(s)` });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Bulk reject failed', description: err.message, variant: 'destructive' });
+    },
+  });
+
 export function useBookExpenseReport() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
