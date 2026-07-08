@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
 import type { Json } from '@/integrations/supabase/types';
 import { notifyNewLead } from '@/lib/slack-notify';
+import { buildAttributionFields, logUtmConversion } from '@/lib/utm';
 
 export type LeadStatus = 'lead' | 'opportunity' | 'customer' | 'lost';
 
