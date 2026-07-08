@@ -139,6 +139,7 @@ export const MODULE_EDGE_FUNCTIONS: Partial<Record<ModuleId, readonly string[]>>
   handbook: ['github-content-sync'],
   workspaceChat: ['workspace-chat'],
   siteMigration: ['migrate-page', 'analyze-brand'],
+  paidGrowth: ['social-post-scheduler'],
 
   // ── Autonomous operator (off by default) ─────────────────────────────────
   flowpilot: [
