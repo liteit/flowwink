@@ -174,6 +174,14 @@ export default function DealsPage() {
           />
         </div>
 
+        {showSetup && (
+          <>
+            <DealTeamsPanel />
+            <DealTemplatesPanel />
+          </>
+        )}
+
+
         {/* Kanban View */}
         {viewMode === 'kanban' && (
           <>
