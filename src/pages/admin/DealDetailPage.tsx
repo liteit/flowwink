@@ -244,6 +244,20 @@ export default function DealDetailPage() {
                   </span>
                 </div>
               )}
+
+              <div className="flex items-center gap-3">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <Select
+                  value={dealTeamId || 'none'}
+                  onValueChange={(v) => updateDeal.mutate({ id: deal.id, team_id: v === 'none' ? null : v } as any)}
+                >
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="No team" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No team</SelectItem>
+                    {teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardContent>
           </Card>
 
