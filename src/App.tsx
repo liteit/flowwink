@@ -362,6 +362,7 @@ const router = createBrowserRouter([
       { path: "/quote/:token", element: <PublicQuotePage /> },
       { path: "/quote/:token/certificate", element: <SignatureCertificatePage /> },
       { path: "/invoice/:token", element: <PublicInvoicePage /> },
+      { path: "/sign/document/:token", element: <PublicDocumentSignPage /> },
       { path: "/s/:token", element: <PublicSurveyPage /> },
       { path: "/admin/accounting", element: <AccountingPage /> },
       { path: "/admin/accounting/locale-packs", element: <LocalePacksPage /> },
