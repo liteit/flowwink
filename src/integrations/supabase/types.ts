@@ -4568,6 +4568,159 @@ export type Database = {
           },
         ]
       }
+      deal_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          deal_id: string
+          field: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          deal_id: string
+          field: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          deal_id?: string
+          field?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_history_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_team_members: {
+        Row: {
+          created_at: string
+          role: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          role?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          role?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "deal_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_teams: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      deal_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          default_currency: string
+          default_notes: string | null
+          default_product_id: string | null
+          default_stage: string | null
+          default_stage_id: string | null
+          default_team_id: string | null
+          default_value_cents: number
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          default_currency?: string
+          default_notes?: string | null
+          default_product_id?: string | null
+          default_stage?: string | null
+          default_stage_id?: string | null
+          default_team_id?: string | null
+          default_value_cents?: number
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          default_currency?: string
+          default_notes?: string | null
+          default_product_id?: string | null
+          default_stage?: string | null
+          default_stage_id?: string | null
+          default_team_id?: string | null
+          default_value_cents?: number
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_templates_default_team_id_fkey"
+            columns: ["default_team_id"]
+            isOneToOne: false
+            referencedRelation: "deal_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deals: {
         Row: {
           closed_at: string | null
@@ -4580,9 +4733,11 @@ export type Database = {
           lost_note: string | null
           lost_reason: string | null
           notes: string | null
+          owner_id: string | null
           product_id: string | null
           stage: Database["public"]["Enums"]["deal_stage"]
           stage_id: string | null
+          team_id: string | null
           updated_at: string
           value_cents: number
         }
@@ -4597,9 +4752,11 @@ export type Database = {
           lost_note?: string | null
           lost_reason?: string | null
           notes?: string | null
+          owner_id?: string | null
           product_id?: string | null
           stage?: Database["public"]["Enums"]["deal_stage"]
           stage_id?: string | null
+          team_id?: string | null
           updated_at?: string
           value_cents?: number
         }
@@ -4614,9 +4771,11 @@ export type Database = {
           lost_note?: string | null
           lost_reason?: string | null
           notes?: string | null
+          owner_id?: string | null
           product_id?: string | null
           stage?: Database["public"]["Enums"]["deal_stage"]
           stage_id?: string | null
+          team_id?: string | null
           updated_at?: string
           value_cents?: number
         }
@@ -4640,6 +4799,13 @@ export type Database = {
             columns: ["stage_id"]
             isOneToOne: false
             referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deals_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "deal_teams"
             referencedColumns: ["id"]
           },
         ]
@@ -18721,6 +18887,14 @@ export type Database = {
         Args: { p_reservation_id: string; p_to_location_code?: string }
         Returns: string
       }
+      convert_amount_to_base: {
+        Args: {
+          p_amount_cents: number
+          p_from_currency: string
+          p_to_currency?: string
+        }
+        Returns: number
+      }
       convert_trial_to_active: {
         Args: { _subscription_id: string }
         Returns: Json
@@ -18791,6 +18965,16 @@ export type Database = {
           p_reason?: string
         }
         Returns: Json
+      }
+      create_deal_from_template: {
+        Args: {
+          p_expected_close?: string
+          p_lead_id: string
+          p_override_currency?: string
+          p_override_value_cents?: number
+          p_template_id: string
+        }
+        Returns: string
       }
       create_manual_subscription: {
         Args: {
