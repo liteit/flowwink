@@ -161,6 +161,7 @@ export default function DocumentsPage() {
         </Tabs>
 
         <AddDocumentDialog open={addOpen} onOpenChange={setAddOpen} />
+        <DocumentDetailSheet doc={detailDoc} open={!!detailDoc} onOpenChange={(o) => !o && setDetailDoc(null)} />
       </AdminPageContainer>
     </AdminLayout>
   );
