@@ -12,9 +12,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Undo2, CheckCircle2, PackageCheck, ClipboardCheck, DollarSign, Plus } from 'lucide-react';
+import { Undo2, CheckCircle2, PackageCheck, ClipboardCheck, DollarSign, Plus, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { ReturnDetailDrawer } from '@/components/admin/returns/ReturnDetailDrawer';
 
 interface ReturnRow {
   id: string;
