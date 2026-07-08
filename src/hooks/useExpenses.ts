@@ -100,6 +100,9 @@ export function useCreateExpense() {
           attendees: (input.attendees as any) || null,
           receipt_url: input.receipt_url || null,
           status: 'draft',
+          rate_code: input.rate_code ?? null,
+          quantity: input.quantity ?? null,
+          unit: input.unit ?? null,
         }])
         .select()
         .single();
