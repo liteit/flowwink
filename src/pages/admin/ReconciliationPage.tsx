@@ -282,6 +282,9 @@ export default function ReconciliationPage() {
             <TabsTrigger value="reconciliation">Reconciliation</TabsTrigger>
             <TabsTrigger value="rules">Rules</TabsTrigger>
             <TabsTrigger value="report">Report</TabsTrigger>
+            <TabsTrigger value="petty-cash">Petty cash</TabsTrigger>
+            <TabsTrigger value="signoff">Sign-off</TabsTrigger>
+            <TabsTrigger value="feeds">Bank feeds</TabsTrigger>
             <TabsTrigger value="imports">Import history</TabsTrigger>
             <TabsTrigger value="accounts">Bank accounts</TabsTrigger>
           </TabsList>
@@ -289,6 +292,9 @@ export default function ReconciliationPage() {
 
         {tab === 'rules' && <ReconciliationRulesPanel />}
         {tab === 'report' && <ReconciliationReportPanel />}
+        {tab === 'petty-cash' && <PettyCashPanel />}
+        {tab === 'signoff' && <ReconciliationSignoffPanel />}
+        {tab === 'feeds' && <BankFeedsPanel />}
 
 
         {tab === 'transactions' && (
