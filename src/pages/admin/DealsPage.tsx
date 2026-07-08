@@ -246,6 +246,14 @@ export default function DealsPage() {
                           </TableCell>
                           <TableCell className="font-semibold">
                             {formatPrice(deal.value_cents, deal.currency)}
+                            {deal.currency && deal.currency.toUpperCase() !== baseCurrency.toUpperCase() && (() => {
+                              const converted = convertAmount(deal.value_cents, deal.currency, baseCurrency, rates);
+                              return converted != null ? (
+                                <div className="text-xs text-muted-foreground font-normal">
+                                  ≈ {formatPrice(converted, baseCurrency)}
+                                </div>
+                              ) : null;
+                            })()}
                           </TableCell>
                           <TableCell>
                             <Select
