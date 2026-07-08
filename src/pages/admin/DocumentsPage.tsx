@@ -14,6 +14,7 @@ import { FileText, Trash2, ExternalLink, FolderOpen, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { AddDocumentDialog } from "@/components/admin/documents/AddDocumentDialog";
 import { DocumentTagsCell } from "@/components/admin/documents/DocumentTagsCell";
+import { DocumentDetailSheet } from "@/components/admin/documents/DocumentDetailSheet";
 
 const CATEGORIES = ["all", "general", "contract", "hr", "finance", "project"];
 
