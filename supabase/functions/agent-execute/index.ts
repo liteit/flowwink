@@ -9264,6 +9264,8 @@ const GENERIC_CRUD_TABLES = new Set([
   'chat_conversations', 'chat_feedback', 'chat_messages',
   // Blog comments (moderation via list_blog_comments)
   'blog_comments',
+  // Social posts (paidGrowth: schedule_social_post / list_social_posts)
+  'social_posts',
   // Support agents (availability/presence read for transfer decisions)
   'support_agents',
   // Manufacturing
