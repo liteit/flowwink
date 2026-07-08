@@ -10,6 +10,10 @@ import { useToast } from '@/hooks/use-toast';
 import { convertToWebP } from '@/lib/image-utils';
 import { cn } from '@/lib/utils';
 import { UnsplashPicker } from '@/components/admin/UnsplashPicker';
+import { MediaDetailsSheet } from '@/components/admin/MediaDetailsSheet';
+import { useMediaAssets, useUpsertMediaAsset, useMediaUsage } from '@/hooks/useMediaParity';
+import { Badge } from '@/components/ui/badge';
+import { Info } from 'lucide-react';
 import { ImageCropper } from '@/components/admin/ImageCropper';
 import { 
   Loader2, 
