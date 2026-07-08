@@ -98,9 +98,9 @@
       "id": "trial_conversion",
       "name": "Trial→paid funnel",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "trial→paid conversion funnel"
+      "verify": "DONE 2026-07-08. trial_start/trial_end already exist; create_manual_subscription now accepts _trial_days (starts as trialing, first_invoice pushed to trial end). convert_trial_to_active RPC (SECURITY DEFINER + service_role escape) flips trialing→active. run_trial_conversions() sweep wired into subscription-billing-cron. UI: trial-days-left badge in the list + Convert trial → active dropdown item."
     },
     {
       "id": "seat_scaling",
