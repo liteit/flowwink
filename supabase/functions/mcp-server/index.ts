@@ -298,6 +298,24 @@ async function loadExposedSkills(filterGroups?: string[]): Promise<SkillRow[]> {
 
 // ---------- execute skill ----------
 
+// Scope enforcement (robustness-review finding H3): API-key scopes were
+// collected but never read — any valid key could execute every exposed skill.
+// Semantics (fail-forward, Law 4): empty/missing scopes or a wildcard
+// ('*' / 'mcp:*') = full access (all keys provisioned to date carry 'mcp:*').
+// A non-wildcard scoped key is restricted to 'mcp:<category>' and/or
+// 'skill:<name>' grants.
+function scopeAllowsSkill(
+  scopes: string[] | null | undefined,
+  skillName: string,
+  category: string | null | undefined,
+): boolean {
+  if (!scopes || scopes.length === 0) return true;
+  if (scopes.includes("*") || scopes.includes("mcp:*")) return true;
+  if (category && scopes.includes(`mcp:${category}`)) return true;
+  if (scopes.includes(`skill:${skillName}`)) return true;
+  return false;
+}
+
 async function executeSkill(
   skillName: string,
   args: Record<string, unknown>,
@@ -1317,6 +1335,9 @@ app.post("/rest/execute", async (c) => {
     if (!match) {
       return c.json({ ok: false, error: `Unknown skill: ${name}. Use search_skills to discover valid names.` }, 404, corsHeaders);
     }
+    if (!scopeAllowsSkill(c.get("apiKeyScopes" as any) as string[] | undefined, match.name, (match as any).category)) {
+      return c.json({ ok: false, error: `API key scope does not permit skill '${name}'.` }, 403, corsHeaders);
+    }
     const result = await executeSkill(match.name, skillArgs, callerUserId, callerApiKeyId);
     try {
       return c.json({ ok: true, tool: name, result: JSON.parse(result) }, 200, corsHeaders);
@@ -1335,6 +1356,9 @@ app.post("/rest/execute", async (c) => {
     );
   }
 
+  if (!scopeAllowsSkill(c.get("apiKeyScopes" as any) as string[] | undefined, match.name, (match as any).category)) {
+    return c.json({ ok: false, error: `API key scope does not permit skill '${tool}'.` }, 403, corsHeaders);
+  }
   const result = await executeSkill(match.name, args || {}, callerUserId, callerApiKeyId);
   try {
     return c.json({ ok: true, tool, result: JSON.parse(result) }, 200, corsHeaders);

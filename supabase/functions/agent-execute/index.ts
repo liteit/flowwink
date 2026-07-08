@@ -24,9 +24,11 @@ const corsHeaders = {
 // These mirror the inline logic in the manage_journal_entry create path
 // (db:journal_entries). They are used by db:propose_bookkeeping so the queue
 // proposes the SAME double-entry the booking path would produce.
-// TODO(unify): fold the manage_journal_entry inline copies onto these helpers
-// so the scoring can never drift between the propose and book surfaces.
-function acctExpandTemplateLines(tplLines: any[], baseCents: number): any[] {
+// These helpers are the ONLY template expand/score implementations — the
+// manage_journal_entry create path calls them too (the inline copies drifted:
+// the old substring scorer survived there and could auto-book to the wrong
+// account — robustness review finding C1, fixed 2026-07-08).
+function acctExpandTemplateLines(tplLines: any[], baseCents: number, grossCents?: number): any[] {
   const out = tplLines.map((l: any) => ({
     account_code: l.account_code,
     account_name: l.account_name,
@@ -34,11 +36,30 @@ function acctExpandTemplateLines(tplLines: any[], baseCents: number): any[] {
     debit_cents: Math.round(((l.debit_pct ?? 0) / 100) * baseCents),
     credit_cents: Math.round(((l.credit_pct ?? 0) / 100) * baseCents),
   }));
+  // Bank-leg pinning (review finding H1): the gross→net→gross round trip can
+  // drift the recomputed bank leg 1 öre off the REAL bank amount (gross 102 →
+  // net round(81.6)=82 → bank round(102.5)=103). The entry balances but 1930
+  // no longer ties to the bank statement — a reconciliation break. When the
+  // actual gross is known (booking a bank event), pin the 19xx leg to it
+  // exactly; rounding is absorbed by a non-bank line below.
+  if (grossCents && grossCents > 0) {
+    const bankLine = out.find((l: any) => String(l.account_code || '').startsWith('19')
+      && (l.debit_cents > 0 || l.credit_cents > 0));
+    if (bankLine) {
+      if (bankLine.debit_cents > 0) bankLine.debit_cents = grossCents;
+      else bankLine.credit_cents = grossCents;
+    }
+  }
   const d = out.reduce((s: number, l: any) => s + l.debit_cents, 0);
   const c = out.reduce((s: number, l: any) => s + l.credit_cents, 0);
   if (d !== c) {
     const diff = d - c;
-    const biggest = out.reduce((a: any, b: any) =>
+    // Absorb rounding on the largest NON-bank line (usually the VAT or
+    // expense/revenue line) — never on the 19xx leg, which must stay equal to
+    // what actually moved in the bank.
+    const candidates = out.filter((l: any) => !String(l.account_code || '').startsWith('19'));
+    const pool = candidates.length > 0 ? candidates : out;
+    const biggest = pool.reduce((a: any, b: any) =>
       Math.max(b.debit_cents, b.credit_cents) > Math.max(a.debit_cents, a.credit_cents) ? b : a);
     if (biggest.debit_cents >= biggest.credit_cents) biggest.debit_cents -= diff;
     else biggest.credit_cents += diff;
@@ -6764,14 +6785,33 @@ async function executeDbAction(
       // Graduated counterparty confidence (Accounted-style trust ramp): a set
       // default starts at 88 (review lane), +5 per CONFIRMED booking of this
       // counterparty, capped 98 — after two confirmations it books itself.
-      const { data: bookedCounts } = await supabase.from('bank_transactions')
-        .select('counterparty')
-        .not('journal_entry_id', 'is', null)
-        .not('counterparty', 'is', null);
+      // Aggregated in SQL (review finding H4): the old full-table pull silently
+      // truncated at PostgREST's row cap (~1000), so on a mature ledger the
+      // confidence — and the auto-vs-propose routing — was computed from an
+      // undercount. Falls back to the old query if the RPC isn't deployed yet.
       const confirmedByCounterparty = new Map<string, number>();
-      for (const r of bookedCounts || []) {
-        const k = String(r.counterparty).toLowerCase().trim();
-        confirmedByCounterparty.set(k, (confirmedByCounterparty.get(k) || 0) + 1);
+      const { data: aggCounts, error: aggErr } = await supabase.rpc('booked_counterparty_counts');
+      if (!aggErr && Array.isArray(aggCounts)) {
+        for (const r of aggCounts) {
+          confirmedByCounterparty.set(String(r.counterparty).toLowerCase().trim(), Number(r.cnt) || 0);
+        }
+      } else {
+        const { data: bookedCounts } = await supabase.from('bank_transactions')
+          .select('counterparty')
+          .not('journal_entry_id', 'is', null)
+          .not('counterparty', 'is', null);
+        for (const r of bookedCounts || []) {
+          const k = String(r.counterparty).toLowerCase().trim();
+          confirmedByCounterparty.set(k, (confirmedByCounterparty.get(k) || 0) + 1);
+        }
+      }
+
+      // Direction partition is event-independent (review finding M3): compute
+      // each template's bank direction ONCE instead of per event (was N×M).
+      const templatesByDirection: Record<'inflow' | 'outflow', any[]> = { inflow: [], outflow: [] };
+      for (const t of allTemplates || []) {
+        const dir = acctTemplateBankDirection(t.template_lines);
+        if (dir) templatesByDirection[dir].push(t);
       }
 
       const proposals = (events || []).map((ev: any) => {
@@ -6794,9 +6834,7 @@ async function executeDbAction(
         // of the bank (credit 19xx); an inflow only templates that take money
         // IN. Prevents "bank fee booked as revenue" class of mismatches.
         const evDirection: 'inflow' | 'outflow' = (ev.amount_cents || 0) >= 0 ? 'inflow' : 'outflow';
-        const directionCompatible = allTemplates.filter(
-          (t: any) => acctTemplateBankDirection(t.template_lines) === evDirection,
-        );
+        const directionCompatible = templatesByDirection[evDirection];
         if (directionCompatible.length === 0) {
           return { ...base, status: 'escalate', confidence: 0,
             reason: `No ${evDirection}-direction template exists — create one via manage_accounting_template`,
@@ -7239,31 +7277,43 @@ async function executeDbAction(
       const { entry_date, description, reference_number, template_name, auto_confirm, template_id: explicitTemplateId, amount_cents } = args as any;
       let { lines: entryLines } = args as any;
 
-      // Expand percentage-based template lines (debit_pct/credit_pct) into
-      // cents using a NET base amount. E.g. a 25%-VAT sale template
-      // (125/100/25) with amount_cents=100000 → 125000/100000/25000.
-      // Rounding drift is absorbed by the largest line so the entry balances.
-      const expandTemplateLines = (tplLines: any[], baseCents: number): any[] => {
-        const out = tplLines.map((l: any) => ({
-          account_code: l.account_code,
-          account_name: l.account_name,
-          description: l.description ?? null,
-          debit_cents: Math.round(((l.debit_pct ?? 0) / 100) * baseCents),
-          credit_cents: Math.round(((l.credit_pct ?? 0) / 100) * baseCents),
-        }));
-        const d = out.reduce((s, l) => s + l.debit_cents, 0);
-        const c = out.reduce((s, l) => s + l.credit_cents, 0);
-        if (d !== c) {
-          const diff = d - c;
-          const biggest = out.reduce((a, b) =>
-            Math.max(b.debit_cents, b.credit_cents) > Math.max(a.debit_cents, a.credit_cents) ? b : a);
-          if (biggest.debit_cents >= biggest.credit_cents) biggest.debit_cents -= diff;
-          else biggest.credit_cents += diff;
+      // Template expansion + scoring use the SHARED helpers (acctExpandTemplateLines,
+      // acctIsPctTemplate, acctScoreTemplates) — the inline copies that used to live
+      // here drifted (old substring scorer → wrong-account auto-book risk, review
+      // finding C1) and were removed 2026-07-08.
+
+      // Fetch the linked bank event EARLY (was after expansion): its gross amount
+      // pins the 19xx leg during expansion (review finding H1), its date defaults
+      // entry_date, and its journal link is the idempotency key.
+      const bankTxIdForGuard = (args as any).bank_transaction_id;
+      let bankTxDate: string | null = null;
+      let bankTxCounterparty: string | null = null;
+      let bankTxGrossCents: number | undefined;
+      if (bankTxIdForGuard) {
+        const { data: existingTx } = await supabase.from('bank_transactions')
+          .select('journal_entry_id, transaction_date, counterparty, amount_cents').eq('id', bankTxIdForGuard).maybeSingle();
+        // Stale-reference guard: booking against a bank event that no longer
+        // exists means the caller is working from stale data (cached proposals
+        // after a wipe/re-import). Refuse instead of creating an orphan entry.
+        if (!existingTx) {
+          throw new Error(`bank_transaction ${bankTxIdForGuard} not found — the event list is stale. Refresh proposals (propose_bookkeeping) and retry.`);
         }
-        return out;
-      };
-      const isPctTemplate = (tplLines: any[]): boolean =>
-        Array.isArray(tplLines) && tplLines.some((l: any) => (l.debit_pct ?? 0) > 0 || (l.credit_pct ?? 0) > 0);
+        if (existingTx.journal_entry_id) {
+          return {
+            already_booked: true,
+            entry_id: existingTx.journal_entry_id,
+            bank_transaction_id: bankTxIdForGuard,
+            message: 'This bank event is already booked (linked to a journal entry). No new entry was created.',
+          };
+        }
+        // Default the entry to the EVENT's date — booking a 2025 bank event
+        // must not land on today's date (it would fall outside the fiscal
+        // year and vanish from year-filtered views).
+        bankTxDate = existingTx.transaction_date as string;
+        bankTxCounterparty = (existingTx.counterparty as string) || null;
+        const rawAmt = Number(existingTx.amount_cents);
+        if (Number.isFinite(rawAmt) && rawAmt !== 0) bankTxGrossCents = Math.abs(rawAmt);
+      }
 
       // ─── Explicit template_id (one-call booking) ─────────────────────────
       // manage_journal_entry {action:'create', template_id, amount_cents} —
@@ -7273,7 +7323,7 @@ async function executeDbAction(
         const { data: tpl, error: tplErr } = await supabase.from('accounting_templates')
           .select('id, template_name, template_lines, usage_count').eq('id', explicitTemplateId).maybeSingle();
         if (tplErr || !tpl) throw new Error(`Template ${explicitTemplateId} not found`);
-        if (isPctTemplate(tpl.template_lines)) {
+        if (acctIsPctTemplate(tpl.template_lines)) {
           if (!amount_cents || amount_cents <= 0) {
             return {
               status: 'propose',
@@ -7283,12 +7333,18 @@ async function executeDbAction(
               message: `Template '${tpl.template_name}' uses percentage lines — call again with amount_cents (NET base amount in cents/öre) to expand, or provide populated lines.`,
             };
           }
-          entryLines = expandTemplateLines(tpl.template_lines, amount_cents);
+          entryLines = acctExpandTemplateLines(tpl.template_lines, amount_cents, bankTxGrossCents);
         } else {
           entryLines = tpl.template_lines;
         }
-        await supabase.from('accounting_templates')
-          .update({ usage_count: (tpl.usage_count || 0) + 1 }).eq('id', tpl.id);
+        // Atomic increment (review finding M4): the old read-modify-write lost
+        // updates under concurrency. Falls back to the racy path if the RPC
+        // isn't deployed yet (fail forward, Law 4).
+        const { error: incErr } = await supabase.rpc('increment_template_usage', { p_template_id: tpl.id });
+        if (incErr) {
+          await supabase.from('accounting_templates')
+            .update({ usage_count: (tpl.usage_count || 0) + 1 }).eq('id', tpl.id);
+        }
       }
 
       // ─── Template-First Matching (OpenClaw instrument principle) ────────
@@ -7312,72 +7368,15 @@ async function executeDbAction(
           throw new Error('Either description or template_name is required to match a template.');
         }
 
-        const searchWords = searchTerms.split(/\s+/).filter((w: string) => w.length > 2);
-
-        interface TemplateMatch {
-          template: any;
-          score: number;
-          matchDetails: string[];
-        }
-
-        const scored: TemplateMatch[] = allTemplates.map((t: any) => {
-          let score = 0;
-          const details: string[] = [];
-
-          // 1. Keyword match (strongest signal — 40 points per match)
-          const keywords: string[] = t.keywords || [];
-          for (const kw of keywords) {
-            const kwLower = kw.toLowerCase();
-            if (searchTerms.includes(kwLower)) {
-              score += 40;
-              details.push(`keyword:${kw}`);
-            }
-            // Partial match (word overlap)
-            for (const sw of searchWords) {
-              if (kwLower.includes(sw) || sw.includes(kwLower)) {
-                score += 15;
-                details.push(`partial:${sw}~${kw}`);
-              }
-            }
-          }
-
-          // 2. Template name match (30 points for exact contain, 15 for word overlap)
-          const nameLower = t.template_name.toLowerCase();
-          if (searchTerms.includes(nameLower) || nameLower.includes(searchTerms)) {
-            score += 30;
-            details.push('name:exact');
-          } else {
-            const nameWords = nameLower.split(/\s+/);
-            const nameOverlap = searchWords.filter((sw: string) => 
-              nameWords.some((nw: string) => nw.includes(sw) || sw.includes(nw))
-            );
-            if (nameOverlap.length > 0) {
-              score += 15 * nameOverlap.length;
-              details.push(`name:words(${nameOverlap.join(',')})`);
-            }
-          }
-
-          // 3. Description match (10 points per word overlap)
-          const descLower = (t.description || '').toLowerCase();
-          for (const sw of searchWords) {
-            if (descLower.includes(sw)) {
-              score += 10;
-              details.push(`desc:${sw}`);
-            }
-          }
-
-          // 4. Usage frequency boost (max 10 points)
-          score += Math.min(10, (t.usage_count || 0) * 2);
-
-          return { template: t, score, matchDetails: details };
-        });
-
-        // Sort by score descending
-        scored.sort((a: TemplateMatch, b: TemplateMatch) => b.score - a.score);
+        // Shared word-boundary scorer (review finding C1): the inline substring
+        // scorer that used to live here could auto-book to the WRONG account on
+        // coincidental infix matches ('el' ∈ 'webbhotell' → electricity) — the
+        // exact bug already fixed in propose_bookkeeping. Both surfaces now
+        // score identically, and confidence comes from the same calibration.
+        const scored = acctScoreTemplates(allTemplates, searchTerms);
 
         const best = scored[0];
-        const maxPossibleScore = 100; // normalize to percentage
-        const confidence = Math.min(100, Math.round((best.score / maxPossibleScore) * 100));
+        const confidence = best.confidence;
 
         // ─── Confidence Zones ────────────────────────────────────────────
         if (confidence < 70) {
@@ -7386,9 +7385,9 @@ async function executeDbAction(
             status: 'escalate',
             confidence,
             message: `No template matched with sufficient confidence (${confidence}%). Please create this journal entry manually. FlowPilot will learn from it.`,
-            top_candidates: scored.slice(0, 3).map((s: TemplateMatch) => ({
+            top_candidates: scored.slice(0, 3).map((s) => ({
               name: s.template.template_name,
-              confidence: Math.min(100, Math.round((s.score / maxPossibleScore) * 100)),
+              confidence: s.confidence,
               match_details: s.matchDetails,
             })),
           };
@@ -7409,7 +7408,7 @@ async function executeDbAction(
 
         // 🟢 AUTO-BOOK — very high confidence, use template lines
         // (Only reaches here if auto_confirm=true AND confidence ≥ 95%)
-        if (isPctTemplate(best.template.template_lines)) {
+        if (acctIsPctTemplate(best.template.template_lines)) {
           if (!amount_cents || amount_cents <= 0) {
             // Percentage template without a base amount would book a
             // zero-amount entry — downgrade to propose instead.
@@ -7422,53 +7421,29 @@ async function executeDbAction(
               message: `Template '${best.template.template_name}' matched (${confidence}%) but uses percentage lines — call again with amount_cents (NET base amount in cents/öre) and auto_confirm=true to book.`,
             };
           }
-          entryLines = expandTemplateLines(best.template.template_lines, amount_cents);
+          entryLines = acctExpandTemplateLines(best.template.template_lines, amount_cents, bankTxGrossCents);
         } else {
           entryLines = best.template.template_lines;
         }
         // Log which template was used
         console.log(`[accounting] Auto-booking with template '${best.template.template_name}' (${confidence}% confidence)`);
 
-        // Increment usage count
-        await supabase.from('accounting_templates')
-          .update({ usage_count: (best.template.usage_count || 0) + 1 })
-          .eq('id', best.template.id);
+        // Atomic increment (M4) with racy fallback until the RPC is deployed.
+        const { error: incErr2 } = await supabase.rpc('increment_template_usage', { p_template_id: best.template.id });
+        if (incErr2) {
+          await supabase.from('accounting_templates')
+            .update({ usage_count: (best.template.usage_count || 0) + 1 })
+            .eq('id', best.template.id);
+        }
       }
 
       if (!entryLines || entryLines.length === 0) {
         throw new Error('lines array is required for create action');
       }
 
-      // Idempotency guard (litmus finding, 2026-07-07): booking a bank event
-      // twice double-books the ledger. If the event is already linked to a
-      // journal entry, refuse — the link IS the idempotency key. Retries after
-      // transport failures hit this instead of creating duplicates.
-      const bankTxIdForGuard = (args as any).bank_transaction_id;
-      let bankTxDate: string | null = null;
-      let bankTxCounterparty: string | null = null;
-      if (bankTxIdForGuard) {
-        const { data: existingTx } = await supabase.from('bank_transactions')
-          .select('journal_entry_id, transaction_date, counterparty').eq('id', bankTxIdForGuard).maybeSingle();
-        // Stale-reference guard: booking against a bank event that no longer
-        // exists means the caller is working from stale data (cached proposals
-        // after a wipe/re-import). Refuse instead of creating an orphan entry.
-        if (!existingTx) {
-          throw new Error(`bank_transaction ${bankTxIdForGuard} not found — the event list is stale. Refresh proposals (propose_bookkeeping) and retry.`);
-        }
-        if (existingTx.journal_entry_id) {
-          return {
-            already_booked: true,
-            entry_id: existingTx.journal_entry_id,
-            bank_transaction_id: bankTxIdForGuard,
-            message: 'This bank event is already booked (linked to a journal entry). No new entry was created.',
-          };
-        }
-        // Default the entry to the EVENT's date — booking a 2025 bank event
-        // must not land on today's date (it would fall outside the fiscal
-        // year and vanish from year-filtered views).
-        bankTxDate = existingTx.transaction_date as string;
-        bankTxCounterparty = (existingTx.counterparty as string) || null;
-      }
+      // (Idempotency guard + bank-event fetch moved ABOVE template expansion —
+      // its gross now pins the 19xx leg. The atomic claim at link time below
+      // closes the read-then-write race, review finding H2.)
 
       // Explicit period-lock check (sweep finding #B3). The DB trigger
       // guard_journal_entries_period() is the backstop; checking here gives
@@ -7533,10 +7508,29 @@ async function executeDbAction(
       // queue and gains an audit trail back to its posted verification.
       const bankTxId = (args as any).bank_transaction_id;
       if (bankTxId) {
-        const { error: linkErr } = await supabase.from('bank_transactions')
+        // Atomic claim (review finding H2): the early guard is read-then-write —
+        // two concurrent calls could both read journal_entry_id=NULL and both
+        // insert an entry. The conditional predicate makes the LINK the atomic
+        // claim; the loser compensates (deletes its entry) and returns
+        // already_booked instead of leaving a duplicate in the ledger.
+        const { data: linkRows, error: linkErr } = await supabase.from('bank_transactions')
           .update({ journal_entry_id: entry.id, status: 'matched' })
-          .eq('id', bankTxId);
+          .eq('id', bankTxId)
+          .is('journal_entry_id', null)
+          .select('id');
         if (linkErr) console.warn(`[accounting] bank_transaction link failed: ${linkErr.message}`);
+        if (!linkErr && (!linkRows || linkRows.length === 0)) {
+          await supabase.from('journal_entry_lines').delete().eq('journal_entry_id', entry.id);
+          await supabase.from('journal_entries').delete().eq('id', entry.id);
+          const { data: winner } = await supabase.from('bank_transactions')
+            .select('journal_entry_id').eq('id', bankTxId).maybeSingle();
+          return {
+            already_booked: true,
+            entry_id: winner?.journal_entry_id ?? null,
+            bank_transaction_id: bankTxId,
+            message: 'Concurrent booking detected — this bank event was booked by another call. No duplicate was created.',
+          };
+        }
 
         // LEARNING LOOP (Accounted-style): every confirmed booking of a bank
         // event teaches the counterparty its template. Next proposal for this
