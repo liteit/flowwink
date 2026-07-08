@@ -355,15 +355,17 @@ export const BAS_2024_TEMPLATES = [
   },
   {
     template_name: 'Momsredovisning (betalning)',
-    description: 'Inbetalning av moms till Skatteverket',
+    // A fixed-% template cannot model VAT settlement (the output/input ratio is never
+    // constant) — the real declaration runs through the momsdeklaration flow into 2650.
+    // This is just the clean 1:1 bank payment of the already-settled liability.
+    description: 'Betalning av redovisad moms från företagskonto (moms redan avräknad till 2650)',
     category: 'tax',
-    keywords: ['moms', 'momsredovisning', 'VAT', 'momsbetalning', 'skattekonto'],
+    keywords: ['moms', 'momsredovisning', 'VAT', 'momsbetalning'],
     is_system: true,
     locale: 'se-bas2024',
     template_lines: [
-      { account_code: '2610', account_name: 'Utgående moms 25%', debit_pct: 100, credit_pct: 0 },
-      { account_code: '2640', account_name: 'Ingående moms', debit_pct: 0, credit_pct: 80 },
-      { account_code: '1930', account_name: 'Checkkonto/Företagskonto', debit_pct: 0, credit_pct: 20 },
+      { account_code: '2650', account_name: 'Momsredovisning', debit_pct: 100, credit_pct: 0 },
+      { account_code: '1930', account_name: 'Checkkonto/Företagskonto', debit_pct: 0, credit_pct: 100 },
     ],
   },
   {
