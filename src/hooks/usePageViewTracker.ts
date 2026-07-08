@@ -1,6 +1,7 @@
 import { logger } from '@/lib/logger';
 import { useEffect, useRef } from 'react';
 import { hasConsent } from '@/lib/visitor-consent';
+import { captureUtmOnLanding } from '@/lib/utm';
 
 interface PageViewData {
   pageId?: string;
