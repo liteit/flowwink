@@ -83,9 +83,9 @@
       "id": "escalation_rules",
       "name": "Escalation rules",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 2,
-      "verify": "Escalation rules on ticket aging/breach"
+      "verify": "DONE 2026-07-08. Table ticket_escalation_rules + run_ticket_escalations() SECURITY DEFINER (service_role escape) applies condition (age > X hrs, status/priority/unassigned filters) and raise-priority/reassign/notify actions. UI: Escalation tab on /admin/tickets with builder + Run sweep now."
     },
     {
       "id": "customer_portal",
