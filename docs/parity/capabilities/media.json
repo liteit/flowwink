@@ -1,18 +1,16 @@
 {
   "module": "media",
   "odoo_app": "Website media library",
-  "current_maturity": "L2",
+  "current_maturity": "L4",
   "target_maturity": "L4",
   "capabilities": [
     {
       "id": "upload",
       "name": "Upload assets",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 2,
-      "verify": "handleUpload in MediaLibraryPage.tsx + ImageUploader.tsx",
-      "notes": "Skill surface missing — media_browse explicitly says 'NOT for: uploading new files (N/A)'.",
-      "epic": "EPIC-06"
+      "verify": "DONE 2026-07-08. Drag-drop + multi-file upload in MediaLibraryPage (handleUpload/handleDrop) with per-file progress. Each successful upload now also records metadata (filename, folder, MIME, size, dimensions probed client-side) into public.media_assets via upsert_media_asset RPC — powering alt-text / variants / where-used tracking."
     },
     {
       "id": "folders",
@@ -34,29 +32,25 @@
       "id": "image_optimization",
       "name": "Image optimization/resize",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 1,
-      "verify": "client-side compression in ImageUploader.tsx + ImageCropper.tsx",
-      "notes": "Skill surface missing — no optimization skill in media-module skillSeeds.",
-      "epic": "EPIC-06"
+      "verify": "DONE 2026-07-08. Client-side WebP conversion on upload (convertToWebP) PLUS server-side variants: media-optimize edge function decodes via ImageScript and uploads thumbnail (256px) + web (1280px) JPEG variants to <folder>/variants/, records them on media_assets.variants jsonb. Exposed as skill media_optimize (handler edge:media-optimize) and via the 'Generate' button in the media details sheet."
     },
     {
       "id": "alt_text",
       "name": "Alt text management",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 1,
-      "verify": "generate_alt_text skill exists (in pages-module skillSeeds); alt fields live in block editors",
-      "notes": "Skill lives in pages-module, not media-module; MediaLibraryPage has no alt text management UI.",
-      "epic": "EPIC-06"
+      "verify": "DONE 2026-07-08. Per-asset alt text stored on media_assets.alt_text; edited via MediaDetailsSheet in the media library (Textarea + Save). Persisted via set_media_alt_text RPC (SECURITY DEFINER, service_role escape) and exposed as skill media_set_alt_text. Tile badges surface ALT / alt? state at a glance."
     },
     {
       "id": "usage_tracking",
       "name": "Where-used tracking",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "no usage/where-used tracking in media module or MediaLibraryPage.tsx"
+      "verify": "DONE 2026-07-08. find_media_usage(text) SECURITY DEFINER function scans pages.content_json, blog_posts.content_json + featured_image, kb_articles.answer_text/answer_json, and products.image_url for a needle. Surfaced in the details sheet as 'Used in (N)' with a list per source_type; exposed as skill media_find_usage for the agent."
     }
   ]
 }

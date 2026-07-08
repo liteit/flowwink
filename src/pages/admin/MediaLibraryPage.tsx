@@ -10,6 +10,10 @@ import { useToast } from '@/hooks/use-toast';
 import { convertToWebP } from '@/lib/image-utils';
 import { cn } from '@/lib/utils';
 import { UnsplashPicker } from '@/components/admin/UnsplashPicker';
+import { MediaDetailsSheet } from '@/components/admin/MediaDetailsSheet';
+import { useMediaAssets, useUpsertMediaAsset, useMediaUsage } from '@/hooks/useMediaParity';
+import { Badge } from '@/components/ui/badge';
+import { Info } from 'lucide-react';
 import { ImageCropper } from '@/components/admin/ImageCropper';
 import { 
   Loader2, 
@@ -63,7 +67,11 @@ export default function MediaLibraryPage() {
   const [showUnsplash, setShowUnsplash] = useState(false);
   const [editingImage, setEditingImage] = useState<{ url: string; name: string } | null>(null);
   const [lightboxImage, setLightboxImage] = useState<{ url: string; name: string; index: number } | null>(null);
+  const [detailsFor, setDetailsFor] = useState<{ storagePath: string; filename: string; publicUrl: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: assetMap } = useMediaAssets();
+  const upsertMeta = useUpsertMediaAsset();
 
   const { toast } = useToast();
 
@@ -161,15 +169,39 @@ export default function MediaLibraryPage() {
         // Convert to WebP for optimization
         const webpBlob = await convertToWebP(file);
         const fileName = `${Date.now()}-${file.name.replace(/\.[^/.]+$/, '')}.webp`;
+        const storagePath = `pages/${fileName}`;
 
         const { error } = await supabase.storage
           .from('cms-images')
-          .upload(`pages/${fileName}`, webpBlob, {
+          .upload(storagePath, webpBlob, {
             contentType: 'image/webp',
             cacheControl: '31536000',
           });
 
         if (error) throw error;
+
+        // Probe dimensions client-side and record metadata for
+        // alt-text / where-used / variants tracking.
+        let width: number | undefined;
+        let height: number | undefined;
+        try {
+          const dims = await probeImageDimensions(webpBlob);
+          width = dims.width;
+          height = dims.height;
+        } catch { /* non-fatal */ }
+
+        await upsertMeta
+          .mutateAsync({
+            storage_path: storagePath,
+            folder: 'pages',
+            filename: fileName,
+            mime_type: 'image/webp',
+            size_bytes: webpBlob.size,
+            width,
+            height,
+          })
+          .catch((e) => logger.warn('media_assets upsert failed', e));
+
         successCount++;
       } catch (error) {
         logger.error('Upload error:', error);
@@ -193,7 +225,7 @@ export default function MediaLibraryPage() {
         variant: 'destructive',
       });
     }
-  }, [toast, refetch]);
+  }, [toast, refetch, upsertMeta]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -515,6 +547,21 @@ export default function MediaLibraryPage() {
                     size="sm"
                     variant="secondary"
                     className="w-full"
+                    onClick={() =>
+                      setDetailsFor({
+                        storagePath: `${file.folder}/${file.name}`,
+                        filename: file.name,
+                        publicUrl: getPublicUrl(file),
+                      })
+                    }
+                  >
+                    <Info className="h-3 w-3 mr-1" />
+                    Details
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="w-full"
                     onClick={() => setEditingImage({ url: getPublicUrl(file), name: file.name })}
                   >
                     <Crop className="h-3 w-3 mr-1" />
@@ -543,6 +590,24 @@ export default function MediaLibraryPage() {
                     Delete
                   </Button>
                 </div>
+
+                {/* Alt-text hint badge (top-right) */}
+                {(() => {
+                  const meta = assetMap?.get(`cms-images|${file.folder}/${file.name}`);
+                  if (!meta) return null;
+                  return (
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      {meta.alt_text ? (
+                        <Badge variant="secondary" className="text-[10px]">ALT</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] border-dashed">alt?</Badge>
+                      )}
+                      {meta.variants && meta.variants.length > 0 && (
+                        <Badge variant="secondary" className="text-[10px]">{meta.variants.length}×</Badge>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* File info */}
                 <div className="p-2 border-t">
@@ -677,6 +742,31 @@ export default function MediaLibraryPage() {
           )}
         </DialogContent>
       </Dialog>
+      <MediaDetailsSheet
+        open={!!detailsFor}
+        onOpenChange={(open) => !open && setDetailsFor(null)}
+        storagePath={detailsFor?.storagePath ?? null}
+        filename={detailsFor?.filename ?? null}
+        publicUrl={detailsFor?.publicUrl ?? null}
+        asset={detailsFor ? (assetMap?.get(`cms-images|${detailsFor.storagePath}`) ?? null) : null}
+      />
     </AdminLayout>
   );
 }
+
+async function probeImageDimensions(blob: Blob): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.onerror = (e) => {
+      URL.revokeObjectURL(url);
+      reject(e);
+    };
+    img.src = url;
+  });
+}
+
