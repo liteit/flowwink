@@ -14,8 +14,10 @@ import { EntityActivityTimeline } from '@/components/admin/EntityActivityTimelin
 import { EntityTags } from '@/components/admin/EntityTags';
 import { EntityFollowers } from '@/components/admin/EntityFollowers';
 import { DealQuotesCard } from '@/components/admin/deals/DealQuotesCard';
+import { DealHistoryTimeline } from '@/components/admin/deals/DealHistoryTimeline';
 import { LostReasonDialog, lostReasonLabel } from '@/components/admin/crm/LostReasonDialog';
-import { ArrowLeft, Calendar, DollarSign, User, Package, Building } from 'lucide-react';
+import { useDealTeams, useLatestExchangeRates, useBaseCurrency, convertAmount } from '@/hooks/useDealsParity';
+import { ArrowLeft, Calendar, DollarSign, User, Package, Building, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +30,9 @@ export default function DealDetailPage() {
   const updateDeal = useUpdateDeal();
   const addActivity = useAddDealActivity();
   const updateActivity = useUpdateDealActivity();
+  const { data: teams = [] } = useDealTeams();
+  const { data: rates = [] } = useLatestExchangeRates();
+  const { data: baseCurrency = 'SEK' } = useBaseCurrency();
   const [showLostDialog, setShowLostDialog] = useState(false);
 
   if (isLoading) {
@@ -59,6 +64,16 @@ export default function DealDetailPage() {
     currency: deal.currency,
     minimumFractionDigits: 0,
   }).format(deal.value_cents / 100);
+  const convertedCents =
+    deal.currency && deal.currency.toUpperCase() !== baseCurrency.toUpperCase()
+      ? convertAmount(deal.value_cents, deal.currency, baseCurrency, rates)
+      : null;
+  const convertedLabel =
+    convertedCents != null
+      ? new Intl.NumberFormat('en-US', { style: 'currency', currency: baseCurrency, minimumFractionDigits: 0 })
+          .format(convertedCents / 100)
+      : null;
+  const dealTeamId = (deal as any).team_id as string | null | undefined;
 
   const handleStageChange = (newStage: DealStage) => {
     if (newStage === 'closed_lost' && deal.stage !== 'closed_lost') {
@@ -128,12 +143,18 @@ export default function DealDetailPage() {
                   </Select>
                 </div>
 
-                <Badge 
-                  variant="secondary" 
+                <Badge
+                  variant="secondary"
                   className={cn("font-mono text-lg", stageInfo.color)}
                 >
                   {formattedValue}
                 </Badge>
+
+                {convertedLabel && (
+                  <Badge variant="outline" className="font-mono">
+                    ≈ {convertedLabel} <span className="ml-1 text-muted-foreground">({baseCurrency})</span>
+                  </Badge>
+                )}
 
                 {deal.expected_close && (
                   <Badge variant="outline" className="flex items-center gap-1">
@@ -182,7 +203,11 @@ export default function DealDetailPage() {
 
           {/* Universal activity timeline (notes / todos / calls / meetings) */}
           <EntityActivityTimeline entityType="deal" entityId={deal.id} title="Notes & Tasks" />
+
+          {/* Change history */}
+          <DealHistoryTimeline dealId={deal.id} />
         </div>
+
 
         {/* Sidebar */}
         <div className="space-y-6">
@@ -219,6 +244,20 @@ export default function DealDetailPage() {
                   </span>
                 </div>
               )}
+
+              <div className="flex items-center gap-3">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <Select
+                  value={dealTeamId || 'none'}
+                  onValueChange={(v) => updateDeal.mutate({ id: deal.id, team_id: v === 'none' ? null : v } as any)}
+                >
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="No team" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No team</SelectItem>
+                    {teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardContent>
           </Card>
 

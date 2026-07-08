@@ -36,7 +36,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Plus, Briefcase, TrendingUp, Trophy, LayoutGrid, List, Target, Calendar } from 'lucide-react';
+import { Plus, Briefcase, TrendingUp, Trophy, LayoutGrid, List, Target, Calendar, Settings2 } from 'lucide-react';
 import { useDeals, useUpdateDeal, useCreateDeal, useDealStats, getDealStageInfo, type DealStage } from '@/hooks/useDeals';
 import { useProducts, formatPrice } from '@/hooks/useProducts';
 import { useLeads } from '@/hooks/useLeads';
@@ -46,20 +46,30 @@ import { PipelineSummary } from '@/components/admin/deals/PipelineSummary';
 import { ScheduleNextActivityDialog } from '@/components/admin/deals/ScheduleNextActivityDialog';
 import { LostReasonDialog } from '@/components/admin/crm/LostReasonDialog';
 import { SavedViewsMenu } from '@/components/admin/SavedViewsMenu';
+import { DealTeamsPanel } from '@/components/admin/deals/DealTeamsPanel';
+import { DealTemplatesPanel } from '@/components/admin/deals/DealTemplatesPanel';
+import { useDealTeams, useLatestExchangeRates, useBaseCurrency, convertAmount } from '@/hooks/useDealsParity';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 
 type ViewMode = 'kanban' | 'table';
 
 export default function DealsPage() {
-  const { data: deals = [], isLoading } = useDeals();
+  const { data: rawDeals = [], isLoading } = useDeals();
   const { data: stats } = useDealStats();
+  const { data: teams = [] } = useDealTeams();
+  const { data: rates = [] } = useLatestExchangeRates();
+  const { data: baseCurrency = 'SEK' } = useBaseCurrency();
   const updateDeal = useUpdateDeal();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [activeViewId, setActiveViewId] = useState<string | null>(null);
+  const [teamFilter, setTeamFilter] = useState<string>('all');
+  const [showSetup, setShowSetup] = useState(false);
   const [scheduleFor, setScheduleFor] = useState<{ deal: any; stage: DealStage } | null>(null);
   const [lostFor, setLostFor] = useState<string | null>(null);
+
+  const deals = teamFilter === 'all' ? rawDeals : rawDeals.filter((d: any) => (d as any).team_id === teamFilter);
 
   const maybePromptScheduler = (dealId: string, newStage: DealStage) => {
     if (newStage !== 'closed_won' && newStage !== 'closed_lost') return;
@@ -110,6 +120,17 @@ export default function DealsPage() {
                 if (cfg.viewMode === 'kanban' || cfg.viewMode === 'table') setViewMode(cfg.viewMode);
               }}
             />
+            <Select value={teamFilter} onValueChange={setTeamFilter}>
+              <SelectTrigger className="w-40 h-9"><SelectValue placeholder="All teams" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All teams</SelectItem>
+                {teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={() => setShowSetup((s) => !s)}>
+              <Settings2 className="h-4 w-4 mr-2" />
+              {showSetup ? 'Hide setup' : 'Teams & templates'}
+            </Button>
             <Button onClick={() => setDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               New Deal
@@ -152,6 +173,14 @@ export default function DealsPage() {
             subtext={stats ? formatPrice(stats.negotiation.value) : ''}
           />
         </div>
+
+        {showSetup && (
+          <>
+            <DealTeamsPanel />
+            <DealTemplatesPanel />
+          </>
+        )}
+
 
         {/* Kanban View */}
         {viewMode === 'kanban' && (
@@ -217,6 +246,14 @@ export default function DealsPage() {
                           </TableCell>
                           <TableCell className="font-semibold">
                             {formatPrice(deal.value_cents, deal.currency)}
+                            {deal.currency && deal.currency.toUpperCase() !== baseCurrency.toUpperCase() && (() => {
+                              const converted = convertAmount(deal.value_cents, deal.currency, baseCurrency, rates);
+                              return converted != null ? (
+                                <div className="text-xs text-muted-foreground font-normal">
+                                  ≈ {formatPrice(converted, baseCurrency)}
+                                </div>
+                              ) : null;
+                            })()}
                           </TableCell>
                           <TableCell>
                             <Select
