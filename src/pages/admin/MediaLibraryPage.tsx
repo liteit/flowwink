@@ -547,6 +547,21 @@ export default function MediaLibraryPage() {
                     size="sm"
                     variant="secondary"
                     className="w-full"
+                    onClick={() =>
+                      setDetailsFor({
+                        storagePath: `${file.folder}/${file.name}`,
+                        filename: file.name,
+                        publicUrl: getPublicUrl(file),
+                      })
+                    }
+                  >
+                    <Info className="h-3 w-3 mr-1" />
+                    Details
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="w-full"
                     onClick={() => setEditingImage({ url: getPublicUrl(file), name: file.name })}
                   >
                     <Crop className="h-3 w-3 mr-1" />
@@ -575,6 +590,24 @@ export default function MediaLibraryPage() {
                     Delete
                   </Button>
                 </div>
+
+                {/* Alt-text hint badge (top-right) */}
+                {(() => {
+                  const meta = assetMap?.get(`cms-images|${file.folder}/${file.name}`);
+                  if (!meta) return null;
+                  return (
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      {meta.alt_text ? (
+                        <Badge variant="secondary" className="text-[10px]">ALT</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] border-dashed">alt?</Badge>
+                      )}
+                      {meta.variants && meta.variants.length > 0 && (
+                        <Badge variant="secondary" className="text-[10px]">{meta.variants.length}×</Badge>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* File info */}
                 <div className="p-2 border-t">
