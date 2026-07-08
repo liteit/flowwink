@@ -82,9 +82,10 @@
       "id": "mileage_perdiem",
       "name": "Mileage/per-diem rate tables",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 2,
-      "verify": "mileage/per-diem rate tables"
+      "verify": "expense_rate_tables seeded with Skatteverket 2025 tax-free rates (mileage 25 kr/mil = 7331, per-diem full 290 kr / half 145 kr / night 145 kr = 7321). Admin UI: Rates tab in ExpensesPage. AddExpenseDialog has Mileage/Per-diem modes that auto-compute amount = quantity × active rate. Effective-dated (valid_from) + versioning + archive. get_expense_rate(code, date) helper returns the active version.",
+      "notes": "Built 2026-07-09."
     },
     {
       "id": "multicurrency_fx",
