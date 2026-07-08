@@ -67,7 +67,11 @@ export default function MediaLibraryPage() {
   const [showUnsplash, setShowUnsplash] = useState(false);
   const [editingImage, setEditingImage] = useState<{ url: string; name: string } | null>(null);
   const [lightboxImage, setLightboxImage] = useState<{ url: string; name: string; index: number } | null>(null);
+  const [detailsFor, setDetailsFor] = useState<{ storagePath: string; filename: string; publicUrl: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: assetMap } = useMediaAssets();
+  const upsertMeta = useUpsertMediaAsset();
 
   const { toast } = useToast();
 
