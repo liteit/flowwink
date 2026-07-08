@@ -20,6 +20,7 @@ interface SeoHeadProps {
   canonicalUrl?: string;
   noIndex?: boolean;
   noFollow?: boolean;
+  keywords?: string[];
   // New props for structured data
   pageType?: 'page' | 'article' | 'kb-article';
   contentBlocks?: ContentBlock[];
