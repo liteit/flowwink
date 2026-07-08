@@ -233,6 +233,22 @@ export default function InventoryPage() {
           <ReceivingPanel />
         </TabsContent>
 
+        <TabsContent value="route">
+          <ReceivingRoutePanel />
+        </TabsContent>
+
+        <TabsContent value="transfers">
+          <TransfersPanel />
+        </TabsContent>
+
+        <TabsContent value="expiry">
+          <ExpiringLotsPanel />
+        </TabsContent>
+
+        <TabsContent value="abc">
+          <AbcAnalysisPanel />
+        </TabsContent>
+
         <TabsContent value="cyclecount">
           <CycleCountPanel />
         </TabsContent>
