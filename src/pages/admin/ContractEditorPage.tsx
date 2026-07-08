@@ -149,6 +149,16 @@ export default function ContractEditorPage() {
             </p>
           </TabsContent>
 
+          <TabsContent value="obligations">
+            <ContractObligationsPanel contractId={contract.id} />
+          </TabsContent>
+
+          <TabsContent value="billing">
+            <ContractBillingPanel contract={contract as any} />
+          </TabsContent>
+
+
+
           <TabsContent value="activity">
             <Card>
               <CardHeader><CardTitle className="text-base">Signing activity</CardTitle></CardHeader>
