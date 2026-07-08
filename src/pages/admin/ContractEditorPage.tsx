@@ -13,6 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ContractMarkdownEditor } from '@/components/admin/contracts/ContractMarkdownEditor';
+import { ContractObligationsPanel } from '@/components/admin/contracts/ContractObligationsPanel';
+import { ContractBillingPanel } from '@/components/admin/contracts/ContractBillingPanel';
 import { DocumentsPanel } from '@/components/admin/documents/DocumentsPanel';
 import {
   useContract, useSendContract, useContractSignatures, useContractVersions,
@@ -123,6 +125,8 @@ export default function ContractEditorPage() {
         <Tabs defaultValue="editor">
           <TabsList>
             <TabsTrigger value="editor">Agreement</TabsTrigger>
+            <TabsTrigger value="obligations">Obligations</TabsTrigger>
+            <TabsTrigger value="billing">Billing &amp; reminders</TabsTrigger>
             <TabsTrigger value="activity">Activity ({signatures.length})</TabsTrigger>
             <TabsTrigger value="versions">Versions ({versions.length})</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
@@ -144,6 +148,16 @@ export default function ContractEditorPage() {
               Markdown is the source of truth. ClawWink (via MCP) and the counterparty signing page render from this exact text.
             </p>
           </TabsContent>
+
+          <TabsContent value="obligations">
+            <ContractObligationsPanel contractId={contract.id} />
+          </TabsContent>
+
+          <TabsContent value="billing">
+            <ContractBillingPanel contract={contract as any} />
+          </TabsContent>
+
+
 
           <TabsContent value="activity">
             <Card>

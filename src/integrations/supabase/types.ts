@@ -4095,6 +4095,110 @@ export type Database = {
           },
         ]
       }
+      contract_invoice_reminders: {
+        Row: {
+          channel: string
+          contract_id: string | null
+          id: string
+          invoice_id: string
+          metadata: Json
+          offset_days: number
+          recipient: string | null
+          sent_at: string
+          triggered_by: string
+        }
+        Insert: {
+          channel?: string
+          contract_id?: string | null
+          id?: string
+          invoice_id: string
+          metadata?: Json
+          offset_days: number
+          recipient?: string | null
+          sent_at?: string
+          triggered_by?: string
+        }
+        Update: {
+          channel?: string
+          contract_id?: string | null
+          id?: string
+          invoice_id?: string
+          metadata?: Json
+          offset_days?: number
+          recipient?: string | null
+          sent_at?: string
+          triggered_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_invoice_reminders_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_invoice_reminders_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_obligations: {
+        Row: {
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          description: string
+          due_date: string | null
+          id: string
+          met_at: string | null
+          met_by: string | null
+          notes: string | null
+          responsible: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          due_date?: string | null
+          id?: string
+          met_at?: string | null
+          met_by?: string | null
+          notes?: string | null
+          responsible?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_date?: string | null
+          id?: string
+          met_at?: string | null
+          met_by?: string | null
+          notes?: string | null
+          responsible?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_obligations_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_signatures: {
         Row: {
           action: string
@@ -4243,6 +4347,16 @@ export type Database = {
       contracts: {
         Row: {
           accept_token: string | null
+          billing_amount_cents: number | null
+          billing_due_in_days: number
+          billing_enabled: boolean
+          billing_interval: string | null
+          billing_interval_count: number
+          billing_last_invoice_id: string | null
+          billing_next_date: string | null
+          billing_reminder_offsets: number[]
+          billing_reminders_enabled: boolean
+          billing_tax_rate: number
           body_markdown: string | null
           body_updated_at: string | null
           contract_type: Database["public"]["Enums"]["contract_type"]
@@ -4274,6 +4388,16 @@ export type Database = {
         }
         Insert: {
           accept_token?: string | null
+          billing_amount_cents?: number | null
+          billing_due_in_days?: number
+          billing_enabled?: boolean
+          billing_interval?: string | null
+          billing_interval_count?: number
+          billing_last_invoice_id?: string | null
+          billing_next_date?: string | null
+          billing_reminder_offsets?: number[]
+          billing_reminders_enabled?: boolean
+          billing_tax_rate?: number
           body_markdown?: string | null
           body_updated_at?: string | null
           contract_type?: Database["public"]["Enums"]["contract_type"]
@@ -4305,6 +4429,16 @@ export type Database = {
         }
         Update: {
           accept_token?: string | null
+          billing_amount_cents?: number | null
+          billing_due_in_days?: number
+          billing_enabled?: boolean
+          billing_interval?: string | null
+          billing_interval_count?: number
+          billing_last_invoice_id?: string | null
+          billing_next_date?: string | null
+          billing_reminder_offsets?: number[]
+          billing_reminders_enabled?: boolean
+          billing_tax_rate?: number
           body_markdown?: string | null
           body_updated_at?: string | null
           contract_type?: Database["public"]["Enums"]["contract_type"]
@@ -7811,6 +7945,7 @@ export type Database = {
       }
       invoices: {
         Row: {
+          contract_id: string | null
           created_at: string
           created_by: string | null
           credited_invoice_id: string | null
@@ -7845,6 +7980,7 @@ export type Database = {
           viewed_at: string | null
         }
         Insert: {
+          contract_id?: string | null
           created_at?: string
           created_by?: string | null
           credited_invoice_id?: string | null
@@ -7879,6 +8015,7 @@ export type Database = {
           viewed_at?: string | null
         }
         Update: {
+          contract_id?: string | null
           created_at?: string
           created_by?: string | null
           credited_invoice_id?: string | null
@@ -7913,6 +8050,13 @@ export type Database = {
           viewed_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "invoices_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "invoices_deal_id_fkey"
             columns: ["deal_id"]
@@ -18510,6 +18654,62 @@ export type Database = {
           },
         ]
       }
+      contract_obligations_with_status: {
+        Row: {
+          contract_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string | null
+          is_overdue: boolean | null
+          met_at: string | null
+          met_by: string | null
+          notes: string | null
+          responsible: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          contract_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          is_overdue?: never
+          met_at?: string | null
+          met_by?: string | null
+          notes?: string | null
+          responsible?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          contract_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          is_overdue?: never
+          met_at?: string | null
+          met_by?: string | null
+          notes?: string | null
+          responsible?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_obligations_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       peer_invitation_tree: {
         Row: {
           created_at: string | null
@@ -18710,6 +18910,10 @@ export type Database = {
       }
       advance_billing_date: {
         Args: { _count: number; _from: string; _interval: string }
+        Returns: string
+      }
+      advance_contract_billing_date: {
+        Args: { _base: string; _count: number; _interval: string }
         Returns: string
       }
       advance_inventory_receipt: {
@@ -19511,6 +19715,10 @@ export type Database = {
       }
       gen_webmeet_slug: { Args: never; Returns: string }
       generate_agi: { Args: { p_period?: string }; Returns: Json }
+      generate_contract_invoice: {
+        Args: { _contract_id: string }
+        Returns: Json
+      }
       generate_mo_work_orders: { Args: { p_mo_id: string }; Returns: Json }
       generate_monthly_expense_report: {
         Args: { p_period?: string; p_user_id?: string }
@@ -19544,6 +19752,16 @@ export type Database = {
         Args: { p_token: string }
         Returns: {
           accept_token: string | null
+          billing_amount_cents: number | null
+          billing_due_in_days: number
+          billing_enabled: boolean
+          billing_interval: string | null
+          billing_interval_count: number
+          billing_last_invoice_id: string | null
+          billing_next_date: string | null
+          billing_reminder_offsets: number[]
+          billing_reminders_enabled: boolean
+          billing_tax_rate: number
           body_markdown: string | null
           body_updated_at: string | null
           contract_type: Database["public"]["Enums"]["contract_type"]
@@ -19636,6 +19854,7 @@ export type Database = {
       get_invoice_by_token: {
         Args: { p_token: string }
         Returns: {
+          contract_id: string | null
           created_at: string
           created_by: string | null
           credited_invoice_id: string | null
@@ -20025,6 +20244,16 @@ export type Database = {
       }
       log_cache_invalidation: {
         Args: { p_all?: boolean; p_slug?: string }
+        Returns: Json
+      }
+      log_contract_invoice_reminder: {
+        Args: {
+          _invoice_id: string
+          _metadata?: Json
+          _offset_days: number
+          _recipient?: string
+          _triggered_by?: string
+        }
         Returns: Json
       }
       log_indirect_time: {
@@ -20823,6 +21052,10 @@ export type Database = {
           p_id?: string
           p_name?: string
         }
+        Returns: Json
+      }
+      mark_contract_obligation_status: {
+        Args: { _notes?: string; _obligation_id: string; _status: string }
         Returns: Json
       }
       mark_expense_report_paid: {
