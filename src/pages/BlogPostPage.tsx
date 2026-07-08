@@ -209,8 +209,23 @@ export default function BlogPostPage() {
             <div className="mb-12">
               <h3 className="text-lg font-semibold mb-4">About the author</h3>
               <AuthorCard author={post.author} />
+              <div className="mt-3">
+                <Link
+                  to={`/blog/author/${
+                    post.author.full_name
+                      ? post.author.full_name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+                      : post.author.id
+                  }`}
+                  className="text-sm text-primary hover:underline"
+                >
+                  View all posts by {post.author.full_name || post.author.email} →
+                </Link>
+              </div>
             </div>
           )}
+
+          {/* Comments */}
+          <BlogComments postId={post.id} />
           
           {/* Related posts */}
           {relatedPosts.length > 0 && (
