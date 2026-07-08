@@ -14,6 +14,7 @@ import { ArrowLeft, Plus, Trash2, Send, CheckCircle, PackageCheck } from 'lucide
 import { GoodsReceiptDialog } from './GoodsReceiptDialog';
 import { PoInvoicesDrilldown } from './PoInvoicesDrilldown';
 import { LandedCostPanel } from './LandedCostDialog';
+import { PoRevisionsPanel } from './PoRevisionsPanel';
 
 interface POLine {
   id?: string;
