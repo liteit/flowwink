@@ -5,17 +5,19 @@ import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { FileText, FolderOpen, Tag, Settings, Plus } from "lucide-react";
+import { FileText, FolderOpen, Tag, Settings, Plus, MessageSquare } from "lucide-react";
 
 import BlogPostsTab from "@/components/admin/blog/BlogPostsTab";
 import BlogCategoriesTab from "@/components/admin/blog/BlogCategoriesTab";
 import BlogTagsTab from "@/components/admin/blog/BlogTagsTab";
 import BlogSettingsTab from "@/components/admin/blog/BlogSettingsTab";
+import BlogCommentsTab from "@/components/admin/blog/BlogCommentsTab";
 
 const PATH_TO_TAB: Record<string, string> = {
   "/admin/blog": "posts",
   "/admin/blog/categories": "categories",
   "/admin/blog/tags": "tags",
+  "/admin/blog/comments": "comments",
   "/admin/blog/settings": "settings",
 };
 
@@ -47,6 +49,10 @@ export default function BlogPage() {
                 <Tag className="h-3.5 w-3.5" />
                 Tags
               </TabsTrigger>
+              <TabsTrigger value="comments" className="gap-1.5">
+                <MessageSquare className="h-3.5 w-3.5" />
+                Comments
+              </TabsTrigger>
               <TabsTrigger value="settings" className="gap-1.5">
                 <Settings className="h-3.5 w-3.5" />
                 Settings
@@ -70,6 +76,9 @@ export default function BlogPage() {
           </TabsContent>
           <TabsContent value="tags" className="mt-0">
             <BlogTagsTab />
+          </TabsContent>
+          <TabsContent value="comments" className="mt-0">
+            <BlogCommentsTab />
           </TabsContent>
           <TabsContent value="settings" className="mt-0">
             <BlogSettingsTab />

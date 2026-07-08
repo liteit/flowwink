@@ -91,11 +91,13 @@ export interface PageMeta {
   description?: string;
   keywords?: string[];
   og_image?: string;
+  ogImage?: string;
   // Page display settings
   showTitle?: boolean;
   titleAlignment?: 'left' | 'center';
   // SEO settings
   seoTitle?: string;
+  canonicalUrl?: string;
   noIndex?: boolean;
   noFollow?: boolean;
 }

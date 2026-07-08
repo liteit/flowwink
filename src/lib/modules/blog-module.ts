@@ -642,6 +642,75 @@ When generating social posts:
     },
     instructions: 'After publishing blog content, create social variants. Requires approval before posting.',
   },
+  {
+    name: 'moderate_blog_comment',
+    description: 'Approve, mark as spam, reject, or reset a reader comment on a blog post. Use when: an admin wants to publish a pending comment or purge spam. NOT for: creating comments (public form only) or deleting posts.',
+    category: 'content',
+    handler: 'rpc:moderate_blog_comment',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'moderate_blog_comment',
+        description: 'Set a blog comment status. Values: approved (publishes it), spam, rejected, pending.',
+        parameters: {
+          type: 'object',
+          required: ['_comment_id', '_status'],
+          properties: {
+            _comment_id: { type: 'string', description: 'blog_comments.id (uuid)' },
+            _status: {
+              type: 'string',
+              enum: ['pending', 'approved', 'spam', 'rejected'],
+              description: 'Target moderation status',
+            },
+          },
+        },
+      },
+    },
+    instructions: 'Approve moves the comment to public. Spam/rejected hide it. Only admins can call this.',
+  },
+  {
+    name: 'list_blog_comments',
+    description: 'List blog comments filtered by status (pending by default) for moderation review. Use when: showing the moderation queue or auditing comments per post.',
+    category: 'content',
+    handler: 'db:blog_comments',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'list_blog_comments',
+        description: 'List blog comments with optional post/status filter.',
+        parameters: {
+          type: 'object',
+          properties: {
+            status: {
+              type: 'string',
+              enum: ['pending', 'approved', 'spam', 'rejected'],
+            },
+            post_id: { type: 'string' },
+            limit: { type: 'number' },
+          },
+        },
+      },
+    },
+    instructions: 'Use before moderate_blog_comment to pick comments needing action.',
+  },
+  {
+    name: 'get_blog_rss_url',
+    description: 'Return the public RSS feed URL for the blog. Use when: a caller asks for the RSS/Atom feed, or when integrating a syndication endpoint.',
+    category: 'content',
+    handler: 'builtin:site_meta',
+    scope: 'external',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'get_blog_rss_url',
+        description: 'Returns { url } pointing at the blog RSS feed edge function.',
+        parameters: { type: 'object', properties: {} },
+      },
+    },
+    instructions: 'The feed is served by the blog-rss edge function at /functions/v1/blog-rss and contains the 20 most recent published posts.',
+  },
 ];
 
 export const blogModule = defineModule<BlogModuleInput, BlogModuleOutput>({
@@ -668,10 +737,13 @@ export const blogModule = defineModule<BlogModuleInput, BlogModuleOutput>({
     'generate_social_post',
     'research_content',
     'generate_content_proposal',
+    'moderate_blog_comment',
+    'list_blog_comments',
+    'get_blog_rss_url',
   ],
   data: {
     // children first (FK-safe order)
-    tables: ['blog_post_categories', 'blog_post_tags', 'blog_posts', 'blog_categories', 'blog_tags'],
+    tables: ['blog_comments', 'blog_post_categories', 'blog_post_tags', 'blog_posts', 'blog_categories', 'blog_tags'],
   },
   skillSeeds: BLOG_SKILLS,
 

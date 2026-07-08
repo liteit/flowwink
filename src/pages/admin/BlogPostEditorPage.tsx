@@ -473,6 +473,48 @@ export default function BlogPostEditorPage() {
                           disabled={!canEdit}
                         />
                       </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm">Open Graph image URL</Label>
+                        <Input
+                          value={meta.ogImage || ""}
+                          onChange={(e) => setMeta({ ...meta, ogImage: e.target.value })}
+                          placeholder="https://example.com/social-preview.jpg"
+                          disabled={!canEdit}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Falls back to the featured image if empty.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm">Canonical URL</Label>
+                        <Input
+                          value={meta.canonicalUrl || ""}
+                          onChange={(e) => setMeta({ ...meta, canonicalUrl: e.target.value })}
+                          placeholder="Auto — leave empty to use the post URL"
+                          disabled={!canEdit}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm">Keywords</Label>
+                        <Input
+                          value={Array.isArray(meta.keywords) ? (meta.keywords as string[]).join(", ") : (meta.keywords as string || "")}
+                          onChange={(e) =>
+                            setMeta({
+                              ...meta,
+                              keywords: e.target.value
+                                .split(",")
+                                .map((s) => s.trim())
+                                .filter(Boolean),
+                            })
+                          }
+                          placeholder="comma, separated, keywords"
+                          disabled={!canEdit}
+                        />
+                      </div>
+
                     </div>
                   </div>
                 </SheetContent>

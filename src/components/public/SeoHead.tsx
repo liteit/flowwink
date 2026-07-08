@@ -20,6 +20,7 @@ interface SeoHeadProps {
   canonicalUrl?: string;
   noIndex?: boolean;
   noFollow?: boolean;
+  keywords?: string[];
   // New props for structured data
   pageType?: 'page' | 'article' | 'kb-article';
   contentBlocks?: ContentBlock[];
@@ -216,6 +217,7 @@ export function SeoHead({
   canonicalUrl,
   noIndex = false,
   noFollow = false,
+  keywords,
   pageType = 'page',
   contentBlocks = [],
   breadcrumbs = [],
@@ -310,6 +312,9 @@ export function SeoHead({
       {/* Basic Meta */}
       <title>{finalTitle}</title>
       {finalDescription && <meta name="description" content={finalDescription} />}
+      {keywords && keywords.length > 0 && (
+        <meta name="keywords" content={keywords.join(', ')} />
+      )}
       <meta name="robots" content={robotsContent} />
       
       {/* Google Verification */}

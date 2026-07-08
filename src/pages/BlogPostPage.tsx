@@ -5,6 +5,7 @@ import { PublicNavigation } from "@/components/public/PublicNavigation";
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { BlockRenderer } from "@/components/public/BlockRenderer";
 import { AuthorCard } from "@/components/public/AuthorCard";
+import { BlogComments } from "@/components/public/BlogComments";
 import { BlogPostCard } from "@/components/public/BlogPostCard";
 import { SeoHead } from "@/components/public/SeoHead";
 import { Badge } from "@/components/ui/badge";
@@ -58,12 +59,19 @@ export default function BlogPostPage() {
     ? new Date(post.published_at)
     : new Date(post.created_at);
   
-  const metaDescription = post.meta_json?.description || post.excerpt || "";
-  const seoTitle = post.meta_json?.seoTitle || post.title;
-  
+  const meta = (post.meta_json ?? {}) as Record<string, unknown>;
+  const metaDescription = (meta.description as string) || post.excerpt || "";
+  const seoTitle = (meta.seoTitle as string) || post.title;
+  const metaOgImage = (meta.ogImage as string) || post.featured_image || undefined;
+  const metaKeywords = Array.isArray(meta.keywords)
+    ? (meta.keywords as string[])
+    : typeof meta.keywords === 'string'
+      ? (meta.keywords as string).split(',').map((s) => s.trim()).filter(Boolean)
+      : undefined;
+
   // Build canonical URL and breadcrumbs
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-  const canonicalUrl = `${baseUrl}/blog/${slug}`;
+  const canonicalUrl = (meta.canonicalUrl as string) || `${baseUrl}/blog/${slug}`;
   const breadcrumbs = [
     { name: 'Hem', url: baseUrl },
     { name: 'Blog', url: `${baseUrl}/blog` },
@@ -78,7 +86,8 @@ export default function BlogPostPage() {
       <SeoHead
         title={seoTitle}
         description={metaDescription}
-        ogImage={post.featured_image || undefined}
+        ogImage={metaOgImage}
+        keywords={metaKeywords}
         canonicalUrl={canonicalUrl}
         pageType="article"
         contentBlocks={Array.isArray(post.content_json) ? post.content_json : undefined}
@@ -200,8 +209,23 @@ export default function BlogPostPage() {
             <div className="mb-12">
               <h3 className="text-lg font-semibold mb-4">About the author</h3>
               <AuthorCard author={post.author} />
+              <div className="mt-3">
+                <Link
+                  to={`/blog/author/${
+                    post.author.full_name
+                      ? post.author.full_name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+                      : post.author.id
+                  }`}
+                  className="text-sm text-primary hover:underline"
+                >
+                  View all posts by {post.author.full_name || post.author.email} →
+                </Link>
+              </div>
             </div>
           )}
+
+          {/* Comments */}
+          <BlogComments postId={post.id} />
           
           {/* Related posts */}
           {relatedPosts.length > 0 && (
