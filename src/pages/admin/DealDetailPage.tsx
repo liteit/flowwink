@@ -64,6 +64,16 @@ export default function DealDetailPage() {
     currency: deal.currency,
     minimumFractionDigits: 0,
   }).format(deal.value_cents / 100);
+  const convertedCents =
+    deal.currency && deal.currency.toUpperCase() !== baseCurrency.toUpperCase()
+      ? convertAmount(deal.value_cents, deal.currency, baseCurrency, rates)
+      : null;
+  const convertedLabel =
+    convertedCents != null
+      ? new Intl.NumberFormat('en-US', { style: 'currency', currency: baseCurrency, minimumFractionDigits: 0 })
+          .format(convertedCents / 100)
+      : null;
+  const dealTeamId = (deal as any).team_id as string | null | undefined;
 
   const handleStageChange = (newStage: DealStage) => {
     if (newStage === 'closed_lost' && deal.stage !== 'closed_lost') {
