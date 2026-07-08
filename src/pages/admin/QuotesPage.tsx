@@ -25,6 +25,7 @@ const STATUS_COLORS: Record<QuoteStatus, string> = {
 export default function QuotesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all');
+  const [view, setView] = useState<'list' | 'recurring'>('list');
   const [selectedId, setSelectedId] = useState<string | null>(searchParams.get('id'));
   const [createOpen, setCreateOpen] = useState(false);
 
