@@ -46,8 +46,10 @@ import {
   useAddTicketComment,
 } from "@/hooks/useTickets";
 import { useCannedResponses, useIncrementCannedUsage } from "@/hooks/useCannedResponses";
+import { useTicketTeams } from "@/hooks/useTicketTeams";
+import { TicketTimeEntriesPanel } from "@/components/admin/tickets/TicketTimeEntriesPanel";
 import { formatDistanceToNow, format } from "date-fns";
-import { MessageSquare, Send, Building2, User, Mail, Clock, Tag, X, Plus, MessageSquareQuote } from "lucide-react";
+import { MessageSquare, Send, Building2, User, Mail, Clock, Tag, X, Plus, MessageSquareQuote, Users } from "lucide-react";
 
 interface TicketDetailDrawerProps {
   ticket: Ticket | null;
