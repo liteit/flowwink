@@ -5818,6 +5818,54 @@ export type Database = {
         }
         Relationships: []
       }
+      expense_rate_tables: {
+        Row: {
+          account_code: string | null
+          active: boolean
+          code: string
+          created_at: string
+          currency: string
+          id: string
+          kind: string
+          label: string
+          notes: string | null
+          rate_cents: number
+          unit: string
+          updated_at: string
+          valid_from: string
+        }
+        Insert: {
+          account_code?: string | null
+          active?: boolean
+          code: string
+          created_at?: string
+          currency?: string
+          id?: string
+          kind: string
+          label: string
+          notes?: string | null
+          rate_cents: number
+          unit: string
+          updated_at?: string
+          valid_from?: string
+        }
+        Update: {
+          account_code?: string | null
+          active?: boolean
+          code?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          kind?: string
+          label?: string
+          notes?: string | null
+          rate_cents?: number
+          unit?: string
+          updated_at?: string
+          valid_from?: string
+        }
+        Relationships: []
+      }
       expense_reports: {
         Row: {
           approved_at: string | null
@@ -5888,11 +5936,14 @@ export type Database = {
           id: string
           is_representation: boolean
           payroll_export_id: string | null
+          quantity: number | null
+          rate_code: string | null
           receipt_analyzed: boolean
           receipt_data: Json | null
           receipt_url: string | null
           report_id: string | null
           status: string
+          unit: string | null
           updated_at: string
           user_id: string
           vat_cents: number
@@ -5911,11 +5962,14 @@ export type Database = {
           id?: string
           is_representation?: boolean
           payroll_export_id?: string | null
+          quantity?: number | null
+          rate_code?: string | null
           receipt_analyzed?: boolean
           receipt_data?: Json | null
           receipt_url?: string | null
           report_id?: string | null
           status?: string
+          unit?: string | null
           updated_at?: string
           user_id: string
           vat_cents?: number
@@ -5934,11 +5988,14 @@ export type Database = {
           id?: string
           is_representation?: boolean
           payroll_export_id?: string | null
+          quantity?: number | null
+          rate_code?: string | null
           receipt_analyzed?: boolean
           receipt_data?: Json | null
           receipt_url?: string | null
           report_id?: string | null
           status?: string
+          unit?: string | null
           updated_at?: string
           user_id?: string
           vat_cents?: number
@@ -17584,6 +17641,30 @@ export type Database = {
       get_exchange_rate: {
         Args: { p_base: string; p_date?: string; p_quote: string }
         Returns: number
+      }
+      get_expense_rate: {
+        Args: { p_code: string; p_date?: string }
+        Returns: {
+          account_code: string | null
+          active: boolean
+          code: string
+          created_at: string
+          currency: string
+          id: string
+          kind: string
+          label: string
+          notes: string | null
+          rate_cents: number
+          unit: string
+          updated_at: string
+          valid_from: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "expense_rate_tables"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       get_experiment_variant: {
         Args: { p_slug: string; p_visitor_id: string }
