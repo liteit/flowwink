@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
 import type { Json } from '@/integrations/supabase/types';
 import { notifyNewLead } from '@/lib/slack-notify';
+import { buildAttributionFields, logUtmConversion } from '@/lib/utm';
 
 export type LeadStatus = 'lead' | 'opportunity' | 'customer' | 'lost';
 
@@ -172,6 +173,7 @@ export async function createLeadFromForm(options: {
     const { companyId } = await findCompanyByDomain(email);
 
     // Create new lead with company_id link
+    const attribution = buildAttributionFields();
     const { data: newLead, error: insertError } = await supabase
       .from('leads')
       .insert({
@@ -185,6 +187,7 @@ export async function createLeadFromForm(options: {
         status: 'lead',
         score: ACTIVITY_POINTS.form_submit,
         needs_review: false,
+        ...attribution,
       })
       .select()
       .single();
@@ -212,6 +215,9 @@ export async function createLeadFromForm(options: {
 
     // Slack notification (fire-and-forget)
     notifyNewLead({ name: name || '', email, source: 'form', score: ACTIVITY_POINTS.form_submit, leadId: newLead.id });
+
+    // Attribution log (fire-and-forget)
+    logUtmConversion('form_submit', newLead.id);
 
     return { lead: newLead as unknown as Lead, isNew: true, error: null };
   } catch (error) {
