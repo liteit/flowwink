@@ -148,6 +148,28 @@ export function TicketDetailDrawer({ ticket, open, onOpenChange }: TicketDetailD
             </Select>
           </div>
 
+          {/* Team assignment (queue) */}
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Users className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">Team / queue</span>
+            </div>
+            <Select
+              value={ticket.team_id ?? "none"}
+              onValueChange={(v) => updateTicket.mutate({ id: ticket.id, team_id: v === "none" ? null : v } as never)}
+            >
+              <SelectTrigger className="h-8 text-xs w-full">
+                <SelectValue placeholder="Unassigned" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Unassigned</SelectItem>
+                {teams.filter(t => t.is_active).map((t) => (
+                  <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Meta Info */}
           <div className="space-y-2 text-sm mb-4">
             <div className="flex items-center gap-2 text-muted-foreground">
