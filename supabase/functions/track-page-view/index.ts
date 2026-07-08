@@ -109,6 +109,9 @@ Deno.serve(async (req) => {
     // Create Supabase client with service role key for insert
             const supabase = getServiceClient();
 
+    const utm = body.utm ?? {};
+    const hasUtm = !!(utm.utm_source || utm.utm_medium || utm.utm_campaign || utm.utm_term || utm.utm_content);
+
     // Insert page view
     const { error } = await supabase.from('page_views').insert({
       page_id: body.pageId || null,
@@ -123,6 +126,12 @@ Deno.serve(async (req) => {
       ip_address: clientIp || null,
       country: geoData.country || null,
       city: geoData.city || null,
+      landing_url: body.landingUrl || null,
+      utm_source: utm.utm_source || null,
+      utm_medium: utm.utm_medium || null,
+      utm_campaign: utm.utm_campaign || null,
+      utm_term: utm.utm_term || null,
+      utm_content: utm.utm_content || null,
     });
 
     if (error) {
@@ -131,6 +140,23 @@ Deno.serve(async (req) => {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // If landing has UTMs, log a landing-touch attribution row (best-effort).
+    if (hasUtm) {
+      const { error: attrErr } = await supabase.from('utm_attributions').insert({
+        visitor_id: body.visitorId || null,
+        session_id: body.sessionId || null,
+        utm_source: utm.utm_source || null,
+        utm_medium: utm.utm_medium || null,
+        utm_campaign: utm.utm_campaign || null,
+        utm_term: utm.utm_term || null,
+        utm_content: utm.utm_content || null,
+        landing_url: body.landingUrl || null,
+        referrer: body.referrer || null,
+        touch_type: 'landing',
+      });
+      if (attrErr) console.error('[track-page-view] utm_attributions insert failed:', attrErr);
     }
 
     console.log('[track-page-view] Page view tracked successfully');
