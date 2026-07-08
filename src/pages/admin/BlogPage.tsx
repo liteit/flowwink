@@ -49,6 +49,10 @@ export default function BlogPage() {
                 <Tag className="h-3.5 w-3.5" />
                 Tags
               </TabsTrigger>
+              <TabsTrigger value="comments" className="gap-1.5">
+                <MessageSquare className="h-3.5 w-3.5" />
+                Comments
+              </TabsTrigger>
               <TabsTrigger value="settings" className="gap-1.5">
                 <Settings className="h-3.5 w-3.5" />
                 Settings
