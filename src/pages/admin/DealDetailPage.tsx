@@ -30,6 +30,9 @@ export default function DealDetailPage() {
   const updateDeal = useUpdateDeal();
   const addActivity = useAddDealActivity();
   const updateActivity = useUpdateDealActivity();
+  const { data: teams = [] } = useDealTeams();
+  const { data: rates = [] } = useLatestExchangeRates();
+  const { data: baseCurrency = 'SEK' } = useBaseCurrency();
   const [showLostDialog, setShowLostDialog] = useState(false);
 
   if (isLoading) {
