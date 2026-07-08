@@ -69,34 +69,65 @@ function acctTemplateBankDirection(tplLines: any[]): 'inflow' | 'outflow' | null
   }
   return null;
 }
+// Word-boundary + Swedish-compound aware template scoring.
+// The old scorer did raw substring matching (terms.includes(keyword)), which
+// false-matched short keywords INSIDE unrelated words: "el" ∈ "webbhot(el)l"
+// booked webhosting as electricity; "kontor" ∈ "(kontor)sgiganten" booked
+// office supplies as rent. Fix: match keywords against tokenised words, count a
+// COMPOUND prefix/suffix (tåg~tågresa, resa~tjänsteresa) but never a coincidental
+// infix. Confidence leans toward "propose" (human review) over "auto" — a wrong
+// auto-book is the costliest failure.
+function acctTokenize(s: string): string[] {
+  return String(s || '')
+    .toLowerCase()
+    .split(/[^a-zà-ÿ0-9]+/i)
+    .filter((w) => w.length >= 2);
+}
 function acctScoreTemplates(
   allTemplates: any[],
   searchTerms: string,
 ): { template: any; score: number; confidence: number; matchDetails: string[] }[] {
   const terms = (searchTerms || '').toLowerCase().trim();
-  const searchWords = terms.split(/\s+/).filter((w: string) => w.length > 2);
+  const words = acctTokenize(terms);
+  const wordSet = new Set(words);
+
+  // Points for one single-token keyword against all search words.
+  const wordMatch = (kw: string): number => {
+    let best = 0;
+    for (const sw of words) {
+      if (kw === sw) return 40; // exact whole word — strongest, short-circuit
+      const minLen = Math.min(kw.length, sw.length);
+      // compound HEAD (prefix): tåg~tågresa, data~datakommunikation — min 4
+      if (minLen >= 4 && (kw.startsWith(sw) || sw.startsWith(kw))) best = Math.max(best, 26);
+      // compound TAIL (suffix): resa~tjänsteresa, hyra~lokalhyra — min 4
+      else if (minLen >= 4 && (kw.endsWith(sw) || sw.endsWith(kw))) best = Math.max(best, 20);
+    }
+    return best;
+  };
+
   const scored = (allTemplates || []).map((t: any) => {
     let score = 0;
     const details: string[] = [];
-    const keywords: string[] = t.keywords || [];
-    for (const kw of keywords) {
-      const kwLower = String(kw).toLowerCase();
-      if (terms.includes(kwLower)) { score += 40; details.push(`keyword:${kw}`); }
-      for (const sw of searchWords) {
-        if (kwLower.includes(sw) || sw.includes(kwLower)) { score += 15; details.push(`partial:${sw}~${kw}`); }
+    for (const kwRaw of (t.keywords || [])) {
+      const kw = String(kwRaw).toLowerCase().trim();
+      if (!kw) continue;
+      if (kw.includes(' ')) {
+        // multi-word phrase keyword ("office supplies") — substring is fine
+        if (terms.includes(kw)) { score += 40; details.push(`phrase:${kw}`); }
+        continue;
       }
+      const pts = wordMatch(kw);
+      if (pts) { score += pts; details.push(`kw:${kw}+${pts}`); }
     }
-    const nameLower = String(t.template_name || '').toLowerCase();
-    if (nameLower && (terms.includes(nameLower) || nameLower.includes(terms))) { score += 30; details.push('name:exact'); }
-    else {
-      const nameWords = nameLower.split(/\s+/);
-      const nameOverlap = searchWords.filter((sw: string) => nameWords.some((nw: string) => nw.includes(sw) || sw.includes(nw)));
-      if (nameOverlap.length > 0) { score += 15 * nameOverlap.length; details.push(`name:words(${nameOverlap.join(',')})`); }
+    // template-name words that appear as whole search words (small tiebreaker)
+    for (const nw of acctTokenize(t.template_name)) {
+      if (nw.length >= 3 && wordSet.has(nw)) { score += 12; details.push(`name:${nw}`); }
     }
-    const descLower = String(t.description || '').toLowerCase();
-    for (const sw of searchWords) { if (descLower.includes(sw)) { score += 10; details.push(`desc:${sw}`); } }
     score += Math.min(10, (t.usage_count || 0) * 2);
-    return { template: t, score, confidence: Math.min(100, Math.round((score / 100) * 100)), matchDetails: details };
+    // Confidence curve: one clean keyword (40) → ~75% (propose); strong
+    // multi-signal (80+) → ~95% (auto). Biases to human review.
+    const confidence = score <= 0 ? 0 : Math.min(100, Math.round(55 + score * 0.5));
+    return { template: t, score, confidence, matchDetails: details };
   });
   scored.sort((a, b) => b.score - a.score);
   return scored;
