@@ -271,6 +271,7 @@ const router = createBrowserRouter([
       { path: "/admin/blog/categories", element: <BlogPage /> },
       { path: "/admin/blog/tags", element: <BlogPage /> },
       { path: "/admin/blog/settings", element: <BlogPage /> },
+      { path: "/admin/blog/comments", element: <BlogPage /> },
       { path: "/admin/blog/:id", element: <BlogPostEditorPage /> },
       { path: "/admin/media", element: <MediaLibraryPage /> },
       { path: "/admin/users", element: <UsersPage /> },
