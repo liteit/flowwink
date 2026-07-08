@@ -109,9 +109,9 @@
       "id": "time_tracking",
       "name": "Time tracking per ticket",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "Time tracking logged per ticket"
+      "verify": "DONE 2026-07-08. Table ticket_time_entries (minutes, note, billable, started_at) + TicketTimeEntriesPanel in TicketDetailDrawer: Start/Stop timer, manual entry, billable toggle, per-ticket total incl. billable subtotal."
     },
     {
       "id": "split_merge",
