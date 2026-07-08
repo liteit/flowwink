@@ -113,6 +113,31 @@ After extracting text from a resume PDF, chain with:
 For non-resume PDFs, return the extracted text directly to the user.`,
   },
   {
+    name: 'manage_document_share_link',
+    description: 'Create/revoke/list tokenized public share links for a document (optional expiry, view/download permission). Use when: sharing a document externally without an account. NOT for: uploading documents (upload_document).',
+    category: 'content',
+    handler: 'rpc:manage_document_share_link',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'manage_document_share_link',
+        description: 'List/create/revoke document share links (document_share_links). Create returns the unguessable token.',
+        parameters: {
+          type: 'object',
+          required: ['action'],
+          properties: {
+            action: { type: 'string', enum: ['list', 'create', 'revoke'] },
+            link_id: { type: 'string', description: 'Required for revoke' },
+            document_id: { type: 'string', description: 'Required for create; filters list' },
+            expires_at: { type: 'string', format: 'date-time', description: 'Optional expiry' },
+            permissions: { type: 'string', enum: ['view', 'download'], description: 'Default view' },
+          },
+        },
+      },
+    },
+  },
+  {
     name: 'upload_document',
     description: 'Upload a file to the workspace knowledge base. Stores a permanent, searchable document with extracted markdown so future workspace-chat queries can cite it. Use when: the agent has produced or received a file (PDF/text/markdown/notes/report) that should be archived and made searchable for humans and future agent sessions. NOT for: temporary scratch text used only inside the current conversation (use chat memory instead) or for binary blobs you want to share without making them searchable.',
     category: 'content',

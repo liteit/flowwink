@@ -37,6 +37,35 @@ type Output = z.infer<typeof outputSchema>;
 // ── Bundled skill definitions (migrated from setup-flowpilot) ──
 const EMAIL_SKILLS: SkillSeed[] = [
   {
+    name: 'manage_email_template',
+    description: 'CRUD for reusable email templates with {{variables}}. Use when: defining or editing the templates outbound email is sent from. NOT for: sending an email (use send_email).',
+    category: 'communication',
+    handler: 'rpc:manage_email_template',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'manage_email_template',
+        description: 'List/get/create/update/delete email templates (email_templates).',
+        parameters: {
+          type: 'object',
+          required: ['action'],
+          properties: {
+            action: { type: 'string', enum: ['list', 'get', 'create', 'update', 'delete'] },
+            template_id: { type: 'string', description: 'Required for get/update/delete' },
+            name: { type: 'string', description: 'Required for create' },
+            subject: { type: 'string', description: 'Required for create; may contain {{variables}}' },
+            html: { type: 'string', description: 'HTML body with {{variables}}' },
+            text: { type: 'string', description: 'Plain-text body' },
+            category: { type: 'string', description: 'e.g. welcome, invoice, follow-up; default general' },
+            variables: { type: 'array', items: { type: 'string' }, description: 'Variable names used in the template' },
+            active: { type: 'boolean' },
+          },
+        },
+      },
+    },
+  },
+  {
     name: 'send_email',
     description:
       'Send a one-off email through the provider-agnostic gateway (SMTP/Resend/Composio — whichever the site has configured). Logs to outbound_communications; with no provider configured the send is simulated and stored for inspection. Use when: sending a transactional or ad-hoc message to a known recipient (confirmation, follow-up, notification). NOT for: newsletter campaigns (send_newsletter); replying on an email-sourced ticket (reply_to_ticket_via_email); emailing a CRM lead with tracked context (send_email_to_lead).',

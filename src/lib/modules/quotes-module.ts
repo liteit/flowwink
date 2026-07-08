@@ -58,6 +58,27 @@ type QuotesOutput = z.infer<typeof quotesOutputSchema>;
 
 const QUOTES_SKILLS: SkillSeed[] = [
   {
+    name: 'list_quote_revisions',
+    description: 'Read-only: version history of a quote (revision number, reason, prev/new totals, delta). Use when: reviewing how a quote changed before acceptance. NOT for: creating quotes (manage_quote).',
+    category: 'commerce',
+    handler: 'rpc:list_quote_revisions',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'list_quote_revisions',
+        description: 'List the revision history for a quote (quote_revisions), newest first.',
+        parameters: {
+          type: 'object',
+          required: ['quote_id'],
+          properties: {
+            quote_id: { type: 'string', description: 'The quote id' },
+          },
+        },
+      },
+    },
+  },
+  {
     name: 'manage_quote',
     description:
       'Manage sales quotes end-to-end: list pending/sent quotes, create new from a lead or template, add line items, send for approval (if above threshold) and then to the customer with a public e-sign link, or convert an accepted quote into an invoice. Use when: a lead requests a price proposal, a deal needs formal quoting, or an accepted quote should become an invoice. NOT for: managing the underlying invoice (use manage_invoice) or the lead/deal itself.',

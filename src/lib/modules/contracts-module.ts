@@ -47,6 +47,34 @@ type ContractsOutput = z.infer<typeof contractsOutputSchema>;
 
 const CONTRACT_SKILLS: SkillSeed[] = [
   {
+    name: 'manage_contract_obligation',
+    description: 'Track contract milestones/obligations (description, due date, status pending/met/overdue, responsible). Use when: adding or updating what a contract commits either party to. NOT for: the contract document itself (manage_contract).',
+    category: 'commerce',
+    handler: 'rpc:manage_contract_obligation',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'manage_contract_obligation',
+        description: 'List/create/update/delete contract obligations (contract_obligations). Setting status=met stamps met_at.',
+        parameters: {
+          type: 'object',
+          required: ['action'],
+          properties: {
+            action: { type: 'string', enum: ['list', 'create', 'update', 'delete'] },
+            obligation_id: { type: 'string', description: 'Required for update/delete' },
+            contract_id: { type: 'string', description: 'Required for create; filters list' },
+            description: { type: 'string', description: 'Required for create' },
+            due_date: { type: 'string', format: 'date' },
+            status: { type: 'string', enum: ['pending', 'met', 'overdue'] },
+            responsible: { type: 'string' },
+            notes: { type: 'string' },
+          },
+        },
+      },
+    },
+  },
+  {
     name: 'manage_contract',
     description: 'Create, list, update, or search contracts. Use when: admin wants to create an agreement, find a contract by counterparty, change status, or update terms. NOT for: invoicing (use manage_invoice), project management (use manage_projects).',
     category: 'commerce',
