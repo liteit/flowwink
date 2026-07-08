@@ -5,12 +5,13 @@ import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { FileText, FolderOpen, Tag, Settings, Plus } from "lucide-react";
+import { FileText, FolderOpen, Tag, Settings, Plus, MessageSquare } from "lucide-react";
 
 import BlogPostsTab from "@/components/admin/blog/BlogPostsTab";
 import BlogCategoriesTab from "@/components/admin/blog/BlogCategoriesTab";
 import BlogTagsTab from "@/components/admin/blog/BlogTagsTab";
 import BlogSettingsTab from "@/components/admin/blog/BlogSettingsTab";
+import BlogCommentsTab from "@/components/admin/blog/BlogCommentsTab";
 
 const PATH_TO_TAB: Record<string, string> = {
   "/admin/blog": "posts",
