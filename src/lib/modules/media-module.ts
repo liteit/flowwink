@@ -158,6 +158,9 @@ export const mediaModule = defineModule<MediaModuleInput, MediaModuleOutput>({
 
   skills: [
     'media_browse',
+    'media_set_alt_text',
+    'media_find_usage',
+    'media_optimize',
   ],
   skillSeeds: MEDIA_SKILLS,
 
