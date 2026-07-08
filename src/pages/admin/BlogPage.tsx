@@ -17,6 +17,7 @@ const PATH_TO_TAB: Record<string, string> = {
   "/admin/blog": "posts",
   "/admin/blog/categories": "categories",
   "/admin/blog/tags": "tags",
+  "/admin/blog/comments": "comments",
   "/admin/blog/settings": "settings",
 };
 
