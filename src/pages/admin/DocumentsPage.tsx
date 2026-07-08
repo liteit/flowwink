@@ -111,8 +111,9 @@ export default function DocumentsPage() {
                     </TableHeader>
                     <TableBody>
                       {filteredDocs.map((doc) => (
-                        <TableRow key={doc.id}>
-                          <TableCell>
+                        <TableRow key={doc.id} className="cursor-pointer" onClick={() => setDetailDoc(doc)}>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setDetailDoc(doc)}>
                             <div className="flex items-center gap-2">
                               <FileText className="h-4 w-4 text-muted-foreground" />
                               <div>
