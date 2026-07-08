@@ -17,6 +17,7 @@ import { PickPackPanel } from '@/components/admin/inventory/PickPackPanel';
 import { ReceivingPanel } from '@/components/admin/inventory/ReceivingPanel';
 import { CycleCountPanel } from '@/components/admin/inventory/CycleCountPanel';
 import { InventoryValuationPanel } from '@/components/admin/inventory/InventoryValuationPanel';
+import { TransfersPanel, ReceivingRoutePanel, ExpiringLotsPanel, AbcAnalysisPanel } from '@/components/admin/inventory/InventoryParityPanels';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
@@ -143,11 +144,15 @@ export default function InventoryPage() {
       </div>
 
       <Tabs defaultValue="stock">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="stock">Stock Levels</TabsTrigger>
           <TabsTrigger value="valuation">Valuation</TabsTrigger>
           <TabsTrigger value="pickpack">Pick & Pack</TabsTrigger>
           <TabsTrigger value="receiving">Receiving</TabsTrigger>
+          <TabsTrigger value="route">Receipt Route</TabsTrigger>
+          <TabsTrigger value="transfers">Transfers</TabsTrigger>
+          <TabsTrigger value="expiry">Expiry / FEFO</TabsTrigger>
+          <TabsTrigger value="abc">ABC Analysis</TabsTrigger>
           <TabsTrigger value="moves">Movements</TabsTrigger>
           <TabsTrigger value="cyclecount">Cycle Count</TabsTrigger>
           <TabsTrigger value="reorder">Reorder & MRP</TabsTrigger>
@@ -226,6 +231,22 @@ export default function InventoryPage() {
 
         <TabsContent value="receiving">
           <ReceivingPanel />
+        </TabsContent>
+
+        <TabsContent value="route">
+          <ReceivingRoutePanel />
+        </TabsContent>
+
+        <TabsContent value="transfers">
+          <TransfersPanel />
+        </TabsContent>
+
+        <TabsContent value="expiry">
+          <ExpiringLotsPanel />
+        </TabsContent>
+
+        <TabsContent value="abc">
+          <AbcAnalysisPanel />
         </TabsContent>
 
         <TabsContent value="cyclecount">

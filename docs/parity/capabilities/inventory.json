@@ -64,10 +64,10 @@
       "id": "reorder_rules",
       "name": "Reorder rules (min/reorder point)",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 1,
-      "notes": "Single-threshold only; no min/max two-bin",
-      "verify": "reorder_point per product/location"
+      "notes": "reorder_rules table has min_qty/max_qty/reorder_qty per product+location; ReorderMrpPanel manages them and procurement_run materializes suggestions into POs/MOs.",
+      "verify": "reorder_rules table + ReorderMrpPanel UI + procurement_run/approve_procurement_suggestion skills"
     },
     {
       "id": "valuation",
@@ -93,9 +93,9 @@
       "id": "multi_step_routes",
       "name": "Multi-step routes (receive→QC→putaway)",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 2,
-      "verify": "route + rule config, intermediate locations"
+      "verify": "inventory_receipts + inventory_receipt_lines + advance_inventory_receipt RPC posts stock_moves on putaway; ReceivingRoutePanel UI (migration 20260708 R12)"
     },
     {
       "id": "cycle_count",
@@ -119,25 +119,25 @@
       "id": "interwarehouse",
       "name": "Inter-warehouse replenishment",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "DC→store transfer rules"
+      "verify": "inventory_transfers + inventory_transfer_lines + complete_inventory_transfer RPC posts stock_moves; TransfersPanel UI (migration 20260708 R12)"
     },
     {
       "id": "expiry_alerts",
       "name": "Expiry-date alerts / FEFO picking",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "automation on stock_lots.expiry_date"
+      "verify": "stock_lots.expiry_date + list_expiring_lots RPC + fefo_suggest_lot helper + ExpiringLotsPanel UI (migration 20260708 R12)"
     },
     {
       "id": "abc_analysis",
       "name": "ABC / slow-moving analysis",
       "odoo": true,
-      "status": "missing",
+      "status": "done",
       "weight": 1,
-      "verify": "report classifying SKUs by velocity"
+      "verify": "abc_analysis_report RPC (80/95 percentile buckets from stock_moves value_cents) + AbcAnalysisPanel UI (migration 20260708 R12)"
     }
   ]
 }
