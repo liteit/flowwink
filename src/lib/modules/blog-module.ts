@@ -737,10 +737,13 @@ export const blogModule = defineModule<BlogModuleInput, BlogModuleOutput>({
     'generate_social_post',
     'research_content',
     'generate_content_proposal',
+    'moderate_blog_comment',
+    'list_blog_comments',
+    'get_blog_rss_url',
   ],
   data: {
     // children first (FK-safe order)
-    tables: ['blog_post_categories', 'blog_post_tags', 'blog_posts', 'blog_categories', 'blog_tags'],
+    tables: ['blog_comments', 'blog_post_categories', 'blog_post_tags', 'blog_posts', 'blog_categories', 'blog_tags'],
   },
   skillSeeds: BLOG_SKILLS,
 
