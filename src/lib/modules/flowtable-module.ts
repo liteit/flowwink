@@ -80,6 +80,28 @@ const FLOWTABLE_SKILLS: SkillSeed[] = [
     },
   },
   {
+    name: 'list_flowtable_tables',
+    description:
+      'Discover the tables + field schema inside a Flowtable base (Airtable-style). Use when: an agent found a base (list_flowtable_bases) and needs to know which tables it holds + their field keys before querying. Returns each table with its record_count and fields [{key,name,type}]. The missing link between list_flowtable_bases and query_flowtable when table names are unknown.',
+    category: 'crm',
+    handler: 'rpc:list_flowtable_tables',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'list_flowtable_tables',
+        description: 'List the tables and their field schema in a Flowtable base. Provide base_id OR base_slug.',
+        parameters: {
+          type: 'object',
+          properties: {
+            base_id: { type: 'string', description: 'Base id (from list_flowtable_bases)' },
+            base_slug: { type: 'string', description: 'Base slug, e.g. field-service-ops' },
+          },
+        },
+      },
+    },
+  },
+  {
     name: 'query_flowtable',
     description:
       'Query a Flowtable table server-side: filter on field values (eq/neq/ilike pushed to the DB; gt/gte/lt/lte numeric, is_empty/not_empty), free-text search across all fields, sort by a field, and count_by aggregation (value → row count). Use when: answering questions over an imported sheet (call list, prospect CSV) WITHOUT paging thousands of rows into context — e.g. "how many rows per status?" is one call with count_by. NOT for: reading a handful of raw rows (list_flowtable_records); structured CRM data (manage_leads).',
