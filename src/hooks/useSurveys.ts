@@ -91,6 +91,57 @@ export function useSurveyResponses(campaignId?: string) {
   });
 }
 
+export interface SurveyQuestionAnalytics {
+  id: string;
+  label: string;
+  type: string;
+  response_count: number;
+  distribution: Record<string, number>;
+}
+
+export interface SurveyCampaignAnalytics {
+  campaign_id: string;
+  campaign_name: string;
+  kind: string | null;
+  total_responses: number;
+  promoters: number;
+  passives: number;
+  detractors: number;
+  nps_score: number | null;
+  avg_score: number | null;
+  avg_points: number | null;
+  passed_count: number;
+  failed_count: number;
+  per_question: SurveyQuestionAnalytics[];
+}
+
+export function useSurveyAnalytics(campaignId?: string) {
+  return useQuery({
+    queryKey: ['survey-analytics', campaignId ?? null],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_survey_analytics' as never, {
+        p_campaign_id: campaignId ?? null,
+      } as never);
+      if (error) throw error;
+      const r = data as unknown as { success: boolean; campaigns?: SurveyCampaignAnalytics[]; error?: string };
+      if (!r?.success) throw new Error(r?.error || 'analytics_failed');
+      return r.campaigns ?? [];
+    },
+  });
+}
+
+export async function exportSurveyResponsesCsv(input: { campaign_id?: string; category?: string; since?: string }) {
+  const { data, error } = await supabase.rpc('export_survey_responses' as never, {
+    p_campaign_id: input.campaign_id ?? null,
+    p_category: input.category ?? null,
+    p_since: input.since ?? null,
+  } as never);
+  if (error) throw error;
+  const r = data as unknown as { success: boolean; csv?: string; row_count?: number; error?: string };
+  if (!r?.success) throw new Error(r?.error || 'export_failed');
+  return r;
+}
+
 export function useNpsStats() {
   return useQuery({
     queryKey: ['survey-nps-stats'],
