@@ -16816,6 +16816,8 @@ export type Database = {
           flowpilot_processed_at: string | null
           id: string
           lead_id: string | null
+          passed: boolean | null
+          points_earned: number | null
           recipient_email: string
           score: number | null
           send_id: string
@@ -16830,6 +16832,8 @@ export type Database = {
           flowpilot_processed_at?: string | null
           id?: string
           lead_id?: string | null
+          passed?: boolean | null
+          points_earned?: number | null
           recipient_email: string
           score?: number | null
           send_id: string
@@ -16844,6 +16848,8 @@ export type Database = {
           flowpilot_processed_at?: string | null
           id?: string
           lead_id?: string | null
+          passed?: boolean | null
+          points_earned?: number | null
           recipient_email?: string
           score?: number | null
           send_id?: string
@@ -16950,7 +16956,9 @@ export type Database = {
           id: string
           is_active: boolean
           kind: string
+          max_points: number | null
           name: string
+          pass_score: number | null
           questions: Json
           updated_at: string
         }
@@ -16960,7 +16968,9 @@ export type Database = {
           id?: string
           is_active?: boolean
           kind?: string
+          max_points?: number | null
           name: string
+          pass_score?: number | null
           questions?: Json
           updated_at?: string
         }
@@ -16970,7 +16980,9 @@ export type Database = {
           id?: string
           is_active?: boolean
           kind?: string
+          max_points?: number | null
           name?: string
+          pass_score?: number | null
           questions?: Json
           updated_at?: string
         }
@@ -19978,6 +19990,10 @@ export type Database = {
         Args: { p_from?: string; p_include_private?: boolean; p_to?: string }
         Returns: string
       }
+      export_survey_responses: {
+        Args: { p_campaign_id?: string; p_category?: string; p_since?: string }
+        Returns: Json
+      }
       extract_email_address: { Args: { raw: string }; Returns: string }
       fefo_suggest_lot: {
         Args: { p_location_id?: string; p_product_id: string }
@@ -20303,6 +20319,7 @@ export type Database = {
         Args: { p_agent_id: string }
         Returns: string
       }
+      get_survey_analytics: { Args: { p_campaign_id?: string }; Returns: Json }
       get_survey_by_token: { Args: { _token: string }; Returns: Json }
       get_team_member_ids: {
         Args: { _manager_user_id: string }
