@@ -11,7 +11,8 @@ export type FlowtableFieldType =
   | 'date'
   | 'url'
   | 'email'
-  | 'phone';
+  | 'phone'
+  | 'link';
 
 export interface FlowtableBase {
   id: string;

@@ -9311,7 +9311,7 @@ async function executeFlowtableQuery(
 ): Promise<unknown> {
   const {
     filters, search, order_by, ascending = true,
-    limit = 50, offset = 0, count_by,
+    limit = 50, offset = 0, count_by, resolve_links = false,
   } = args as any;
 
   const resolved = await resolveFlowtableTable(supabase, args);
@@ -9319,9 +9319,29 @@ async function executeFlowtableQuery(
   const table = resolved.table;
 
   const { data: fieldRows } = await supabase.from('flowtable_fields')
-    .select('key, name, type').eq('table_id', table.id).order('position');
-  const fields = fieldRows || [];
-  const fieldKeys = new Set(fields.map((f: any) => f.key));
+    .select('key, name, type, options').eq('table_id', table.id).order('position');
+  const rawFields = fieldRows || [];
+  const fieldKeys = new Set(rawFields.map((f: any) => f.key));
+
+  // Link fields point at another table (values[key] holds a target row id).
+  // Surface the target so an agent can traverse the relation, and resolve the
+  // id → display value when asked (resolve_links) — the payoff of relations
+  // for an operator: one query returns human labels, not UUIDs.
+  const linkFields = rawFields.filter((f: any) => f.type === 'link' && f.options?.link_table_id);
+  const linkTargetNames: Record<string, string> = {};
+  if (linkFields.length) {
+    const targetIds = [...new Set(linkFields.map((f: any) => f.options.link_table_id))];
+    const { data: targs } = await supabase.from('flowtable_tables')
+      .select('id, name').in('id', targetIds);
+    for (const t of (targs || [])) linkTargetNames[t.id] = t.name;
+  }
+  // Public field schema — link fields carry their target table id + name.
+  const fields = rawFields.map((f: any) => f.type === 'link'
+    ? { key: f.key, name: f.name, type: f.type,
+        link_table_id: f.options?.link_table_id,
+        link_table_name: linkTargetNames[f.options?.link_table_id],
+        link_display_field: f.options?.display_field }
+    : { key: f.key, name: f.name, type: f.type });
 
   // Validate filter fields up front — a typo'd key should error with the real
   // keys listed, not silently match nothing.
@@ -9339,6 +9359,31 @@ async function executeFlowtableQuery(
   if (order_by && (!safeFlowtableKey(order_by) || !fieldKeys.has(order_by))) {
     return { error: `Unknown order_by field '${order_by}'. Fields: ${[...fieldKeys].join(', ')}` };
   }
+
+  // Resolve link-field ids → display values for a page of items (opt-in).
+  // Batches one select per target table over the ids actually present, so a
+  // 50-row page with 2 link columns costs at most 2 extra queries.
+  const resolveLinksOnItems = async (items: any[]): Promise<void> => {
+    if (!resolve_links || !linkFields.length || !items.length) return;
+    for (const lf of linkFields) {
+      const targetId = lf.options.link_table_id;
+      const disp = lf.options.display_field;
+      const ids = [...new Set(items.map((it) => it.values?.[lf.key]).filter(Boolean))];
+      if (!ids.length) continue;
+      const { data: targetRows } = await supabase.from('flowtable_records')
+        .select('id, values').in('id', ids);
+      const byId: Record<string, any> = {};
+      for (const r of (targetRows || [])) byId[r.id] = r.values || {};
+      for (const it of items) {
+        const linkId = it.values?.[lf.key];
+        if (!linkId) continue;
+        const tv = byId[linkId];
+        const display = tv ? String((disp ? tv[disp] : undefined) ?? Object.values(tv)[0] ?? linkId) : '(missing)';
+        it._links = it._links || {};
+        it._links[lf.key] = { id: linkId, display };
+      }
+    }
+  };
 
   const PUSHDOWN_OPS = new Set(['eq', 'neq', 'ilike']);
   const LOCAL_OPS = new Set(['gt', 'gte', 'lt', 'lte', 'is_empty', 'not_empty']);
@@ -9381,12 +9426,14 @@ async function executeFlowtableQuery(
       .order('position', { ascending: true })
       .range(offset, offset + Math.min(limit, 500) - 1);
     if (error) return { error: `Flowtable query failed: ${error.message}` };
+    const items = data || [];
+    await resolveLinksOnItems(items);
     return {
       table: { id: table.id, name: table.name, slug: table.slug },
       fields,
-      total_matched: count ?? (data || []).length,
-      items: data || [],
-      count: (data || []).length,
+      total_matched: count ?? items.length,
+      items,
+      count: items.length,
       offset,
     };
   }
@@ -9435,13 +9482,15 @@ async function executeFlowtableQuery(
     });
   }
 
+  const pageItems = matched.slice(offset, offset + Math.min(limit, 500));
+  await resolveLinksOnItems(pageItems);
   const result: Record<string, unknown> = {
     table: { id: table.id, name: table.name, slug: table.slug },
     fields,
     total_matched: matched.length,
     scanned,
     scan_capped: scanned >= FLOWTABLE_SCAN_CAP,
-    items: matched.slice(offset, offset + Math.min(limit, 500)),
+    items: pageItems,
     offset,
   };
 
