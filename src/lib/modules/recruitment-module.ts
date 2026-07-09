@@ -128,7 +128,11 @@ const RECRUITMENT_SKILLS: SkillSeed[] = [
     description:
       'Move a candidate application to a new pipeline stage. Use when: advancing a candidate (e.g. screened → interview_scheduled), rejecting, or marking hired. NOT for: editing candidate data.',
     category: 'crm',
-    handler: 'db:applications',
+    // Dedicated RPC (was db:applications generic CRUD): "move" is a status transition
+    // the verb-inference can't infer, so it silently listed; and the generic handler
+    // keys on `id` while this passes the natural application_id. The RPC validates the
+    // stage enum, casts safely, and has a service-role escape. (process-QA 2026-07-09)
+    handler: 'rpc:move_application_stage',
     scope: 'internal',
     tool_definition: {
       type: 'function',
@@ -149,6 +153,7 @@ const RECRUITMENT_SKILLS: SkillSeed[] = [
                 'offer_sent',
                 'hired',
                 'rejected',
+                'withdrawn',
               ],
             },
             rejected_reason: { type: 'string' },

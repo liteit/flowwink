@@ -9761,6 +9761,21 @@ async function executeGenericCrud(
     else if (skillName.startsWith('delete_') || skillName.endsWith('_delete')) action = 'delete';
   }
 
+  // Natural-id resolution (process-QA finding 2026-07-09): many skills key the row by
+  // the entity's natural id (manage_employee→employee_id, get/update an order→order_id)
+  // rather than a bare `id`, so get/update/delete failed with "id is required". When no
+  // `id` was given, accept `<singular(table)>_id` and lift it out of the data fields so
+  // it is used as the selector, not written as a column. Only the specific table-derived
+  // key — skills whose natural key doesn't match this pattern keep their dedicated RPCs.
+  if (id === undefined && action !== 'create' && action !== 'list') {
+    const singular = table.replace(/ies$/, 'y').replace(/s$/, '');
+    const naturalKey = `${singular}_id`;
+    if (fields[naturalKey] !== undefined) {
+      id = fields[naturalKey];
+      delete fields[naturalKey];
+    }
+  }
+
   // Action aliases — common natural variants like "list_pending" → list + filter
   const ACTION_ALIASES: Record<string, { action: string; extraFilters?: Record<string, any> }> = {
     list_pending:  { action: 'list', extraFilters: { status: 'pending' } },
