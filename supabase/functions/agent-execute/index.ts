@@ -6861,7 +6861,7 @@ async function executeDbAction(
             suggested_amount_cents: netBaseV,
             match_details: ['vendor-default', `booked ${confirmed} time(s) before for this counterparty`],
             proposed_lines: isPctV
-              ? acctExpandTemplateLines(vendorTpl.template_lines, netBaseV)
+              ? acctExpandTemplateLines(vendorTpl.template_lines, netBaseV, grossCents)
               : vendorTpl.template_lines,
             top_candidates: [
               { template_id: vendorTpl.id, name: vendorTpl.template_name, confidence: vendorConfidence },
@@ -6875,7 +6875,7 @@ async function executeDbAction(
         const netBase = isPct ? acctNetBaseFromGross(best.template.template_lines, grossCents) : grossCents;
         const proposedLines = status === 'escalate'
           ? []
-          : (isPct ? acctExpandTemplateLines(best.template.template_lines, netBase) : best.template.template_lines);
+          : (isPct ? acctExpandTemplateLines(best.template.template_lines, netBase, grossCents) : best.template.template_lines);
         return {
           ...base,
           status,
