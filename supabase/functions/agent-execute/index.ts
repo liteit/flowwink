@@ -7775,14 +7775,36 @@ async function executeDbAction(
       // quote_items after the parent quote is created.
       const { action = 'list' } = args as any;
 
+      // Fields that belong on a quote LINE, not the quotes row. The skill schema
+      // advertised these top-level (description/quantity/unit_price_cents/…), so an
+      // agent naturally passes them flat — but quotes has no such columns and the
+      // insert threw "Could not find the 'description' column" (process-QA 2026-07-09).
+      // Strip them from the quote payload; create/update fold them into an implicit line.
+      const QUOTE_LINE_ONLY = new Set([
+        'description', 'quantity', 'qty', 'unit', 'unit_price_cents', 'unit_price',
+        'discount_pct', 'tax_rate_pct', 'product_id', 'name', 'position',
+      ]);
       const stripQuoteInternal = (obj: Record<string, any>): Record<string, any> => {
         const out: Record<string, any> = {};
         for (const [k, v] of Object.entries(obj)) {
           if (k === 'action' || k === 'items' || k === 'line_items') continue;
           if (k.startsWith('_')) continue;
+          if (QUOTE_LINE_ONLY.has(k)) continue;
           out[k] = v;
         }
         return out;
+      };
+      // Fold flat top-level line fields into a single implicit item when the caller
+      // gave no items[] array — so `create {title, description, quantity, unit_price_cents}`
+      // just works instead of erroring or producing an itemless quote.
+      const implicitQuoteItems = (a: Record<string, any>, explicit: unknown[] | null): unknown[] | null => {
+        if (explicit && explicit.length) return explicit;
+        if (a.description == null && a.unit_price_cents == null && a.unit_price == null && a.quantity == null) return explicit;
+        return [{
+          description: a.description, quantity: a.quantity, unit: a.unit,
+          unit_price_cents: a.unit_price_cents, unit_price: a.unit_price,
+          tax_rate_pct: a.tax_rate_pct, discount_pct: a.discount_pct, product_id: a.product_id,
+        }];
       };
 
       // quotes.quote_number is NOT NULL with no default — the admin UI generates
@@ -7844,9 +7866,10 @@ async function executeDbAction(
 
       if (action === 'create') {
         const a = args as any;
-        const items = Array.isArray(a.items) ? a.items
+        const explicitItems = Array.isArray(a.items) ? a.items
                     : Array.isArray(a.line_items) ? a.line_items
                     : null;
+        const items = implicitQuoteItems(a, explicitItems);
         const insertData = stripQuoteInternal(a);
         // The table stores valid_until (a date) — accept the friendlier
         // valid_days and convert, instead of crashing on an unknown column.
