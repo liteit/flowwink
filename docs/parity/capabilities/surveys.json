@@ -1,27 +1,26 @@
 {
   "module": "surveys",
   "odoo_app": "Surveys (survey.survey)",
-  "current_maturity": "L2",
+  "current_maturity": "L3",
   "target_maturity": "L4",
   "capabilities": [
     {
       "id": "builder",
       "name": "Survey builder",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 2,
-      "verify": "survey_templates table (questions jsonb) + template UI in SurveysPage.tsx",
-      "notes": "Skill surface missing — no template CRUD skill; create_survey_campaign only references an existing template_id.",
+      "verify": "survey_templates + manage_survey_template skill (CRUD) + SurveysPage template editor; skip-logic supported via question.show_if honoured in PublicSurveyPage",
       "epic": "EPIC-06"
     },
     {
       "id": "question_types",
       "name": "Multiple question types",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 1,
-      "verify": "survey_templates.kind check: nps/csat/ces/custom; PublicSurveyPage renders nps/csat",
-      "notes": "Limited type set and no skill surface; custom question rendering is thin."
+      "verify": "PublicSurveyPage renders nps/csat + choice/single_choice/boolean/text/comment/number/rating; template editor supports score/text/choice",
+      "notes": "Custom question rendering now full-fat; skip-logic via show_if is respected."
     },
     {
       "id": "public_links",
@@ -29,7 +28,7 @@
       "odoo": true,
       "status": "done",
       "weight": 1,
-      "verify": "send_survey skill issues unique one-click token links; PublicSurveyPage.tsx renders them"
+      "verify": "send_survey skill issues unique one-click token links; PublicSurveyPage renders them"
     },
     {
       "id": "responses",
@@ -37,25 +36,32 @@
       "odoo": true,
       "status": "done",
       "weight": 1,
-      "verify": "list_survey_responses skill; responses in SurveysPage.tsx"
+      "verify": "list_survey_responses skill; responses in SurveysPage"
     },
     {
       "id": "scoring",
       "name": "Scoring",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 1,
-      "verify": "min_score/max_score/category (detractor/passive/promoter) filters on list_survey_responses; scores in SurveysPage",
-      "notes": "NPS/CSAT category scoring only — no quiz/point scoring like Odoo's."
+      "verify": "survey_templates.pass_score + question.points/correct; submit_survey_response computes points_earned + passed; NPS/CSAT category scoring preserved",
+      "notes": "Weighted point/quiz scoring added on top of NPS/CSAT category scoring — parity with Odoo quiz mode."
     },
     {
       "id": "analytics",
       "name": "Response analytics",
       "odoo": true,
-      "status": "partial",
+      "status": "done",
       "weight": 1,
-      "verify": "NPS score display in SurveysPage.tsx",
-      "notes": "Skill surface missing — get_nps_score is in the module inputSchema but has no SkillSeed."
+      "verify": "get_survey_analytics RPC (per-question distribution + NPS breakdown) + Analytics tab in SurveysPage; get_survey_analytics skill exposed to agents"
+    },
+    {
+      "id": "export",
+      "name": "CSV export of responses",
+      "odoo": true,
+      "status": "done",
+      "weight": 1,
+      "verify": "export_survey_responses RPC (returns CSV text, admin/service_role only) + Export CSV button in SurveysPage responses tab; export_survey_responses skill for agents"
     },
     {
       "id": "event_triggers",
@@ -63,7 +69,7 @@
       "odoo": false,
       "status": "done",
       "weight": 1,
-      "verify": "create_survey_campaign trigger enum + delay_hours; Trigger UI in SurveysPage.tsx",
+      "verify": "create_survey_campaign trigger enum + delay_hours; Trigger UI in SurveysPage",
       "notes": "Added: platform-event-driven survey dispatch with detractor auto-routing to FlowPilot."
     }
   ]
