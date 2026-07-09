@@ -157,6 +157,54 @@ const SURVEY_SKILLS: SkillSeed[] = [
     instructions:
       'Filter by category="detractor" to find unhappy customers needing immediate attention. Filter by category="promoter" to find advocates for testimonials/case studies.',
   },
+  {
+    name: 'get_survey_analytics',
+    description:
+      'Aggregate per-campaign NPS/CSAT scores AND per-question response distributions across all responses. Use when: building the monthly NPS report, seeing which quiz question failed the most, understanding response spread. NOT for: raw response rows (use list_survey_responses).',
+    category: 'crm',
+    handler: 'rpc:get_survey_analytics',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'get_survey_analytics',
+        description: 'Return per-campaign aggregates plus per-question distributions for one or all survey campaigns.',
+        parameters: {
+          type: 'object',
+          properties: {
+            campaign_id: { type: 'string', description: 'Optional UUID; if omitted, aggregates all campaigns.' },
+          },
+        },
+      },
+    },
+    instructions:
+      'Returns { success, campaigns: [{ campaign_id, campaign_name, kind, total_responses, promoters, passives, detractors, nps_score, avg_score, avg_points, passed_count, failed_count, per_question: [{ id, label, type, response_count, distribution }] }] }. `distribution` is a { answer_value: count } map. Prefer this over list_survey_responses when you need summary numbers.',
+  },
+  {
+    name: 'export_survey_responses',
+    description:
+      'Export survey responses as a CSV string. Use when: an operator requests a spreadsheet-ready extract for board reports, external BI, or archive. Filters by campaign, category, and start date. Caps at 10 000 rows.',
+    category: 'crm',
+    handler: 'rpc:export_survey_responses',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'export_survey_responses',
+        description: 'Return CSV text of survey responses (up to 10 000 rows) with optional campaign/category/date filters.',
+        parameters: {
+          type: 'object',
+          properties: {
+            campaign_id: { type: 'string', description: 'Optional UUID to scope to one campaign.' },
+            category: { type: 'string', enum: ['detractor', 'passive', 'promoter'] },
+            since: { type: 'string', description: 'Optional ISO timestamp — only responses newer than this are returned.' },
+          },
+        },
+      },
+    },
+    instructions:
+      'Returns { success, csv, row_count }. `csv` includes a header row. Use category="detractor" for a churn-risk export. For very large exports (>10k) paginate by narrowing `since`.',
+  },
 ];
 
 export const surveysModule = defineModule<Input, Output>({
