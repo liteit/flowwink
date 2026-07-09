@@ -7,14 +7,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2, CheckCircle2, AlertCircle, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+interface SurveyQuestion {
+  id: string;
+  type: string;
+  label: string;
+  required?: boolean;
+  options?: string[];
+  show_if?: { id: string; equals?: unknown; gte?: number; lte?: number };
+}
+
 interface SurveyData {
   success: boolean;
   send_id?: string;
   campaign?: { name: string; email_intro: string };
   template?: {
-    kind: 'nps' | 'csat' | 'ces' | 'custom';
+    kind: 'nps' | 'csat' | 'ces' | 'custom' | 'quiz';
     name: string;
-    questions: Array<{ id: string; type: string; label: string; required?: boolean }>;
+    questions: SurveyQuestion[];
   };
   recipient_name?: string;
   error?: string;
@@ -29,6 +38,7 @@ export default function PublicSurveyPage() {
   const [loading, setLoading] = useState(true);
   const [score, setScore] = useState<number | null>(presetScore ? Number(presetScore) : null);
   const [comment, setComment] = useState('');
+  const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -42,13 +52,24 @@ export default function PublicSurveyPage() {
     })();
   }, [token]);
 
+  const questionVisible = (q: SurveyQuestion): boolean => {
+    if (!q.show_if) return true;
+    const src = q.show_if.id === 'score' ? score : answers[q.show_if.id];
+    if (q.show_if.equals !== undefined) return src === q.show_if.equals;
+    if (q.show_if.gte !== undefined && typeof src === 'number') return src >= q.show_if.gte;
+    if (q.show_if.lte !== undefined && typeof src === 'number') return src <= q.show_if.lte;
+    return true;
+  };
+
   const submit = async () => {
-    if (!token || score === null) return;
+    if (!token) return;
     setSubmitting(true);
+    const merged = { ...answers, ...(comment ? { comment } : {}), ...(score !== null ? { score } : {}) };
     const { data: result, error } = await supabase.rpc('submit_survey_response' as never, {
       _token: token,
       _score: score,
       _comment: comment || null,
+      _answers: merged,
     } as never);
     setSubmitting(false);
     const r = result as unknown as { success: boolean; error?: string };
@@ -58,6 +79,7 @@ export default function PublicSurveyPage() {
       setSubmitted(true);
     }
   };
+
 
   if (loading) {
     return (
@@ -173,10 +195,103 @@ export default function PublicSurveyPage() {
             </div>
           )}
 
-          <Button onClick={submit} disabled={score === null || submitting} className="w-full">
+          {/* Extended questions (choice / boolean / text / number / rating) with optional skip-logic */}
+          {(data.template?.questions ?? [])
+            .filter(q => q.id !== primary?.id && q.id !== followUp?.id && questionVisible(q))
+            .map(q => (
+              <div key={q.id} className="space-y-2">
+                <p className="text-sm font-medium">
+                  {q.label}
+                  {q.required && <span className="text-rose-500 ml-1">*</span>}
+                </p>
+                {(q.type === 'choice' || q.type === 'single_choice') && (
+                  <div className="flex flex-wrap gap-2">
+                    {(q.options ?? []).map(opt => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setAnswers(a => ({ ...a, [q.id]: opt }))}
+                        className={cn(
+                          'px-3 py-1.5 rounded-md border text-sm transition-colors',
+                          answers[q.id] === opt
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-background hover:bg-muted border-border',
+                        )}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {q.type === 'boolean' && (
+                  <div className="flex gap-2">
+                    {[['Yes', true], ['No', false]].map(([label, val]) => (
+                      <button
+                        key={String(val)}
+                        type="button"
+                        onClick={() => setAnswers(a => ({ ...a, [q.id]: val }))}
+                        className={cn(
+                          'flex-1 px-3 py-2 rounded-md border text-sm transition-colors',
+                          answers[q.id] === val
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-background hover:bg-muted border-border',
+                        )}
+                      >
+                        {label as string}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {(q.type === 'text' || q.type === 'comment') && (
+                  <Textarea
+                    rows={3}
+                    value={String(answers[q.id] ?? '')}
+                    onChange={e => setAnswers(a => ({ ...a, [q.id]: e.target.value }))}
+                    className="resize-none"
+                  />
+                )}
+                {q.type === 'number' && (
+                  <input
+                    type="number"
+                    value={String(answers[q.id] ?? '')}
+                    onChange={e => setAnswers(a => ({ ...a, [q.id]: e.target.value === '' ? null : Number(e.target.value) }))}
+                    className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm"
+                  />
+                )}
+                {q.type === 'rating' && (
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map(n => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setAnswers(a => ({ ...a, [q.id]: n }))}
+                        className="p-1"
+                        aria-label={`${n} star${n === 1 ? '' : 's'}`}
+                      >
+                        <Star
+                          className={cn(
+                            'h-6 w-6 transition-colors',
+                            typeof answers[q.id] === 'number' && n <= (answers[q.id] as number)
+                              ? 'fill-amber-400 text-amber-400'
+                              : 'text-muted-foreground/40',
+                          )}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+
+          <Button
+            onClick={submit}
+            disabled={submitting || (primary && score === null && (kind === 'nps' || kind === 'csat' || kind === 'ces'))}
+            className="w-full"
+          >
             {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
             Submit feedback
           </Button>
+
         </CardContent>
       </Card>
     </div>
