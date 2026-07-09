@@ -6524,16 +6524,39 @@ async function executeDbAction(
 
       if (skillName === 'site_branding_update') {
         const { logo_url, primary_color, accent_color, font_family, favicon_url } = args as any;
-        // Read current branding, merge updates
+        // The branding JSON the app READS uses logo / primaryColor / accentColor /
+        // headingFont+bodyFont / favicon, with colors in HSL "H S% L%". The old handler
+        // wrote logo_url/primary_color/accent_color (agent-shaped, hex) as separate keys
+        // the app never reads → an agent "set the logo/brand colour" was a silent no-op
+        // (QA finding 2026-07-09). Map to the app's keys and convert hex → HSL.
+        const hexToHsl = (input: string): string => {
+          const v = String(input).trim();
+          if (!v.startsWith('#')) return v; // already HSL or a named token — pass through
+          let hex = v.replace('#', '');
+          if (hex.length === 3) hex = hex.split('').map((c) => c + c).join('');
+          const r = parseInt(hex.slice(0, 2), 16) / 255;
+          const g = parseInt(hex.slice(2, 4), 16) / 255;
+          const b = parseInt(hex.slice(4, 6), 16) / 255;
+          const max = Math.max(r, g, b), min = Math.min(r, g, b);
+          let h = 0, s = 0; const l = (max + min) / 2;
+          if (max !== min) {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+            else if (max === g) h = (b - r) / d + 2;
+            else h = (r - g) / d + 4;
+            h /= 6;
+          }
+          return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+        };
         const { data: existing } = await supabase.from('site_settings')
           .select('value').eq('key', 'branding').maybeSingle();
-        const current = existing?.value || {};
-        const updated = { ...current };
-        if (logo_url !== undefined) updated.logo_url = logo_url;
-        if (primary_color !== undefined) updated.primary_color = primary_color;
-        if (accent_color !== undefined) updated.accent_color = accent_color;
-        if (font_family !== undefined) updated.font_family = font_family;
-        if (favicon_url !== undefined) updated.favicon_url = favicon_url;
+        const updated: Record<string, unknown> = { ...(existing?.value || {}) };
+        if (logo_url !== undefined) updated.logo = logo_url;
+        if (favicon_url !== undefined) updated.favicon = favicon_url;
+        if (primary_color !== undefined) updated.primaryColor = hexToHsl(primary_color);
+        if (accent_color !== undefined) updated.accentColor = hexToHsl(accent_color);
+        if (font_family !== undefined) { updated.headingFont = font_family; updated.bodyFont = font_family; }
         const { error } = await supabase.from('site_settings')
           .upsert({ key: 'branding', value: updated }, { onConflict: 'key' });
         if (error) throw new Error(`Branding update failed: ${error.message}`);
