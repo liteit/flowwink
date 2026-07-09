@@ -9244,7 +9244,16 @@ async function resolveFlowtableTable(
     matches = matches.filter((t: any) =>
       t.flowtable_bases?.slug === b || (t.flowtable_bases?.name || '').toLowerCase() === b);
   }
-  if (matches.length === 0) return { error: `No Flowtable table matches '${table}'${base ? ` in base '${base}'` : ''}. Use list_flowtable_bases + list_flowtable_records to discover.` };
+  if (matches.length === 0) {
+    // Uncoached operators routinely pass the BASE name (or guess the table
+    // name) — list the real tables so they can pick without a second
+    // discovery round-trip. Cheap: one indexed select.
+    const { data: all } = await supabase.from('flowtable_tables')
+      .select('name, slug, flowtable_bases!inner(name, slug)').limit(50);
+    const available = (all || []).map((t: any) =>
+      `${t.flowtable_bases?.name}/${t.name}`).join(', ') || '(none)';
+    return { error: `No Flowtable table matches '${table}'${base ? ` in base '${base}'` : ''}. Note: pass the TABLE name, not the base. Available tables (base/table): ${available}. Or pass table_id.` };
+  }
   if (matches.length > 1) {
     return { error: `Ambiguous table '${table}': ${matches.map((t: any) => `${t.flowtable_bases?.slug}/${t.slug}`).join(', ')}. Pass base or table_id.` };
   }
@@ -9305,9 +9314,9 @@ async function executeFlowtableQuery(
     return { error: `Unsupported op '${badOps[0].op}'. Supported: eq, neq, ilike (server-side); gt, gte, lt, lte (numeric), is_empty, not_empty.` };
   }
 
-  const buildBase = () => {
+  const buildBase = (opts?: { withCount?: boolean }) => {
     let q = supabase.from('flowtable_records')
-      .select('id, values, created_at, updated_at')
+      .select('id, values, created_at, updated_at', opts?.withCount ? { count: 'exact' } : undefined)
       .eq('table_id', table.id);
     for (const f of pushdown) {
       const col = `values->>${f.field}`;
@@ -9327,14 +9336,20 @@ async function executeFlowtableQuery(
   const needsScan = local.length > 0 || !!count_by || !!order_by;
 
   if (!needsScan) {
-    // Fast path — everything pushed down, page directly in the DB
-    const { data, error } = await buildBase()
+    // Fast path — everything pushed down, page directly in the DB. Ask
+    // PostgREST for the exact total (count:'exact' ignores the range) so the
+    // response always reports total_matched — an operator filtering with a
+    // limit still learns the full match size, and the shape matches the scan
+    // path (found live 2026-07-09: the fast path only returned page `count`,
+    // hiding that a filter matched 1500 rows).
+    const { data, error, count } = await buildBase({ withCount: true })
       .order('position', { ascending: true })
       .range(offset, offset + Math.min(limit, 500) - 1);
     if (error) return { error: `Flowtable query failed: ${error.message}` };
     return {
       table: { id: table.id, name: table.name, slug: table.slug },
       fields,
+      total_matched: count ?? (data || []).length,
       items: data || [],
       count: (data || []).length,
       offset,
