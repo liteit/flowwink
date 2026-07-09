@@ -120,13 +120,23 @@ export default function SurveysPage() {
           </TabsContent>
 
           <TabsContent value="responses" className="space-y-4 mt-4">
-            <Select value={selectedCampaign ?? 'all'} onValueChange={(v) => setSelectedCampaign(v === 'all' ? undefined : v)}>
-              <SelectTrigger className="w-64"><SelectValue placeholder="All campaigns" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All campaigns</SelectItem>
-                {(campaigns ?? []).map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center justify-between gap-2">
+              <Select value={selectedCampaign ?? 'all'} onValueChange={(v) => setSelectedCampaign(v === 'all' ? undefined : v)}>
+                <SelectTrigger className="w-64"><SelectValue placeholder="All campaigns" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All campaigns</SelectItem>
+                  {(campaigns ?? []).map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <div className="flex gap-1">
+                <Button size="sm" variant="outline" disabled={exporting} onClick={() => handleExport()}>
+                  {exporting ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Download className="h-3.5 w-3.5 mr-1.5" />}Export CSV
+                </Button>
+                <Button size="sm" variant="ghost" disabled={exporting} onClick={() => handleExport('detractor')}>
+                  <Download className="h-3.5 w-3.5 mr-1.5" />Detractors
+                </Button>
+              </div>
+            </div>
             <Card><CardContent className="p-0">
               <Table>
                 <TableHeader><TableRow><TableHead>Score</TableHead><TableHead>Email</TableHead><TableHead>Comment</TableHead><TableHead>When</TableHead></TableRow></TableHeader>
@@ -144,6 +154,67 @@ export default function SurveysPage() {
               </Table>
             </CardContent></Card>
           </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-4 mt-4">
+            <Select value={selectedCampaign ?? 'all'} onValueChange={(v) => setSelectedCampaign(v === 'all' ? undefined : v)}>
+              <SelectTrigger className="w-64"><SelectValue placeholder="All campaigns" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All campaigns</SelectItem>
+                {(campaigns ?? []).map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {!analytics?.length && (
+              <Card><CardContent className="p-8 text-center text-muted-foreground">
+                <BarChart3 className="h-6 w-6 mx-auto mb-2 opacity-40" />No analytics yet — send a campaign to collect responses.
+              </CardContent></Card>
+            )}
+            <div className="space-y-4">
+              {(analytics ?? []).map(a => (
+                <Card key={a.campaign_id}>
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      {a.campaign_name}
+                      <Badge variant="outline" className="uppercase text-[10px]">{a.kind ?? '—'}</Badge>
+                    </CardTitle>
+                    <CardDescription>
+                      {a.total_responses} responses · NPS {a.nps_score ?? '—'} · avg score {a.avg_score ?? '—'}
+                      {a.avg_points !== null && <> · avg points {a.avg_points}</>}
+                      {(a.passed_count + a.failed_count) > 0 && <> · passed {a.passed_count}/{a.passed_count + a.failed_count}</>}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex gap-2 text-xs">
+                      <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 border">Promoters {a.promoters}</Badge>
+                      <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 border">Passives {a.passives}</Badge>
+                      <Badge className="bg-rose-500/10 text-rose-600 border-rose-500/20 border">Detractors {a.detractors}</Badge>
+                    </div>
+                    {(a.per_question ?? []).map(q => {
+                      const total = Object.values(q.distribution ?? {}).reduce((s, n) => s + n, 0) || 1;
+                      const entries = Object.entries(q.distribution ?? {}).sort(([x], [y]) => x.localeCompare(y));
+                      return (
+                        <div key={q.id} className="space-y-1">
+                          <p className="text-sm font-medium">{q.label} <span className="text-xs text-muted-foreground">· {q.response_count} answers</span></p>
+                          <div className="space-y-1">
+                            {entries.map(([k, v]) => (
+                              <div key={k} className="flex items-center gap-2 text-xs">
+                                <span className="w-32 truncate text-muted-foreground" title={k}>{k.replace(/^"|"$/g, '')}</span>
+                                <div className="flex-1 h-2 rounded bg-muted overflow-hidden">
+                                  <div className="h-full bg-primary" style={{ width: `${(v / total) * 100}%` }} />
+                                </div>
+                                <span className="w-10 text-right font-mono">{v}</span>
+                              </div>
+                            ))}
+                            {!entries.length && <p className="text-xs text-muted-foreground italic">No answers yet</p>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
 
           <TabsContent value="templates" className="space-y-4 mt-4">
             <div className="flex justify-end">
