@@ -136,7 +136,11 @@ const PURCHASING_SKILLS: SkillSeed[] = [
     name: 'send_purchase_order',
     description: 'Mark a draft purchase order as sent to the vendor. Use when: admin approves a PO and wants to notify the vendor. NOT for: creating POs (use create_purchase_order).',
     category: 'commerce',
-    handler: 'db:purchase_orders',
+    // Dedicated RPC (not generic db:purchase_orders CRUD): "send" is a status
+    // transition the generic verb-inference can't infer a target state for, so it
+    // silently listed instead of transitioning. The RPC enforces draft→sent, has a
+    // service-role escape, and is an idempotent no-op if already sent.
+    handler: 'rpc:send_purchase_order',
     scope: 'internal',
     tool_definition: {
       type: 'function',
@@ -145,11 +149,12 @@ const PURCHASING_SKILLS: SkillSeed[] = [
         description: 'Transition a PO from draft to sent status',
         parameters: {
           type: 'object',
-          properties: { purchase_order_id: { type: 'string' } },
+          properties: { purchase_order_id: { type: 'string', description: 'UUID of the draft PO to send' } },
           required: ['purchase_order_id'],
         },
       },
     },
+    instructions: 'If the PO amount exceeds the approval threshold this returns a "requires chain approval" error — call request_entity_approval("purchase_order", id, amount_cents) then advance_approval_step until approved, then retry send.',
   },
   {
     name: 'receive_purchase_order',
@@ -165,14 +170,14 @@ const PURCHASING_SKILLS: SkillSeed[] = [
         parameters: {
           type: 'object',
           properties: {
-            p_purchase_order_id: { type: 'string', description: 'PO UUID being received' },
-            p_lines: {
+            purchase_order_id: { type: 'string', description: 'PO UUID being received' },
+            lines: {
               type: 'array',
-              description: 'Lines being received',
+              description: 'Lines being received. Get po_line_id from the PO lines first.',
               items: {
                 type: 'object',
                 properties: {
-                  po_line_id: { type: 'string' },
+                  po_line_id: { type: 'string', description: 'UUID of an existing PO line' },
                   quantity_received: { type: 'number' },
                   lot_number: { type: 'string', description: 'Optional lot/serial' },
                   expiration_date: { type: 'string', description: 'YYYY-MM-DD, optional' },
@@ -180,11 +185,11 @@ const PURCHASING_SKILLS: SkillSeed[] = [
                 required: ['po_line_id', 'quantity_received'],
               },
             },
-            p_to_location_id: { type: 'string', description: 'Destination internal location; defaults to first internal' },
-            p_received_date: { type: 'string', description: 'YYYY-MM-DD, defaults to today' },
-            p_notes: { type: 'string' },
+            to_location_id: { type: 'string', description: 'Destination internal location; defaults to first internal' },
+            received_date: { type: 'string', description: 'YYYY-MM-DD, defaults to today' },
+            notes: { type: 'string' },
           },
-          required: ['p_purchase_order_id', 'p_lines'],
+          required: ['purchase_order_id', 'lines'],
         },
       },
     },
