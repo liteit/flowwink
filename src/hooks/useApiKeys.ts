@@ -6,7 +6,6 @@ export interface ApiKey {
   id: string;
   name: string;
   key_prefix: string;
-  key_raw: string | null;
   scopes: string[];
   created_by: string | null;
   last_used_at: string | null;
@@ -18,9 +17,12 @@ export function useApiKeys() {
   return useQuery({
     queryKey: ['api-keys'],
     queryFn: async () => {
+      // Never select key_raw — the full key is shown ONCE at creation and only
+      // its hash is stored. Listing just the prefix keeps the secret off the DB
+      // read path (and out of any cached query state).
       const { data, error } = await supabase
         .from('api_keys')
-        .select('id, name, key_prefix, key_raw, scopes, created_by, last_used_at, expires_at, created_at')
+        .select('id, name, key_prefix, scopes, created_by, last_used_at, expires_at, created_at')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as unknown as ApiKey[];
@@ -51,18 +53,19 @@ export function useCreateApiKey() {
 
       const { data: { user } } = await supabase.auth.getUser();
 
+      // Store ONLY the hash + prefix — never the raw key. The caller shows the
+      // returned raw once; after that it is unrecoverable (regenerate to rotate).
       const { error } = await supabase.from('api_keys').insert({
         name: input.name,
         key_hash: hash,
         key_prefix: prefix,
-        key_raw: raw,
         scopes: input.scopes ?? [],
         expires_at: input.expires_at ?? null,
         created_by: user?.id ?? null,
       } as any);
 
       if (error) throw error;
-      return raw; // Return the raw key (shown once)
+      return raw; // Return the raw key (shown once, never persisted)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['api-keys'] });

@@ -160,9 +160,8 @@ export function ApiKeysContent() {
           ) : (
             <div className="divide-y">
               {keys.map((key) => {
-                const fullKey = key.key_raw || `${key.key_prefix}…`;
-                const canCopy = !!key.key_raw;
-
+                // The full key is shown ONCE at creation and never stored — the
+                // list only ever knows the prefix.
                 return (
                   <div key={key.id} className="flex items-center justify-between py-3 gap-4">
                     <div className="min-w-0 flex-1">
@@ -171,23 +170,11 @@ export function ApiKeysContent() {
                       </div>
                       <div className="flex items-center gap-2 mt-1.5">
                         <code className="text-xs text-muted-foreground font-mono bg-muted px-2 py-1 rounded break-all select-all">
-                          {fullKey}
+                          {key.key_prefix}…
                         </code>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 shrink-0"
-                          disabled={!canCopy}
-                          title={canCopy ? 'Copy full key' : 'Full key not available'}
-                          onClick={() => {
-                            if (key.key_raw) {
-                              navigator.clipboard.writeText(key.key_raw);
-                              toast.success('API key copied');
-                            }
-                          }}
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
+                        <span className="text-[11px] text-muted-foreground shrink-0" title="The full key is shown only once, at creation. Regenerate to rotate.">
+                          shown once at creation
+                        </span>
                       </div>
                       <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                         <span>Created {formatDistanceToNow(new Date(key.created_at), { addSuffix: true })}</span>
