@@ -195,10 +195,103 @@ export default function PublicSurveyPage() {
             </div>
           )}
 
-          <Button onClick={submit} disabled={score === null || submitting} className="w-full">
+          {/* Extended questions (choice / boolean / text / number / rating) with optional skip-logic */}
+          {(data.template?.questions ?? [])
+            .filter(q => q.id !== primary?.id && q.id !== followUp?.id && questionVisible(q))
+            .map(q => (
+              <div key={q.id} className="space-y-2">
+                <p className="text-sm font-medium">
+                  {q.label}
+                  {q.required && <span className="text-rose-500 ml-1">*</span>}
+                </p>
+                {(q.type === 'choice' || q.type === 'single_choice') && (
+                  <div className="flex flex-wrap gap-2">
+                    {(q.options ?? []).map(opt => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setAnswers(a => ({ ...a, [q.id]: opt }))}
+                        className={cn(
+                          'px-3 py-1.5 rounded-md border text-sm transition-colors',
+                          answers[q.id] === opt
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-background hover:bg-muted border-border',
+                        )}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {q.type === 'boolean' && (
+                  <div className="flex gap-2">
+                    {[['Yes', true], ['No', false]].map(([label, val]) => (
+                      <button
+                        key={String(val)}
+                        type="button"
+                        onClick={() => setAnswers(a => ({ ...a, [q.id]: val }))}
+                        className={cn(
+                          'flex-1 px-3 py-2 rounded-md border text-sm transition-colors',
+                          answers[q.id] === val
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-background hover:bg-muted border-border',
+                        )}
+                      >
+                        {label as string}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {(q.type === 'text' || q.type === 'comment') && (
+                  <Textarea
+                    rows={3}
+                    value={String(answers[q.id] ?? '')}
+                    onChange={e => setAnswers(a => ({ ...a, [q.id]: e.target.value }))}
+                    className="resize-none"
+                  />
+                )}
+                {q.type === 'number' && (
+                  <input
+                    type="number"
+                    value={String(answers[q.id] ?? '')}
+                    onChange={e => setAnswers(a => ({ ...a, [q.id]: e.target.value === '' ? null : Number(e.target.value) }))}
+                    className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm"
+                  />
+                )}
+                {q.type === 'rating' && (
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map(n => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setAnswers(a => ({ ...a, [q.id]: n }))}
+                        className="p-1"
+                        aria-label={`${n} star${n === 1 ? '' : 's'}`}
+                      >
+                        <Star
+                          className={cn(
+                            'h-6 w-6 transition-colors',
+                            typeof answers[q.id] === 'number' && n <= (answers[q.id] as number)
+                              ? 'fill-amber-400 text-amber-400'
+                              : 'text-muted-foreground/40',
+                          )}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+
+          <Button
+            onClick={submit}
+            disabled={submitting || (primary && score === null && (kind === 'nps' || kind === 'csat' || kind === 'ces'))}
+            className="w-full"
+          >
             {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
             Submit feedback
           </Button>
+
         </CardContent>
       </Card>
     </div>
