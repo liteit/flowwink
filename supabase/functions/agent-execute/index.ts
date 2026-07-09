@@ -9029,7 +9029,7 @@ async function executeDbAction(
 
     case 'invoices': {
       // ─── Invoicing module — full lifecycle ──────────────────────────────
-      const VALID_INVOICE_STATUS = new Set(['draft', 'sent', 'paid', 'cancelled', 'overdue']);
+      const VALID_INVOICE_STATUS = new Set(['draft', 'sent', 'partially_paid', 'paid', 'cancelled', 'overdue']);
       // Argument-name tolerance: MCP peers commonly send `id` — map to `invoice_id`.
       const inv = args as any;
       if (inv.id !== undefined && inv.invoice_id === undefined) inv.invoice_id = inv.id;
