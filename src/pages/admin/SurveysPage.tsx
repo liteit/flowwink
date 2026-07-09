@@ -26,10 +26,30 @@ export default function SurveysPage() {
   const { data: stats } = useNpsStats();
   const [selectedCampaign, setSelectedCampaign] = useState<string | undefined>();
   const { data: responses } = useSurveyResponses(selectedCampaign);
+  const { data: analytics } = useSurveyAnalytics(selectedCampaign);
   const createCampaign = useCreateCampaign();
   const sendSurvey = useSendSurvey();
   const saveTemplate = useSaveTemplate();
   const deleteTemplate = useDeleteTemplate();
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async (category?: string) => {
+    setExporting(true);
+    try {
+      const r = await exportSurveyResponsesCsv({ campaign_id: selectedCampaign, category });
+      if (!r.csv || (r.row_count ?? 0) === 0) {
+        toast.info('No responses match the current filter');
+      } else {
+        const stamp = new Date().toISOString().slice(0, 10);
+        downloadCSV(r.csv, `survey-responses-${stamp}.csv`);
+        toast.success(`Exported ${r.row_count} responses`);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Export failed');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const [createOpen, setCreateOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState<string | null>(null);
