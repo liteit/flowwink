@@ -8071,9 +8071,19 @@ async function executeDbAction(
           description: it.description, qty: Number(it.quantity) || 1,
           unit_price_cents: Number(it.unit_price_cents) || 0,
         }));
-        const subtotal = lineItems.reduce((s: number, it: any) => s + it.qty * it.unit_price_cents, 0);
+        // Carry the QUOTE's stored totals onto the invoice — the quote is the accepted
+        // (possibly e-signed and pay-now-charged) document, so the invoice must bill
+        // exactly what the customer accepted. Recomputing doc-level here diverged from
+        // the quote's per-line tax rounding by öre (5×199 @25%: quote 1245, recompute
+        // 1244 — rounding QA 2026-07-10) AND ignored quote-level discount_cents.
+        // Fall back to recomputation only if the stored totals are missing/zeroed.
+        const recomputedSubtotal = lineItems.reduce((s: number, it: any) => s + it.qty * it.unit_price_cents, 0);
         const taxRate = Number(quote.tax_rate ?? 0.25);
-        const taxCents = Math.round(subtotal * taxRate);
+        const subtotal = Number(quote.subtotal_cents) > 0 ? Number(quote.subtotal_cents) : recomputedSubtotal;
+        const taxCents = Number(quote.subtotal_cents) > 0 && quote.tax_cents != null
+          ? Number(quote.tax_cents)
+          : Math.round(subtotal * taxRate);
+        const totalCents = Number(quote.total_cents) > 0 ? Number(quote.total_cents) : subtotal + taxCents;
         // Same INV-YYYY-NNNNN series the invoices handler uses (it's scoped to
         // that case block, so regenerate here).
         const yr = new Date().getFullYear();
@@ -8094,7 +8104,7 @@ async function executeDbAction(
           subtotal_cents: subtotal,
           tax_rate: taxRate,
           tax_cents: taxCents,
-          total_cents: subtotal + taxCents,
+          total_cents: totalCents,
           currency: quote.currency || 'SEK',
           issue_date: new Date().toISOString().split('T')[0],
           status: 'draft',
