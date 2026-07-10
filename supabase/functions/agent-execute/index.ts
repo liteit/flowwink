@@ -198,6 +198,7 @@ const UNDERSCORE_PARAM_RPCS = new Set<string>([
   'create_manual_subscription',
   'cancel_manual_subscription',
   'generate_subscription_invoice',
+  'generate_contract_invoice',
 ]);
 
 interface ExecuteRequest {

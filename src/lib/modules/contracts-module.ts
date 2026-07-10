@@ -161,6 +161,28 @@ const CONTRACT_SKILLS: SkillSeed[] = [
     instructions: 'Query active contracts where end_date is within the specified window. Group by urgency: critical (<7 days), warning (<30 days), notice (<90 days). For auto-renew contracts, check if renewal_notice_days has passed.',
   },
   {
+    name: 'generate_contract_invoice',
+    description: 'Generate a customer invoice for a contract (the CTR-YYYYMMDD-… series). Use when: a service/retainer agreement is due for billing (its recurring fee), after the contract is active. NOT for: subscriptions (generate_subscription_invoice), quotes (manage_quote convert_to_invoice), or ad-hoc invoices (manage_invoice).',
+    category: 'commerce',
+    handler: 'rpc:generate_contract_invoice',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'generate_contract_invoice',
+        description: 'Bill a contract — creates an invoice from the contract value/schedule',
+        parameters: {
+          type: 'object',
+          properties: {
+            contract_id: { type: 'string', description: 'UUID of the active contract to bill' },
+          },
+          required: ['contract_id'],
+        },
+      },
+    },
+    instructions: 'The contract must be active. Emits the invoice on the CTR- document series (distinct from the customer INV- series and the SUB- subscription series). Run after the contract is signed/active; for renewal billing, invoke each period.',
+  },
+  {
     name: 'get_contract_content',
     description: 'Fetch the full markdown body of a contract for LLM consumption. Use when: external operator (ClawWink) or agent needs to read, summarize, or analyze the actual agreement text — not just metadata. Returns title, counterparty, status, value and the entire body_markdown. NOT for: listing contracts (use manage_contract action=list) or attached PDFs (use list_contract_documents).',
     category: 'commerce',
@@ -275,7 +297,7 @@ export const contractsModule = defineModule<ContractsInput, ContractsOutput>({
   inputSchema: contractsInputSchema,
   outputSchema: contractsOutputSchema,
 
-  skills: ['manage_contract', 'list_contract_templates', 'contract_renewal_check', 'get_contract_content', 'search_contracts', 'send_contract_for_signature', 'list_contract_documents'],
+  skills: ['manage_contract', 'list_contract_templates', 'contract_renewal_check', 'generate_contract_invoice', 'get_contract_content', 'search_contracts', 'send_contract_for_signature', 'list_contract_documents'],
   data: {
     tables: [
       'contract_signatures',
