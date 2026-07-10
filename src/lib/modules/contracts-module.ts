@@ -105,6 +105,13 @@ const CONTRACT_SKILLS: SkillSeed[] = [
             notes: { type: 'string', description: 'Short internal note / metadata. NOT the agreement text.' },
             body_markdown: { type: 'string', description: 'Only used when template_id is NOT provided AND no file_url. Must be >=200 chars of real agreement text — DB trigger rejects empty contracts.' },
             file_url: { type: 'string', description: 'Optional URL to an attached PDF/DOCX. Alternative to template_id and body_markdown.' },
+            billing_enabled: { type: 'boolean', description: 'Enable recurring billing so generate_contract_invoice can bill this contract.' },
+            billing_amount_cents: { type: 'number', description: 'Amount to invoice each billing period (integer cents).' },
+            billing_interval: { type: 'string', enum: ['day', 'week', 'month', 'year'], description: 'Billing period unit (with billing_interval_count).' },
+            billing_interval_count: { type: 'number', description: 'Number of intervals per period, e.g. 3 with month = quarterly.' },
+            billing_next_date: { type: 'string', description: 'YYYY-MM-DD of the next invoice; generate_contract_invoice bills when this is due.' },
+            billing_due_in_days: { type: 'number', description: 'Payment terms in days for generated invoices (default 30).' },
+            billing_tax_rate: { type: 'number', description: 'Tax rate as a fraction, e.g. 0.25.' },
             search_query: { type: 'string', description: 'Free-text search in title/counterparty' },
           },
           required: ['action'],
@@ -159,6 +166,28 @@ const CONTRACT_SKILLS: SkillSeed[] = [
       },
     },
     instructions: 'Query active contracts where end_date is within the specified window. Group by urgency: critical (<7 days), warning (<30 days), notice (<90 days). For auto-renew contracts, check if renewal_notice_days has passed.',
+  },
+  {
+    name: 'generate_contract_invoice',
+    description: 'Generate a customer invoice for a contract (the CTR-YYYYMMDD-… series). Use when: a service/retainer agreement is due for billing (its recurring fee), after the contract is active. NOT for: subscriptions (generate_subscription_invoice), quotes (manage_quote convert_to_invoice), or ad-hoc invoices (manage_invoice).',
+    category: 'commerce',
+    handler: 'rpc:generate_contract_invoice',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'generate_contract_invoice',
+        description: 'Bill a contract — creates an invoice from the contract value/schedule',
+        parameters: {
+          type: 'object',
+          properties: {
+            contract_id: { type: 'string', description: 'UUID of the active contract to bill' },
+          },
+          required: ['contract_id'],
+        },
+      },
+    },
+    instructions: 'The contract must be active. Emits the invoice on the CTR- document series (distinct from the customer INV- series and the SUB- subscription series). Run after the contract is signed/active; for renewal billing, invoke each period.',
   },
   {
     name: 'get_contract_content',
@@ -275,7 +304,7 @@ export const contractsModule = defineModule<ContractsInput, ContractsOutput>({
   inputSchema: contractsInputSchema,
   outputSchema: contractsOutputSchema,
 
-  skills: ['manage_contract', 'list_contract_templates', 'contract_renewal_check', 'get_contract_content', 'search_contracts', 'send_contract_for_signature', 'list_contract_documents'],
+  skills: ['manage_contract', 'list_contract_templates', 'contract_renewal_check', 'generate_contract_invoice', 'get_contract_content', 'search_contracts', 'send_contract_for_signature', 'list_contract_documents'],
   data: {
     tables: [
       'contract_signatures',
