@@ -366,6 +366,10 @@ serve(async (req: Request) => {
               p_invoice_id: invoiceId,
               p_amount_cents: amountCents,
               p_method: "stripe",
+              // Idempotency key so a redelivered webhook (Stripe retries!) can't double-count
+              // this payment even if the priorPayment check above races. The PI id is stable
+              // across redeliveries of the same charge; fall back to the session id.
+              p_reference: (session.payment_intent as string) ?? session.id,
             });
             if (payErr) {
               console.error("Error recording invoice payment:", payErr);
