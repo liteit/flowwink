@@ -20,6 +20,12 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+} from '@/components/ui/command';
 import { useIsModuleEnabled } from '@/hooks/useModules';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -33,7 +39,7 @@ import {
   useFlowtableRecords, useCreateRecord, useUpdateRecord, useDeleteRecords, useBulkInsertRecords,
   usePushToCrmLeads,
   fieldKeyify,
-  type FlowtableFieldType, type FlowtableRecord, type FlowtableField,
+  type FlowtableFieldType, type FlowtableRecord, type FlowtableField, type FlowtableTable,
 } from '@/hooks/useFlowtable';
 
 const FIELD_TYPES: { value: FlowtableFieldType; label: string }[] = [
@@ -47,7 +53,10 @@ const FIELD_TYPES: { value: FlowtableFieldType; label: string }[] = [
   { value: 'url', label: 'URL' },
   { value: 'email', label: 'Email' },
   { value: 'phone', label: 'Phone' },
+  { value: 'link', label: 'Link to table' },
 ];
+
+const TYPES_WITH_OPTIONS = new Set<FlowtableFieldType>(['select', 'multiselect', 'link']);
 
 export default function FlowtablePage() {
   const enabled = useIsModuleEnabled('flowtable');
@@ -465,19 +474,21 @@ export default function FlowtablePage() {
                       <GridView
                         fields={fields}
                         records={records}
+                        tables={tables}
                         selected={selected}
                         setSelected={setSelected}
                         onUpdateRecord={(id, values) =>
                           updateRecord.mutate({ id, table_id: activeTable.id, values })
                         }
-                        onAddField={(name, type) =>
-                          createField.mutate({ table_id: activeTable.id, name, type, position: fields.length })
+                        onAddField={(name, type, options) =>
+                          createField.mutate({ table_id: activeTable.id, name, type, options, position: fields.length })
                         }
-                        onRenameField={(id, name) =>
-                          updateField.mutate({ id, table_id: activeTable.id, patch: { name, key: fieldKeyify(name) } })
-                        }
-                        onChangeFieldType={(id, type) =>
-                          updateField.mutate({ id, table_id: activeTable.id, patch: { type } })
+                        onConfigureField={(id, patch) =>
+                          updateField.mutate({
+                            id,
+                            table_id: activeTable.id,
+                            patch: patch.name !== undefined ? { ...patch, key: fieldKeyify(patch.name) } : patch,
+                          })
                         }
                         onDeleteField={(id) =>
                           deleteField.mutate({ id, table_id: activeTable.id })
@@ -540,19 +551,21 @@ export default function FlowtablePage() {
 function GridView(props: {
   fields: FlowtableField[];
   records: FlowtableRecord[];
+  tables: FlowtableTable[];
   selected: Set<string>;
   setSelected: (s: Set<string>) => void;
   onUpdateRecord: (id: string, values: Record<string, unknown>) => void;
-  onAddField: (name: string, type: FlowtableFieldType) => void;
-  onRenameField: (id: string, name: string) => void;
-  onChangeFieldType: (id: string, type: FlowtableFieldType) => void;
+  onAddField: (name: string, type: FlowtableFieldType, options: Record<string, unknown>) => void;
+  onConfigureField: (id: string, patch: Partial<FlowtableField>) => void;
   onDeleteField: (id: string) => void;
   onAddRow: () => void;
 }) {
-  const { fields, records, selected, setSelected } = props;
+  const { fields, records, tables, selected, setSelected } = props;
   const [addFieldOpen, setAddFieldOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState<FlowtableFieldType>('text');
+  const [newOptions, setNewOptions] = useState<Record<string, unknown>>({});
+  const [configField, setConfigField] = useState<FlowtableField | null>(null);
 
   const toggleAll = () => {
     if (selected.size === records.length) setSelected(new Set());
@@ -587,7 +600,7 @@ function GridView(props: {
                   <input
                     defaultValue={f.name}
                     onBlur={(e) => {
-                      if (e.target.value && e.target.value !== f.name) props.onRenameField(f.id, e.target.value);
+                      if (e.target.value && e.target.value !== f.name) props.onConfigureField(f.id, { name: e.target.value });
                     }}
                     className="bg-transparent border-0 outline-none flex-1 min-w-0 font-medium text-foreground"
                   />
@@ -599,16 +612,9 @@ function GridView(props: {
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuLabel className="text-xs">Field type</DropdownMenuLabel>
-                      {FIELD_TYPES.map((t) => (
-                        <DropdownMenuItem
-                          key={t.value}
-                          onClick={() => f.type !== t.value && props.onChangeFieldType(f.id, t.value)}
-                          className={f.type === t.value ? 'bg-accent' : ''}
-                        >
-                          {t.label}
-                        </DropdownMenuItem>
-                      ))}
+                      <DropdownMenuItem onClick={() => setConfigField(f)}>
+                        Configure field…
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive"
@@ -630,18 +636,26 @@ function GridView(props: {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-72 p-3 space-y-2">
                   <Input placeholder="Field name" value={newName} onChange={(e) => setNewName(e.target.value)} autoFocus />
-                  <Select value={newType} onValueChange={(v) => setNewType(v as FlowtableFieldType)}>
+                  <Select value={newType} onValueChange={(v) => { setNewType(v as FlowtableFieldType); setNewOptions({}); }}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {FIELD_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
+                  {TYPES_WITH_OPTIONS.has(newType) && (
+                    <FieldOptionsEditor
+                      type={newType}
+                      options={newOptions}
+                      onChange={setNewOptions}
+                      tables={tables}
+                    />
+                  )}
                   <Button
                     className="w-full" size="sm"
                     onClick={() => {
                       if (!newName.trim()) return;
-                      props.onAddField(newName.trim(), newType);
-                      setNewName(''); setNewType('text'); setAddFieldOpen(false);
+                      props.onAddField(newName.trim(), newType, newOptions);
+                      setNewName(''); setNewType('text'); setNewOptions({}); setAddFieldOpen(false);
                     }}
                   >Add field</Button>
                 </DropdownMenuContent>
@@ -695,7 +709,135 @@ function GridView(props: {
           </tr>
         </tbody>
       </table>
+
+      {configField && (
+        <FieldConfigDialog
+          field={configField}
+          tables={tables}
+          onClose={() => setConfigField(null)}
+          onSave={(patch) => { props.onConfigureField(configField.id, patch); setConfigField(null); }}
+        />
+      )}
     </div>
+  );
+}
+
+// Type-specific options editor, shared by the add-field popover and the
+// per-field config dialog. select/multiselect → user-defined choices;
+// link → target table + which field to display.
+function FieldOptionsEditor({ type, options, onChange, tables }: {
+  type: FlowtableFieldType;
+  options: Record<string, unknown>;
+  onChange: (o: Record<string, unknown>) => void;
+  tables: FlowtableTable[];
+}) {
+  if (type === 'select' || type === 'multiselect') {
+    const choices = (options.choices as string[]) ?? [];
+    return (
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">Choices (one per line)</Label>
+        <Textarea
+          rows={4}
+          defaultValue={choices.join('\n')}
+          placeholder={'New\nIn progress\nDone'}
+          onChange={(e) => onChange({
+            ...options,
+            choices: e.target.value.split('\n').map((s) => s.trim()).filter(Boolean),
+          })}
+          className="text-sm"
+        />
+      </div>
+    );
+  }
+  if (type === 'link') {
+    const targetId = (options.link_table_id as string) || '';
+    return <LinkOptionsEditor targetId={targetId} options={options} onChange={onChange} tables={tables} />;
+  }
+  return null;
+}
+
+function LinkOptionsEditor({ targetId, options, onChange, tables }: {
+  targetId: string;
+  options: Record<string, unknown>;
+  onChange: (o: Record<string, unknown>) => void;
+  tables: FlowtableTable[];
+}) {
+  const { data: targetFields = [] } = useFlowtableFields(targetId || undefined);
+  return (
+    <div className="space-y-2">
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">Linked table</Label>
+        <Select
+          value={targetId}
+          onValueChange={(v) => onChange({ link_table_id: v, display_field: '' })}
+        >
+          <SelectTrigger><SelectValue placeholder="Pick a table" /></SelectTrigger>
+          <SelectContent>
+            {tables.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      {targetId && (
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Show which field</Label>
+          <Select
+            value={(options.display_field as string) || ''}
+            onValueChange={(v) => onChange({ ...options, display_field: v })}
+          >
+            <SelectTrigger><SelectValue placeholder="Display field" /></SelectTrigger>
+            <SelectContent>
+              {targetFields.map((f) => <SelectItem key={f.key} value={f.key}>{f.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Per-field config dialog — rename, retype, and edit type-specific options.
+function FieldConfigDialog({ field, tables, onClose, onSave }: {
+  field: FlowtableField;
+  tables: FlowtableTable[];
+  onClose: () => void;
+  onSave: (patch: Partial<FlowtableField>) => void;
+}) {
+  const [name, setName] = useState(field.name);
+  const [type, setType] = useState<FlowtableFieldType>(field.type);
+  const [options, setOptions] = useState<Record<string, unknown>>(field.options ?? {});
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Configure field</DialogTitle>
+          <DialogDescription>Rename, change type, or edit its options.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Name</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Type</Label>
+            <Select value={type} onValueChange={(v) => { setType(v as FlowtableFieldType); setOptions({}); }}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {FIELD_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          {TYPES_WITH_OPTIONS.has(type) && (
+            <FieldOptionsEditor type={type} options={options} onChange={setOptions} tables={tables} />
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            onClick={() => onSave({ name: name.trim() || field.name, type, options })}
+          >Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -724,7 +866,10 @@ function CellEditor({ field, value, onChange }: { field: FlowtableField; value: 
     );
   }
   if (field.type === 'select') {
-    const choices = ((field.options?.choices as string[]) ?? ['New', 'In Progress', 'Done']);
+    // User-defined choices from options; only fall back to a starter set when
+    // the field was never configured (keeps old select columns working).
+    const configured = field.options?.choices as string[] | undefined;
+    const choices = (configured && configured.length) ? configured : ['New', 'In progress', 'Done'];
     return (
       <td className="border-r border-b p-0" style={cellStyle}>
         <select
@@ -737,6 +882,9 @@ function CellEditor({ field, value, onChange }: { field: FlowtableField; value: 
         </select>
       </td>
     );
+  }
+  if (field.type === 'link') {
+    return <LinkCell field={field} value={value} onChange={onChange} cellStyle={cellStyle} common={common} />;
   }
   // Date columns render an <input type="date">, which only accepts yyyy-MM-dd.
   // Imported data is usually free-form text ("2/13/2026", "2026-02-13 10:31:16"),
@@ -773,6 +921,76 @@ function CellEditor({ field, value, onChange }: { field: FlowtableField; value: 
         }}
         className={common}
       />
+    </td>
+  );
+}
+
+// Link cell — a searchable picker over the target table's rows (Airtable
+// "link to another record"). Stores the linked record id in values[key];
+// resolves it to the configured display field on read, so the grid shows
+// human text, not a UUID. Tolerates a deleted target row (shows "(missing)").
+function LinkCell({ field, value, onChange, cellStyle, common }: {
+  field: FlowtableField;
+  value: unknown;
+  onChange: (v: unknown) => void;
+  cellStyle: { width: number; minWidth: number };
+  common: string;
+}) {
+  const targetId = field.options?.link_table_id as string | undefined;
+  const displayField = field.options?.display_field as string | undefined;
+  const { data: rows = [] } = useFlowtableRecords(targetId);
+  const [open, setOpen] = useState(false);
+
+  const displayOf = (id: string | undefined): string => {
+    if (!id) return '';
+    const r = rows.find((x) => x.id === id);
+    if (!r) return '(missing)';
+    const v = displayField ? r.values?.[displayField] : undefined;
+    return String(v ?? Object.values(r.values ?? {})[0] ?? r.id);
+  };
+
+  if (!targetId) {
+    return (
+      <td className="border-r border-b p-0" style={cellStyle}>
+        <div className="h-9 px-2 flex items-center text-xs text-muted-foreground">Configure link target</div>
+      </td>
+    );
+  }
+
+  const current = value as string | undefined;
+  return (
+    <td className="border-r border-b p-0" style={cellStyle}>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button className={`${common} text-left truncate`}>
+            {current
+              ? <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-xs">{displayOf(current)}</span>
+              : <span className="text-muted-foreground">—</span>}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="p-0 w-64" align="start">
+          <Command>
+            <CommandInput placeholder="Search rows…" />
+            <CommandList>
+              <CommandEmpty>No match</CommandEmpty>
+              <CommandGroup>
+                <CommandItem value="__clear__" onSelect={() => { onChange(null); setOpen(false); }}>
+                  <span className="text-muted-foreground">— (clear)</span>
+                </CommandItem>
+                {rows.slice(0, 500).map((r) => (
+                  <CommandItem
+                    key={r.id}
+                    value={`${displayOf(r.id)} ${r.id}`}
+                    onSelect={() => { onChange(r.id); setOpen(false); }}
+                  >
+                    {displayOf(r.id)}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
     </td>
   );
 }

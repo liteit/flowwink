@@ -136,6 +136,7 @@ const FLOWTABLE_SKILLS: SkillSeed[] = [
             order_by: { type: 'string', description: 'Field key to sort by (numeric-aware)' },
             ascending: { type: 'boolean' },
             count_by: { type: 'string', description: 'Field key to aggregate: returns value → count map' },
+            resolve_links: { type: 'boolean', description: 'For link-type fields (which store a related row id), expand each id to the target row\'s display value under item._links[field] = {id, display}. Default false.' },
             limit: { type: 'number', description: 'Rows to return (default 50, max 500)' },
             offset: { type: 'number' },
           },
@@ -143,7 +144,7 @@ const FLOWTABLE_SKILLS: SkillSeed[] = [
       },
     },
     instructions:
-      'Resolve the table via table_id, or table (+ base if ambiguous). Every response includes the table\'s fields (key/name/type) — use those keys in filters/order_by/count_by; unknown keys error with the valid list. eq/neq/ilike filters and search run in the database; gt/gte/lt/lte (numeric) and sorting/aggregation scan up to 20 000 rows in the handler (scan_capped=true signals truncation). For "how is X distributed?" call once with count_by=X instead of listing rows. Pagination: limit/offset over the matched set; total_matched tells you the full size.',
+      'Resolve the table via table_id, or table (+ base if ambiguous). Every response includes the table\'s fields (key/name/type) — use those keys in filters/order_by/count_by; unknown keys error with the valid list. eq/neq/ilike filters and search run in the database; gt/gte/lt/lte (numeric) and sorting/aggregation scan up to 20 000 rows in the handler (scan_capped=true signals truncation). For "how is X distributed?" call once with count_by=X instead of listing rows. Pagination: limit/offset over the matched set; total_matched tells you the full size. RELATIONS: a field with type="link" points at another table — its response entry carries link_table_id + link_table_name + link_display_field, and the value stored per row is the target row id. To traverse the relation in one call, pass resolve_links=true and read item._links[field]={id,display}; to filter by a link, use its id as the value (op=eq). Discover the target table\'s own fields with list_flowtable_tables.',
   },
   {
     name: 'manage_flowtable_record',
