@@ -33,6 +33,10 @@ const STATUS_ACTIONS: Record<InvoiceStatus, { label: string; next: InvoiceStatus
     { label: 'Mark as Paid', next: 'paid' },
     { label: 'Cancel', next: 'cancelled' },
   ],
+  partially_paid: [
+    { label: 'Mark as Paid', next: 'paid' },
+    { label: 'Cancel', next: 'cancelled' },
+  ],
   overdue: [
     { label: 'Mark as Paid', next: 'paid' },
     { label: 'Cancel', next: 'cancelled' },
