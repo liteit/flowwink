@@ -109,23 +109,23 @@ function useHeartbeatPulse() {
   });
 }
 
-function useResumePulse() {
+function useFollowThroughPulse() {
   return useQuery({
-    queryKey: ['operator-health', 'resume'],
+    queryKey: ['operator-health', 'followthrough'],
     queryFn: async (): Promise<PulseRow> => {
-      // Latest resume-sweep activity. Multiple skill names have been used
-      // over the resume feature's life — match any of them, plus the
-      // conventional agent tag.
+      // Single engine-state row the follow-through sweep updates in place
+      // (skill_name sentinel, agent='cron'). NB: "follow-through" = the operator
+      // carrying out an approved decision — NOT the résumé/CV module.
       const { data, error } = await supabase
         .from('agent_activity')
         .select('created_at, status, skill_name')
-        .in('skill_name', ['resume_sweep', 'flowpilot_resume', 'approval_resume'])
+        .eq('skill_name', 'followthrough_sweep')
         .order('created_at', { ascending: false })
         .limit(1);
       if (error) throw error;
       const row = data?.[0];
       return {
-        label: 'Approval-resume sweep',
+        label: 'Approval follow-through',
         ts: row?.created_at ?? null,
         ok: row ? row.status === 'success' : null,
         detail: row?.status ?? undefined,
@@ -187,7 +187,7 @@ export function OperatorHealthCard() {
   const posture = usePosture();
   const setPosture = useSetPosture();
   const heartbeat = useHeartbeatPulse();
-  const resume = useResumePulse();
+  const followThrough = useFollowThroughPulse();
   const pending = usePendingApprovals();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -236,7 +236,7 @@ export function OperatorHealthCard() {
           {/* Pulses */}
           <div className="divide-y divide-border/60">
             <PulseLine row={heartbeat.data ?? { label: 'Heartbeat', ts: null, ok: null }} />
-            <PulseLine row={resume.data ?? { label: 'Approval-resume sweep', ts: null, ok: null }} />
+            <PulseLine row={followThrough.data ?? { label: 'Approval follow-through', ts: null, ok: null }} />
             <div className="flex items-center justify-between gap-3 py-1.5 text-sm">
               <div className="flex items-center gap-2 min-w-0">
                 <StatusDot ok={pendingRow.ok} />
@@ -276,7 +276,7 @@ export function OperatorHealthCard() {
           {/* Footer note */}
           <p className="text-[11px] text-muted-foreground leading-relaxed flex items-start gap-1.5 pt-1">
             <Info className="h-3 w-3 mt-0.5 shrink-0" />
-            Engine cadence is fixed (heartbeat hourly, approval-resume every 5 min).
+            Engine cadence is fixed (heartbeat hourly, approval follow-through every 5 min).
             Control <em>what</em> FlowPilot may do via policies and approvals — not how often it runs.
           </p>
         </CardContent>

@@ -68,7 +68,15 @@ optional. `flowpilot-learn` / `flowpilot-distill` are the seeds.
 
 ## 4. Build plan (phased)
 
-### Phase 1 — Resumption sweep  *(unblocks proof weeks — build first)*
+### Phase 1 — Approval follow-through sweep  *(unblocks proof weeks — build first)*
+
+> **Naming (Magnus 2026-07-12):** the wire identifier is **`flowpilot-followthrough`**, NOT
+> "resume". "Resume" already means the **résumé/CV module** (`parse_resume`) in FlowWink — a
+> user-chosen module, a different thing entirely. This is **engine plumbing**: the operator
+> *following through* on a decision a human already approved. Renamed while still dev-only
+> (before it froze into the fleet). The internal architecture concept is still "resumption"
+> (Hermes's term); the FlowWink component is "follow-through".
+
 A deterministic pass, invoked at the START of every heartbeat (and available as a standalone
 cron), that:
 1. Selects `agent_activity` where `status='approved'` AND not yet executed, within a
@@ -84,8 +92,10 @@ cron), that:
 5. Backfill: the 24 existing stale rows are pre-fix — mark them `expired` (do not execute
    month-old approvals), then the sweep governs everything new.
 
-Deliverable: `flowpilot-resume` (RPC or a heartbeat pre-pass) + a guardrail test + dev
-end-to-end proof (stage → approve in UI → next sweep executes → entity created).
+Deliverable: `flowpilot-followthrough` (edge fn on a fixed cron or a heartbeat pre-pass) + a
+guardrail test + dev end-to-end proof (stage → approve in UI → next sweep executes → entity
+created). Writes one in-place `agent_activity` pulse row (`skill_name='followthrough_sweep'`,
+`agent='cron'`) the Operator Health card reads — never a row per run.
 
 ### Phase 2 — Pipeline-collapse for known chains
 Turn P2P / dunning / month-end / expense-reimbursement into deterministic **composite
@@ -101,17 +111,17 @@ the exact Hermes "grows with you" property, governed by the autonomy dial.
 
 ## 4b. Plumbing vs policy vs transparency (design ruling, Magnus 2026-07-10)
 
-- **Plumbing** (heartbeat, resume, distill, learn cadence) = **engine constants**, not
+- **Plumbing** (heartbeat, follow-through, distill, learn cadence) = **engine constants**, not
   settings. Dedicated pg_cron jobs, never surfaced as adjustable automations — a knob you
   must never turn is false transparency and settings-sprawl. Cadence: heartbeat hourly,
-  resume sweep every 5 min (HIL responsiveness), briefing/distill/learn daily. Dev is live;
+  follow-through sweep every 5 min (HIL responsiveness), briefing/distill/learn daily. Dev is live;
   fleet gets the cadence at proof-week start (heartbeat cost is an owner decision per
   instance).
 - **Policy** (what the operator MAY do) = the only adjustable layer: `flowpilot_autonomy`
   posture + `agent_trust_policies` + objectives + /admin/approvals.
 - **Transparency** = seeing what the agent DID and WANTS, not seeing the gears: activity
   log + approvals + daily briefing, plus a small **Operator Health card** (posture, last
-  heartbeat/resume/distill/learn run + status, pending approvals count) so the owner sees
+  heartbeat/follow-through/distill/learn run + status, pending approvals count) so the owner sees
   in 5 seconds that the engine is alive without understanding five cron jobs.
 
 ## 5. Proof-weeks gate
