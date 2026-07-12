@@ -210,6 +210,9 @@ verify_jwt = false
 [functions.flowpilot-heartbeat]
 verify_jwt = false
 
+[functions.skill-curator]
+verify_jwt = false
+
 [functions.flowpilot-learn]
 verify_jwt = false
 

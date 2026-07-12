@@ -139,11 +139,32 @@ composite queues/skips and reports why (proven live). Guardrails:
 callable by admin UI / external agents), homed in their owning domain modules —
 NOT flowpilot-module.
 
-### Phase 3 — Curator / learning loop (BR2)
-`flowpilot-learn` observes repeated corrections → proposes instruction/skill improvements to
-a review queue (human-approved at first, the dial can open later). `flowpilot-distill`
-consolidates. Closes the loop so FlowPilot improves at *this* business over the proof weeks —
-the exact Hermes "grows with you" property, governed by the autonomy dial.
+### Phase 3 — Curator / learning loop (BR2)  *(SHIPPED 2026-07-12, loop-proven)*
+The **Skill Curator** (`skill-curator` edge fn — platform primitive: better skill metadata
+serves every agent, so NOT flowpilot-named) closes the Hermes learning loop by reusing the
+Phase 1+2 machinery end-to-end:
+
+  evidence (failed activities, human-REJECTED approvals + notes, negative outcomes; 7d)
+    → AI drafts improved instructions for the worst offenders (Law 2 automated:
+      "the fix is ALWAYS better metadata" — the Curator drafts it, the human edits-in-chief)
+    → staged via `update_skill_instructions` (internal: handler, trust 'approve')
+    → human decides in /admin/approvals → flowpilot-followthrough applies it.
+
+**Safety invariants:** the Curator never writes a skill directly; skill self-modification
+is pinned to 'approve' by an `agent_trust_policies` row (migration 20260712150000) — the
+one dial that never opens implicitly, even in proving posture. Bounded: ≥3 failures or ≥1
+rejection to qualify, max 3 proposals/run, 14-day cooldown per skill, engine plumbing
+excluded from evidence. Audit-before-overwrite: the previous text is returned + logged
+(undo = one update). Cron: daily 04:00 (after distill), executor platform.
+
+**Loop-proven locally:** 5 seeded slug-failures on manage_wiki_page → curator drafted
+"slug is ALWAYS required — find it via search_wiki" → staged → approved → followthrough
+applied it to the live catalog → cooldown blocked re-proposal. `flowpilot-learn` (site
+usage → memory) and `flowpilot-distill` continue unchanged alongside.
+
+**Operational note:** an accepted improvement lives in `agent_skills` — a code-seed resync
+restores the bundled text. Promote accepted improvements into the module seeds
+(src/lib/modules/*) to make them permanent; the handler's output says so on every update.
 
 ## 4b. Plumbing vs policy vs transparency (design ruling, Magnus 2026-07-10)
 

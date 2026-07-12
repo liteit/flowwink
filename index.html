@@ -43,6 +43,24 @@
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+    <!-- Runtime Supabase config (see RUNTIME_ENV_DEFINES in vite.config.ts).
+         The bundle reads __FLOWWINK_RUNTIME__.<key>; assembled here from the
+         build-time values (%VITE_*% is replaced by Vite) with optional
+         overrides from /runtime-config.js (regenerated from container env by
+         the Docker entrypoint). Classic blocking scripts: must run before the
+         module bundle below evaluates. -->
+    <script src="/runtime-config.js"></script>
+    <script>
+      (function () {
+        var overrides = globalThis.__FLOWWINK_ENV__ || {};
+        globalThis.__FLOWWINK_RUNTIME__ = {
+          VITE_SUPABASE_URL: overrides.VITE_SUPABASE_URL || "__BAKED_VITE_SUPABASE_URL__",
+          VITE_SUPABASE_PUBLISHABLE_KEY: overrides.VITE_SUPABASE_PUBLISHABLE_KEY || "__BAKED_VITE_SUPABASE_PUBLISHABLE_KEY__",
+          VITE_SUPABASE_PROJECT_ID: overrides.VITE_SUPABASE_PROJECT_ID || "__BAKED_VITE_SUPABASE_PROJECT_ID__",
+        };
+      })();
+    </script>
 </head>
 
   <body>

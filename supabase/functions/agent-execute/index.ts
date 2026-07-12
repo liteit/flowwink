@@ -591,6 +591,9 @@ serve(async (req) => {
       } else if (handler === 'internal:lint_skill') {
         result = await executeLintSkill(supabase, args);
 
+      } else if (handler === 'internal:update_skill_instructions') {
+        result = await executeUpdateSkillInstructions(supabase, args);
+
       } else if (handler === 'internal:list_communications') {
         result = await executeListCommunications(supabase, args);
 
@@ -11153,6 +11156,56 @@ async function executeUploadDocument(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// update_skill_instructions — the Curator's write-path (FlowPilot 2.0 Phase 3).
+// Applies a REVIEWED instruction/description improvement to one agent_skills
+// row. Trust-gated 'approve' (an explicit agent_trust_policies row keeps it
+// gated even in 'proving' posture): the skill-curator sweep stages a proposal
+// via the normal trust machinery, a human approves it in /admin/approvals, and
+// flowpilot-followthrough re-invokes this with _approved=true — same loop as
+// every other gated action. The previous text is returned + logged so an
+// unwanted change is one update away from undone (audit before overwrite).
+// ─────────────────────────────────────────────────────────────────────────────
+async function executeUpdateSkillInstructions(
+  supabase: any,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  const name = typeof args.skill_name === 'string' ? args.skill_name.trim() : '';
+  const newInstructions = typeof args.instructions === 'string' ? args.instructions.trim() : '';
+  const newDescription = typeof args.description === 'string' ? args.description.trim() : '';
+  const reason = typeof args.reason === 'string' ? args.reason : '';
+
+  if (!name) throw new Error('skill_name is required');
+  if (!newInstructions && !newDescription) {
+    throw new Error('Provide instructions and/or description — nothing to update');
+  }
+
+  const { data: skill, error } = await supabase
+    .from('agent_skills')
+    .select('id, name, description, instructions, origin')
+    .eq('name', name)
+    .maybeSingle();
+  if (error) throw new Error(`Load skill failed: ${error.message}`);
+  if (!skill) throw new Error(`Skill "${name}" not found`);
+
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (newInstructions) patch.instructions = newInstructions;
+  if (newDescription) patch.description = newDescription;
+
+  const { error: upErr } = await supabase.from('agent_skills').update(patch).eq('id', skill.id);
+  if (upErr) throw new Error(`Update failed: ${upErr.message}`);
+
+  return {
+    updated: name,
+    fields: Object.keys(patch).filter((k) => k !== 'updated_at'),
+    reason,
+    previous: {
+      instructions: skill.instructions,
+      description: newDescription ? skill.description : undefined,
+    },
+    note: 'NB: a code-seed resync (sync:skills / Sync skills from code) restores the bundled text — promote accepted improvements into the module seed to make them permanent.',
+  };
+}
+
 // internal:lint_skill — runs the Agent Contract Integrity pre-release checklist
 // (mem://architecture/agent-contract-integrity) against one or all enabled
 // skills. Returns a structured findings list with severity + suggested fix per

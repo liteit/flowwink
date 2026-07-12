@@ -232,6 +232,60 @@ Reads and updates site settings including module configuration, site name, theme
 - ai_config controls which AI provider FlowPilot uses.
 - Be careful with module toggles — disabling a module hides its UI.`,
   },
+  {
+    name: 'update_skill_instructions',
+    description:
+      'Apply a reviewed improvement to one skill\'s instructions (and optionally description) in the live skill catalog. Use when: a Skill Curator proposal was approved, an admin asks to fix a skill\'s guidance after repeated agent mistakes. NOT for: creating skills, changing handlers/parameters (code change), disabling skills (manage via admin UI).',
+    category: 'system',
+    handler: 'internal:update_skill_instructions',
+    scope: 'internal',
+    // Skill self-modification is the one dial that never opens implicitly:
+    // 'approve' here + an agent_trust_policies row (migration 20260712...)
+    // keeps it human-gated even in 'proving' posture.
+    trust_level: 'approve',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'update_skill_instructions',
+        description: 'Update instructions/description on one agent_skills row. Returns the previous text for audit/undo.',
+        parameters: {
+          type: 'object',
+          required: ['skill_name'],
+          properties: {
+            skill_name: { type: 'string', description: 'Exact name of the skill to update' },
+            instructions: { type: 'string', description: 'The full new instructions text (replaces the old)' },
+            description: { type: 'string', description: 'Optional new description (replaces the old)' },
+            reason: { type: 'string', description: 'Why — evidence summary shown to the approver' },
+          },
+        },
+      },
+    },
+    instructions:
+      'Replaces the WHOLE instructions text — include everything that should remain, not just the delta. The previous text is returned and logged in the activity output; to undo, re-run with that text. NB: a code-seed resync restores the bundled text — promote accepted improvements into the module seed (src/lib/modules/*) to make them permanent.',
+  },
+  {
+    name: 'run_skill_curator',
+    description:
+      'Run the Skill Curator sweep: observe how skills failed recently (failed activities, human-rejected approvals, negative outcomes), draft instruction improvements for the worst offenders, and stage each as an approval in /admin/approvals. Never edits a skill directly. Use when: daily curator cron, "why does the agent keep failing at X — propose a fix", after a QA round produced repeated skill failures. NOT for: applying an improvement (update_skill_instructions after approval), business insights (run_daily_briefing).',
+    category: 'system',
+    handler: 'edge:skill-curator',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'run_skill_curator',
+        description: 'Evidence sweep → AI-drafted instruction improvements → staged approvals. Bounded: max 3 proposals/run, 14-day cooldown per skill.',
+        parameters: {
+          type: 'object',
+          properties: {
+            dry_run: { type: 'boolean', description: 'Draft but do NOT stage approvals — returns previews. Default false.' },
+          },
+        },
+      },
+    },
+    instructions:
+      'Deterministic and bounded: evidence window 7 days, threshold ≥3 failures or ≥1 human rejection, max 3 proposals per run, 14-day cooldown per skill. Proposals land in /admin/approvals (update_skill_instructions, trust=approve — policy-pinned even in proving posture); flowpilot-followthrough applies them after approval. Returns { observed_skills, candidates, proposals: [{skill, staged, approval_request_id, rationale}] }.',
+  },
 ];
 
 export const PLATFORM_AUTOMATIONS: AutomationSeed[] = [
@@ -242,6 +296,16 @@ export const PLATFORM_AUTOMATIONS: AutomationSeed[] = [
     trigger_type: 'cron',
     trigger_config: { cron: '0 7 * * *', timezone: 'UTC' },
     skill_name: 'run_daily_briefing',
+    skill_arguments: { source: 'automation' },
+    executor: 'platform',
+  },
+  {
+    name: 'Skill Curator',
+    description:
+      'Platform automation. Daily at 04:00 UTC (after distill) the Skill Curator reviews how skills failed, drafts instruction improvements and stages them for human approval in /admin/approvals. Deterministic, bounded (max 3 proposals, 14-day cooldown per skill).',
+    trigger_type: 'cron',
+    trigger_config: { cron: '0 4 * * *', timezone: 'UTC' },
+    skill_name: 'run_skill_curator',
     skill_arguments: { source: 'automation' },
     executor: 'platform',
   },

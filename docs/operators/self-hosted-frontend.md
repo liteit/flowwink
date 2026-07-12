@@ -6,14 +6,32 @@ firewall — the repo ships a `Dockerfile` that builds the Vite SPA and serves
 it with nginx using the checked-in `nginx.conf` (SPA routing, asset caching,
 `/health` endpoint).
 
-## The one thing that bites everyone
+## Runtime configuration (one image, any instance)
 
-**`VITE_*` variables are baked into the JS bundle at BUILD time.** Setting
-them as runtime container env does nothing — the bundle is already compiled.
-They must reach `docker build` as build args, and changing them requires a
-**rebuild**, not a restart.
+The image reads its Supabase target from **container env vars at startup**:
+an entrypoint script (`docker/40-runtime-env.sh`) regenerates
+`/runtime-config.js` from `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`
+/ `VITE_SUPABASE_PROJECT_ID` on every start, and the bundle resolves those
+values through `__FLOWWINK_RUNTIME__` (see `RUNTIME_ENV_DEFINES` in
+`vite.config.ts`) — runtime override first, build-time baked value as
+fallback.
 
-Required:
+Consequences:
+
+- **In Easypanel, just set the three vars under Environment** on a
+  Docker-Image service. Switching instance = change env + **Restart**. No
+  rebuild, no registry round-trip.
+- One generic image serves every customer/instance — the values baked at
+  build time (dev by default) are only the fallback when no env is set.
+- On Vercel and `vite dev`, `public/runtime-config.js` sets no overrides, so
+  the baked values apply — behavior unchanged.
+
+Verify what a running container resolved: `curl https://<host>/runtime-config.js`.
+
+## Build-time values (the fallback)
+
+`VITE_*` values are also baked into the bundle at build time as the fallback
+when no container env is set. They reach `docker build` as build args:
 
 | Build arg | Value |
 |---|---|
@@ -33,9 +51,9 @@ Two fixes:
   create the App with source **Docker Image** instead of GitHub. If the ghcr
   package is private, either make it public (it contains only public code +
   the anon key) or add registry credentials in Easypanel (GitHub username +
-  a PAT with `read:packages`). Instance targeting: the image bakes the dev
-  instance by default; override via the `VITE_*` repository *variables* or a
-  matrix entry in the workflow.
+  a PAT with `read:packages`). Instance targeting: set the `VITE_*` env vars
+  on the service (runtime override, see above); with no env set the image
+  falls back to the dev instance baked at build time.
 - **Build on the VPS anyway:** add swap first —
   `fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile`
   (persist with an `/etc/fstab` entry), then rebuild.

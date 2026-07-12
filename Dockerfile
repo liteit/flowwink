@@ -4,17 +4,17 @@
 # Multi-stage: Node builds the Vite SPA, nginx serves the static output using
 # the nginx.conf checked into the repo root (SPA routing, caching, /health).
 #
-# IMPORTANT: VITE_* variables are baked into the bundle AT BUILD TIME. They
-# must be provided as build args (Easypanel passes service env vars as build
-# args automatically for Dockerfile builds):
+# Supabase target resolution (see docs/operators/self-hosted-frontend.md):
+#   1. RUNTIME: container env VITE_SUPABASE_URL / _PUBLISHABLE_KEY /
+#      _PROJECT_ID — the entrypoint regenerates /runtime-config.js on every
+#      start, so one image serves any instance (switch = restart).
+#   2. FALLBACK: the same vars as build args, baked into the bundle:
 #
 #   docker build \
 #     --build-arg VITE_SUPABASE_URL=https://<ref>.supabase.co \
 #     --build-arg VITE_SUPABASE_PUBLISHABLE_KEY=<anon-key> \
 #     --build-arg VITE_SUPABASE_PROJECT_ID=<ref> \
 #     -t flowwink .
-#
-# Changing them later requires a rebuild, not a restart.
 # =============================================================================
 
 FROM node:22-alpine AS build
@@ -41,6 +41,10 @@ RUN npm run build
 FROM nginx:1.27-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
+# Regenerate /runtime-config.js from container env on every start — lets one
+# image point at any Supabase instance (restart to switch, no rebuild).
+COPY docker/40-runtime-env.sh /docker-entrypoint.d/40-runtime-env.sh
+RUN chmod +x /docker-entrypoint.d/40-runtime-env.sh
 
 EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
