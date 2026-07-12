@@ -1,7 +1,7 @@
 {
   "generated_by": "scripts/edge-functions-to-json.ts",
   "note": "Selective-deploy map. Core = always deployed. modules[<id>] = deployed only when that module is enabled. Unknown/new functions: deploy (fail-open).",
-  "total": 120,
+  "total": 121,
   "core_count": 44,
   "plan_limits": {
     "free": 100,
@@ -80,6 +80,10 @@
       "composio-proxy",
       "composio-webhook"
     ],
+    "consultants": [
+      "consultant-checkin",
+      "consultant-match"
+    ],
     "contracts": [
       "contract-billing-cron",
       "contract-sign"
@@ -114,6 +118,7 @@
     "flowpilot": [
       "flowpilot-briefing",
       "flowpilot-distill",
+      "flowpilot-followthrough",
       "flowpilot-heartbeat",
       "flowpilot-learn",
       "run-autonomy-tests",
@@ -169,10 +174,6 @@
       "invite-employee",
       "parse-resume",
       "process-job-application"
-    ],
-    "resume": [
-      "consultant-checkin",
-      "resume-match"
     ],
     "salesIntelligence": [
       "prospect-fit-analysis",
