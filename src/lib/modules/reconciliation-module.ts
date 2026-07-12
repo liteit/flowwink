@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { defineModule } from '@/lib/module-def';
 import { supabase } from '@/integrations/supabase/client';
-import type { SkillSeed } from '@/lib/module-bootstrap';
+import type { SkillSeed, AutomationSeed } from '@/lib/module-bootstrap';
 
 const inputSchema = z.object({
   action: z.enum([
@@ -273,6 +273,41 @@ const RECONCILIATION_SKILLS: SkillSeed[] = [
     },
     instructions: 'Omit dates for an all-time summary. unmatched + rule_suggested helps prioritise review.',
   },
+  {
+    name: 'run_bookkeeping_sweep',
+    description:
+      'Run the WHOLE daily bookkeeping pipeline as one deterministic step: apply reconciliation rules → auto-match bank events against invoices/expenses/orders → propose bookings for the rest → auto-book only the sanctioned high-confidence tier (≥95). Idempotent — booked events drop out of the next run; propose/escalate stay in the "Händelser att bokföra" review queue. Use when: daily bookkeeping cron, "process the bank feed", an agent wants the bank queue handled end-to-end in one call. NOT for: booking a single specific event (manage_journal_entry), reviewing proposals (propose_bookkeeping is the read-only sensor).',
+    category: 'commerce',
+    handler: 'db:run_bookkeeping_sweep',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'run_bookkeeping_sweep',
+        description: 'Composite: rules → match → propose → auto-book (confidence ≥95 only). Returns a per-stage summary.',
+        parameters: {
+          type: 'object',
+          properties: {
+            limit: { type: 'integer', description: 'Max unbooked events to process. Default 50, max 200.' },
+            auto_book: { type: 'boolean', description: 'Set false to run rules/match/propose but queue EVERYTHING for human review (no bookings). Default true.' },
+          },
+        },
+      },
+    },
+    instructions:
+      'One call = the whole chain; do NOT hand-walk apply_reconciliation_rules → auto_match_transactions → propose_bookkeeping → manage_journal_entry yourself. Only confidence ≥95 ("auto") proposals are booked; "propose" and "escalate" are left in the review queue — report their counts. Safe to re-run any time (idempotent). Returns { rules_tagged, auto_matched, scanned, auto_booked, queued_for_review, escalated, book_errors? }.',
+  },
+];
+
+const RECONCILIATION_AUTOMATIONS: AutomationSeed[] = [
+  {
+    name: 'Daily Bookkeeping Sweep',
+    description: 'Every weekday at 06:30 the whole bank-event pipeline runs as one step: rules → match → propose → auto-book (≥95 confidence). Non-auto proposals land in the review queue.',
+    trigger_type: 'cron',
+    trigger_config: { cron: '30 6 * * 1-5', expression: '30 6 * * 1-5' },
+    skill_name: 'run_bookkeeping_sweep',
+    skill_arguments: {},
+  },
 ];
 
 /**
@@ -315,6 +350,7 @@ export const reconciliationModule = defineModule<Input, Output>({
     'manage_reconciliation_rule',
     'apply_reconciliation_rules',
     'reconciliation_report',
+    'run_bookkeeping_sweep',
   ],
 
   data: {
@@ -327,6 +363,7 @@ export const reconciliationModule = defineModule<Input, Output>({
     ],
   },
   skillSeeds: RECONCILIATION_SKILLS,
+  automations: RECONCILIATION_AUTOMATIONS,
 
   async publish(input: Input): Promise<Output> {
     try {

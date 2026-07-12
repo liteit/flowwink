@@ -248,6 +248,30 @@ Locale-specific: ${getActivePack().ai_instructions.invoicing}`,
     },
     instructions: 'Omit p_as_of for a report computed against today. Cancelled invoices and credit notes are excluded; fully-paid invoices (outstanding <= 0) are excluded. Sorted by total_outstanding_cents descending. Admin/approver/service-role only.',
   },
+  {
+    name: 'run_month_end_invoicing',
+    description:
+      'Run the WHOLE month-end billing run as one deterministic step: (a) every project with billable uninvoiced time in the period gets one invoice draft (bulk_invoice_from_timesheets per project); (b) every active subscription whose paid period has lapsed gets its renewal invoice. Idempotent — invoiced time entries and renewed periods drop out of the next run. Drafts are NOT sent (sending stays behind send_invoice_email / approval). Use when: month-end billing cron, "fakturera månaden", an agent asked to bill the period end-to-end. NOT for: a single project (bulk_invoice_from_timesheets) or a single renewal (generate_subscription_invoice).',
+    category: 'commerce',
+    handler: 'db:run_month_end_invoicing',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'run_month_end_invoicing',
+        description: 'Composite: timesheets→invoice drafts per project + lapsed subscription renewals, for one period. Returns what was billed.',
+        parameters: {
+          type: 'object',
+          properties: {
+            start_date: { type: 'string', description: 'YYYY-MM-DD. Default: first day of the PREVIOUS month.' },
+            end_date: { type: 'string', description: 'YYYY-MM-DD. Default: last day of the PREVIOUS month.' },
+          },
+        },
+      },
+    },
+    instructions:
+      'One call = the whole billing run; do NOT hand-walk per-project bulk_invoice_from_timesheets + per-subscription generate_subscription_invoice yourself. Defaults to the previous calendar month — pass start_date/end_date only for a different period. Creates DRAFTS; report invoice numbers + totals and leave sending to the approval flow. Safe to re-run (idempotent). Returns { period, timesheet_invoices: [{project_id, invoice_number, total_cents, hours}], projects_billed, subscription_renewals, *_failed? }.',
+  },
 ];
 
 const INVOICING_AUTOMATIONS: AutomationSeed[] = [
@@ -258,6 +282,14 @@ const INVOICING_AUTOMATIONS: AutomationSeed[] = [
     trigger_config: { cron: '0 8 * * *', expression: '0 8 * * *' },
     skill_name: 'invoice_overdue_check',
     skill_arguments: { auto_flag: true },
+  },
+  {
+    name: 'Month-End Billing Run',
+    description: 'On the 1st of every month at 05:00 the previous month is billed as one step: timesheet invoice drafts per project + lapsed subscription renewals. Drafts only — sending stays behind approval.',
+    trigger_type: 'cron',
+    trigger_config: { cron: '0 5 1 * *', expression: '0 5 1 * *' },
+    skill_name: 'run_month_end_invoicing',
+    skill_arguments: {},
   },
 ];
 
@@ -273,7 +305,7 @@ export const invoicingModule = defineModule<InvoicingInput, InvoicingOutput>({
   inputSchema: invoicingInputSchema,
   outputSchema: invoicingOutputSchema,
 
-  skills: ['manage_invoice', 'invoice_from_timesheets', 'invoice_overdue_check', 'bulk_invoice_from_timesheets', 'send_dunning_reminders', 'auto_mark_invoice_paid', 'create_credit_note', 'record_invoice_payment', 'ar_aging_report'],
+  skills: ['manage_invoice', 'invoice_from_timesheets', 'invoice_overdue_check', 'bulk_invoice_from_timesheets', 'send_dunning_reminders', 'auto_mark_invoice_paid', 'create_credit_note', 'record_invoice_payment', 'ar_aging_report', 'run_month_end_invoicing'],
   data: {
     tables: ['dunning_actions', 'dunning_sequences', 'invoices'],
   },

@@ -117,11 +117,27 @@ in the heartbeat/reason seam and pinned by `flowpilot-hermes.guardrails.test.ts`
 Sim scoreboard: baseline 2 artifacts/3 days with 1 hollow turn → after: 5/5 days delivered,
 0 hollow, differentiated content, follow-through visible every cycle.
 
-### Phase 2 — Pipeline-collapse for known chains
-Turn P2P / dunning / month-end / expense-reimbursement into deterministic **composite
-automations** the loop *invokes* as one step, instead of hand-walking 7 skills across
-heartbeats. Each composite is internally sequential + idempotent; the loop only decides
-*whether* to run it, not *how*.
+### Phase 2 — Pipeline-collapse for known chains  *(SHIPPED 2026-07-12, live-proven)*
+liteit's real flows collapsed into deterministic composite skills (Hermes
+"zero-context-cost turns") — the loop or a platform cron invokes ONE skill; the chain
+runs in-process, sequential + idempotent:
+
+- **`run_bookkeeping_sweep`** (reconciliation) = rules → auto-match → propose →
+  auto-book (confidence ≥95 only; propose/escalate stay in the review queue). Cron
+  seed: weekdays 06:30, executor `platform`. Proven: balanced JE booked + linked to
+  the bank event; re-run drops booked events (idempotent).
+- **`run_month_end_invoicing`** (invoicing) = per-project timesheet invoice drafts +
+  lapsed subscription renewals for the period (drafts only — sending stays behind
+  approval). Cron seed: 1st 05:00, executor `platform`. Proven: INV-2026-NNNNN
+  minted, idempotent, honest per-leg errors.
+- Dunning was already collapsed by design (`send_dunning_reminders`, one skill).
+
+**Invariant (safe-by-construction): dial inheritance.** A composite is never a way
+around a stricter gate on an inner money skill — approve-gated inner skill ⇒ the
+composite queues/skips and reports why (proven live). Guardrails:
+`flowpilot-pipelines.guardrails.test.ts`. Composites are platform primitives (also
+callable by admin UI / external agents), homed in their owning domain modules —
+NOT flowpilot-module.
 
 ### Phase 3 — Curator / learning loop (BR2)
 `flowpilot-learn` observes repeated corrections → proposes instruction/skill improvements to

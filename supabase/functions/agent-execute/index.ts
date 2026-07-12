@@ -6797,6 +6797,160 @@ async function executeDbAction(
       return { period, total: ratings.length, positive, negative, satisfaction_rate: ratings.length > 0 ? Math.round(positive / ratings.length * 100) : null, recent: ratings.slice(0, 10) };
     }
 
+    case 'run_bookkeeping_sweep': {
+      // ─── Pipeline-collapse composite (FlowPilot 2.0 Phase 2, Hermes pattern) ─
+      // The whole daily bookkeeping chain as ONE deterministic, idempotent step:
+      //   rules → match → propose → auto-book (confidence ≥95 only).
+      // The reason() loop (or a cron automation) invokes this as a single skill
+      // instead of hand-walking 4 skills across heartbeats. Everything below
+      // reuses the EXISTING atomic paths (recursive executeDbAction / rpc /
+      // edge), so guards, learning and idempotency are inherited, not re-built:
+      // booked events get journal_entry_id and drop out of the next run.
+      // Non-auto proposals stay in the "Händelser att bokföra" review queue —
+      // the autonomy dial still governs the composite skill itself.
+      const sweepLimit = Math.min(Number((args as any).limit) || 50, 200);
+      let autoBook = (args as any).auto_book !== false;
+      const summary: Record<string, unknown> = {};
+
+      // Dial inheritance (safe-by-construction): the composite must never be a
+      // way around a stricter gate on the inner money skill. If the admin has
+      // set manage_journal_entry to 'approve', the sweep queues EVERYTHING for
+      // review instead of booking — and says so.
+      if (autoBook) {
+        const { data: journalSkill } = await supabase
+          .from('agent_skills').select('trust_level').eq('name', 'manage_journal_entry').maybeSingle();
+        if (journalSkill?.trust_level === 'approve') {
+          autoBook = false;
+          summary.auto_book_disabled = 'manage_journal_entry is trust=approve — all proposals queued for human review';
+        }
+      }
+
+      // 1. Reconciliation rules — tag unmatched events (non-fatal).
+      try {
+        const { data: tagged, error: rulesErr } = await supabase.rpc('apply_reconciliation_rules');
+        summary.rules_tagged = rulesErr ? `error: ${rulesErr.message}` : (tagged ?? 0);
+      } catch (e) { summary.rules_tagged = `error: ${(e as Error).message}`; }
+
+      // 2. Auto-match against invoices/expenses/orders (edge fn, non-fatal).
+      try {
+        const matchResp = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/reconciliation/auto-match`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` },
+          body: JSON.stringify({}),
+        });
+        const matchOut = await matchResp.json().catch(() => ({}));
+        summary.auto_matched = matchResp.ok ? (matchOut?.matched ?? matchOut?.matches ?? matchOut) : `HTTP ${matchResp.status}`;
+      } catch (e) { summary.auto_matched = `error: ${(e as Error).message}`; }
+
+      // 3. Propose bookings for what remains unbooked.
+      const proposals = await executeDbAction(supabase, 'propose_bookkeeping', 'propose_bookkeeping', { limit: sweepLimit }, auditCtx) as any;
+      const rows: any[] = proposals?.proposals || proposals?.events || (Array.isArray(proposals) ? proposals : []);
+      summary.scanned = rows.length;
+
+      // 4. Book the sanctioned-auto tier (≥95 confidence); one bad event must
+      //    never kill the sweep — per-event try/catch, failures reported.
+      let booked = 0; const bookErrors: string[] = []; let queued = 0; let escalated = 0;
+      for (const p of rows) {
+        if (p.status === 'propose') { queued++; continue; }
+        if (p.status === 'escalate') { escalated++; continue; }
+        if (p.status !== 'auto' || p.already_booked) continue;
+        if (!autoBook) { queued++; continue; }
+        try {
+          await executeDbAction(supabase, 'journal_entries', 'manage_journal_entry', {
+            action: 'create',
+            template_id: p.suggested_template_id,
+            amount_cents: p.suggested_amount_cents,
+            description: p.description || p.counterparty || 'Bank event',
+            bank_transaction_id: p.bank_transaction_id,
+            auto_confirm: true,
+          }, auditCtx);
+          booked++;
+        } catch (e) {
+          bookErrors.push(`${(p.bank_transaction_id || p.id || '?')}: ${(e as Error).message}`.slice(0, 120));
+        }
+      }
+      summary.auto_booked = booked;
+      summary.queued_for_review = queued;
+      summary.escalated = escalated;
+      if (bookErrors.length) summary.book_errors = bookErrors;
+
+      return { sweep: 'bookkeeping', ...summary };
+    }
+
+    case 'run_month_end_invoicing': {
+      // ─── Pipeline-collapse composite: month-end billing as ONE step ─────────
+      // (a) every project with billable uninvoiced time in the period → one
+      //     invoice draft; (b) every active subscription whose period has
+      //     lapsed → renewal invoice. Idempotent: invoiced time entries and
+      //     renewed periods drop out of the next run. Drafts are NOT sent —
+      //     sending stays behind its own skill/approval (dial-preserving).
+      const now2 = new Date();
+      const defStart = new Date(now2.getFullYear(), now2.getMonth() - 1, 1);
+      const defEnd = new Date(now2.getFullYear(), now2.getMonth(), 0);
+      const iso = (d: Date) => d.toISOString().slice(0, 10);
+      const startDate = (args as any).start_date || iso(defStart);
+      const endDate = (args as any).end_date || iso(defEnd);
+
+      // Dial inheritance — a leg whose inner skill is approve-gated is skipped
+      // (queued for a human-initiated run), never silently bypassed.
+      const { data: innerTrust } = await supabase
+        .from('agent_skills').select('name, trust_level')
+        .in('name', ['bulk_invoice_from_timesheets', 'generate_subscription_invoice']);
+      const trustOf = (n: string) => (innerTrust || []).find((s: any) => s.name === n)?.trust_level;
+      const tsGated = trustOf('bulk_invoice_from_timesheets') === 'approve';
+      const subGated = trustOf('generate_subscription_invoice') === 'approve';
+
+      // (a) timesheets → invoice drafts, per project with uninvoiced billable time
+      const { data: billable } = await supabase
+        .from('time_entries')
+        .select('project_id')
+        .eq('is_billable', true)
+        .is('invoice_id', null)
+        .gte('entry_date', startDate)
+        .lte('entry_date', endDate)
+        .not('project_id', 'is', null);
+      const projectIds = tsGated ? [] : [...new Set((billable || []).map((t: any) => t.project_id))];
+      const invoices: any[] = []; const tsErrors: string[] = [];
+      for (const pid of projectIds) {
+        try {
+          const { data: inv, error: invErr } = await supabase.rpc('bulk_invoice_from_timesheets', {
+            p_project_id: pid, p_start_date: startDate, p_end_date: endDate,
+          });
+          if (invErr) throw new Error(invErr.message);
+          for (const row of inv || []) invoices.push({ project_id: pid, invoice_number: row.invoice_number, total_cents: row.total_cents, hours: row.hours_billed });
+        } catch (e) { tsErrors.push(`${pid}: ${(e as Error).message}`.slice(0, 120)); }
+      }
+
+      // (b) subscription renewals — active subs whose paid period has lapsed
+      const { data: dueSubs } = await supabase
+        .from('subscriptions')
+        .select('id, current_period_end')
+        .eq('status', 'active')
+        .lte('current_period_end', new Date().toISOString());
+      const renewals: any[] = []; const subErrors: string[] = [];
+      for (const s of subGated ? [] : (dueSubs || [])) {
+        try {
+          const { data: out, error: subErr } = await supabase.rpc('generate_subscription_invoice', { _subscription_id: s.id });
+          if (subErr) throw new Error(subErr.message);
+          renewals.push({ subscription_id: s.id, result: out });
+        } catch (e) { subErrors.push(`${s.id}: ${(e as Error).message}`.slice(0, 120)); }
+      }
+
+      return {
+        sweep: 'month_end_invoicing',
+        period: { start: startDate, end: endDate },
+        timesheet_invoices: invoices,
+        projects_billed: invoices.length,
+        projects_failed: tsErrors.length ? tsErrors : undefined,
+        subscription_renewals: renewals.length,
+        renewals_failed: subErrors.length ? subErrors : undefined,
+        skipped_due_to_trust: (tsGated || subGated)
+          ? [tsGated ? 'timesheets (bulk_invoice_from_timesheets is approve-gated)' : null,
+             subGated ? 'subscriptions (generate_subscription_invoice is approve-gated)' : null].filter(Boolean)
+          : undefined,
+      };
+    }
+
     case 'propose_bookkeeping': {
       // ─── Agentic bookkeeping: propose double-entry for unbooked bank events ─
       // Read-only sensor. For each unbooked bank_transaction it ranks a
@@ -11122,7 +11276,11 @@ function lintOne(
   }
 
   // Layer 2 — NOT NULL coverage for db:*
-  if (handler.startsWith('db:')) {
+  // Virtual handlers are composite/computed CASES in executeDbAction, not
+  // relations — table checks don't apply. Keep in sync with the switch +
+  // scripts/skill-linter.ts.
+  const VIRTUAL_DB_HANDLERS = new Set(['propose_bookkeeping', 'run_bookkeeping_sweep', 'run_month_end_invoicing']);
+  if (handler.startsWith('db:') && !VIRTUAL_DB_HANDLERS.has(handler.slice(3))) {
     const table = handler.slice(3);
     const required = ctx.notNullByTable.get(table);
     if (!required) {

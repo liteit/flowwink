@@ -259,6 +259,14 @@ function lintSingleSkill(skill: AgentSkillRow, ctx: LintCtx): SkillReport {
   // Name-based read-only inference when no action enum is declared.
   // Skills whose name signals a query/report/check never INSERT — treat
   // missing NOT NULL columns as informational rather than a blocking error.
+  // db: handlers whose "table" is a computed/composite CASE in agent-execute's
+  // executeDbAction switch, not a public relation. Keep in sync with the switch.
+  const VIRTUAL_DB_HANDLERS = new Set([
+    'propose_bookkeeping',
+    'run_bookkeeping_sweep',
+    'run_month_end_invoicing',
+  ]);
+
   const READ_ONLY_NAME_RE =
     /^(list_|search_|get_|find_|fetch_|read_|summarize_|analyze_|suggest_|users_list$|crm_task_list$|accounting_reports$|site_branding_get$)|(_check|_reports|_list|_get|_status|_summary)$/;
   const READ_ONLY_NAME_HIT = READ_ONLY_NAME_RE.test(skill.name);
@@ -269,7 +277,10 @@ function lintSingleSkill(skill: AgentSkillRow, ctx: LintCtx): SkillReport {
 
   if (handler.startsWith('db:')) {
     const table = handler.replace('db:', '');
-    if (!ctx.publicTables.has(table)) {
+    if (VIRTUAL_DB_HANDLERS.has(table)) {
+      // Composite / computed cases in agent-execute's executeDbAction switch —
+      // the "table" is a case key, not a relation. Layer-2 table checks don't apply.
+    } else if (!ctx.publicTables.has(table)) {
       findings.push({
         layer: 2,
         severity: 'error',
