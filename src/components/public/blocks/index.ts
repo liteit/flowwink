@@ -53,7 +53,7 @@ export { ParallaxSectionBlock } from './ParallaxSectionBlock';
 export { BentoGridBlock } from './BentoGridBlock';
 export { SectionDividerBlock } from './SectionDividerBlock';
 export { FeaturedCarouselBlock } from './FeaturedCarouselBlock';
-export { ResumeMatcherBlock } from './ResumeMatcherBlock';
+export { ConsultantMatcherBlock } from './ConsultantMatcherBlock';
 export { FeaturedProductBlock } from './FeaturedProductBlock';
 export { TrustBarBlock } from './TrustBarBlock';
 export { CategoryNavBlock } from './CategoryNavBlock';

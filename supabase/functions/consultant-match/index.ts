@@ -210,7 +210,7 @@ serve(async (req) => {
       queryEmbedding = r.embedding;
       usedProvider = `${provider.provider}:${provider.model}`;
     } catch (e) {
-      console.warn('[resume-match] embedding unavailable, falling back to text-only:', e);
+      console.warn('[consultant-match] embedding unavailable, falling back to text-only:', e);
     }
 
     const { data: matches, error: rpcErr } = await supabase.rpc('match_consultants', {

@@ -22,7 +22,7 @@ import type { AgentSkill } from '@/types/agent';
 import { SkillEditorSheet } from '@/components/admin/skills/SkillEditorSheet';
 
 const CATEGORY_TO_MODULES: Record<string, string[]> = {
-  content: ['pages', 'blog', 'knowledgeBase', 'handbook', 'resume', 'mediaLibrary', 'siteMigration'],
+  content: ['pages', 'blog', 'knowledgeBase', 'handbook', 'consultants', 'mediaLibrary', 'siteMigration'],
   crm: ['leads', 'deals', 'companies', 'forms', 'bookings', 'hr', 'recruitment', 'projects', 'salesIntelligence', 'tickets'],
   communication: ['newsletter', 'chat', 'liveSupport', 'webinars'],
   commerce: ['ecommerce', 'accounting', 'expenses', 'contracts', 'inventory', 'purchasing', 'invoicing', 'timesheets'],

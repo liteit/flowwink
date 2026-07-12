@@ -26,7 +26,7 @@ export const consultAgencyTemplate: StarterTemplate = {
   icon: 'UserCheck',
   tagline: 'Your website is a consultant. Always on. Always current.',
   aiChatPosition: 'Agentic consultant — live roster data, answers any brief, qualifies leads, A2A-ready for enterprise integrations',
-  requiredModules: ['blog', 'chat', 'leads', 'deals', 'companies', 'forms', 'bookings', 'newsletter', 'resume'],
+  requiredModules: ['blog', 'chat', 'leads', 'deals', 'companies', 'forms', 'bookings', 'newsletter', 'consultants'],
 
   pages: [
 
@@ -74,7 +74,7 @@ export const consultAgencyTemplate: StarterTemplate = {
             overlayColor: 'dark',
             titleAnimation: 'slide-up',
             showScrollIndicator: true,
-            primaryButton: { text: 'Search Consultants', url: '#resume-matcher-consultants' },
+            primaryButton: { text: 'Search Consultants', url: '#consultant-matcher-consultants' },
             secondaryButton: { text: 'Join Our Network', url: '/join' },
             eyebrow: 'Agentic Consulting Platform',
             heroStats: [
@@ -88,8 +88,8 @@ export const consultAgencyTemplate: StarterTemplate = {
 
         // RESUME MATCHER — AI-powered consultant search (hero follow-up)
         {
-          id: 'resume-matcher-consultants',
-          type: 'resume-matcher',
+          id: 'consultant-matcher-consultants',
+          type: 'consultant-matcher',
           data: {
             title: 'Find the Right Consultant — Right Now',
             subtitle: 'Describe the role, tech stack, and context. FlowPilot searches our live roster — profiles updated as consultants check in — and returns the best matches with availability, scoring, and gap analysis. Information that was never accessible this fast before.',

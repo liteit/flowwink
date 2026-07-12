@@ -67,7 +67,7 @@ const BLOCK_LABELS: Record<ContentBlockType, string> = {
   'bento-grid': 'Bento Grid',
   'section-divider': 'Section Divider',
   'featured-carousel': 'Featured Carousel',
-  'resume-matcher': 'Resume Matcher',
+  'consultant-matcher': 'Consultant Matcher',
   'featured-product': 'Featured Product',
   'trust-bar': 'Trust Bar',
   'category-nav': 'Category Navigation',

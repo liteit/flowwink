@@ -536,7 +536,7 @@ export const BLOCK_CREATION_TOOLS = [
             "type": "string"
           },
           "items": {
-            "description": "Array of items [{ question, answer }]",
+            "description": "FAQ items",
             "type": "array",
             "items": {
               "type": "object"
@@ -1232,6 +1232,54 @@ export const BLOCK_CREATION_TOOLS = [
   {
     "type": "function",
     "function": {
+      "name": "create_latest_posts_block",
+      "description": "Create a Latest Posts section: Auto-pulls the most recent published blog posts.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "description": "Section title",
+            "type": "string"
+          },
+          "subtitle": {
+            "description": "Section subtitle",
+            "type": "string"
+          },
+          "count": {
+            "description": "Posts to show (1-6)",
+            "type": "number"
+          },
+          "columns": {
+            "description": "Columns (1-4)",
+            "type": "number"
+          },
+          "category": {
+            "description": "Filter by category",
+            "type": "string"
+          },
+          "showExcerpt": {
+            "description": "Show post excerpt",
+            "type": "boolean"
+          },
+          "showDate": {
+            "description": "Show published date",
+            "type": "boolean"
+          },
+          "ctaText": {
+            "description": "CTA text",
+            "type": "string"
+          },
+          "ctaUrl": {
+            "description": "CTA URL",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
       "name": "create_announcement_bar_block",
       "description": "Create a Announcement Bar section: Sticky top banner for promotions, notices, or countdown timers.",
       "parameters": {
@@ -1295,7 +1343,7 @@ export const BLOCK_CREATION_TOOLS = [
             "type": "string"
           },
           "tabs": {
-            "description": "Array of tabs [{ id, title, icon, content }]",
+            "description": "Tab items",
             "type": "array",
             "items": {
               "type": "object"

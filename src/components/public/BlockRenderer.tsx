@@ -67,7 +67,7 @@ const WebinarBlock = lazy(() => import('./blocks/WebinarBlock').then(m => ({ def
 const ParallaxSectionBlock = lazy(() => import('./blocks/ParallaxSectionBlock').then(m => ({ default: m.ParallaxSectionBlock })));
 const BentoGridBlock = lazy(() => import('./blocks/BentoGridBlock').then(m => ({ default: m.BentoGridBlock })));
 const FeaturedCarouselBlock = lazy(() => import('./blocks/FeaturedCarouselBlock').then(m => ({ default: m.FeaturedCarouselBlock })));
-const ResumeMatcherBlock = lazy(() => import('./blocks/ResumeMatcherBlock').then(m => ({ default: m.ResumeMatcherBlock })));
+const ConsultantMatcherBlock = lazy(() => import('./blocks/ConsultantMatcherBlock').then(m => ({ default: m.ConsultantMatcherBlock })));
 const FeaturedProductBlock = lazy(() => import('./blocks/FeaturedProductBlock').then(m => ({ default: m.FeaturedProductBlock })));
 const AiAssistantBlock = lazy(() => import('./blocks/AiAssistantBlock').then(m => ({ default: m.AiAssistantBlock })));
 const HandbookBlock = lazy(() => import('./blocks/HandbookBlock').then(m => ({ default: m.HandbookBlock })));
@@ -307,8 +307,8 @@ export function BlockRenderer({ block, pageId, index = 0, resolvedBackground }: 
         return <SectionDividerBlock data={block.data as unknown as SectionDividerBlockData} />;
       case 'featured-carousel':
         return <FeaturedCarouselBlock data={block.data as unknown as FeaturedCarouselBlockData} />;
-      case 'resume-matcher':
-        return <ResumeMatcherBlock data={block.data as Record<string, unknown>} />;
+      case 'consultant-matcher':
+        return <ConsultantMatcherBlock data={block.data as Record<string, unknown>} />;
       case 'featured-product':
         return <FeaturedProductBlock data={block.data as unknown as FeaturedProductBlockData} />;
       case 'trust-bar':

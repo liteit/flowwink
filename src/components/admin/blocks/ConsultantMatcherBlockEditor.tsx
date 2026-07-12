@@ -1,28 +1,28 @@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { ResumeMatcherBlock } from '@/components/public/blocks/ResumeMatcherBlock';
+import { ConsultantMatcherBlock } from '@/components/public/blocks/ConsultantMatcherBlock';
 
-interface ResumeMatcherBlockData {
+interface ConsultantMatcherBlockData {
   title?: string;
   subtitle?: string;
   placeholder?: string;
   buttonText?: string;
 }
 
-interface ResumeMatcherBlockEditorProps {
-  data: ResumeMatcherBlockData;
-  onChange: (data: ResumeMatcherBlockData) => void;
+interface ConsultantMatcherBlockEditorProps {
+  data: ConsultantMatcherBlockData;
+  onChange: (data: ConsultantMatcherBlockData) => void;
   isEditing?: boolean;
 }
 
-export function ResumeMatcherBlockEditor({ data, onChange, isEditing }: ResumeMatcherBlockEditorProps) {
-  const handleChange = (key: keyof ResumeMatcherBlockData, value: string) => {
+export function ConsultantMatcherBlockEditor({ data, onChange, isEditing }: ConsultantMatcherBlockEditorProps) {
+  const handleChange = (key: keyof ConsultantMatcherBlockData, value: string) => {
     onChange({ ...data, [key]: value });
   };
 
   // Preview mode — render the REAL public block so search actually works
   if (!isEditing) {
-    return <ResumeMatcherBlock data={data} />;
+    return <ConsultantMatcherBlock data={data} />;
   }
 
   // Edit mode

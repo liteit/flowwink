@@ -21,15 +21,15 @@ interface ConsultantMatch {
   hybrid_score: number;
 }
 
-interface ResumeMatcherBlockData {
+interface ConsultantMatcherBlockData {
   title?: string;
   subtitle?: string;
   placeholder?: string;
   buttonText?: string;
 }
 
-interface ResumeMatcherBlockProps {
-  data: ResumeMatcherBlockData;
+interface ConsultantMatcherBlockProps {
+  data: ConsultantMatcherBlockData;
 }
 
 type Strength = 'strong' | 'good' | 'fair';
@@ -246,7 +246,7 @@ const MatchDetail = memo(function MatchDetail({
   );
 });
 
-export function ResumeMatcherBlock({ data }: ResumeMatcherBlockProps) {
+export function ConsultantMatcherBlock({ data }: ConsultantMatcherBlockProps) {
   const [jobDescription, setJobDescription] = useState('');
   const [matches, setMatches] = useState<ConsultantMatch[]>([]);
   const [loading, setLoading] = useState(false);
@@ -279,7 +279,7 @@ export function ResumeMatcherBlock({ data }: ResumeMatcherBlockProps) {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/resume-match`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/consultant-match`,
         {
           method: 'POST',
           headers: {

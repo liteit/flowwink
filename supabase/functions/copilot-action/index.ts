@@ -16,7 +16,7 @@ const BLOCK_TYPES = [
   'shipping-info', 'article-grid', 'announcement-bar', 'tabs', 'marquee',
   'embed', 'lottie', 'table', 'countdown', 'progress', 'badge', 'social-proof',
   'notification-toast', 'floating-cta', 'webinar', 'parallax-section',
-  'bento-grid', 'section-divider', 'featured-carousel', 'resume-matcher',
+  'bento-grid', 'section-divider', 'featured-carousel', 'consultant-matcher',
   'featured-product', 'ai-assistant', 'quick-links', 'kb-featured', 'kb-hub',
   'kb-search', 'kb-accordion', 'chat-launcher', 'cart', 'products', 'contact',
 ];

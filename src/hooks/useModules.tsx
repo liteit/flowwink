@@ -50,7 +50,7 @@ export interface ModuleConfig {
   // Booking-specific settings
   confirmationEmailEnabled?: boolean; // Send confirmation email on new booking
   bookingEmailProvider?: BookingEmailProvider; // Which provider to use for booking emails
-  // Consultants (resume) module — GDPR setting for public-facing match results
+  // Consultants module — GDPR setting for public-facing match results
   publicAnonymization?: ConsultantAnonymization;
 }
 
@@ -74,7 +74,7 @@ export interface ModulesSettings {
   mediaLibrary: ModuleConfig;
   webinars: ModuleConfig;
   salesIntelligence: ModuleConfig;
-  resume: ModuleConfig;
+  consultants: ModuleConfig;
   browserControl: ModuleConfig;
   federation: ModuleConfig;
   paidGrowth: ModuleConfig;
@@ -312,7 +312,7 @@ export const defaultModulesSettings: ModulesSettings = {
     enhancedByFlowPilot: true,
     optionalIntegrations: ['hunter', 'jina', 'firecrawl', 'openai', 'gemini'],
   },
-  resume: {
+  consultants: {
     enabled: false,
     name: 'Consultants',
     description: 'AI-powered consultant matching with tailored CVs and cover letters — requires at least one AI provider',
@@ -846,7 +846,7 @@ export const SIDEBAR_TO_MODULE: Record<string, keyof ModulesSettings> = {
   '/admin/webinars': 'webinars',
   '/admin/webmeet': 'webmeet',
   '/admin/sales-intelligence': 'salesIntelligence',
-  '/admin/resume': 'resume',
+  '/admin/resume': 'consultants',
   '/admin/federation': 'federation',
   '/admin/growth': 'paidGrowth',
   '/admin/company-insights': 'companyInsights',

@@ -159,7 +159,7 @@ export type ContentBlockType =
   | 'bento-grid'
   | 'section-divider'
   | 'featured-carousel'
-  | 'resume-matcher'
+  | 'consultant-matcher'
   | 'featured-product'
   | 'trust-bar'
   | 'category-nav'

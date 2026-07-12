@@ -18,7 +18,7 @@ export type GroupMap = Record<string, string[]>;
  * the unified module registry (src/lib/modules/*).
  */
 export const SKILL_CATEGORY_MODULES: GroupMap = {
-  content: ["pages", "blog", "knowledgeBase", "handbook", "resume", "mediaLibrary", "siteMigration"],
+  content: ["pages", "blog", "knowledgeBase", "handbook", "consultants", "mediaLibrary", "siteMigration"],
   crm: ["leads", "deals", "companies", "forms", "bookings", "hr", "recruitment", "projects", "salesIntelligence", "tickets"],
   communication: ["newsletter", "chat", "liveSupport", "webinars"],
   automation: [],

@@ -80,7 +80,7 @@ import { CategoryNavBlockEditor } from './CategoryNavBlockEditor';
 import { ShippingInfoBlockEditor } from './ShippingInfoBlockEditor';
 import { AiAssistantBlockEditor } from './AiAssistantBlockEditor';
 import { SmartBookingBlockEditor } from './SmartBookingBlockEditor';
-import { ResumeMatcherBlockEditor } from './ResumeMatcherBlockEditor';
+import { ConsultantMatcherBlockEditor } from './ConsultantMatcherBlockEditor';
 import { HandbookBlockEditor } from './HandbookBlockEditor';
 import { QuickLinksBlockEditor } from './QuickLinksBlockEditor';
 import type { QuickLinksBlockData } from '@/components/public/blocks/QuickLinksBlock';
@@ -1117,9 +1117,9 @@ export function BlockEditor({ blocks, onChange, canEdit }: BlockEditorProps) {
             isEditing={isEditing}
           />
         );
-      case 'resume-matcher':
+      case 'consultant-matcher':
         return (
-          <ResumeMatcherBlockEditor
+          <ConsultantMatcherBlockEditor
             data={block.data as unknown as { title?: string; subtitle?: string; placeholder?: string; buttonText?: string }}
             onChange={(data) => handleUpdateBlock(block.id, data as unknown as Record<string, unknown>)}
             isEditing={isEditing}

@@ -4,14 +4,14 @@ import type { SkillSeed } from '@/lib/module-bootstrap';
 import { defineModule } from '@/lib/module-def';
 import { z } from 'zod';
 
-// --- Resume Module Schemas ---
+// --- Consultants Module Schemas ---
 
-export const resumeMatchInputSchema = z.object({
+export const consultantMatchInputSchema = z.object({
   job_description: z.string().min(10, 'Job description must be at least 10 characters'),
   max_results: z.number().optional().default(3),
 });
 
-export const resumeMatchOutputSchema = z.object({
+export const consultantMatchOutputSchema = z.object({
   success: z.boolean(),
   matches: z.array(z.object({
     consultant_id: z.string(),
@@ -27,22 +27,22 @@ export const resumeMatchOutputSchema = z.object({
   error: z.string().optional(),
 });
 
-export type ResumeMatchInput = z.infer<typeof resumeMatchInputSchema>;
-export type ResumeMatchOutput = z.infer<typeof resumeMatchOutputSchema>;
+export type ConsultantMatchInput = z.infer<typeof consultantMatchInputSchema>;
+export type ConsultantMatchOutput = z.infer<typeof consultantMatchOutputSchema>;
 
 // ── Bundled skill definitions (migrated from setup-flowpilot) ──
-const RESUME_SKILLS: SkillSeed[] = [
+const CONSULTANTS_SKILLS: SkillSeed[] = [
   {
     name: 'manage_consultant_profile',
-    description: 'Manage consultant/resume profiles: list, create, update, delete, deduplicate. Use when: adding a new consultant; updating skills or availability; cleaning up duplicate entries. NOT for: matching consultants to jobs (match_consultant); managing company profiles (manage_company).',
+    description: 'Manage consultant profiles: list, create, update, delete, deduplicate. Use when: adding a new consultant; updating skills or availability; cleaning up duplicate entries. NOT for: matching consultants to jobs (match_consultant); managing company profiles (manage_company).',
     category: 'content',
-    handler: 'module:resume',
+    handler: 'module:consultants',
     scope: 'internal',
     tool_definition: {
       type: 'function',
       function: {
         name: 'manage_consultant_profile',
-        description: 'Manage consultant/resume profiles: list, create, update, delete, deduplicate. Use when: adding a new consultant; updating skills or availability; cleaning up duplicate entries. NOT for: matching consultants to jobs (match_consultant); managing company profiles (manage_company).',
+        description: 'Manage consultant profiles: list, create, update, delete, deduplicate. Use when: adding a new consultant; updating skills or availability; cleaning up duplicate entries. NOT for: matching consultants to jobs (match_consultant); managing company profiles (manage_company).',
         parameters: {
           type: 'object',
           properties: {
@@ -102,7 +102,7 @@ Manages consultant/resume profiles: list, create, update, delete, find duplicate
     name: 'match_consultant',
     description: 'Match consultants to a job description using AI. Use when: finding suitable candidates for an open position; a user provides a job description and needs recommendations; identifying best-fit consultants. NOT for: managing consultant profiles (manage_consultant_profile); researching companies (prospect_research).',
     category: 'content',
-    handler: 'module:resume',
+    handler: 'module:consultants',
     scope: 'internal',
     tool_definition: {
       type: 'function',
@@ -145,7 +145,7 @@ AI-powered matching of consultants to a job description.
     name: 'consultant_checkin_update',
     description: "Update a consultant's own profile during a check-in interview. Updates bio, summary, skills, availability, and experience. Use when: a consultant has completed a check-in conversation and you have gathered enough information to update their profile. NOT for: admin-driven profile edits (manage_consultant_profile).",
     category: 'content',
-    handler: 'module:resume',
+    handler: 'module:consultants',
     scope: 'external',
     tool_definition: {
       type: 'function',
@@ -186,7 +186,7 @@ AI-powered matching of consultants to a job description.
     name: 'reindex_consultants',
     description: 'Re-embed consultant profiles whose semantic-search index is stale. Use when: an automation or admin wants to refresh embeddings after bulk profile changes; keeping vector search up to date. NOT for: matching consultants to a job (match_consultant); editing profiles (manage_consultant_profile).',
     category: 'system',
-    handler: 'edge:resume-match',
+    handler: 'edge:consultant-match',
     scope: 'internal',
     trust_level: 'auto',
     tool_definition: {
@@ -295,8 +295,8 @@ AI-powered matching of consultants to a job description.
 ];
 
 
-export const resumeModule = defineModule<ResumeMatchInput, ResumeMatchOutput>({
-  id: 'resume',
+export const consultantsModule = defineModule<ConsultantMatchInput, ConsultantMatchOutput>({
+  id: 'consultants',
   name: 'Consultants',
   version: '1.0.0',
   processes: ['hire-to-retire'],
@@ -304,8 +304,8 @@ export const resumeModule = defineModule<ResumeMatchInput, ResumeMatchOutput>({
   description: 'Match consultant profiles against job descriptions with AI-powered scoring and cover letters',
   capabilities: ['data:read', 'content:produce'],
   tier: 'extended',
-  inputSchema: resumeMatchInputSchema,
-  outputSchema: resumeMatchOutputSchema,
+  inputSchema: consultantMatchInputSchema,
+  outputSchema: consultantMatchOutputSchema,
 
   skills: [
     'manage_consultant_profile',
@@ -319,7 +319,7 @@ export const resumeModule = defineModule<ResumeMatchInput, ResumeMatchOutput>({
   data: {
     tables: ['consultant_profiles', 'consultant_assignments', 'consultant_skill_rates'],
   },
-  skillSeeds: RESUME_SKILLS,
+  skillSeeds: CONSULTANTS_SKILLS,
 
   automations: [
     {
@@ -334,22 +334,22 @@ export const resumeModule = defineModule<ResumeMatchInput, ResumeMatchOutput>({
   ],
 
 
-  async publish(input: ResumeMatchInput): Promise<ResumeMatchOutput> {
+  async publish(input: ConsultantMatchInput): Promise<ConsultantMatchOutput> {
     try {
-      const validated = resumeMatchInputSchema.parse(input);
+      const validated = consultantMatchInputSchema.parse(input);
 
-      const { data, error } = await supabase.functions.invoke('resume-match', {
+      const { data, error } = await supabase.functions.invoke('consultant-match', {
         body: validated,
       });
 
       if (error) {
-        logger.error('[ResumeModule] Edge function error:', error);
+        logger.error('[ConsultantsModule] Edge function error:', error);
         return { success: false, error: error.message };
       }
 
-      return data as ResumeMatchOutput;
+      return data as ConsultantMatchOutput;
     } catch (error) {
-      logger.error('[ResumeModule] Error:', error);
+      logger.error('[ConsultantsModule] Error:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   },

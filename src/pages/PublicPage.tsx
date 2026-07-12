@@ -468,7 +468,7 @@ export default function PublicPage() {
                 'kb-search', 'kb-hub', 'kb-featured', 'kb-accordion',
                 // Card/container blocks that render their own framing
                 'features', 'stats', 'testimonials', 'team', 'tabs', 'accordion',
-                'timeline', 'resume-matcher', 'quick-links', 'two-column', 'logos',
+                'timeline', 'consultant-matcher', 'quick-links', 'two-column', 'logos',
                 'table', 'countdown', 'products', 'cart', 'webinar', 'article-grid',
               ]);
               let contentIndex = 0;

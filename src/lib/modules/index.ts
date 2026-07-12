@@ -74,7 +74,7 @@ export { payrollModule } from './payroll-module';
 // ── Growth ──
 export { salesIntelligenceModule } from './sales-intelligence-module';
 export { growthModule } from './growth-module';
-export { resumeModule } from './resume-module';
+export { consultantsModule } from './consultants-module';
 
 // ── System / Integration ──
 export { browserControlModule } from './browser-control-module';

@@ -338,7 +338,7 @@ export default function ConsultantProfilesPage() {
 
   const reindexMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("resume-match", {
+      const { data, error } = await supabase.functions.invoke("consultant-match", {
         body: { action: "reindex_stale", limit: 50 },
       });
       if (error) throw error;

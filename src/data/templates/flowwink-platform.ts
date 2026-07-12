@@ -43,7 +43,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
     // Communication
     'chat', 'liveSupport', 'workspaceChat', 'webinars', 'river', 'email',
     // Platform & agent
-    'flowpilot', 'federation', 'composio', 'browserControl', 'siteMigration', 'developer', 'analytics', 'resume',
+    'flowpilot', 'federation', 'composio', 'browserControl', 'siteMigration', 'developer', 'analytics', 'consultants',
   ],
   pages: [
     // ═══════════════════════════════════════════════════════════
@@ -1080,7 +1080,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
             contentAlignment: 'center',
             overlayOpacity: 60,
             titleAnimation: 'slide-up',
-            primaryButton: { text: 'Try the Matcher', url: '#consult-resume-matcher' },
+            primaryButton: { text: 'Try the Matcher', url: '#consult-consultant-matcher' },
             secondaryButton: { text: 'See Pricing', url: '/#pricing-detailed' },
             eyebrow: 'FlowWink for Consultancies',
           },
@@ -1100,8 +1100,8 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
         },
         // RESUME MATCHER — the star block from consult-agency
         {
-          id: 'consult-resume-matcher',
-          type: 'resume-matcher',
+          id: 'consult-consultant-matcher',
+          type: 'consultant-matcher',
           data: {
             title: 'Find the Right Consultant — Right Now',
             subtitle: 'Describe the role, tech stack, and context. FlowPilot searches the live roster — profiles updated as consultants check in — and returns the best matches with availability, scoring, and gap analysis.',

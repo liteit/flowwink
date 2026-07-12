@@ -29,8 +29,8 @@ export const BLOCK_TO_MODULE: Partial<Record<ContentBlockType, keyof ModulesSett
   // Webinars
   'webinar': 'webinars',
 
-  // Resume
-  'resume-matcher': 'resume',
+  // Consultants
+  'consultant-matcher': 'consultants',
 };
 
 interface BlockModuleStatus {

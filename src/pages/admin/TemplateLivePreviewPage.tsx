@@ -33,7 +33,7 @@ export default function TemplateLivePreviewPage() {
             'comparison', 'bento-grid', 'social-proof', 'badge', 'separator',
             'kb-search', 'kb-hub', 'kb-featured', 'kb-accordion',
             'features', 'stats', 'testimonials', 'team', 'tabs', 'accordion',
-            'timeline', 'resume-matcher', 'quick-links', 'two-column', 'logos',
+            'timeline', 'consultant-matcher', 'quick-links', 'two-column', 'logos',
             'table', 'countdown', 'products', 'cart', 'webinar', 'article-grid',
           ]);
           let contentIndex = 0;

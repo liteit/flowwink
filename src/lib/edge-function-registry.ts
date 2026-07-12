@@ -67,7 +67,7 @@ export const ALL_EDGE_FUNCTIONS: readonly string[] = [
   'openai-account', 'openclaw-responses', 'parse-resume', 'process-image',
   'process-job-application', 'prospect-fit-analysis', 'prospect-research', 'qualify-lead',
   'quote-expiry-reminders', 'quote-pay', 'quote-sign', 'reconciliation', 'recurring-quotes-cron',
-  'resume-match', 'run-autonomy-tests',
+  'consultant-match', 'run-autonomy-tests',
   'run-platform-tests', 'sales-profile-setup', 'score-visitor-intent', 'send-booking-confirmation',
   'send-return-confirmation',
   'send-booking-reminders',
@@ -115,7 +115,7 @@ export const MODULE_EDGE_FUNCTIONS: Partial<Record<ModuleId, readonly string[]>>
 
   // ── HR / recruitment / consultants ───────────────────────────────────────
   recruitment: ['parse-resume', 'invite-employee', 'process-job-application'],
-  resume: ['resume-match', 'consultant-checkin'],
+  consultants: ['consultant-match', 'consultant-checkin'],
 
   // ── Commerce / finance ───────────────────────────────────────────────────
   ecommerce: ['create-checkout', 'send-order-confirmation'],

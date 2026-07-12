@@ -767,7 +767,7 @@ const MODULE_HANDLER_TO_SETTING: Record<string, string> = {
   objectives: 'analytics',
   products: 'ecommerce',
   media: 'media',
-  resume: 'resume',
+  consultants: 'consultants',
   pages: 'pages',
   kb: 'knowledgeBase',
   globalElements: 'globalElements',
@@ -1060,8 +1060,8 @@ async function executeModuleAction(
       return await executeApprovalsAction(supabase, skillName, args);
     }
 
-    case 'resume': {
-      return await executeResumeAction(supabase, skillName, args);
+    case 'consultants': {
+      return await executeConsultantsAction(supabase, skillName, args);
     }
 
     case 'pages': {
@@ -2434,10 +2434,10 @@ async function executeOpenClawAction(
 }
 
 // =============================================================================
-// Resume module handlers
+// Consultants module handlers
 // =============================================================================
 
-async function executeResumeAction(
+async function executeConsultantsAction(
   supabase: any,
   skillName: string,
   args: Record<string, unknown>,
@@ -2506,7 +2506,7 @@ async function executeResumeAction(
         return { total_profiles: profiles.length, duplicates, duplicate_count: duplicates.length };
       }
 
-      return { error: `Unknown resume action: ${action}` };
+      return { error: `Unknown consultant action: ${action}` };
     }
 
     case 'match_consultant': {
@@ -2515,7 +2515,7 @@ async function executeResumeAction(
       
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
       const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-      const response = await fetch(`${supabaseUrl}/functions/v1/resume-match`, {
+      const response = await fetch(`${supabaseUrl}/functions/v1/consultant-match`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2545,7 +2545,7 @@ async function executeResumeAction(
     }
 
     default:
-      return { error: `Unknown resume skill: ${skillName}` };
+      return { error: `Unknown consultant skill: ${skillName}` };
   }
 }
 

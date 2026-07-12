@@ -628,7 +628,7 @@ export function ModuleDetailSheet({
             )}
 
             {/* Consultants — Public anonymization (GDPR) */}
-            {moduleId === 'resume' && moduleConfig && (
+            {moduleId === 'consultants' && moduleConfig && (
               <>
                 <Separator />
                 <div>
@@ -638,7 +638,7 @@ export function ModuleDetailSheet({
                   </div>
                   <div className="rounded-lg border p-4 bg-muted/20 space-y-3">
                     <p className="text-xs text-muted-foreground">
-                      Controls how consultant names appear in the public Resume Matcher block.
+                      Controls how consultant names appear in the public Consultant Matcher block.
                       Email, phone and LinkedIn are never exposed publicly regardless of this setting.
                     </p>
                     <Select
