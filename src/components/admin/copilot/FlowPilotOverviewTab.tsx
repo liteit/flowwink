@@ -190,7 +190,11 @@ export function FlowPilotOverviewTab() {
   }, [feed.data]);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-3 p-4 max-w-7xl mx-auto">
+    <div className="p-4 max-w-7xl mx-auto space-y-4">
+      {/* Operator health — 5-second engine status */}
+      <OperatorHealthCard />
+
+      <div className="grid gap-4 lg:grid-cols-3">
       {/* LEFT — briefing + priorities */}
       <div className="lg:col-span-2 space-y-4">
         {/* Morning briefing */}
