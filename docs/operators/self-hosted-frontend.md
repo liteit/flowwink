@@ -21,7 +21,31 @@ Required:
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | the anon/publishable key |
 | `VITE_SUPABASE_PROJECT_ID` | `<ref>` |
 
-## Easypanel
+## Prebuilt image (recommended for small VPSes)
+
+The Vite build needs ~4 GB RAM — on a small VPS the builder gets OOM-killed
+mid-`transforming...` with **no error in the Easypanel log** (it just stops).
+Two fixes:
+
+- **Pull instead of build (recommended):** the
+  `docker-image.yml` GitHub Action builds on every push to main and publishes
+  `ghcr.io/<owner>/flowwink-frontend:dev` (+ `:dev-<sha>`). In Easypanel,
+  create the App with source **Docker Image** instead of GitHub. If the ghcr
+  package is private, either make it public (it contains only public code +
+  the anon key) or add registry credentials in Easypanel (GitHub username +
+  a PAT with `read:packages`). Instance targeting: the image bakes the dev
+  instance by default; override via the `VITE_*` repository *variables* or a
+  matrix entry in the workflow.
+- **Build on the VPS anyway:** add swap first —
+  `fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile`
+  (persist with an `/etc/fstab` entry), then rebuild.
+
+Build-log canary: with the `VITE_*` build args present, the prebuild step
+prints `📦 Checking for pending database migrations...` /
+`ℹ️ Supabase CLI not available` — if you instead see
+`⚠️ Supabase not configured`, the env vars did not reach the build.
+
+## Easypanel (building from source)
 
 1. Create an **App** service from the GitHub repo, **Build: Dockerfile**
    (the repo-root `Dockerfile`; no custom build/start commands).

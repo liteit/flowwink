@@ -1,0 +1,76 @@
+name: Docker image (self-hosted frontend)
+
+# WHY THIS EXISTS
+# ---------------
+# Self-hosted deployments (Easypanel on a VPS, internal servers behind a
+# firewall) should PULL a prebuilt image instead of building on the box —
+# the Vite build needs ~4 GB RAM and OOM-dies on small VPSes. This workflow
+# builds the frontend image on GitHub's runners on every push to main and
+# publishes it to GitHub Container Registry. Easypanel then deploys it in
+# "Docker Image" mode: ghcr.io/<owner>/flowwink-frontend:dev
+#
+# NOTE: VITE_* values are baked into the bundle at BUILD time, so an image is
+# tied to one Supabase instance. This default build targets the dev instance;
+# override via repository variables (Settings → Secrets and variables →
+# Actions → Variables) or add a matrix entry per instance. The values are
+# NOT secrets — the publishable/anon key ships in the public JS bundle by design.
+#
+# See docs/operators/self-hosted-frontend.md for the full runbook.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'supabase/**'
+      - 'docs/**'
+      - 'scripts/**'
+      - '**.md'
+  workflow_dispatch: {}
+
+concurrency:
+  group: docker-image
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-push:
+    name: Build and push frontend image
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: ghcr.io/${{ github.repository_owner }}/flowwink-frontend
+      # Non-sensitive (see note above). Defaults = the dev instance.
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || 'https://rzhjotxffjfsdlhrdkpj.supabase.co' }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6aGpvdHhmZmpmc2RsaHJka3BqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1NTk2MzAsImV4cCI6MjA4MTEzNTYzMH0.h_S8ZHuCWWz97-uzQge0sb3riHmElrKTTfs5jrwE72c' }}
+      VITE_SUPABASE_PROJECT_ID: ${{ vars.VITE_SUPABASE_PROJECT_ID || 'rzhjotxffjfsdlhrdkpj' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:dev
+            ${{ env.IMAGE }}:dev-${{ github.sha }}
+          build-args: |
+            VITE_SUPABASE_URL=${{ env.VITE_SUPABASE_URL }}
+            VITE_SUPABASE_PUBLISHABLE_KEY=${{ env.VITE_SUPABASE_PUBLISHABLE_KEY }}
+            VITE_SUPABASE_PROJECT_ID=${{ env.VITE_SUPABASE_PROJECT_ID }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
