@@ -66,6 +66,7 @@ export async function embedPendingChunks(service: any, limit = 80): Promise<Embe
 
   let embedded = 0;
   let failed = 0;
+  let consecutiveFailures = 0;
   for (const chunk of pending ?? []) {
     try {
       const { embedding } = await embedText(chunk.content, provider);
@@ -75,9 +76,17 @@ export async function embedPendingChunks(service: any, limit = 80): Promise<Embe
         .eq('id', chunk.id);
       if (upErr) throw new Error(upErr.message);
       embedded += 1;
+      consecutiveFailures = 0;
     } catch (e) {
       failed += 1;
+      consecutiveFailures += 1;
       console.error(`embed failed for chunk ${chunk.id}:`, e);
+      // A dead/quota-exhausted provider fails every call — don't hammer it
+      // with the whole batch; the next cron sweep retries.
+      if (consecutiveFailures >= 3) {
+        console.error('embed sweep aborted after 3 consecutive failures (provider down/quota)');
+        break;
+      }
     }
   }
 
