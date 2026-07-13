@@ -2,7 +2,7 @@
 
 > **Purpose:** everything a fresh Claude Code session (local or cloud) needs to
 > continue the Program 80 grind without re-deriving context. Update this doc at
-> the end of significant sessions. Last updated: **2026-07-08 (helicopter sync + audit)**.
+> the end of significant sessions. Last updated: **2026-07-13 (Flowtable/Flowwork arc, cloud session)**.
 
 ## The program
 
@@ -67,6 +67,86 @@ results via the gateway) and reconciled PR #108 down to this memory doc.
 **Coordination convention: whoever does substantive work updates THIS doc;
 the other session watches git (`git ls-remote` polling) and the live gateway
 surface.**
+
+## The Flowtable/Flowwork arc (2026-07-11 → 07-13, cloud session, PRs #111–#118)
+
+Magnus drove a rapid product sprint: **Flowtable** (the Airtable-style module)
+built out to relational, agent-operable parity, then wired into **Flowwork**
+(renamed from Cowork) as a retrieval source. All merged to `main`.
+
+**What shipped, in order:**
+
+1. **Agent surface** (#111 wave): `query_flowtable` (handler
+   `module:flowtable` in agent-execute) — server-side filter (eq/neq/ilike
+   pushed to PostgREST as `values->>key`; gt/gte/lt/lte + is_empty/not_empty
+   over a bounded scan, cap 20 000 rows / pages of 1 000), free-text search,
+   numeric-aware sort, `count_by` aggregation (top 100), `total_matched` via
+   `count:'exact'`, and helpful table-not-found errors listing real
+   base/table combos. Plus `manage_flowtable_record` (update MERGES by
+   default). Colleague added `list_flowtable_tables` (rpc:) as the discovery
+   link. Live-verified on rzhj against the colleague's "Field Service Ops"
+   base (6 000-row Error Codes: count_by severity → 1500×4).
+2. **UI fixes:** Airtable-style hover checkbox (row number ⇄ checkbox on
+   group-hover); column **type change was a silent no-op** (dropdown called
+   onRenameField) — now a real `onChangeFieldType`; `toDateInputValue()`
+   coerces imported M/D/YYYY text so date cells don't blank.
+3. **Relations** (#113/#114): field types `link` (link_table_id +
+   display_field; value = target row id), user-defined **select choices**,
+   `lookup` (via_link_field + target_field) and `rollup`
+   (source_table_id + source_link_field + agg + agg_field). Query-side:
+   `resolve_links=true` → `item._links[field]={id,display}`;
+   `resolve_computed=true` → `item._computed[field]` (lookup batched by
+   target table; rollup bucketed with an `.in()` on the link key). All field
+   config lives in `flowtable_fields.options` JSONB — **new field types need
+   no migrations**. Live-verified (rollup PX-500=1, AX-300=2; link display
+   names resolved).
+4. **Views** (#115): per-table `view_config` JSONB (filters/sort/group_by/
+   kanban_field), `applyViewConfig()` client-side feeding all views, filter/
+   sort popover toolbar, **Kanban** via @dnd-kit (DragOverlay, pointer
+   distance 4). Migration `20260712140000_flowtable-view-config.sql` adds the
+   column (forward-dated after the CI guard caught my back-dated first try).
+5. **Cowork → Flowwork rename** (#116): story only — UI copy, module name,
+   route now `/admin/flowwork` (legacy redirects dropped on Magnus's OK).
+   **Wire identifiers deliberately kept** per naming policy: `cowork_messages`
+   table, `post_to_cowork_chat` skill, `cowork_chat` settings key,
+   `workspaceChat` module id, stored mode value `'cowork'`. Documented in
+   `workspace-chat-module.ts` docstring.
+6. **Flowtable as Flowwork source** (#117, `dd8bd200`): workspace-chat gains
+   a `flowtable` source — question-driven (keywords ≥3 chars, max 6, from the
+   latest user message), only `workspace_shared` bases (10 max, 30 tables),
+   `or()` ilike across keys×terms, 6 rows/table, citations deep-link to
+   `/admin/flowtable/{base}/{table}`. Fits the source-based CAG fair-share
+   budget like the other sources.
+7. **User/currency/rating fields** (#118, `76291032`): `user` field stores a
+   **profiles.id** (real platform identity — never role-as-value; optional
+   `options.role_filter` only scopes the picker, 12 app_roles minus
+   customer). UserCell = people picker with initials chip via
+   `useTeamProfiles(roleFilter)`. `resolve_links` expands user fields to
+   `{id, display, email}`; agents can SET an assignee by writing a
+   profiles.id. Plus `currency` (options.currency_code) and `rating` (1–5
+   stars, click-same-to-clear).
+
+**Architecture decisions locked:** assignment stores the person
+(profiles.id), roles only filter pickers; rename = fix the story, keep the
+wire; Flowtable field types are pure `options`-JSONB extensions (no schema
+churn); Flowwork retrieval stays question-driven and shared-bases-only.
+
+**⚠️ Deploy state on rzhj as of 2026-07-13 — NUDGE PENDING.** Merged to main
+(Vercel frontend auto-deploys) but the Lovable side has NOT been asked yet:
+1. Apply migration `20260712140000_flowtable-view-config.sql` (view persistence for #115 is silently non-durable until then).
+2. Redeploy `workspace-chat` (Flowtable source, #117).
+3. Redeploy `agent-execute` (user-field schema + resolve, #118).
+4. Click **"Sync skills from code"** at /admin/modules (query_flowtable instructions grew RELATIONS/DERIVED/USER sections).
+
+Then Stage-3 verify: (a) Flowwork question "vad betyder felkod E-SEN0012?"
+should cite a flowtable source — requires Magnus to flip Field Service Ops to
+`workspace_shared` first; (b) `query_flowtable` with `resolve_links` on a
+user field returns `{id, display, email}`.
+
+**Recurring conflict pattern:** `supabase/seed/module-skills.json` is a
+generated artifact and conflicts whenever both sessions push — resolve with
+`git checkout --theirs`, then regenerate `npm run skills:json`, then verify
+both sides' skills survived.
 
 ## The fleet & who deploys what
 
@@ -160,6 +240,10 @@ where RLS allows and for `--no-verify-jwt` public functions.
 
 ## Open queue (next session starts here)
 
+0. **Flowtable/Flowwork deploy nudge on rzhj** (see the arc section above):
+   migration 20260712140000 + workspace-chat & agent-execute redeploys +
+   "Sync skills from code", then the two Stage-3 verifications (Flowwork
+   felkodsfråga with flowtable citation; user-field resolve_links).
 1. ~~kb over 80~~ **DONE** — kb at 100 (feedback + versioning live-verified
    2026-07-07). Remaining sub-80 tail: contact-center 41, media 57,
    accounting 58 (SE statutory P1s: NE-bilaga/INK2/SRU, SIE 4 ledger
