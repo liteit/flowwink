@@ -8805,6 +8805,81 @@ export type Database = {
           },
         ]
       }
+      knowledge_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          content_hash: string
+          embedding: string | null
+          embedding_model: string | null
+          entity_id: string
+          id: string
+          metadata: Json
+          source_table: string
+          title: string
+          tsv: unknown
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          chunk_index: number
+          content: string
+          content_hash: string
+          embedding?: string | null
+          embedding_model?: string | null
+          entity_id: string
+          id?: string
+          metadata?: Json
+          source_table: string
+          title: string
+          tsv?: unknown
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          content_hash?: string
+          embedding?: string | null
+          embedding_model?: string | null
+          entity_id?: string
+          id?: string
+          metadata?: Json
+          source_table?: string
+          title?: string
+          tsv?: unknown
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
+      knowledge_index_queue: {
+        Row: {
+          attempts: number
+          entity_id: string
+          last_error: string | null
+          op: string
+          queued_at: string
+          source_table: string
+        }
+        Insert: {
+          attempts?: number
+          entity_id: string
+          last_error?: string | null
+          op?: string
+          queued_at?: string
+          source_table: string
+        }
+        Update: {
+          attempts?: number
+          entity_id?: string
+          last_error?: string | null
+          op?: string
+          queued_at?: string
+          source_table?: string
+        }
+        Relationships: []
+      }
       landed_costs: {
         Row: {
           amount_cents: number
@@ -22076,6 +22151,10 @@ export type Database = {
         }
         Returns: Json
       }
+      register_knowledge_indexer_cron: {
+        Args: { p_anon_key: string; p_supabase_url: string }
+        Returns: Json
+      }
       register_visitor_intent_trigger: {
         Args: { p_anon_key: string; p_supabase_url: string }
         Returns: Json
@@ -22418,6 +22497,26 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      search_knowledge_chunks: {
+        Args: {
+          match_count?: number
+          query_embedding?: string
+          query_text: string
+          rrf_k?: number
+          sources?: string[]
+        }
+        Returns: {
+          chunk_id: string
+          content: string
+          entity_id: string
+          hybrid_score: number
+          metadata: Json
+          semantic_score: number
+          source_table: string
+          text_score: number
+          title: string
+        }[]
       }
       search_memories_hybrid: {
         Args: {
