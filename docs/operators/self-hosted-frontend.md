@@ -103,13 +103,52 @@ nginx covers these instead:
 ## Scope reminder — this is 1 of 4 layers
 
 A FlowWink site is schema + skills + edge functions + frontend
-(see [provisioning-and-updates.md](./provisioning-and-updates.md)). This
-Dockerfile only moves the **frontend** off Vercel. The backend is still a
-Supabase project: run migrations (`supabase db push`), deploy edge functions,
-and sync skills exactly as for any other instance. Fully air-gapped operation
-(self-hosted Supabase on the same VPS) is a separate track — the frontend
-container doesn't care where the Supabase URL points, so it already works
-against a self-hosted Supabase if you stand one up.
+(see [provisioning-and-updates.md](./provisioning-and-updates.md)). The
+sections above only move the **frontend** off Vercel. With a cloud Supabase
+backend, run migrations (`supabase db push`), deploy edge functions, and sync
+skills exactly as for any other instance. For a fully self-hosted backend on
+the same box, see the next section.
+
+## Fully self-hosted: FlowWink against a self-hosted Supabase
+
+Verified 2026-07-13 on one Easypanel VPS: frontend image + Easypanel's
+Supabase template ("din data, din AI, din hårdvara" — everything behind your
+own firewall). The frontend container doesn't care where the Supabase URL
+points; the work is bootstrapping the backend's three layers.
+
+**Key CLI fact:** `supabase login` / `supabase link` / `supabase functions
+deploy` talk to Supabase's cloud **Management API** — a self-hosted instance
+has no control plane, so they don't apply. The self-hosted equivalents:
+
+| Layer | Cloud | Self-hosted |
+|---|---|---|
+| Schema | `supabase link` + `db push` | `supabase db push --db-url 'postgresql://postgres:<pw>@<host>:5432/postgres'` (no login/link; records applied migrations in the ledger so re-runs only apply new ones). Postgres usually isn't exposed publicly — run on the server, tunnel via `ssh -L`, or fall back to looping `supabase/migrations/*.sql` (baseline first, sorted) through `docker exec -i <db-container> psql -U postgres -d postgres -q` — all migrations are idempotent. |
+| Edge functions | `supabase functions deploy` | Copy files into the functions volume and restart: `cp -r supabase/functions/* <easypanel-project>/volumes/functions/ && docker restart <functions-container>`. **Keep the existing `main/` router** (the repo has none — the edge runtime routes through it). `VERIFY_JWT=false` is fine: FlowWink functions do their own auth. |
+| Skills | `npm run sync:skills` or admin UI | Same as cloud once you're in: **/admin/modules → "Sync skills from code"** (migrations seed only a handful of skills; bootstrap seeds all ~470). |
+
+**First admin user** (no signup flow on a fresh instance): create via GoTrue's
+admin API with the service-role key (found in the functions container's env),
+then grant the role:
+
+```bash
+curl "https://<supabase-host>/auth/v1/admin/users" \
+  -H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"you@example.com","password":"<temp>","email_confirm":true}'
+# then, in the db container:
+# insert into public.user_roles (user_id, role) values ('<returned id>', 'admin');
+```
+
+Then log in, install a template (New Site), and run "Sync skills from code".
+
+**Before real data goes in:**
+
+- **Rotate the JWT secret.** Easypanel/docker Supabase templates often ship
+  Supabase's *published demo keys* (`iss: supabase-demo`) — anyone can mint a
+  service_role token against your instance until you change `JWT_SECRET` and
+  regenerate the anon/service keys (then update the frontend env + restart).
+- Change the default Postgres password; configure SMTP (password resets) and
+  an AI provider key (admin → Integrations) as needed.
 
 Build notes: the `prebuild` migration script self-skips inside the image (no
 Supabase CLI present) — migrations never run from the image build. The build
