@@ -22740,6 +22740,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      set_flowpilot_heartbeat_cadence: {
+        Args: { p_schedule: string }
+        Returns: Json
+      }
       set_media_alt_text: {
         Args: { p_alt_text: string; p_bucket?: string; p_storage_path: string }
         Returns: {
