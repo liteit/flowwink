@@ -108,3 +108,31 @@ describe('Retrieval Engine confidentiality guardrails', () => {
     }
   });
 });
+
+describe('Retrieval Engine fusion guardrails (semantic weighting)', () => {
+  // The latest CREATE OR REPLACE of the RPC (semantic-weight migration) is the
+  // authoritative one applied last; assert its shape.
+  const migration = read('supabase/migrations/20260714170000_retrieval-semantic-weight.sql');
+
+  it('the fusion is weighted, not plain equal-weight RRF', () => {
+    // semantic term × semantic_weight, text term × (1 - semantic_weight).
+    expect(migration).toMatch(/semantic_weight\s+double precision DEFAULT/);
+    expect(migration).toMatch(/semantic_weight\s*\*\s*COALESCE\(1\.0 \/ \(rrf_k \+ s\.rank\)/);
+    expect(migration).toMatch(/\(1 - semantic_weight\)\s*\*\s*COALESCE\(1\.0 \/ \(rrf_k \+ t\.rank\)/);
+  });
+
+  it('near-ties break toward the semantically-closer chunk', () => {
+    expect(migration).toMatch(/ORDER BY f\.hybrid_score DESC, f\.semantic_score DESC/);
+  });
+
+  it('stays SECURITY INVOKER (caller-eyes preserved through the change)', () => {
+    const fn = migration.slice(migration.indexOf('FUNCTION public.search_knowledge_chunks'));
+    const body = fn.slice(0, fn.indexOf('$$;'));
+    expect(body).toContain('SECURITY INVOKER');
+    expect(body).not.toContain('SECURITY DEFINER');
+  });
+
+  it('drops the old signature so PostgREST has no overload ambiguity', () => {
+    expect(migration).toMatch(/DROP FUNCTION IF EXISTS public\.search_knowledge_chunks\(text, extensions\.vector, int, int, text\[\]\)/);
+  });
+});
