@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getServiceClient } from '../_shared/supabase-clients.ts';
+import { getServiceClient, getAnonClient } from '../_shared/supabase-clients.ts';
+import { retrieve, renderContext } from '../_shared/retrieval/index.ts';
+import { embedQuery } from '../_shared/retrieval/embedder.ts';
 import {
   loadWorkspaceFiles,
   buildWorkspacePrompt,
@@ -39,6 +41,17 @@ const corsHeaders = {
 };
 
 const MAX_TOOL_ITERATIONS = 4;
+
+/** Last user message as plain text (content may be a multimodal part array). */
+function extractLastUserText(messages: Array<{ role: string; content: ChatContent }>): string {
+  const last = [...(messages || [])].reverse().find((m) => m.role === 'user');
+  if (!last) return '';
+  if (typeof last.content === 'string') return last.content;
+  return (last.content || [])
+    .map((p) => (p.type === 'text' ? p.text : ''))
+    .filter(Boolean)
+    .join(' ');
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -404,15 +417,51 @@ serve(async (req) => {
     const profileSaveActive = !!conversationId && provider.supportsToolCalling;
     const visitorIdentifier = customerEmail || sessionId;
 
+    // Knowledge grounding via the Retrieval Engine (M3): top-K query-relevant
+    // chunks instead of the legacy full-KB dump. The chunk SEARCH runs with
+    // the ANON client — this is the rung-0 visitor surface, and RLS on
+    // knowledge_chunks guarantees only 'public' chunks can ground an answer.
+    // Falls back to the legacy bulk-dump if the chunk index isn't migrated
+    // yet on this instance (Law 4: degrade, never gate).
+    const retrievalQueryText = extractLastUserText(messages);
+    const buildRetrievedKnowledge = async (): Promise<string> => {
+      const sources = [
+        ...(settings?.includeContentAsContext ? ['pages'] : []),
+        ...(settings?.includeKbArticles ? ['kb_articles'] : []),
+      ];
+      if (!sources.length || !retrievalQueryText) return '';
+      const queryEmbedding = await embedQuery(supabase, retrievalQueryText);
+      let chunks = await retrieve(getAnonClient(), {
+        query: retrievalQueryText,
+        k: 12,
+        tokenBudget: Math.min(settings?.contentContextMaxTokens || 50000, 8000),
+        sources,
+        queryEmbedding,
+      });
+      // Per-article chat opt-out (kb.include_in_chat=false) — indexed for
+      // other surfaces, excluded here.
+      chunks = chunks.filter((c) => !(c.sourceTable === 'kb_articles' && c.metadata.include_in_chat === false));
+      // Admin-curated page allowlist, when configured.
+      const slugAllowlist = settings?.includeContentAsContext ? (settings?.includedPageSlugs || []) : [];
+      if (slugAllowlist.length > 0) {
+        chunks = chunks.filter((c) => c.sourceTable !== 'pages' || slugAllowlist.includes(String(c.metadata.slug)));
+      }
+      if (!chunks.length) return '';
+      return `\n\n=== WEBSITE CONTENT (retrieved by relevance to the question) ===\n${renderContext(chunks)}`;
+    };
+
     const [{ soul, identity, agents }, knowledgeBase, skillTools, visitorContext] = await Promise.all([
       loadWorkspaceFiles(supabase),
       shouldLoadKB
-        ? buildKnowledgeBase(
-            supabase,
-            settings?.contentContextMaxTokens || 50000,
-            settings?.includeContentAsContext ? (settings?.includedPageSlugs || []) : [],
-            settings?.includeKbArticles || false,
-          )
+        ? buildRetrievedKnowledge().catch((e) => {
+            console.error('retrieval grounding failed — falling back to legacy KB dump:', e);
+            return buildKnowledgeBase(
+              supabase,
+              settings?.contentContextMaxTokens || 50000,
+              settings?.includeContentAsContext ? (settings?.includedPageSlugs || []) : [],
+              settings?.includeKbArticles || false,
+            );
+          })
         : Promise.resolve(''),
       shouldLoadSkills ? loadSkillTools(supabase, 'external') : Promise.resolve([]),
       visitorIdentifier ? loadVisitorContext(supabase, visitorIdentifier, conversationId) : Promise.resolve(''),

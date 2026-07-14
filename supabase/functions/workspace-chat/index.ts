@@ -22,6 +22,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { getServiceClient, resolveCaller } from '../_shared/supabase-clients.ts';
 import { resolveAiConfig, isAnthropicProvider } from '../_shared/ai-config.ts';
 import { logAiUsage } from '../_shared/ai-usage-logger.ts';
+import { knowledgeChunksSource, flowtableSource, type SourceCtx } from '../_shared/retrieval/sources.ts';
+import { embedQuery } from '../_shared/retrieval/embedder.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -168,6 +170,10 @@ async function buildContext(
   supabase: any,
   sources: SourceKey[],
   query = '',
+  // M3 (Retrieval Engine): the caller's own client + optional query vector.
+  // Knowledge-shaped sources retrieve chunks WITH THE CALLER'S EYES (RLS on
+  // knowledge_chunks); entity/live sources keep the service client as before.
+  opts: { userClient?: any; queryEmbedding?: number[] | null } = {},
 ): Promise<{ contextText: string; citations: Citation[]; meta: ContextMeta }> {
   const citations: Citation[] = [];
   const rawBlocks: Array<{ source: string; text: string }> = [];
@@ -184,30 +190,38 @@ async function buildContext(
     return r;
   };
 
-  if (sources.includes('documents')) {
-    const { data } = await supabase
-      .from('documents')
-      .select('id, title, description, related_entity_type, source, content_md, extraction_status, created_at')
-      .order('created_at', { ascending: false })
-      .limit(PER_SOURCE_LIMIT);
-    if (data?.length) {
-      const lines = data.map((d: any) => {
-        const r = push('document', d.id, d.title || 'Untitled', `/admin/documents/${d.id}`);
-        const meta = d.related_entity_type ? ` [${d.related_entity_type}]` : '';
-        const sourceTag = d.source && d.source !== 'manual' ? ` (${d.source})` : '';
-        const desc = d.description ? ` — ${String(d.description).slice(0, 200)}` : '';
-
-        // If we have a successfully extracted markdown shadow, include a slice
-        // of the actual file content so the model can answer about it.
-        let body = '';
-        if (d.extraction_status === 'success' && d.content_md) {
-          const excerpt = String(d.content_md).slice(0, 2000);
-          body = `\n${excerpt}${d.content_md.length > 2000 ? '\n[…content truncated]' : ''}`;
-        }
-
-        return `[${r}] ${d.title || 'Untitled'}${sourceTag}${meta}${desc}${body}`;
-      });
-      rawBlocks.push({ source: 'documents', text: `### Documents\n${lines.join('\n\n')}` });
+  // ── Knowledge lane (Retrieval Engine M3): query-relevant chunks across the
+  // selected knowledge sources (documents/kb/pages/wiki), via the
+  // RetrievalSource contract. The search runs on the CALLER's client — staff
+  // see internal chunks through RLS; the old "25 most-recent rows" listings
+  // are replaced by relevance-ranked actual content.
+  const KNOWLEDGE_TABLES: Partial<Record<SourceKey, string>> = {
+    documents: 'documents',
+    kb: 'kb_articles',
+    pages: 'pages',
+    wiki: 'wiki_pages',
+  };
+  const chunkTables = sources.map((s) => KNOWLEDGE_TABLES[s]).filter(Boolean) as string[];
+  if (chunkTables.length && query) {
+    try {
+      const ctx: SourceCtx = {
+        query,
+        userClient: opts.userClient ?? supabase,
+        service: supabase,
+        queryEmbedding: opts.queryEmbedding,
+      };
+      const block = await knowledgeChunksSource(chunkTables, { k: 12, tokenBudget: 6000 }).run(ctx);
+      if (block) {
+        const lines = block.items.map((it) => {
+          const r = push(it.type, it.id, it.title, it.url);
+          return `[${r}] ${it.title}${it.url ? ` (${it.url})` : ''}\n${it.text}`;
+        });
+        rawBlocks.push({ source: 'knowledge', text: `${block.header}\n${lines.join('\n\n')}` });
+      }
+    } catch (e) {
+      // Chunk index not migrated yet on this instance → lane absent, chat
+      // still works from the remaining sources (Law 4).
+      console.error('cowork-chat: knowledge chunk lane failed', e);
     }
   }
 
@@ -254,38 +268,7 @@ async function buildContext(
     }
   }
 
-  if (sources.includes('kb')) {
-    const { data } = await supabase
-      .from('kb_articles')
-      .select('id, title, slug, summary, body')
-      .order('updated_at', { ascending: false })
-      .limit(PER_SOURCE_LIMIT);
-    if (data?.length) {
-      const lines = data.map((a: any) => {
-        const r = push('kb_article', a.id, a.title, `/kb/${a.slug || a.id}`);
-        const summary = a.summary || (a.body ? String(a.body).slice(0, 200) : '');
-        return `[${r}] ${a.title} — ${summary}`;
-      });
-      rawBlocks.push({ source: 'kb', text: `### Knowledge Base\n${lines.join('\n')}` });
-    }
-  }
-
-  if (sources.includes('pages')) {
-    const { data } = await supabase
-      .from('pages')
-      .select('id, title, slug, status, seo_description')
-      .eq('status', 'published')
-      .order('updated_at', { ascending: false })
-      .limit(PER_SOURCE_LIMIT);
-    if (data?.length) {
-      const lines = data.map((p: any) => {
-        const r = push('page', p.id, p.title, `/${p.slug || ''}`);
-        const desc = p.seo_description ? ` — ${p.seo_description}` : '';
-        return `[${r}] ${p.title} (/${p.slug || ''})${desc}`;
-      });
-      rawBlocks.push({ source: 'pages', text: `### Pages\n${lines.join('\n')}` });
-    }
-  }
+  // (kb + pages now ground through the knowledge chunk lane above.)
 
   if (sources.includes('crm')) {
     const { data: leads, error: leadsErr } = await supabase
@@ -337,102 +320,24 @@ async function buildContext(
     }
   }
 
-  if (sources.includes('wiki')) {
-    const { data } = await supabase
-      .from('wiki_pages')
-      .select('slug, title, content_md, updated_at')
-      .order('updated_at', { ascending: false })
-      .limit(PER_SOURCE_LIMIT);
-    if (data?.length) {
-      const lines = data.map((w: any) => {
-        const r = push('wiki', w.slug, w.title || w.slug, `/admin/wiki/${w.slug}`);
-        const excerpt = String(w.content_md || '').slice(0, 1200);
-        return `[${r}] ${w.title || w.slug} (slug=${w.slug})\n${excerpt}${(w.content_md || '').length > 1200 ? '\n[…truncated]' : ''}`;
-      });
-      rawBlocks.push({ source: 'wiki', text: `### Wiki\n${lines.join('\n\n')}` });
-    }
-  }
+  // (wiki + documents now ground through the knowledge chunk lane above.)
 
   if (sources.includes('flowtable')) {
-    // Flowtable = the company's long-tail knowledge (imported sheets: error
-    // codes, price lists, supplier registers). Unlike the other sources these
-    // tables can be huge (6k+ rows), so retrieval is QUESTION-DRIVEN: extract
-    // keywords from the user's latest message and search values server-side,
-    // instead of dumping recent rows. Only workspace-shared bases are exposed
-    // — owner-private bases stay out of the team chat.
-    try {
-      const terms = [...new Set(
-        String(query).toLowerCase()
-          .replace(/[^\p{L}\p{N}\s_-]/gu, ' ')
-          .split(/\s+/)
-          .filter((t) => t.length >= 3),
-      )].slice(0, 6);
-
-      if (terms.length) {
-        const { data: bases } = await supabase
-          .from('flowtable_bases')
-          .select('id, name, slug')
-          .eq('workspace_shared', true)
-          .limit(10);
-
-        if (bases?.length) {
-          const baseIds = bases.map((b: any) => b.id);
-          const baseById: Record<string, any> = {};
-          for (const b of bases) baseById[b.id] = b;
-
-          const { data: tables } = await supabase
-            .from('flowtable_tables')
-            .select('id, base_id, name, slug')
-            .in('base_id', baseIds)
-            .limit(30);
-
-          const safeKey = (k: string) => /^[a-zA-Z0-9_]+$/.test(k);
-          const esc = (t: string) => t.replace(/[,()\\%]/g, '');
-          const ROWS_PER_TABLE = 6;
-          const tableBlocks: string[] = [];
-
-          for (const t of (tables || [])) {
-            const { data: fields } = await supabase
-              .from('flowtable_fields')
-              .select('key, name')
-              .eq('table_id', t.id)
-              .order('position')
-              .limit(20);
-            const keys = (fields || []).map((f: any) => f.key).filter(safeKey);
-            if (!keys.length) continue;
-
-            const orExpr = keys
-              .flatMap((k: string) => terms.map((term) => `values->>${k}.ilike.%${esc(term)}%`))
-              .join(',');
-            const { data: rows } = await supabase
-              .from('flowtable_records')
-              .select('id, values')
-              .eq('table_id', t.id)
-              .or(orExpr)
-              .limit(ROWS_PER_TABLE);
-            if (!rows?.length) continue;
-
-            const base = baseById[t.base_id];
-            const rowLines = rows.map((rec: any) => {
-              const v = rec.values || {};
-              const firstVal = String(Object.values(v)[0] ?? rec.id).slice(0, 60);
-              const r = push('flowtable', rec.id, `${t.name}: ${firstVal}`, `/admin/flowtable/${base?.slug}/${t.slug}`);
-              const kv = keys
-                .map((k: string) => (v[k] != null && v[k] !== '' ? `${k}: ${String(v[k]).slice(0, 200)}` : null))
-                .filter(Boolean)
-                .join('; ');
-              return `[${r}] ${kv}`;
-            });
-            tableBlocks.push(`#### ${base?.name}/${t.name} (fields: ${keys.join(', ')})\n${rowLines.join('\n')}`);
-          }
-
-          if (tableBlocks.length) {
-            rawBlocks.push({ source: 'flowtable', text: `### Flowtable (matched rows)\n${tableBlocks.join('\n\n')}` });
-          }
-        }
-      }
-    } catch (e) {
-      console.error('cowork-chat: flowtable source failed', e);
+    // Live lane via the RetrievalSource contract — implementation moved to
+    // _shared/retrieval/sources.ts (question-driven search over
+    // workspace-shared bases; structured rows are never chunk-indexed).
+    const block = await flowtableSource.run({
+      query,
+      userClient: opts.userClient ?? supabase,
+      service: supabase,
+      queryEmbedding: opts.queryEmbedding,
+    });
+    if (block) {
+      const lines = block.items.map((it) => {
+        const r = push(it.type, it.id, it.title, it.url);
+        return `[${r}] ${it.text}`;
+      });
+      rawBlocks.push({ source: 'flowtable', text: `${block.header}\n${lines.join('\n')}` });
     }
   }
 
@@ -564,7 +469,15 @@ Deno.serve(async (req) => {
     const webSearchOn = mode === 'strict' ? false : settings.allowWebSearch && !!Deno.env.get('FIRECRAWL_API_KEY');
 
     const latestUserMessage = [...messages].reverse().find((m) => m.role === 'user')?.content ?? '';
-    const { contextText, citations, meta: contextMeta } = await buildContext(supabaseAdmin, requestedSources, String(latestUserMessage));
+    // Hybrid query vector (provider CONFIG via service; null → text-only).
+    const queryEmbedding = await embedQuery(supabaseAdmin, String(latestUserMessage));
+    const { contextText, citations, meta: contextMeta } = await buildContext(
+      supabaseAdmin,
+      requestedSources,
+      String(latestUserMessage),
+      // Chunk retrieval runs with the CALLER's eyes (auth.client), not admin.
+      { userClient: supabaseUser, queryEmbedding },
+    );
     console.log(`[cowork-chat] context: ${contextMeta.tokens_used}/${contextMeta.tokens_budget} tokens, ${contextMeta.sources_active} sources, truncated=[${contextMeta.sources_truncated.join(',')}]`);
 
     const { apiKey, apiUrl, model, provider } = await resolveAiConfig(supabaseAdmin, 'fast');

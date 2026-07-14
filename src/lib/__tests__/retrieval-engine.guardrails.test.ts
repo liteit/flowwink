@@ -80,6 +80,24 @@ describe('Retrieval Engine confidentiality guardrails', () => {
     expect(serviceUses.length).toBe(embedConfigUses.length);
   });
 
+  it('chat-completion SEARCHES with the anon client (rung 0), never service', () => {
+    const fn = read('supabase/functions/chat-completion/index.ts');
+    expect(fn).toMatch(/retrieve\(\s*getAnonClient\(\)/);
+    expect(fn).not.toMatch(/retrieve\(\s*(supabase|getServiceClient)/);
+  });
+
+  it('Flowwork retrieves chunks with the CALLER’s client, not admin', () => {
+    const fn = read('supabase/functions/workspace-chat/index.ts');
+    expect(fn).toContain('knowledgeChunksSource');
+    expect(fn).toMatch(/userClient:\s*supabaseUser/);
+  });
+
+  it('the chunk-lane source resolves through the caller client', () => {
+    const src = read('supabase/functions/_shared/retrieval/sources.ts');
+    expect(src).toMatch(/retrieve\(\s*userClient/);
+    expect(src).not.toMatch(/retrieve\(\s*service/);
+  });
+
   it('structured-data tables are not chunk sources (two-lane rule)', () => {
     const indexer = read('supabase/functions/_shared/retrieval/indexer.ts');
     const sourcesMatch = indexer.match(/CHUNK_SOURCES = \[([^\]]+)\]/);
