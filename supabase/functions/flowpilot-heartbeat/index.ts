@@ -276,13 +276,19 @@ serve(async (req) => {
     const { data: hbOv } = await supabase
       .from('site_settings').select('value').eq('key', 'heartbeat_overrides').maybeSingle();
     const ov = (hbOv?.value || null) as
-      { tokenBudget?: number; maxIterations?: number; skillCategories?: string[]; lightContext?: boolean; dispatchMode?: boolean } | null;
+      { tokenBudget?: number; maxIterations?: number; skillCategories?: string[]; lightContext?: boolean; dispatchMode?: boolean; tier?: 'fast' | 'reasoning' } | null;
     // Dispatch surface ON by default — the 200+ business skills reach the
     // operator via search_skills/execute_skill (2 tools) instead of a pre-narrowed
     // set baked into the tool array. Set heartbeat_overrides.dispatchMode=false to
     // A/B the legacy pre-narrow path.
     const dispatchMode = ov?.dispatchMode !== false;
     const light = !!ov?.lightContext;
+    // Model tier is a DIAL (cost control): routine autonomous cycles run on
+    // the 'fast' tier (≈5× cheaper; gpt-4.1-mini class). Dial UP per instance
+    // with heartbeat_overrides.tier='reasoning' when the operator's workload
+    // warrants the flagship model. Observed before this dial existed: hourly
+    // heartbeats at tier 'reasoning' burned ~3M prompt tokens/day (~$6-7/day).
+    const hbTier: 'fast' | 'reasoning' = ov?.tier === 'reasoning' ? 'reasoning' : 'fast';
 
     // 0a. Follow-through pre-pass — complete human-approved actions BEFORE
     // reasoning, and surface the results in this cycle's context.
@@ -357,7 +363,7 @@ serve(async (req) => {
     ], {
       scope: 'internal',
       maxIterations: maxIter,
-      tier: 'reasoning',
+      tier: hbTier,
       traceId,
       builtInToolGroups: ['memory', 'objectives', 'reflect', 'planning', 'automations-exec'],
       tokenBudget: TOKEN_BUDGET,
@@ -403,7 +409,7 @@ serve(async (req) => {
         ], {
           scope: 'internal',
           maxIterations: Math.min(6, maxIter),
-          tier: 'reasoning',
+          tier: hbTier,
           traceId: `${traceId}-cp`,
           builtInToolGroups: ['objectives', 'planning'],
           tokenBudget: Math.min(budgetLeft, 60_000),
