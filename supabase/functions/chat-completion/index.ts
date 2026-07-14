@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getServiceClient, getAnonClient } from '../_shared/supabase-clients.ts';
 import { retrieve, renderContext } from '../_shared/retrieval/index.ts';
 import { embedQuery } from '../_shared/retrieval/embedder.ts';
+import { resolveAuthenticatedCustomer, buildCustomerContext } from '../_shared/customer-context.ts';
 import {
   loadWorkspaceFiles,
   buildWorkspacePrompt,
@@ -417,6 +418,20 @@ serve(async (req) => {
     const profileSaveActive = !!conversationId && provider.supportsToolCalling;
     const visitorIdentifier = customerEmail || sessionId;
 
+    // Identity ladder rung 2 (conversation-and-retrieval.md): when the request
+    // carries a VERIFIED user JWT (the authenticated portal surface, not the
+    // anon public widget), inject the signed-in customer's OWN account summary.
+    // Resolved strictly from the token — the body `customerEmail` is rung-1
+    // visitor memory only and must never unlock another person's account.
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    const authedCustomer = await resolveAuthenticatedCustomer(req.headers.get('Authorization'), anonKey);
+    const customerContext = authedCustomer
+      ? await buildCustomerContext(supabase, authedCustomer.email).catch((e) => {
+          console.error('customer context build failed:', e);
+          return '';
+        })
+      : '';
+
     // Knowledge grounding via the Retrieval Engine (M3): top-K query-relevant
     // chunks instead of the legacy full-KB dump. The chunk SEARCH runs with
     // the ANON client — this is the rung-0 visitor surface, and RLS on
@@ -479,6 +494,7 @@ serve(async (req) => {
 
     if (knowledgeBase) chatPrompt += knowledgeBase;
     if (visitorContext) chatPrompt += visitorContext;
+    if (customerContext) chatPrompt += customerContext;
 
     // Sentiment detection
     if (settings?.sentimentDetectionEnabled && settings?.humanHandoffEnabled) {
