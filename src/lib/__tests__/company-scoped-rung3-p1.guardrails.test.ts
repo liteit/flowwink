@@ -48,16 +48,15 @@ describe('rung 3 (B2B) P1 read-rung guardrails', () => {
     expect(chat).toMatch(/resolveCompanyMembership\(supabase, req\.headers\.get\('Authorization'\)/);
   });
 
-  it('read skills are external + auto (reads); no destructive company skill sneaks in as auto', () => {
+  it('read skills are external + auto and gated at the viewer (read) role', () => {
     const block = companiesMod.slice(companiesMod.indexOf("name: 'list_company_orders'"));
     expect(block).toMatch(/scope:\s*'external'/);
     expect(block).toMatch(/trust_level:\s*'auto'/);
-    // the set is exactly the two read skills — a write/delete company skill must
-    // not be added here without its own trust gating.
-    const setLine = chat.match(/COMPANY_SCOPED_SKILLS = new Set\(\[[^\]]*\]\)/);
-    expect(setLine).toBeTruthy();
-    expect(setLine![0]).toContain('list_company_orders');
-    expect(setLine![0]).toContain('list_company_invoices');
-    expect(setLine![0]).not.toMatch(/delete|refund|approve|pay_/i);
+    // The company-scope set is now derived from the role map (P2). The reads must
+    // remain open to any active member (viewer); every entry carries a min role so
+    // a write can never be offered without an explicit role gate (see the P2 test).
+    expect(chat).toMatch(/COMPANY_SCOPED_SKILLS = new Set\(Object\.keys\(COMPANY_SKILL_MIN_ROLE\)\)/);
+    expect(chat).toMatch(/list_company_orders:\s*'viewer'/);
+    expect(chat).toMatch(/list_company_invoices:\s*'viewer'/);
   });
 });

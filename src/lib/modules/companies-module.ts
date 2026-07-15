@@ -170,6 +170,79 @@ Manages CRM companies: list, get, create, update, delete.
     },
     instructions: "Company-facing self-service, read-only. Scoped to the caller's OWN company from the verified session — never ask for a company id. Returns invoices with total + due date + an unpaid flag. Paying an invoice is a separate, deliberate step (not this skill).",
   },
+  {
+    name: 'request_company_return',
+    description: "Open a return (RMA) for one of the signed-in B2B contact's OWN company's orders (identity ladder rung 3, write). Use when: an authenticated company contact with the buyer role or higher wants to return a company order. NOT for: a personal B2C order (request_return), staff-side return processing, viewers (read-only role), or anonymous visitors.",
+    category: 'commerce',
+    handler: 'internal:request_company_return',
+    scope: 'external',
+    trust_level: 'auto',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'request_company_return',
+        description: "Open a return for one of the caller's company orders. Scoped server-side to the caller's active company; requires the buyer role or higher.",
+        parameters: {
+          type: 'object',
+          properties: {
+            order_reference: { type: 'string', description: "The company order id (or its short prefix) to return." },
+            reason_code: { type: 'string', enum: ['defective', 'wrong_item', 'not_as_described', 'changed_mind', 'damaged_in_transit', 'other'] },
+            reason: { type: 'string', description: 'Free-text detail (optional).' },
+          },
+          required: ['order_reference'],
+        },
+      },
+    },
+    instructions: "Company-facing write. The company + role come from the verified session — never ask for or pass a company id. Resolve the order among the company's own orders (list_company_orders first if unsure of the id). Opens a 'requested' RMA only; approval + refund stay staff-gated. If the contact's role is below buyer, the platform refuses — tell them to ask a company admin.",
+  },
+  {
+    name: 'approve_company_quote',
+    description: "Accept/approve a sales quote addressed to the signed-in B2B contact's OWN company (identity ladder rung 3, commitment). Use when: an authenticated company contact with the approver role or higher wants to accept a quote their company received. NOT for: creating or sending quotes (staff), buyers/viewers (insufficient role), paying (a separate money step), or anonymous visitors.",
+    category: 'commerce',
+    handler: 'internal:approve_company_quote',
+    scope: 'external',
+    trust_level: 'auto',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'approve_company_quote',
+        description: "Accept a quote belonging to the caller's active company. Scoped server-side; requires the approver role or higher. Acceptance is a commitment, not a payment.",
+        parameters: {
+          type: 'object',
+          properties: {
+            quote_reference: { type: 'string', description: 'The quote number (or id) to accept.' },
+          },
+          required: ['quote_reference'],
+        },
+      },
+    },
+    instructions: "Company-facing commitment. The company + role come from the verified session — never ask for a company id. Only quotes awaiting the customer (sent/viewed/pending_approval) can be accepted; already-accepted is idempotent. Accepting commits the company but moves NO money — payment is a separate, deliberate step. Below the approver role → the platform refuses.",
+  },
+  {
+    name: 'manage_company_contacts',
+    description: "Manage who else may act for the signed-in B2B contact's OWN company: list contacts, invite a colleague by email with a role, change a role, or revoke access (identity ladder rung 3, admin only). Use when: a company ADMIN wants to add/remove/adjust their organisation's portal users. NOT for: staff-side CRM contact management, non-admin roles, or anonymous visitors.",
+    category: 'crm',
+    handler: 'internal:manage_company_contacts',
+    scope: 'external',
+    trust_level: 'auto',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'manage_company_contacts',
+        description: "List/invite/set_role/revoke contacts of the caller's active company. Scoped server-side; requires the admin role.",
+        parameters: {
+          type: 'object',
+          properties: {
+            action: { type: 'string', enum: ['list', 'invite', 'set_role', 'revoke'], description: 'Default list.' },
+            email: { type: 'string', description: 'The colleague to invite / set_role / revoke.' },
+            role: { type: 'string', enum: ['viewer', 'buyer', 'approver', 'admin'], description: 'Role for invite / set_role.' },
+          },
+          required: ['action'],
+        },
+      },
+    },
+    instructions: "Company-facing admin. The company comes from the verified session — never ask for a company id. invite: an already-registered email is added active immediately; otherwise an 'invited' row that activates automatically when they sign up with that email. Roles ascend viewer<buyer<approver<admin. The platform refuses removing/demoting the company's last admin, and refuses the whole skill below the admin role.",
+  },
 ];
 
 export const companiesModule = defineModule<CompanyModuleInput, CompanyModuleOutput>({
@@ -194,6 +267,10 @@ export const companiesModule = defineModule<CompanyModuleInput, CompanyModuleOut
     // Identity-ladder rung 3 (B2B) read skills — company-scoped self-service.
     'list_company_orders',
     'list_company_invoices',
+    // Rung 3 (B2B) P2 — write + roles (buyer/approver/admin gated server-side).
+    'request_company_return',
+    'approve_company_quote',
+    'manage_company_contacts',
   ],
   data: {
     tables: ['companies'],

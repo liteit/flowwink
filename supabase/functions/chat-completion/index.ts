@@ -55,7 +55,19 @@ const CUSTOMER_SCOPED_SKILLS = new Set(['request_return']);
  * rung 3). Offered ONLY when the contact has an ACTIVE company membership; their
  * handlers enforce isolation from the server-injected `_company_id`.
  */
-const COMPANY_SCOPED_SKILLS = new Set(['list_company_orders', 'list_company_invoices']);
+// Rung-3 (B2B) skills and the MINIMUM company role each requires. Reads are open
+// to any active member (viewer+); writes ascend buyer → approver → admin. The
+// handlers re-enforce this from the server-injected _company_role — this map only
+// keeps the OFFER surface honest (never dangle a skill a role can't use).
+const COMPANY_SKILL_MIN_ROLE: Record<string, 'viewer' | 'buyer' | 'approver' | 'admin'> = {
+  list_company_orders: 'viewer',
+  list_company_invoices: 'viewer',
+  request_company_return: 'buyer',
+  approve_company_quote: 'approver',
+  manage_company_contacts: 'admin',
+};
+const COMPANY_ROLE_RANK: Record<string, number> = { viewer: 0, buyer: 1, approver: 2, admin: 3 };
+const COMPANY_SCOPED_SKILLS = new Set(Object.keys(COMPANY_SKILL_MIN_ROLE));
 
 /** Last user message as plain text (content may be a multimodal part array). */
 function extractLastUserText(messages: Array<{ role: string; content: ChatContent }>): string {
@@ -584,10 +596,19 @@ serve(async (req) => {
         filteredSkillTools = filteredSkillTools.filter((t) => !CUSTOMER_SCOPED_SKILLS.has(t?.function?.name));
       }
       // Company-scoped (rung 3) skills are offered ONLY to a contact with an
-      // active company membership — hidden otherwise (they'd fail the
-      // _company_id check anyway; hiding keeps the surface honest).
+      // active company membership, and only up to their role: a viewer sees the
+      // reads, a buyer also sees request_company_return, an approver also
+      // approve_company_quote, an admin also manage_company_contacts. Hidden
+      // otherwise (they'd fail the handler _company_id/_company_role check anyway;
+      // hiding keeps the surface honest).
       if (!companyCtx?.activeCompanyId) {
         filteredSkillTools = filteredSkillTools.filter((t) => !COMPANY_SCOPED_SKILLS.has(t?.function?.name));
+      } else {
+        const haveRank = COMPANY_ROLE_RANK[companyCtx.activeRole ?? 'viewer'] ?? 0;
+        filteredSkillTools = filteredSkillTools.filter((t) => {
+          const need = COMPANY_SKILL_MIN_ROLE[t?.function?.name];
+          return need === undefined || haveRank >= COMPANY_ROLE_RANK[need];
+        });
       }
       tools.push(...filteredSkillTools);
     }

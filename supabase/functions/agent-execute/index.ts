@@ -637,6 +637,15 @@ serve(async (req) => {
       } else if (handler === 'internal:list_company_invoices') {
         result = await executeListCompanyRecords(supabase, args, 'invoices');
 
+      } else if (handler === 'internal:request_company_return') {
+        result = await executeRequestCompanyReturn(supabase, args);
+
+      } else if (handler === 'internal:approve_company_quote') {
+        result = await executeApproveCompanyQuote(supabase, args);
+
+      } else if (handler === 'internal:manage_company_contacts') {
+        result = await executeManageCompanyContacts(supabase, args);
+
       } else if (handler === 'internal:lint_skill') {
         result = await executeLintSkill(supabase, args);
 
@@ -11808,6 +11817,257 @@ async function executeListCompanyRecords(
     })),
     note: rows.length === 0 ? 'No invoices linked to this company yet.' : undefined,
   };
+}
+
+// ── Company-role gate (identity ladder rung 3, P2 — write + roles) ────────────
+// The verified active company + role are server-injected (_company_id /
+// _company_role), never a model/body claim. Writes require a MINIMUM role. The
+// offer surface in chat-completion already hides higher-privilege skills from a
+// lower role, but THIS handler-side check is the authoritative gate: an external
+// / MCP caller has no company context, so every company skill simply denies.
+// Roles ascend viewer < buyer < approver < admin.
+const COMPANY_ROLE_RANK: Record<string, number> = { viewer: 0, buyer: 1, approver: 2, admin: 3 };
+
+function companyScopeGuard(
+  args: Record<string, unknown>,
+  minRole: 'viewer' | 'buyer' | 'approver' | 'admin',
+): { companyId: string; role: string } | { error: string } {
+  const companyId = typeof (args as any)._company_id === 'string' ? (args as any)._company_id.trim() : '';
+  if (!companyId) {
+    return { error: 'You must be signed in as a company contact for this. If you just signed in, your account may not be linked to a company yet — ask your account manager.' };
+  }
+  const role = typeof (args as any)._company_role === 'string' ? (args as any)._company_role.trim() : 'viewer';
+  if ((COMPANY_ROLE_RANK[role] ?? 0) < (COMPANY_ROLE_RANK[minRole] ?? 0)) {
+    return { error: `This action needs the "${minRole}" company role or higher; your role is "${role}". Ask a company admin to grant it.` };
+  }
+  return { companyId, role };
+}
+
+// internal:request_company_return — company-scoped RMA (rung 3 P2, buyer+). The
+// order is resolved ONLY among the caller's ACTIVE company's orders (company_id) —
+// the exact company analog of request_return's own-order enforcement: a contact of
+// company A can never open a return against company B's order. Write, role-gated.
+// ─────────────────────────────────────────────────────────────────────────────
+async function executeRequestCompanyReturn(
+  supabase: any,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  const scope = companyScopeGuard(args, 'buyer');
+  if ('error' in scope) return { success: false, error: scope.error };
+  const { companyId } = scope;
+
+  const ref = typeof args.order_reference === 'string' ? args.order_reference.trim() : '';
+  if (!ref) return { success: false, error: 'order_reference is required (which company order to return).' };
+
+  const { data: coOrders, error: ordErr } = await supabase
+    .from('orders')
+    .select('id, status, total_cents, currency, created_at')
+    .eq('company_id', companyId)                          // ← the isolation predicate
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (ordErr) return { success: false, error: `Could not look up your company's orders: ${ordErr.message}` };
+
+  const cleanRef = ref.replace(/^#/, '').toLowerCase();
+  const matches = (coOrders ?? []).filter((o: any) =>
+    o.id.toLowerCase() === cleanRef || o.id.toLowerCase().startsWith(cleanRef));
+  if (matches.length === 0) {
+    return { success: false, error: `No order matching "${ref}" was found for your company. I can list your company's orders if that helps.` };
+  }
+  if (matches.length > 1) {
+    return { success: false, error: `"${ref}" matches more than one of your company's orders — please give the full order id (${matches.slice(0, 3).map((o: any) => o.id.slice(0, 12)).join(', ')}…).` };
+  }
+  const order = matches[0];
+
+  // Idempotency: don't open a second open return for the same order.
+  const { data: existing } = await supabase
+    .from('returns')
+    .select('id, rma_number, status')
+    .eq('order_id', order.id)
+    .not('status', 'in', '("refunded","rejected","cancelled")')
+    .limit(1);
+  if (existing && existing.length) {
+    return { success: true, already_open: true, rma_number: existing[0].rma_number, status: existing[0].status,
+      message: `Your company already has an open return (${existing[0].rma_number || 'pending'}) for this order — it's ${existing[0].status}.` };
+  }
+
+  const reasonCode = typeof args.reason_code === 'string' && RETURN_REASON_CODES.includes(args.reason_code)
+    ? args.reason_code : 'other';
+  const reason = typeof args.reason === 'string' ? args.reason.slice(0, 2000) : null;
+  const callerUserId = typeof (args as any)._caller_user_id === 'string' ? (args as any)._caller_user_id : null;
+
+  const { data: created, error: insErr } = await supabase
+    .from('returns')
+    .insert({ order_id: order.id, reason_code: reasonCode, reason, status: 'requested', created_by: callerUserId })
+    .select('id, rma_number, status')
+    .single();
+  if (insErr) return { success: false, error: `Could not open the return: ${insErr.message}` };
+
+  return {
+    success: true, rma_number: created.rma_number, status: created.status, order_id: order.id,
+    message: `Return request opened for company order ${order.id.slice(0, 8)}${created.rma_number ? ` (RMA ${created.rma_number})` : ''}. Our team will review it and follow up about the refund.`,
+  };
+}
+
+// internal:approve_company_quote — accept a quote addressed to the caller's ACTIVE
+// company (rung 3 P2, approver+). Commitment → gated above buyer. Resolved only
+// among the company's own quotes; only quotes actually awaiting the customer
+// (sent/viewed/pending_approval) can be accepted. Idempotent: an already-accepted
+// quote returns success without a second write. Accepting is a commitment, NOT a
+// payment — money stays staff/rail-gated (Decision 4).
+// ─────────────────────────────────────────────────────────────────────────────
+const QUOTE_ACCEPTABLE_FROM = ['sent', 'viewed', 'pending_approval'];
+
+async function executeApproveCompanyQuote(
+  supabase: any,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  const scope = companyScopeGuard(args, 'approver');
+  if ('error' in scope) return { success: false, error: scope.error };
+  const { companyId } = scope;
+
+  const ref = typeof args.quote_reference === 'string' ? args.quote_reference.trim()
+    : typeof args.quote_number === 'string' ? args.quote_number.trim() : '';
+  if (!ref) return { success: false, error: 'quote_reference is required (the quote number or id to approve).' };
+
+  const { data: coQuotes, error: qErr } = await supabase
+    .from('quotes')
+    .select('id, quote_number, status, total_cents, currency, accepted_at')
+    .eq('company_id', companyId)                          // ← the isolation predicate
+    .order('created_at', { ascending: false })
+    .limit(200);
+  if (qErr) return { success: false, error: `Could not look up your company's quotes: ${qErr.message}` };
+
+  const rl = ref.replace(/^#/, '').toLowerCase();
+  const matches = (coQuotes ?? []).filter((q: any) =>
+    (q.quote_number && q.quote_number.toLowerCase() === rl) ||
+    q.id.toLowerCase() === rl || q.id.toLowerCase().startsWith(rl));
+  if (matches.length === 0) return { success: false, error: `No quote matching "${ref}" was found for your company.` };
+  if (matches.length > 1) return { success: false, error: `"${ref}" matches more than one quote — please give the full quote number.` };
+  const quote = matches[0];
+
+  if (quote.status === 'accepted') {
+    return { success: true, already_accepted: true, quote_number: quote.quote_number, status: 'accepted',
+      message: `Quote ${quote.quote_number} is already accepted.` };
+  }
+  if (!QUOTE_ACCEPTABLE_FROM.includes(quote.status)) {
+    return { success: false, error: `Quote ${quote.quote_number} can't be accepted from status "${quote.status}".` };
+  }
+
+  const { data: updated, error: upErr } = await supabase
+    .from('quotes')
+    .update({ status: 'accepted', accepted_at: new Date().toISOString() })
+    .eq('id', quote.id)
+    .eq('company_id', companyId)                          // re-assert scope on the write
+    .in('status', QUOTE_ACCEPTABLE_FROM)                  // optimistic guard vs a concurrent change
+    .select('id, quote_number, status')
+    .single();
+  if (upErr) return { success: false, error: `Could not accept the quote: ${upErr.message}` };
+  return { success: true, quote_number: updated.quote_number, status: updated.status,
+    message: `Quote ${updated.quote_number} accepted for your company. Our team will proceed to the order/invoice — payment stays a separate, deliberate step.` };
+}
+
+// internal:manage_company_contacts — a company ADMIN manages who else may act for
+// their company (rung 3 P2, admin only). Every operation is scoped to the caller's
+// ACTIVE company (_company_id) — an admin of company A can never touch company B's
+// contacts. Actions: list, invite (email+role → an invited row, auto-activated on
+// signup by trg_link_invited_company_contacts, or active now if the person already
+// has an account), set_role, revoke. A guard prevents removing the last admin.
+// Grants up to admin (mirrors staff "grant portal access"); money stays staff.
+// ─────────────────────────────────────────────────────────────────────────────
+const COMPANY_CONTACT_ROLES = ['viewer', 'buyer', 'approver', 'admin'];
+
+async function executeManageCompanyContacts(
+  supabase: any,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  const scope = companyScopeGuard(args, 'admin');
+  if ('error' in scope) return { success: false, error: scope.error };
+  const { companyId } = scope;
+  const action = typeof args.action === 'string' ? args.action.trim().toLowerCase() : 'list';
+
+  if (action === 'list') {
+    const { data, error } = await supabase
+      .from('company_contacts')
+      .select('id, contact_email, company_role, visibility_scope, status, created_at')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) return { success: false, error: `Could not list company contacts: ${error.message}` };
+    return { success: true, company_id: companyId, count: (data ?? []).length,
+      contacts: (data ?? []).map((c: any) => ({ id: c.id, email: c.contact_email, role: c.company_role, scope: c.visibility_scope, status: c.status })) };
+  }
+
+  const email = typeof args.email === 'string' ? args.email.toLowerCase().trim() : '';
+  const roleProvided = typeof args.role === 'string' && COMPANY_CONTACT_ROLES.includes(args.role);
+  const role = roleProvided ? (args.role as string) : 'viewer';
+  const callerUserId = typeof (args as any)._caller_user_id === 'string' ? (args as any)._caller_user_id : null;
+
+  if (action === 'invite') {
+    if (!email) return { success: false, error: 'email is required to invite a contact.' };
+    // Already a contact of THIS company? Idempotent — never a duplicate row.
+    const { data: existing } = await supabase
+      .from('company_contacts')
+      .select('id, status, company_role')
+      .eq('company_id', companyId)
+      .ilike('contact_email', email)
+      .limit(1);
+    if (existing && existing.length) {
+      return { success: true, already_member: true, contact_id: existing[0].id, status: existing[0].status,
+        message: `${email} is already a ${existing[0].company_role} contact (${existing[0].status}).` };
+    }
+    // If the person already has an account, link + activate now; else invited row
+    // that the profiles trigger activates on signup.
+    const { data: prof } = await supabase.from('profiles').select('id').ilike('email', email).limit(1);
+    const authUserId = prof && prof.length ? prof[0].id : null;
+    const { data: created, error: insErr } = await supabase
+      .from('company_contacts')
+      .insert({
+        company_id: companyId, contact_email: email, auth_user_id: authUserId,
+        company_role: role, status: authUserId ? 'active' : 'invited', created_by: callerUserId,
+      })
+      .select('id, status, company_role')
+      .single();
+    if (insErr) return { success: false, error: `Could not invite the contact: ${insErr.message}` };
+    return { success: true, contact_id: created.id, status: created.status, role: created.company_role,
+      message: created.status === 'active'
+        ? `${email} added as ${created.company_role} (they already had an account).`
+        : `${email} invited as ${created.company_role}. They'll get access automatically when they sign up with this email.` };
+  }
+
+  if (action === 'set_role' || action === 'revoke') {
+    if (!email) return { success: false, error: `email is required to ${action} a contact.` };
+    if (action === 'set_role' && !roleProvided) {
+      return { success: false, error: 'role is required for set_role (viewer, buyer, approver, or admin).' };
+    }
+    // Never let the company be left without an active admin.
+    if (action === 'revoke' || (action === 'set_role' && role !== 'admin')) {
+      const { data: admins } = await supabase
+        .from('company_contacts')
+        .select('contact_email')
+        .eq('company_id', companyId)
+        .eq('company_role', 'admin')
+        .eq('status', 'active');
+      const activeAdmins = admins ?? [];
+      const targetIsOnlyAdmin = activeAdmins.length === 1 &&
+        (activeAdmins[0].contact_email ?? '').toLowerCase() === email;
+      if (targetIsOnlyAdmin) {
+        return { success: false, error: `${email} is the company's only admin — promote another contact to admin before ${action === 'revoke' ? 'revoking' : 'demoting'} them.` };
+      }
+    }
+    const patch = action === 'revoke' ? { status: 'revoked' } : { company_role: role };
+    const { data: updated, error: upErr } = await supabase
+      .from('company_contacts')
+      .update({ ...patch, updated_at: new Date().toISOString() })
+      .eq('company_id', companyId)                        // scope on the write
+      .ilike('contact_email', email)
+      .select('id, contact_email, company_role, status');
+    if (upErr) return { success: false, error: `Could not ${action} the contact: ${upErr.message}` };
+    if (!updated || !updated.length) return { success: false, error: `No contact with email "${email}" in your company.` };
+    return { success: true, updated: updated.length,
+      message: action === 'revoke' ? `${email} revoked.` : `${email} is now ${role}.` };
+  }
+
+  return { success: false, error: `Unknown action "${action}". Use list, invite, set_role, or revoke.` };
 }
 
 // internal:lint_skill — runs the Agent Contract Integrity pre-release checklist
