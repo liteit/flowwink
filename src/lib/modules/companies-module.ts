@@ -130,6 +130,46 @@ Manages CRM companies: list, get, create, update, delete.
     },
     instructions: 'Read-only. Returns pairs {company_a, name_a, company_b, name_b, score, same_domain} ordered by score. Merge is a manual decision — present pairs to the admin.',
   },
+  {
+    name: 'list_company_orders',
+    description: "List the orders of the signed-in B2B contact's OWN company (identity ladder rung 3). Use when: an authenticated company contact asks about their organisation's orders. NOT for: an individual's personal order (that is the B2C rung), staff-side order management, or anonymous visitors.",
+    category: 'commerce',
+    handler: 'internal:list_company_orders',
+    scope: 'external',
+    trust_level: 'auto',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'list_company_orders',
+        description: "List the signed-in contact's company orders. Scoped server-side to the caller's active company only.",
+        parameters: {
+          type: 'object',
+          properties: { limit: { type: 'integer', description: 'Max orders to return (default 20, max 50).' } },
+        },
+      },
+    },
+    instructions: "Company-facing self-service. The company is taken from the contact's verified session — do NOT ask for or pass a company id/name; the platform scopes to the caller's OWN company. Returns orders with status + total. If the contact isn't linked to a company yet, tell them to ask their account manager.",
+  },
+  {
+    name: 'list_company_invoices',
+    description: "List the invoices of the signed-in B2B contact's OWN company (identity ladder rung 3), including which are unpaid. Use when: an authenticated company contact asks about their organisation's invoices/what's outstanding. NOT for: personal B2C invoices, staff-side AR management, or anonymous visitors.",
+    category: 'commerce',
+    handler: 'internal:list_company_invoices',
+    scope: 'external',
+    trust_level: 'auto',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'list_company_invoices',
+        description: "List the signed-in contact's company invoices (with unpaid flag). Scoped server-side to the caller's active company only.",
+        parameters: {
+          type: 'object',
+          properties: { limit: { type: 'integer', description: 'Max invoices to return (default 20, max 50).' } },
+        },
+      },
+    },
+    instructions: "Company-facing self-service, read-only. Scoped to the caller's OWN company from the verified session — never ask for a company id. Returns invoices with total + due date + an unpaid flag. Paying an invoice is a separate, deliberate step (not this skill).",
+  },
 ];
 
 export const companiesModule = defineModule<CompanyModuleInput, CompanyModuleOutput>({
@@ -151,6 +191,9 @@ export const companiesModule = defineModule<CompanyModuleInput, CompanyModuleOut
     'update_company_profile',
     // Polymorphic multi-address skill — primary owner is companies.
     'manage_addresses',
+    // Identity-ladder rung 3 (B2B) read skills — company-scoped self-service.
+    'list_company_orders',
+    'list_company_invoices',
   ],
   data: {
     tables: ['companies'],

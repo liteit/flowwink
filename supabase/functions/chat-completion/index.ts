@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getServiceClient, getAnonClient } from '../_shared/supabase-clients.ts';
 import { retrieve, renderContext } from '../_shared/retrieval/index.ts';
 import { embedQuery } from '../_shared/retrieval/embedder.ts';
-import { resolveAuthenticatedCustomer, buildCustomerContext } from '../_shared/customer-context.ts';
+import { resolveAuthenticatedCustomer, buildCustomerContext, resolveCompanyMembership } from '../_shared/customer-context.ts';
 import {
   loadWorkspaceFiles,
   buildWorkspacePrompt,
@@ -49,6 +49,13 @@ const MAX_TOOL_ITERATIONS = 4;
  * handlers additionally enforce ownership from the verified _caller_email.
  */
 const CUSTOMER_SCOPED_SKILLS = new Set(['request_return']);
+
+/**
+ * Skills that act on the signed-in contact's COMPANY records (identity ladder
+ * rung 3). Offered ONLY when the contact has an ACTIVE company membership; their
+ * handlers enforce isolation from the server-injected `_company_id`.
+ */
+const COMPANY_SCOPED_SKILLS = new Set(['list_company_orders', 'list_company_invoices']);
 
 /** Last user message as plain text (content may be a multimodal part array). */
 function extractLastUserText(messages: Array<{ role: string; content: ChatContent }>): string {
@@ -193,6 +200,11 @@ async function executeChatTool(
   // customerEmail above. Forwarded to agent-execute so customer-scoped skills
   // act on the caller's own records. Never model-supplied.
   authedCustomerEmail?: string,
+  // VERIFIED active company + role (rung 3) — server-resolved from the JWT →
+  // membership. Forwarded so company-scoped skills act within the caller's own
+  // company. Never model-supplied.
+  activeCompanyId?: string | null,
+  activeCompanyRole?: string | null,
 ): Promise<string> {
   switch (toolName) {
     case 'firecrawl_search': {
@@ -281,6 +293,10 @@ async function executeChatTool(
             // Rung-2 identity: enables customer-scoped skills to enforce
             // ownership against the caller's own account. Absent for anon.
             ...(authedCustomerEmail ? { caller_email: authedCustomerEmail } : {}),
+            // Rung-3 identity: the active company + role, so company-scoped
+            // skills act only within the caller's own company. Absent unless a
+            // membership resolved.
+            ...(activeCompanyId ? { company_id: activeCompanyId, company_role: activeCompanyRole || 'viewer' } : {}),
           }),
         });
         const data = await resp.json();
@@ -446,6 +462,16 @@ serve(async (req) => {
         })
       : '';
 
+    // Rung 3 (B2B): resolve the contact's company membership from the SAME
+    // verified JWT. The active company (sole membership → auto) is what
+    // company-scoped skills act on — server-derived, never a body claim.
+    const companyCtx = authedCustomer
+      ? await resolveCompanyMembership(supabase, req.headers.get('Authorization'), anonKey).catch((e) => {
+          console.error('company membership resolve failed:', e);
+          return null;
+        })
+      : null;
+
     // Knowledge grounding via the Retrieval Engine (M3): top-K query-relevant
     // chunks instead of the legacy full-KB dump. The chunk SEARCH runs with
     // the ANON client — this is the rung-0 visitor surface, and RLS on
@@ -556,6 +582,12 @@ serve(async (req) => {
       // (no verified email), but hiding them keeps the anon widget honest.
       if (!authedCustomer) {
         filteredSkillTools = filteredSkillTools.filter((t) => !CUSTOMER_SCOPED_SKILLS.has(t?.function?.name));
+      }
+      // Company-scoped (rung 3) skills are offered ONLY to a contact with an
+      // active company membership — hidden otherwise (they'd fail the
+      // _company_id check anyway; hiding keeps the surface honest).
+      if (!companyCtx?.activeCompanyId) {
+        filteredSkillTools = filteredSkillTools.filter((t) => !COMPANY_SCOPED_SKILLS.has(t?.function?.name));
       }
       tools.push(...filteredSkillTools);
     }
@@ -825,6 +857,7 @@ serve(async (req) => {
                       tc.name, fnArgs,
                       conversationId, customerEmail, customerName,
                       authedCustomer?.email,
+                      companyCtx?.activeCompanyId, companyCtx?.activeRole,
                     );
                     msgs.push({ role: 'tool', tool_call_id: tc.id, content: result });
                   }

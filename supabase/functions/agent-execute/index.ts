@@ -631,6 +631,12 @@ serve(async (req) => {
       } else if (handler === 'internal:request_return') {
         result = await executeRequestReturn(supabase, args);
 
+      } else if (handler === 'internal:list_company_orders') {
+        result = await executeListCompanyRecords(supabase, args, 'orders');
+
+      } else if (handler === 'internal:list_company_invoices') {
+        result = await executeListCompanyRecords(supabase, args, 'invoices');
+
       } else if (handler === 'internal:lint_skill') {
         result = await executeLintSkill(supabase, args);
 
@@ -11745,6 +11751,62 @@ async function executeRequestReturn(
     status: created.status,
     order_id: order.id,
     message: `Return request opened for order ${order.id.slice(0, 8)}${created.rma_number ? ` (RMA ${created.rma_number})` : ''}. Our team will review it and follow up about the refund.`,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// internal:list_company_orders / list_company_invoices — identity ladder rung 3
+// (B2B) read skills. Return ONLY records of the caller's ACTIVE company, resolved
+// from the server-injected _company_id (never a model/body claim). The exact
+// company-level analog of request_return's own-record enforcement: a contact of
+// company A can never list company B's orders/invoices. Read-only, trust=auto.
+// ─────────────────────────────────────────────────────────────────────────────
+async function executeListCompanyRecords(
+  supabase: any,
+  args: Record<string, unknown>,
+  table: 'orders' | 'invoices',
+): Promise<unknown> {
+  const companyId = typeof (args as any)._company_id === 'string' ? (args as any)._company_id : '';
+  if (!companyId) {
+    return { success: false, error: 'You must be signed in as a company contact to see your company records. If you just signed in, your account may not be linked to a company yet — ask your account manager.' };
+  }
+  const limit = Math.min(Number((args as any).limit) || 20, 50);
+
+  if (table === 'orders') {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('id, status, total_cents, currency, customer_name, customer_email, created_at')
+      .eq('company_id', companyId)                       // ← the isolation predicate
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) return { success: false, error: `Could not list company orders: ${error.message}` };
+    return {
+      success: true, company_id: companyId, count: (data ?? []).length,
+      orders: (data ?? []).map((o: any) => ({
+        id: o.id, short_id: o.id.slice(0, 8), status: o.status,
+        total: `${((o.total_cents ?? 0) / 100).toFixed(0)} ${o.currency || 'SEK'}`,
+        placed_by: o.customer_name || o.customer_email, created_at: o.created_at,
+      })),
+    };
+  }
+
+  // invoices — company_id populated as memberships/backfill land (rung-3 P0 column)
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('id, invoice_number, status, total_cents, currency, due_date, customer_email, created_at')
+    .eq('company_id', companyId)                         // ← the isolation predicate
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) return { success: false, error: `Could not list company invoices: ${error.message}` };
+  const rows = data ?? [];
+  return {
+    success: true, company_id: companyId, count: rows.length,
+    invoices: rows.map((i: any) => ({
+      id: i.id, invoice_number: i.invoice_number, status: i.status,
+      total: `${((i.total_cents ?? 0) / 100).toFixed(0)} ${i.currency || 'SEK'}`,
+      due_date: i.due_date, unpaid: !['paid', 'cancelled'].includes(i.status),
+    })),
+    note: rows.length === 0 ? 'No invoices linked to this company yet.' : undefined,
   };
 }
 
