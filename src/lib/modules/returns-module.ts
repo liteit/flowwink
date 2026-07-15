@@ -54,6 +54,39 @@ const SKILLS: SkillSeed[] = [
       'rma_number is auto-generated if omitted (DB trigger) — you do NOT need to pass it or call generate_rma_number. Set reason_code (defective|wrong_item|not_as_described|changed_mind|damaged_in_transit|other) so return_reason_report can aggregate. Full RMA flow: create_return → add lines via manage_return_item → approve_return → receive_return → inspect_return (sets restocking fee) → refund_return.',
   },
   {
+    // Customer self-service (identity ladder rung 2, dial 2). Unlike
+    // create_return (internal, staff), this is scope 'external' so the
+    // authenticated portal assistant can offer it — but it acts ONLY on the
+    // signed-in customer's OWN order. Ownership is enforced server-side in the
+    // handler from the JWT-verified caller email, never from model arguments.
+    // It only creates a 'requested' RMA; approval and refund stay staff-gated.
+    name: 'request_return',
+    description:
+      "Request a return for one of the signed-in customer's OWN orders. Use when: an authenticated customer wants to return/send back something they bought. NOT for: staff-side RMA management (create_return), approving or refunding (staff only), or anonymous visitors (they must sign in first).",
+    category: 'commerce',
+    handler: 'internal:request_return',
+    scope: 'external',
+    trust_level: 'auto',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'request_return',
+        description: "Open a return request on the signed-in customer's own order. Only works for the authenticated customer's orders.",
+        parameters: {
+          type: 'object',
+          properties: {
+            order_reference: { type: 'string', description: "The order the customer wants to return, as they refer to it (the order id or its short prefix shown in their account, e.g. '977bda28'). Resolved against the caller's own orders only." },
+            reason_code: { type: 'string', enum: ['defective','wrong_item','not_as_described','changed_mind','damaged_in_transit','other'], description: 'Categorized return reason' },
+            reason: { type: 'string', description: "The customer's description of why they want to return it" },
+          },
+          required: ['order_reference'],
+        },
+      },
+    },
+    instructions:
+      "Customer-facing self-service. The customer identity is taken from their verified session — do NOT ask for or pass an email/customer id; the platform resolves the order against the caller's own orders. Pass order_reference as the customer names it (short id is fine). If no matching order is found for their account, tell them you can't find that order on their account and offer to list their orders. This only OPENS the return (status 'requested'); a person reviews and processes the refund.",
+  },
+  {
     name: 'manage_return_item',
     description:
       'Add/edit/remove line items on an existing return. Use when: specifying which order items are being returned and in what condition.',

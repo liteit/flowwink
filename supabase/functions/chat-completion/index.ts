@@ -43,6 +43,13 @@ const corsHeaders = {
 
 const MAX_TOOL_ITERATIONS = 4;
 
+/**
+ * Skills that act on the signed-in customer's own records (identity ladder
+ * rung 2, dial 2). Offered ONLY when a customer is authenticated; their
+ * handlers additionally enforce ownership from the verified _caller_email.
+ */
+const CUSTOMER_SCOPED_SKILLS = new Set(['request_return']);
+
 /** Last user message as plain text (content may be a multimodal part array). */
 function extractLastUserText(messages: Array<{ role: string; content: ChatContent }>): string {
   const last = [...(messages || [])].reverse().find((m) => m.role === 'user');
@@ -182,6 +189,10 @@ async function executeChatTool(
   supabase: any, supabaseUrl: string, serviceKey: string,
   toolName: string, args: any,
   conversationId?: string, customerEmail?: string, customerName?: string,
+  // VERIFIED signed-in customer email (rung 2) — distinct from the self-declared
+  // customerEmail above. Forwarded to agent-execute so customer-scoped skills
+  // act on the caller's own records. Never model-supplied.
+  authedCustomerEmail?: string,
 ): Promise<string> {
   switch (toolName) {
     case 'firecrawl_search': {
@@ -267,6 +278,9 @@ async function executeChatTool(
             arguments: args,
             agent_type: 'chat',
             conversation_id: conversationId,
+            // Rung-2 identity: enables customer-scoped skills to enforce
+            // ownership against the caller's own account. Absent for anon.
+            ...(authedCustomerEmail ? { caller_email: authedCustomerEmail } : {}),
           }),
         });
         const data = await resp.json();
@@ -534,9 +548,15 @@ serve(async (req) => {
     // FlowPilot action skills — gated on master switch + optional allow-list
     if (shouldLoadSkills) {
       const allow = settings?.allowedSkillNames ?? [];
-      const filteredSkillTools = allow.length > 0
+      let filteredSkillTools = allow.length > 0
         ? (skillTools as any[]).filter((t) => allow.includes(t?.function?.name))
         : (skillTools as any[]);
+      // Customer-scoped "my" skills (dial 2, rung 2) are only OFFERED to an
+      // authenticated customer. For anon they'd fail the ownership check anyway
+      // (no verified email), but hiding them keeps the anon widget honest.
+      if (!authedCustomer) {
+        filteredSkillTools = filteredSkillTools.filter((t) => !CUSTOMER_SCOPED_SKILLS.has(t?.function?.name));
+      }
       tools.push(...filteredSkillTools);
     }
 
@@ -804,6 +824,7 @@ serve(async (req) => {
                       supabase, supabaseUrl, serviceKey,
                       tc.name, fnArgs,
                       conversationId, customerEmail, customerName,
+                      authedCustomer?.email,
                     );
                     msgs.push({ role: 'tool', tool_call_id: tc.id, content: result });
                   }

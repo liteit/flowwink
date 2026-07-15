@@ -215,6 +215,13 @@ interface ExecuteRequest {
   caller_user_id?: string;
   /** When called via MCP, the api_key id (and inbound peer) that initiated the call. */
   caller_api_key_id?: string;
+  /**
+   * The VERIFIED email of a signed-in customer (identity ladder rung 2). Set by
+   * chat-completion from the resolved JWT — NEVER from model output. Customer-
+   * scoped skills (e.g. request_return) use it to enforce "acts on the caller's
+   * own records only". Injected into args as `_caller_email`.
+   */
+  caller_email?: string;
   objective_context?: {
     goal: string;
     step: string;
@@ -276,7 +283,7 @@ serve(async (req) => {
     }
 
     const body: ExecuteRequest = await req.json();
-    const { skill_id, skill_name, arguments: rawArgs = {}, agent_type, conversation_id, objective_context, trace_id, caller_user_id: bodyCallerUserId, caller_api_key_id } = body;
+    const { skill_id, skill_name, arguments: rawArgs = {}, agent_type, conversation_id, objective_context, trace_id, caller_user_id: bodyCallerUserId, caller_api_key_id, caller_email } = body;
     // A verified admin JWT is the authoritative caller identity — internal edge
     // callers (service key) keep passing caller_user_id/caller_api_key_id in the body.
     const caller_user_id = gateUserId ?? bodyCallerUserId;
@@ -290,6 +297,14 @@ serve(async (req) => {
     }
     if (caller_api_key_id && !(args as any)._caller_api_key_id) {
       (args as any)._caller_api_key_id = caller_api_key_id;
+    }
+    // Verified signed-in customer email (rung 2). Server-injected only — force
+    // it over anything the model may have put in args, so a customer-scoped
+    // skill can never be tricked into acting for another account.
+    if (caller_email) {
+      (args as any)._caller_email = String(caller_email).toLowerCase().trim();
+    } else {
+      delete (args as any)._caller_email;
     }
     if (_rawHasData) {
       console.log('[normalize-debug] rawKeys:', Object.keys(rawArgs as any), 'flatKeys:', Object.keys(args), 'sample:', JSON.stringify(args).slice(0,200));
@@ -592,6 +607,9 @@ serve(async (req) => {
 
       } else if (handler === 'internal:search_knowledge') {
         result = await executeSearchKnowledge(supabase, args);
+
+      } else if (handler === 'internal:request_return') {
+        result = await executeRequestReturn(supabase, args);
 
       } else if (handler === 'internal:lint_skill') {
         result = await executeLintSkill(supabase, args);
@@ -11632,6 +11650,81 @@ async function executeSearchKnowledge(
       content: c.content,
       score: c.score,
     })),
+  };
+}
+
+// internal:request_return — customer self-service RMA (identity ladder rung 2,
+// dial 2). Ownership is enforced BY CONSTRUCTION: the target order is resolved
+// only among the caller's OWN orders (orders.customer_email = the JWT-verified
+// _caller_email). A model-supplied order id that isn't the caller's simply
+// doesn't resolve — no other account's data is reachable or revealable. Creates
+// a 'requested' RMA only; approval + refund stay staff-gated. Never trusts an
+// email/customer id from args — only the server-injected _caller_email.
+// ─────────────────────────────────────────────────────────────────────────────
+const RETURN_REASON_CODES = ['defective','wrong_item','not_as_described','changed_mind','damaged_in_transit','other'];
+
+async function executeRequestReturn(
+  supabase: any,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  const email = typeof (args as any)._caller_email === 'string' ? (args as any)._caller_email : '';
+  if (!email) {
+    return { success: false, error: 'You must be signed in to request a return. Please log in to your account.' };
+  }
+  const ref = typeof args.order_reference === 'string' ? args.order_reference.trim() : '';
+  if (!ref) return { success: false, error: 'order_reference is required (the order to return).' };
+
+  // Resolve the order AMONG THE CALLER'S OWN ORDERS ONLY. Match by exact id or
+  // by the short prefix the customer sees in their account.
+  const { data: ownOrders, error: ordErr } = await supabase
+    .from('orders')
+    .select('id, status, total_cents, currency, created_at')
+    .eq('customer_email', email)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (ordErr) return { success: false, error: `Could not look up your orders: ${ordErr.message}` };
+
+  const cleanRef = ref.replace(/^#/, '').toLowerCase();
+  const matches = (ownOrders ?? []).filter((o: any) =>
+    o.id.toLowerCase() === cleanRef || o.id.toLowerCase().startsWith(cleanRef));
+  if (matches.length === 0) {
+    return { success: false, error: `No order matching "${ref}" was found on your account. I can list your orders if that helps.` };
+  }
+  if (matches.length > 1) {
+    return { success: false, error: `"${ref}" matches more than one of your orders — please give the full order id (${matches.slice(0, 3).map((o: any) => o.id.slice(0, 12)).join(', ')}…).` };
+  }
+  const order = matches[0];
+
+  // Idempotency: don't open a second open return for the same order.
+  const { data: existing } = await supabase
+    .from('returns')
+    .select('id, rma_number, status')
+    .eq('order_id', order.id)
+    .not('status', 'in', '("refunded","rejected","cancelled")')
+    .limit(1);
+  if (existing && existing.length) {
+    return { success: true, already_open: true, rma_number: existing[0].rma_number, status: existing[0].status,
+      message: `You already have an open return (${existing[0].rma_number || 'pending'}) for this order — it's ${existing[0].status}.` };
+  }
+
+  const reasonCode = typeof args.reason_code === 'string' && RETURN_REASON_CODES.includes(args.reason_code)
+    ? args.reason_code : 'other';
+  const reason = typeof args.reason === 'string' ? args.reason.slice(0, 2000) : null;
+  const callerUserId = typeof (args as any)._caller_user_id === 'string' ? (args as any)._caller_user_id : null;
+
+  const { data: created, error: insErr } = await supabase
+    .from('returns')
+    .insert({ order_id: order.id, reason_code: reasonCode, reason, status: 'requested', created_by: callerUserId })
+    .select('id, rma_number, status')
+    .single();
+  if (insErr) return { success: false, error: `Could not open the return: ${insErr.message}` };
+
+  return {
+    success: true,
+    rma_number: created.rma_number,
+    status: created.status,
+    order_id: order.id,
+    message: `Return request opened for order ${order.id.slice(0, 8)}${created.rma_number ? ` (RMA ${created.rma_number})` : ''}. Our team will review it and follow up about the refund.`,
   };
 }
 
