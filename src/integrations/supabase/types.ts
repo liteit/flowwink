@@ -3811,6 +3811,53 @@ export type Database = {
         }
         Relationships: []
       }
+      company_contacts: {
+        Row: {
+          auth_user_id: string | null
+          company_id: string
+          company_role: string
+          contact_email: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          status: string
+          updated_at: string
+          visibility_scope: string
+        }
+        Insert: {
+          auth_user_id?: string | null
+          company_id: string
+          company_role?: string
+          contact_email?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+          visibility_scope?: string
+        }
+        Update: {
+          auth_user_id?: string | null
+          company_id?: string
+          company_role?: string
+          contact_email?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+          visibility_scope?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_contacts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consultant_assignments: {
         Row: {
           allocation_pct: number
@@ -4461,6 +4508,7 @@ export type Database = {
           billing_tax_rate: number
           body_markdown: string | null
           body_updated_at: string | null
+          company_id: string | null
           contract_type: Database["public"]["Enums"]["contract_type"]
           counterparty_email: string | null
           counterparty_name: string
@@ -4502,6 +4550,7 @@ export type Database = {
           billing_tax_rate?: number
           body_markdown?: string | null
           body_updated_at?: string | null
+          company_id?: string | null
           contract_type?: Database["public"]["Enums"]["contract_type"]
           counterparty_email?: string | null
           counterparty_name: string
@@ -4543,6 +4592,7 @@ export type Database = {
           billing_tax_rate?: number
           body_markdown?: string | null
           body_updated_at?: string | null
+          company_id?: string | null
           contract_type?: Database["public"]["Enums"]["contract_type"]
           counterparty_email?: string | null
           counterparty_name?: string
@@ -4571,6 +4621,13 @@ export type Database = {
           viewed_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "contracts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contracts_template_id_fkey"
             columns: ["template_id"]
@@ -8050,6 +8107,7 @@ export type Database = {
       }
       invoices: {
         Row: {
+          company_id: string | null
           contract_id: string | null
           created_at: string
           created_by: string | null
@@ -8085,6 +8143,7 @@ export type Database = {
           viewed_at: string | null
         }
         Insert: {
+          company_id?: string | null
           contract_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -8120,6 +8179,7 @@ export type Database = {
           viewed_at?: string | null
         }
         Update: {
+          company_id?: string | null
           contract_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -8155,6 +8215,13 @@ export type Database = {
           viewed_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "invoices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "invoices_contract_id_fkey"
             columns: ["contract_id"]
@@ -20043,6 +20110,7 @@ export type Database = {
         Returns: Json
       }
       current_employee_id: { Args: never; Returns: string }
+      current_user_company_ids: { Args: never; Returns: string[] }
       delete_email_template: { Args: { p_name: string }; Returns: boolean }
       dispatch_automation_event: {
         Args: {
@@ -20222,6 +20290,7 @@ export type Database = {
           billing_tax_rate: number
           body_markdown: string | null
           body_updated_at: string | null
+          company_id: string | null
           contract_type: Database["public"]["Enums"]["contract_type"]
           counterparty_email: string | null
           counterparty_name: string
@@ -20312,6 +20381,7 @@ export type Database = {
       get_invoice_by_token: {
         Args: { p_token: string }
         Returns: {
+          company_id: string | null
           contract_id: string | null
           created_at: string
           created_by: string | null
