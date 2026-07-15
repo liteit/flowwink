@@ -461,6 +461,8 @@ export default function CompanyDetailPage() {
             </CardContent>
           </Card>
         </div>
+
+        {id && <CompanyContactsSection companyId={id} />}
       </div>
 
       <CreateLeadDialog 
