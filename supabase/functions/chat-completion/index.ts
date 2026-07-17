@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getServiceClient, getAnonClient } from '../_shared/supabase-clients.ts';
 import { retrieve, renderContext } from '../_shared/retrieval/index.ts';
 import { embedQuery } from '../_shared/retrieval/embedder.ts';
-import { resolveAuthenticatedCustomer, buildCustomerContext, resolveCompanyMembership } from '../_shared/customer-context.ts';
+import { resolveAuthenticatedCustomer, buildCustomerContext, resolveCompanyMembership, buildCompanyContext } from '../_shared/customer-context.ts';
 import {
   loadWorkspaceFiles,
   buildWorkspacePrompt,
@@ -550,6 +550,18 @@ serve(async (req) => {
     if (knowledgeBase) chatPrompt += knowledgeBase;
     if (visitorContext) chatPrompt += visitorContext;
     if (customerContext) chatPrompt += customerContext;
+
+    // Rung-3 context dial (§6): company summary + the disambiguation that the
+    // personal block above is NOT exhaustive for company matters. Without it the
+    // model treats the rung-2 list as the whole truth and never reaches for the
+    // company skills (live miss: a company invoice "didn't exist").
+    if (companyCtx?.activeCompanyId) {
+      const companyContext = await buildCompanyContext(supabase, companyCtx).catch((e) => {
+        console.error('company context build failed:', e);
+        return '';
+      });
+      if (companyContext) chatPrompt += companyContext;
+    }
 
     // Sentiment detection
     if (settings?.sentimentDetectionEnabled && settings?.humanHandoffEnabled) {

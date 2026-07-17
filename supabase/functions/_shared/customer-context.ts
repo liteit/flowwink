@@ -111,6 +111,55 @@ const money = (cents: number | null | undefined, ccy?: string | null) =>
   `${((cents ?? 0) / 100).toFixed(0)}${ccy ? ' ' + ccy : ''}`;
 
 /**
+ * Rung-3 context dial (identity-ladder-rung3-b2b.md §6): a compact,
+ * prompt-ready summary of the contact's ACTIVE company — recent orders and
+ * unpaid invoices — plus the crucial disambiguation line: the PERSONAL account
+ * block above is NOT exhaustive for company matters. Without this, the model
+ * reads the rung-2 list as the whole truth and never reaches for the company
+ * skills (a real miss found live: a company invoice "didn't exist" because
+ * only the personal context was injected). Reads with the service client but
+ * ONLY rows of the verified active company.
+ */
+export async function buildCompanyContext(
+  admin: any,
+  companyCtx: CompanyContext,
+): Promise<string> {
+  const companyId = companyCtx.activeCompanyId;
+  if (!companyId) return '';
+
+  const [company, orders, invoices] = await Promise.all([
+    admin.from('companies').select('name').eq('id', companyId).single(),
+    admin.from('orders')
+      .select('id, total_cents, currency, status, created_at')
+      .eq('company_id', companyId).order('created_at', { ascending: false }).limit(5),
+    admin.from('invoices')
+      .select('invoice_number, total_cents, currency, status, due_date')
+      .eq('company_id', companyId).not('status', 'in', '("paid","cancelled","void")')
+      .order('due_date', { ascending: true }).limit(5),
+  ]);
+
+  const name = company.data?.name || 'their company';
+  const sections: string[] = [];
+  const o = orders.data ?? [];
+  if (o.length) {
+    sections.push(`Company orders (recent):\n` + o.map((r: any) =>
+      `- Order ${String(r.id).slice(0, 8)}: ${money(r.total_cents, r.currency)}, status ${r.status}`).join('\n'));
+  }
+  const inv = invoices.data ?? [];
+  if (inv.length) {
+    sections.push(`Company unpaid invoices:\n` + inv.map((r: any) =>
+      `- ${r.invoice_number || '(invoice)'}: ${money(r.total_cents, r.currency)}, status ${r.status}${r.due_date ? `, due ${r.due_date}` : ''}`).join('\n'));
+  }
+
+  return `\n\n=== AUTHENTICATED COMPANY CONTACT (rung 3) ===\n` +
+    `This customer is also a verified contact of ${name} (role: ${companyCtx.activeRole ?? 'viewer'}). ` +
+    `The personal account section covers ONLY their personal records — it is NOT exhaustive for company matters. ` +
+    `For anything about ${name}'s orders, invoices, quotes, returns or payments, use the company skills ` +
+    `(list_company_orders, list_company_invoices, initiate_company_invoice_payment, …) rather than assuming from the personal list.` +
+    (sections.length ? `\n${sections.join('\n\n')}` : '');
+}
+
+/**
  * Build a compact, prompt-ready summary of the customer's OWN account —
  * recent orders, unpaid invoices, active subscriptions, open tickets, upcoming
  * bookings. Reads with the service client (`admin`) but ONLY for the given

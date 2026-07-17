@@ -80,6 +80,19 @@ describe('rung 3 (B2B) P2b guardrails', () => {
     expect(chat).toMatch(/initiate_company_invoice_payment:\s*'buyer'/);
   });
 
+  it('rung-3 context dial: company context is injected and disambiguates the personal block', () => {
+    const cc = read('supabase/functions/_shared/customer-context.ts');
+    // built strictly from the resolved membership's active company
+    const fn = cc.slice(cc.indexOf('export async function buildCompanyContext'));
+    const body = fn.slice(0, fn.indexOf('\n}\n'));
+    expect(body).toMatch(/\.eq\('company_id', companyId\)/);
+    expect(body).not.toMatch(/customer_email/); // company rows by company_id, never email guessing
+    // the disambiguation line that stops "personal list = whole truth"
+    expect(body).toMatch(/NOT exhaustive for company matters/);
+    // chat-completion injects it only with an active membership
+    expect(chat).toMatch(/if \(companyCtx\?\.activeCompanyId\)\s*\{[\s\S]*?buildCompanyContext\(supabase, companyCtx\)/);
+  });
+
   it('the three skills are external + auto with internal handlers and registered', () => {
     for (const name of ['reorder_company_order', 'request_company_quote', 'initiate_company_invoice_payment']) {
       const block = companiesMod.slice(companiesMod.indexOf(`name: '${name}'`));
