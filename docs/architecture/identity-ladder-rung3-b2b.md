@@ -124,10 +124,24 @@ on the read side).
   company RMA, and invited a colleague — but could NOT see or approve Globex's quote (refused in
   the assistant AND Globex's row stayed `sent` in the DB); an external/MCP caller with no company
   context is denied by construction on all three. 16/16 rung-3 guardrails green. The staff invite
-  UI ("Company Contacts admin") shipped in parallel via Lovable. Remaining P2b (own pass, higher
-  surface area): `reorder`, `request_quote`, and pay-your-own-invoice via the payment rail
-  (Decision 4). Live role-DENY of a lower role is unit-proven + offer-surface-gated (a lower-role
-  live login wasn't available to exercise the rank branch end-to-end).
+  UI ("Company Contacts admin") shipped in parallel via Lovable. Live role-DENY of a lower role is
+  unit-proven + offer-surface-gated (a lower-role live login wasn't available to exercise the rank
+  branch end-to-end).
+- **P2b — reorder, quote request, pay-via-rail.** ✅ SHIPPED 2026-07-16 (dev). Three buyer+
+  skills: `reorder_company_order` (PENDING copy of a company order, `metadata.reorder_of`
+  idempotency — 3 live sends produced exactly 1 row), `request_company_quote` (DRAFT quote,
+  amounts all 0 — the customer never authors amounts; staff price it up), and
+  `initiate_company_invoice_payment` (resolves the company's OWN unpaid invoice and returns
+  `/invoice/<public_token>` — the handler has NO writes and NO charging; Decision 4 holds by
+  construction). **The §6 context dial shipped with it**, forced by a live finding: with only the
+  rung-2 personal context injected, the model read the personal unpaid-invoice list as exhaustive
+  and concluded a company invoice "didn't exist" — never calling the skill. `buildCompanyContext()`
+  now injects the active company's recent orders + unpaid invoices plus the disambiguation line
+  ("the personal block is NOT exhaustive for company matters"). Live sweep after the fix: payment
+  link returned for the company invoice, personal B2C invoice still refused by the company skill
+  (scope honesty), invoice status untouched (`sent`) — no money moved. 24/24 rung-3 guardrails.
+  *Known limitation:* quote-request idempotency keys on the model-authored title, so a paraphrased
+  repeat can file a near-duplicate draft (staff-visible, zero-amount — nuisance, not a safety risk).
 - **P3 — hierarchy + multi-company UX.** parent/subsidiary opt-in, active-company switcher.
 
 ## 8. Pre-fleet gate (reuse the rung-2 sweep, lifted)
