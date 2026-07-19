@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Sparkles, Loader2, X } from 'lucide-react';
 import { useCreateCompany, useCompanies } from '@/hooks/useCompanies';
 import { supabase } from '@/integrations/supabase/client';
+import { callSkill } from '@/lib/call-skill';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 
@@ -76,8 +77,7 @@ export function CreateCompanyDialog({ trigger, onCreated }: CreateCompanyDialogP
     if (!domain) return toast.error('Enter a domain first');
     setIsEnriching(true);
     try {
-      const { data, error } = await supabase.functions.invoke('enrich-company', { body: { domain } });
-      if (error) throw error;
+      const data = await callSkill<{ success?: boolean; data?: Record<string, string | null> }>('enrich_company', { domain });
       if (data?.success && data?.data) {
         const e = data.data;
         if (e.industry && !industry) setIndustry(e.industry);

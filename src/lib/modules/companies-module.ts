@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { callSkill } from '@/lib/call-skill';
 import { logger } from '@/lib/logger';
 import type { SkillSeed } from '@/lib/module-bootstrap';
 import { defineModule } from '@/lib/module-def';
@@ -390,7 +391,7 @@ export const companiesModule = defineModule<CompanyModuleInput, CompanyModuleOut
       let enriched = false;
       if (validated.options?.auto_enrich && (domain || validated.website)) {
         try {
-          await supabase.functions.invoke('enrich-company', { body: { companyId: data.id } });
+          await callSkill('enrich_company', { companyId: data.id });
           enriched = true;
         } catch (enrichError) {
           logger.warn('[CompaniesModule] Enrichment failed:', enrichError);

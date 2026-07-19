@@ -27,6 +27,7 @@ import { LostReasonDialog, lostReasonLabel } from '@/components/admin/crm/LostRe
 import { LeadConsentCard } from '@/components/admin/crm/LeadConsentCard';
 import { LeadPredictiveScoreCard } from '@/components/admin/crm/LeadPredictiveScoreCard';
 import { supabase } from '@/integrations/supabase/client';
+import { callSkill } from '@/lib/call-skill';
 import { toast } from 'sonner';
 import { 
   ArrowLeft, Mail, Phone, Building, Calendar, Sparkles, AlertCircle, Check, ChevronsUpDown, X, Plus, Loader2, Send, Trash2
@@ -111,10 +112,7 @@ export default function LeadDetailPage() {
     }
     setIsEnrichingInline(true);
     try {
-      const { data, error } = await supabase.functions.invoke('enrich-company', {
-        body: { domain: newCompanyDomain.trim() }
-      });
-      if (error) throw error;
+      const data = await callSkill<{ success?: boolean; data?: Record<string, string | null> }>('enrich_company', { domain: newCompanyDomain.trim() });
       if (data?.success && data?.data) {
         const enrichedData = data.data;
         if (enrichedData.industry) setNewCompanyIndustry(enrichedData.industry);

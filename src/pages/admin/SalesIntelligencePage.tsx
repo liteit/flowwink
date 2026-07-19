@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { callSkill } from "@/lib/call-skill";
 import { toast } from "sonner";
 import { Search, Loader2, Target, Sparkles } from "lucide-react";
 import { ResearchResultCards } from "@/components/admin/sales-intelligence/ResearchResultCards";
@@ -84,20 +85,12 @@ export default function SalesIntelligencePage() {
     setFitResult(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke("prospect-research", {
-        body: {
-          company_name: companyName.trim(),
-          ...(companyUrl.trim() ? { company_url: companyUrl.trim() } : {}),
-        },
+      const data = await callSkill("prospect_research", {
+        company_name: companyName.trim(),
+        ...(companyUrl.trim() ? { company_url: companyUrl.trim() } : {}),
       });
 
-      if (error) throw error;
-      if (data?.error) {
-        toast.error(data.error);
-        return;
-      }
-
-      setResult(data as ResearchResult);
+      setResult(data as unknown as ResearchResult);
       toast.success(`Research complete — saved to CRM`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Research failed");
@@ -115,15 +108,7 @@ export default function SalesIntelligencePage() {
     setIsAnalyzing(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("prospect-fit-analysis", {
-        body: { company_id: result.company.id },
-      });
-
-      if (error) throw error;
-      if (data?.error) {
-        toast.error(data.error);
-        return;
-      }
+      const data = await callSkill("prospect_fit_analysis", { company_id: result.company.id });
 
       const normalized = normalizeFitAnalysisResult((data ?? {}) as Record<string, any>);
       setFitResult(normalized);

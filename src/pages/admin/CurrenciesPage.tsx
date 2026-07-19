@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { callSkill } from '@/lib/call-skill';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -77,9 +78,7 @@ export default function CurrenciesPage() {
 
   const fetchEcb = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('fetch-fx-rates');
-      if (error) throw error;
-      return data;
+      return await callSkill('fetch_ecb_rates');
     },
     onSuccess: (data: any) => {
       toast.success(`Imported ${data?.rows_upserted ?? 0} rates from ECB`);

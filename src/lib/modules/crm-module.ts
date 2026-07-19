@@ -74,7 +74,7 @@ Adds a new lead to the CRM system.
     name: 'qualify_lead',
     description: 'Score and qualify a lead based on activities and engagement data. Use when: evaluating lead quality; automating lead scoring; prioritizing sales pipeline. NOT for: adding new leads (add_lead); managing lead records (manage_leads).',
     category: 'crm',
-    handler: 'edge:qualify-lead',
+    handler: 'internal:qualify_lead',
     scope: 'internal',
     tool_definition: {
       type: 'function',
@@ -114,7 +114,7 @@ FlowPilot can read the score result and add its own analysis via memory or lead 
     name: 'enrich_company',
     description: 'Scrape a company website to enrich its record with website, phone, and description. Use when: needing more details about a prospect; automatically populating company data. NOT for: researching individual prospects (prospect_research); basic company CRUD (manage_company).',
     category: 'crm',
-    handler: 'edge:enrich-company',
+    handler: 'internal:enrich_company',
     scope: 'internal',
     tool_definition: {
       type: 'function',

@@ -30,6 +30,7 @@ import { CreateLeadDialog } from '@/components/admin/CreateLeadDialog';
 import { format } from 'date-fns';
 import { getLeadStatusInfo } from '@/lib/lead-utils';
 import { supabase } from '@/integrations/supabase/client';
+import { callSkill } from '@/lib/call-skill';
 import { CompanyContactsSection } from '@/components/admin/CompanyContactsSection';
 import { toast } from 'sonner';
 import {
@@ -112,12 +113,8 @@ export default function CompanyDetailPage() {
     
     setIsEnriching(true);
     try {
-      const { data, error } = await supabase.functions.invoke('enrich-company', {
-        body: { domain: company.domain }
-      });
-      
-      if (error) throw error;
-      
+      const data = await callSkill<{ success?: boolean; data?: Record<string, string | null> }>('enrich_company', { domain: company.domain });
+
       if (data?.success && data?.data) {
         const enrichedData = data.data;
         

@@ -51,7 +51,7 @@ const SALESINTELLIGENCE_SKILLS: SkillSeed[] = [
     name: 'prospect_research',
     description: 'Research a company — search web, scrape website, find contacts via Hunter.io. Returns raw data for FlowPilot to analyze. Use when: preparing for outreach; gathering intelligence on a prospect; building a company profile from scratch. NOT for: enriching existing company records (enrich_company); managing companies (manage_company).',
     category: 'crm',
-    handler: 'edge:prospect-research',
+    handler: 'internal:prospect_research',
     scope: 'internal',
     tool_definition: {
       type: 'function',
@@ -94,7 +94,7 @@ Researches a company — scrapes website, finds contacts via Hunter.io, analyzes
     name: 'prospect_fit_analysis',
     description: 'Collect company data, related leads, and deals to evaluate prospect fit. Returns raw data for FlowPilot to analyze. Use when: evaluating a new prospect; scoring company fit before outreach; comparing prospects against ICP criteria. NOT for: researching a company (prospect_research); enriching company data (enrich_company).',
     category: 'crm',
-    handler: 'edge:prospect-fit-analysis',
+    handler: 'internal:prospect_fit_analysis',
     scope: 'internal',
     tool_definition: {
       type: 'function',
@@ -190,7 +190,7 @@ This skill is primarily triggered by automations, not directly by users.
     name: 'sales_profile_setup',
     description: 'Set up or update the Sales Intelligence company profile or user profile. Use when: configuring sales profile, updating company positioning for prospecting. NOT for: managing business identity (use manage_business_identity).',
     category: 'crm',
-    handler: 'edge:sales-profile-setup',
+    handler: 'internal:sales_profile_setup',
     scope: 'internal',
     tool_definition: {
       type: 'function',

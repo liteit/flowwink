@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { callSkill } from '@/lib/call-skill';
 import { logger } from '@/lib/logger';
 import type { Json } from '@/integrations/supabase/types';
 import { notifyNewLead } from '@/lib/slack-notify';
@@ -48,12 +49,7 @@ function extractDomain(email: string): string | null {
  */
 async function triggerCompanyEnrichment(companyId: string): Promise<void> {
   try {
-    const { error } = await supabase.functions.invoke('enrich-company', {
-      body: { companyId },
-    });
-    if (error) {
-      logger.warn('Company enrichment failed:', error);
-    }
+    await callSkill('enrich_company', { companyId });
   } catch (error) {
     logger.warn('triggerCompanyEnrichment error:', error);
   }
@@ -533,13 +529,7 @@ export async function trackNewsletterActivity(options: {
  */
 export async function qualifyLead(leadId: string): Promise<void> {
   try {
-    const { error } = await supabase.functions.invoke('qualify-lead', {
-      body: { leadId },
-    });
-
-    if (error) {
-      logger.warn('Lead qualification failed:', error);
-    }
+    await callSkill('qualify_lead', { leadId });
   } catch (error) {
     logger.warn('qualifyLead error:', error);
   }

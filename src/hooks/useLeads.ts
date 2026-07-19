@@ -1,6 +1,7 @@
 import { logger } from '@/lib/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { callSkill } from '@/lib/call-skill';
 import { toast } from 'sonner';
 import type { Lead, LeadStatus, LeadActivity } from '@/lib/lead-utils';
 
@@ -149,12 +150,7 @@ export function useQualifyLead() {
 
   return useMutation({
     mutationFn: async (leadId: string) => {
-      const { data, error } = await supabase.functions.invoke('qualify-lead', {
-        body: { leadId },
-      });
-
-      if (error) throw error;
-      return data;
+      return await callSkill('qualify_lead', { leadId });
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });

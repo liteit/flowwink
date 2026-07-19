@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { callSkill } from '@/lib/call-skill';
 import { toast } from "sonner";
 import { User, Loader2, Check, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -59,10 +60,7 @@ export function SalesProfileSetup() {
   const saveProfile = async () => {
     setSavingUser(true);
     try {
-      const { error } = await supabase.functions.invoke('sales-profile-setup', {
-        body: { type: 'user', data: userData },
-      });
-      if (error) throw error;
+      await callSkill('sales_profile_setup', { type: 'user', data: userData });
       toast.success('Sales profile saved');
       await loadProfile();
     } catch (e) {

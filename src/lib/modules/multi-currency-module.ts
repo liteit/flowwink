@@ -64,7 +64,7 @@ const SKILLS: SkillSeed[] = [
     description:
       'Pull the latest daily exchange rates from the European Central Bank reference feed and upsert them into exchange_rates. Use when: scheduled daily refresh, admin clicks "Refresh rates now". Idempotent.',
     category: 'commerce',
-    handler: 'edge:fetch-fx-rates',
+    handler: 'internal:fetch_ecb_rates',
     scope: 'internal',
     trust_level: 'auto',
     tool_definition: {
