@@ -20,6 +20,10 @@ name: Docker image (self-hosted frontend)
 on:
   push:
     branches: [main]
+    # Release tags also build — and get VERSIONED image tags (:vX.Y.Z + :stable)
+    # so self-hosted deployments can pin a release instead of tracking :dev.
+    # (paths-ignore does not apply to tag pushes — a release always builds.)
+    tags: ['v*']
     paths-ignore:
       - 'supabase/**'
       - 'docs/**'
@@ -28,7 +32,8 @@ on:
   workflow_dispatch: {}
 
 concurrency:
-  group: docker-image
+  # Per-ref so a release-tag build is never cancelled by a concurrent main push.
+  group: docker-image-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -63,6 +68,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Compute image tags
+        id: tags
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            # Release: pinnable version tag + a moving :stable pointer.
+            V="${GITHUB_REF#refs/tags/}"
+            echo "tags=${IMAGE}:${V},${IMAGE}:stable" >> "$GITHUB_OUTPUT"
+          else
+            # main: bleeding edge, as before.
+            echo "tags=${IMAGE}:dev,${IMAGE}:dev-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -71,9 +88,7 @@ jobs:
           # amd64 covers most VPSes; arm64 covers ARM VPSes (Hetzner CAX,
           # Oracle Ampere) and local testing on Apple Silicon.
           platforms: linux/amd64,linux/arm64
-          tags: |
-            ${{ env.IMAGE }}:dev
-            ${{ env.IMAGE }}:dev-${{ github.sha }}
+          tags: ${{ steps.tags.outputs.tags }}
           build-args: |
             VITE_SUPABASE_URL=${{ env.VITE_SUPABASE_URL }}
             VITE_SUPABASE_PUBLISHABLE_KEY=${{ env.VITE_SUPABASE_PUBLISHABLE_KEY }}

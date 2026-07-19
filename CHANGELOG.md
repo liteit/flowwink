@@ -4,8 +4,91 @@ All notable changes to FlowWink will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Release process: [docs/operators/release-process.md](docs/operators/release-process.md).
 
 ## [Unreleased]
+
+## [3.0.0] - 2026-07-19
+
+The "agent-operated business" release. Since 1.3.0 the platform has completed the
+turn from AI-assisted CMS to a Business Operating System run by agents — internal
+(FlowPilot) and external (any MCP operator) — with the safety architecture to match:
+identity-scoped customer self-service, evidence-bound autonomy, and a hardened fleet.
+(Version note: this release supersedes both the stale `v2.0.0` git tag from the
+early CMS era and the 1.x changelog line — the two numbering tracks merge here.)
+
+### Added
+
+**Identity ladder — customers talk to the business, safely**
+- Customer portal assistant (`/account/assistant`): signed-in customers get an
+  AI assistant scoped to their OWN account (rung 2) — orders, invoices, returns —
+  with identity server-injected from the verified JWT, never from a body claim.
+- Customer-scoped self-service returns: `request_return` resolves the order only
+  among the caller's own orders; ownership enforced by construction.
+- **B2B company scope (rung 3)**: `company_contacts` membership table, server-injected
+  company identity, and eight company-scoped skills — reads (orders, invoices),
+  writes (`request_company_return`, `reorder_company_order`, `request_company_quote`),
+  commitment (`approve_company_quote`) and admin (`manage_company_contacts` with
+  invite-on-signup) — role-gated viewer < buyer < approver < admin, enforced in the
+  handler. Cross-company isolation proven adversarially: a contact of company A can
+  never see or act on company B's data. Staff "Company Contacts" admin surface included.
+- Pay-your-own-invoice via the payment rail: the assistant resolves the company's
+  invoice and hands out the secure payment page — it never moves money.
+- Company context dial: the assistant sees the active company's open items alongside
+  the personal account, with explicit disambiguation between the two.
+
+**FlowPilot 2.0 — the Hermes arc**
+- Follow-through: staged and multi-step operations are resumed, not forgotten
+  (`flowpilot-followthrough` sweep).
+- Pipeline-collapse composites for chained flows, with dial inheritance — a composite
+  never bypasses a stricter inner-skill gate.
+- Skill Curator learning loop: evidence-driven proposals that improve skill
+  instructions over time.
+- Cost dials: heartbeat cadence and reasoning tier are per-instance configuration.
+- **Evidence-bound objectives**: progress notes are stamped with machine-derived
+  evidence (real skill outcomes from the activity log), and an objective can only be
+  completed when its plan's work is actually evidenced — the agent's say-so is not proof.
+
+**Agentic accounting (BR1)**
+- Bank ingest → `propose_bookkeeping` → human review queue ("Händelser att bokföra"):
+  the agent proposes, staged postings await approval, money never moves on its own.
+- Opening balances (IB) management and Swedish VAT return preparation
+  (SKV 4700 box mapping) via `prepare_vat_return`.
+
+**Platform & operations**
+- Outward MCP gateway connection profiles: `?groups=` specialist surfaces and
+  `?mode=dispatch` (2-tool `search_skills`/`execute_skill`) for external operators,
+  plus the `/rest/*` compatibility layer with distributed locking.
+- Skill Relevance Engine as a platform primitive (shared by FlowPilot and the
+  gateway), with IDF-weighted name matching.
+- Self-hosted distribution: prebuilt multi-arch frontend image on ghcr
+  (`flowwink-frontend`), Easypanel-ready. **Releases now publish pinnable
+  `:vX.Y.Z` and `:stable` image tags; `:dev` remains bleeding edge.**
+- Edge-function tier model (core vs optional) with core-verify, and the align-down
+  rule: the skill surface always mirrors what is actually deployed per instance.
+- Observability: `cron_health_report` makes silent scheduled-job failures loud;
+  pg_net response codes as the source of truth for cron health.
+
+### Fixed
+- Automation cron parser: monthly expressions (`0 5 1 * *`) no longer silently fall
+  back to hourly runs; weekday ranges (`1-5`) no longer run Mondays-only; the
+  unsupported-expression fallback now logs.
+- `newsletter-dispatch-scheduled` self-references its own instance (was hardcoded
+  to the dev project fleet-wide); `publish-scheduled-pages` calls the DB function
+  directly instead of a nonexistent edge function.
+- Automation executor semantics (`flowpilot` executor requires the module on) and
+  the `isModuleEnabled` site-settings gate.
+- `prepare_vat_return` declares its period as required (`anyOf` in the tool schema)
+  so agents pass it correctly.
+- Visitor-intent lead trigger self-heals to its own instance.
+
+### Security
+- Fleet hardening sweep: RLS on all tables, `SECURITY DEFINER` functions pinned
+  with `search_path`, the `agent_automations` permissive-UPDATE control-plane hole
+  closed, service-role guards for agent-callable admin functions.
+- Trust architecture: staged operations (`approve_pending_operation` handshake),
+  per-skill trust levels that survive resyncs, and role/scope gates enforced
+  server-side — never by the model.
 
 ## [1.3.0] - 2026-05-28
 
