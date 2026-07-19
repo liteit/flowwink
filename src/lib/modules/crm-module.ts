@@ -478,7 +478,7 @@ Return a structured analysis with: company_name, domain, recent_content (titles/
     name: 'contact_finder',
     description: 'Find business contacts by company domain. Use when: prospecting by company domain, finding email addresses for outreach. NOT for: managing existing leads (use manage_leads).',
     category: 'crm',
-    handler: 'edge:contact-finder',
+    handler: 'internal:contact_finder',
     scope: 'internal',
     tool_definition: {
       type: 'function',
