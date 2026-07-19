@@ -114,7 +114,8 @@ const variantInfo: Record<FooterVariant, { label: string; description: string; i
 export function FooterBlockEditor({ data, onChange }: FooterBlockEditorProps) {
   const { 
     data: footerData, 
-    updateField, 
+    updateField,
+    updateFields,
     addArrayItem, 
     removeArrayItem, 
     updateArrayItem,
