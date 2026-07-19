@@ -20113,6 +20113,7 @@ export type Database = {
         }
         Returns: Json
       }
+      cron_health_report: { Args: never; Returns: Json }
       current_employee_id: { Args: never; Returns: string }
       current_user_company_ids: { Args: never; Returns: string[] }
       delete_email_template: { Args: { p_name: string }; Returns: boolean }
