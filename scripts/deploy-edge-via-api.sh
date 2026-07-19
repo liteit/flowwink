@@ -56,7 +56,10 @@ seen={start}; queue=[start]; missing=[]
 while queue:
     f=queue.pop()
     for d in imports_of(f):
-        if not d.endswith('.ts'): d+='.ts'
+        # JSON module imports (`from "./x.json" with { type: "json" }`) are
+        # already complete paths — appending .ts broke the closure and made
+        # the script bail with "MISSING ... _templates.json.ts" (0 files).
+        if not d.endswith('.ts') and not d.endswith('.json'): d+='.ts'
         if d in seen: continue
         seen.add(d)
         queue.append(d) if os.path.isfile(d) else missing.append(d)
