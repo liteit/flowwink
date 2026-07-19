@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getServiceClient } from '../_shared/supabase-clients.ts';
 
@@ -85,7 +84,8 @@ function suggestSkillName(seq: string[]): string {
   return `${first}_to_${last}_chain`;
 }
 
-serve(async (req) => {
+// Moved VERBATIM from supabase/functions/flowpilot-distill/index.ts (edge-surface B5).
+export async function handler(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const supabase = getServiceClient();
@@ -321,4 +321,4 @@ serve(async (req) => {
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
-});
+}

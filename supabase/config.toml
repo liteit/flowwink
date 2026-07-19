@@ -173,16 +173,7 @@ verify_jwt = false
 [functions.federation-invite-peer]
 verify_jwt = false
 
-[functions.flowpilot-briefing]
-verify_jwt = false
-
 [functions.flowpilot-heartbeat]
-verify_jwt = false
-
-[functions.skill-curator]
-verify_jwt = false
-
-[functions.flowpilot-learn]
 verify_jwt = false
 
 [functions.migrate-page]
@@ -225,11 +216,6 @@ verify_jwt = false
 verify_jwt = false
 
 # Called by pg_cron with the publishable key (verified across the live fleet).
-[functions.flowpilot-followthrough]
-verify_jwt = false
-
-# Invoked by the DB trigger trigger_score_visitor_intent() via pg_net with the
-# instance's anon/publishable key on every lead insert/update — no user JWT.
 [functions.score-visitor-intent]
 verify_jwt = false
 
@@ -244,4 +230,9 @@ verify_jwt = false
 # Public flows (checkout/booking/contact) + cron POSTs. The kinds that were
 # JWT-gated as standalone functions (invoice_email, return_confirmation,
 # csat_dispatch) keep equivalent protection via an in-body gate in index.ts.
+verify_jwt = false
+
+[functions.flowpilot-lifecycle]
+# pg_cron POSTs (learn/followthrough) + heartbeat's internal hop. The task
+# that was JWT-gated standalone (distill) keeps an in-body gate in index.ts.
 verify_jwt = false

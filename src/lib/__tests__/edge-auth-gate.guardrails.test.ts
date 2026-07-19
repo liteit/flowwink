@@ -27,6 +27,7 @@ const FUNCTIONS_DIR = join(process.cwd(), 'supabase', 'functions');
 const MUST_BE_GATED = [
   'agent-execute',
   'comms-send',
+  'flowpilot-lifecycle',
   'agent-operate',
   'federation-invite-peer',
   'reconciliation',

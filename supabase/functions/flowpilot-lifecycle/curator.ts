@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getServiceClient } from "../_shared/supabase-clients.ts";
 import { resolveAiConfig } from "../_shared/ai-config.ts";
 import { callAi } from "../_shared/ai-call.ts";
@@ -41,7 +40,8 @@ const COOLDOWN_DAYS = 14;
 const MAX_PROPOSALS_PER_RUN = 3;
 const MIN_FAILURES = 3;
 
-serve(async (req) => {
+// Moved VERBATIM from supabase/functions/skill-curator/index.ts (edge-surface B5).
+export async function handler(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const supabase = getServiceClient();
@@ -238,7 +238,7 @@ Reply with ONLY a JSON object: {"instructions": "<the full improved instructions
     await recordPulse(supabase, false, (err as Error).message, {});
     return json({ error: (err as Error).message }, 500);
   }
-});
+}
 
 function json(payload: unknown, status = 200): Response {
   return new Response(JSON.stringify(payload), {

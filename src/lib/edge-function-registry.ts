@@ -58,10 +58,7 @@ export const ALL_EDGE_FUNCTIONS: readonly string[] = [
   'docs-chat', 'docs-sync', 'document-share', 'document-sign-request',
   'dunning-processor', 'elks46-ingest',
   'email-send', 'email-webhook', 'enrich-company-profile', 'event-dispatcher',
-  'extract-pdf-text', 'extract-receipt', 'federation-invite-peer', 'fetch-image', 'flowpilot-briefing',
-  'cron-health',
-  'flowpilot-distill', 'flowpilot-followthrough', 'flowpilot-heartbeat', 'flowpilot-learn', 'gatewayapi-ingest', 'skill-curator',
-  'generate-invoice-pdf', 'get-page', 'github-content-sync', 'gmail-oauth-callback', 'integrations-account', 'instance-health', 'invite-employee',
+  'extract-pdf-text', 'extract-receipt', 'federation-invite-peer', 'fetch-image', 'flowpilot-lifecycle', 'flowpilot-heartbeat', 'gatewayapi-ingest', 'generate-invoice-pdf', 'get-page', 'github-content-sync', 'gmail-oauth-callback', 'integrations-account', 'instance-health', 'invite-employee',
   'knowledge-indexer', 'llms-txt', 'mcp-server', 'media-optimize', 'migrate-page', 'newsletter',
   'openclaw-responses', 'process-image',
   'process-job-application', 'quote-expiry-reminders', 'quote-pay', 'quote-sign', 'reconciliation', 'recurring-quotes-cron',
@@ -135,8 +132,7 @@ export const MODULE_EDGE_FUNCTIONS: Partial<Record<ModuleId, readonly string[]>>
 
   // ── Autonomous operator (off by default) ─────────────────────────────────
   flowpilot: [
-    'flowpilot-heartbeat', 'flowpilot-briefing', 'flowpilot-learn', 'flowpilot-distill',
-    'flowpilot-followthrough', 'skill-curator', 'update-autonomy-cron', 'run-autonomy-tests', 'web-search', 'web-scrape'],
+    'flowpilot-heartbeat', 'update-autonomy-cron', 'run-autonomy-tests', 'web-search', 'web-scrape'],
 
   // ── Federation / external agents ─────────────────────────────────────────
   federation: ['a2a', 'agent-card', 'federation-invite-peer', 'openclaw-responses'],

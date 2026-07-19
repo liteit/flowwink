@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { isModuleEnabled } from "../_shared/modules.ts";
 
@@ -29,7 +28,8 @@ const corsHeaders = {
 // One row, updated in place — a 5-minute cadence must not write 288 audit rows/day.
 const PULSE_SKILL = "followthrough_sweep";
 
-serve(async (req) => {
+// Moved VERBATIM from supabase/functions/flowpilot-followthrough/index.ts (edge-surface B5).
+export async function handler(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -108,7 +108,7 @@ serve(async (req) => {
 
   return new Response(JSON.stringify({ candidates: rows.length, resumed, failed, results }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-});
+}
 
 /**
  * Update the single engine-state pulse row the Operator Health card reads. One row per
