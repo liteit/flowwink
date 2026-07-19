@@ -100,6 +100,51 @@ export async function getBootstrapHealth(moduleId: keyof ModulesSettings): Promi
 }
 
 /**
+ * Ensure the instance's scheduled jobs exist.
+ *
+ * `register_flowpilot_cron()` and `register_retrieval_cron()` need the instance's
+ * OWN url + anon key, which Postgres cannot derive (app.settings.* is not exposed),
+ * so both were parameterised and left provisioning-opt-in — and nothing ever called
+ * them. A fresh install therefore came up with NO scheduled jobs at all: no
+ * heartbeat, no automation dispatcher, no learn sweep. Nothing errored; it simply
+ * looked like the operator did nothing (observed on demo: every automation sat at
+ * run_count 0 since creation because the per-minute tick never existed).
+ *
+ * The browser knows what Postgres cannot, so bootstrap registers them. Both
+ * registrars guard each job with "create only if absent", which also means they
+ * must be re-run whenever a new job is added — running this on every bootstrap
+ * makes that automatic. Failure is non-fatal: never block a module bootstrap on it.
+ */
+export async function ensurePlatformCron(): Promise<{ registered: boolean; error?: string }> {
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !key) {
+    return { registered: false, error: 'VITE_SUPABASE_URL / _PUBLISHABLE_KEY missing' };
+  }
+  try {
+    const { error } = await supabase.rpc('register_flowpilot_cron', {
+      p_supabase_url: url,
+      p_anon_key: key,
+    });
+    if (error) throw error;
+    // Retrieval (knowledge-indexer) has its own registrar; absent on older instances.
+    const { error: rErr } = await supabase.rpc('register_retrieval_cron', {
+      p_supabase_url: url,
+      p_anon_key: key,
+    });
+    if (rErr && !/could not find|does not exist/i.test(rErr.message)) {
+      logger.warn('[module-bootstrap] retrieval cron registration failed:', rErr.message);
+    }
+    logger.log('[module-bootstrap] platform cron ensured');
+    return { registered: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error registering cron';
+    logger.warn('[module-bootstrap] platform cron registration failed:', msg);
+    return { registered: false, error: msg };
+  }
+}
+
+/**
  * Run bootstrap for a module being enabled.
  * Idempotent — safe to run multiple times.
  *
@@ -128,6 +173,11 @@ export async function bootstrapModule(
 
   const startedAt = Date.now();
   const configHash = await computeConfigHash(moduleId);
+
+  // Scheduled jobs are instance-level, not module-level, but bootstrap is the one
+  // provisioning moment that reliably happens — so ensure them here. Idempotent,
+  // and non-fatal: a cron failure must never block seeding the module itself.
+  await ensurePlatformCron();
 
   // 1. Always seed reference data (unified seedData takes precedence over legacy bootstrap.seedData)
   const seedFn = unified?.seedData ?? bootstrap?.seedData;

@@ -263,3 +263,62 @@ verify_jwt = false
 
 [functions.contact-center]
 verify_jwt = false
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Functions that must stay OPEN, added after a fresh-install review (2026-07-19).
+#
+# WHY THIS BLOCK EXISTS: 46 of 124 functions had no [functions.*] entry at all.
+# `supabase functions deploy` (no args) defaults a missing entry to
+# verify_jwt = TRUE, so a full deploy on a NEW instance would JWT-gate checkout,
+# invoice payment, quote/contract signing and the inbound webhooks — the public
+# money paths would 401 on day one. The new-format publishable key
+# (sb_publishable_…) is not a JWT, so anything called with it must be listed here.
+#
+# Only functions with POSITIVE evidence of a no-JWT caller are listed. Admin
+# tooling (create-user, setup-database, check-secrets, run-*-tests, *-account,
+# cron-health, document-share/-sign-request) is deliberately left to the
+# verify_jwt = true default.
+
+# Inbound webhooks — the sender is an external service and cannot present a JWT.
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.email-webhook]
+verify_jwt = false
+
+[functions.composio-webhook]
+verify_jwt = false
+
+# Public customer money/signature paths — called by anonymous visitors with the
+# publishable key from CheckoutPage, PublicInvoicePage, PublicQuotePage and
+# PublicContractPage respectively.
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.create-invoice-payment]
+verify_jwt = false
+
+[functions.quote-pay]
+verify_jwt = false
+
+[functions.quote-sign]
+verify_jwt = false
+
+[functions.contract-sign]
+verify_jwt = false
+
+# Called by pg_cron with the publishable key (verified across the live fleet).
+[functions.flowpilot-followthrough]
+verify_jwt = false
+
+# Invoked by the DB trigger trigger_score_visitor_intent() via pg_net with the
+# instance's anon/publishable key on every lead insert/update — no user JWT.
+[functions.score-visitor-intent]
+verify_jwt = false
+
+# STILL UNLISTED, deliberately: the *-cron functions (contract-billing-cron,
+# recurring-quotes-cron, subscription-billing-cron, social-post-scheduler) are
+# not scheduled on any live instance, so there is no evidence of how they are
+# invoked. If one is ever registered in pg_cron it will be called with the
+# publishable key and MUST be added here first — otherwise it 401s silently
+# (pg_net reports success; only net._http_response shows the truth).
