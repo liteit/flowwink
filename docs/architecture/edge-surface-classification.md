@@ -177,6 +177,70 @@ defense lines; the second one is what has been missing.
    instance is a point for this consolidation; the fresh-install protocol
    doubles as the priority order.
 
+## Independent review (2026-07-19, second session)
+
+Cross-validated against the ~10 drift incidents root-caused the same day. The
+thesis holds against every one of them. Three things the analysis *understates*,
+and two objections.
+
+### Understated
+
+**1. The 100-function cap is a cliff, not a gradient.** The cost is framed as
+deploy burden and drift risk. It is harder than that: at 100 functions Supabase
+rejects **every** deploy with `402 Max number of functions reached` — *including
+updates to functions that already exist*. www hit this today and could not
+receive the rung-3 invite security fix until two dead aliases
+(`flowpilot-resume`, `resume-match`, both renamed away long ago) were deleted.
+With ~115 functions in the repo every instance sits against the wall
+(liteit 67, demo 71, autoversio 85, www 98 after the deletions — the spread is
+only because `flowwink.sh` already deploys a module-filtered subset). **This is
+the urgent argument for the work**, stronger than drift.
+
+**2. An entire bug class disappears, it does not merely shrink.** 66 orphaned
+`edge:` skills were disabled across the fleet today — skills whose function was
+absent on that instance, so the agent was offered capabilities that could only
+404. A skill sync then resurrected 18 of them, which is what forced the
+sync → align-down ordering rule. With `internal:` handlers **the class cannot
+exist**: a skill cannot reference a missing edge function when there is no edge
+function. Align-down becomes unnecessary rather than automated.
+
+**3. `config.toml` shrinks proportionally.** 46 of 124 functions had no
+`[functions.*]` entry, and a missing entry defaults to `verify_jwt = true` — a
+full deploy on a fresh instance would have gated checkout, invoice payment,
+quote/contract signing and the inbound webhooks. At ~45 functions that surface
+is small enough to audit by eye, and nearly all of what remains is kernel with
+an obvious classification.
+
+### Objections
+
+**A. B3 (cron → automations): verify determinism per candidate first.** The
+platform does have a cron runtime, but `automation-dispatcher` **never calls
+`reason()`** (verified in the code today) — an automation invokes exactly one
+skill with static arguments. Anything needing generation cannot be an
+automation; that is why a "daily blog" had to be an objective rather than a
+cron. `dunning-processor` and `social-post-scheduler` plausibly generate
+content. Check each B3 candidate for a generative step before converting, or
+the capability is lost silently.
+
+**B. Blast radius and cold start for `agent-execute`.** It is already **13,011
+lines / 588 KB**. Absorbing ~40 handlers could roughly double it. Three risks
+worth tracking that the analysis does not mention: cold-start latency paid on
+*every* skill invocation, bundle size against edge-runtime limits, and blast
+radius — a bug in `agent-execute` today takes down one function's worth of
+capability; afterwards it takes down the platform. Recommendation: make
+**cold-start time and bundle size explicit Stage-3 criteria** during B1, and be
+willing to split into 2–3 domain runtimes (`agent-execute-commerce`, …) if the
+curve turns. That is not a contradiction of the thesis — it is the same
+category-D isolation argument applied to the kernel itself.
+
+### Sequencing note
+
+The freeze principle (step 1) costs nothing and should apply from today. For the
+rest, the **fresh install is the measuring stick** — as step 5 already says. Run
+it first, with a notebook: every function that must be hand-deployed or
+hand-configured is a vote, and B1 then gets its priority order from observed
+reality rather than an estimate.
+
 ## Relationship to the other root fixes
 
 This classification is one of three structural fixes identified 2026-07-19:
