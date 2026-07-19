@@ -233,6 +233,33 @@ willing to split into 2–3 domain runtimes (`agent-execute-commerce`, …) if t
 curve turns. That is not a contradiction of the thesis — it is the same
 category-D isolation argument applied to the kernel itself.
 
+### Measured correction to B1 (2026-07-19, pre-flight)
+
+Grepping the seeds against the candidate list splits B1 into two classes the
+analysis conflates:
+
+- **16 are skill-backed** (`edge:X` in a seed): qualify-lead, enrich-company,
+  contact-finder, prospect-research, prospect-fit-analysis, parse-resume,
+  consultant-match, sales-profile-setup, field-service-skill,
+  score-visitor-intent, fetch-fx-rates, customer-360, contact-center,
+  copilot-action, gmail-inbox-scan, accounting-vat-return-se. These are the
+  true zero-API moves — the `internal:` dispatch mechanism already exists in
+  agent-execute (the rung-3 handlers use it).
+- **17 are UI-invoked** (admin hooks/components call the function directly via
+  `functions.invoke`): enrich-company-profile, extract-receipt, analyze-brand,
+  consultant-checkin, sla-check, company-profile, support-router, docs-sync,
+  github-content-sync, unsplash-search, fetch-image, reconciliation,
+  demo-cycle, create-user, invite-employee, update-autonomy-cron,
+  test-ai-connection. Still movable, but each needs a frontend change too
+  (the UI becomes a caller of agent-execute, or the logic becomes SQL/RPC).
+  **Not** zero-API; sequence them after the 16.
+
+So "40+ already registered as skills" overstates the zero-API subset by ~2.5×.
+The thesis stands; the effort estimate for the easy tranche shrinks and the
+UI-invoked tranche needs its own design decision (likely: UI → `agent-execute`
+with the skill layer as the single choke point, which is also the [[rung]]
+security posture).
+
 ### Sequencing note
 
 The freeze principle (step 1) costs nothing and should apply from today. For the
