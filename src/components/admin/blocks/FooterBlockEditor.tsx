@@ -129,20 +129,19 @@ export function FooterBlockEditor({ data, onChange }: FooterBlockEditorProps) {
 
   const handleVariantChange = (newVariant: FooterVariant) => {
     const preset = footerVariantPresets[newVariant];
-    if (preset) {
-      // Apply preset while preserving user data
-      onChange({
-        ...footerData,
-        variant: newVariant,
-        showBrand: preset.showBrand,
-        showQuickLinks: preset.showQuickLinks,
-        showContact: preset.showContact,
-        showHours: preset.showHours,
-        sectionOrder: preset.sectionOrder,
-        showComplianceBadges: preset.showComplianceBadges,
-        legalLinks: footerData.legalLinks?.length ? footerData.legalLinks : preset.legalLinks,
-      });
-    }
+    if (!preset) return;
+    // Apply preset while preserving user data — go through updateFields so
+    // the hook's internal state stays in sync with the parent onChange.
+    updateFields({
+      variant: newVariant,
+      showBrand: preset.showBrand,
+      showQuickLinks: preset.showQuickLinks,
+      showContact: preset.showContact,
+      showHours: preset.showHours,
+      sectionOrder: preset.sectionOrder,
+      showComplianceBadges: preset.showComplianceBadges,
+      legalLinks: footerData.legalLinks?.length ? footerData.legalLinks : preset.legalLinks,
+    } as Partial<FooterBlockData>);
   };
 
   const handleSectionReorder = (event: DragEndEvent) => {
