@@ -4,7 +4,7 @@
   "layers": {
     "schema": {
       "migration_head": "20260720030000",
-      "migrations_count": 248,
+      "migrations_count": 250,
       "migrations": [
         {
           "version": "00000000000000",
@@ -595,7 +595,7 @@
           "name": "bank-tx-journal-link"
         },
         {
-          "version": "20260707120000",
+          "version": "20260707120001",
           "name": "parity-r3-shipping-tickets-subscriptions"
         },
         {
@@ -727,7 +727,7 @@
           "name": "b6d92ac3-7806-4448-bbdb-4f654bd5932e"
         },
         {
-          "version": "20260708130000",
+          "version": "20260708130001",
           "name": "payroll-benefit-gl-balance"
         },
         {
@@ -863,6 +863,10 @@
           "name": "flowpilot-resume-selector"
         },
         {
+          "version": "20260710070001",
+          "name": "flowpilot-resume-selector-backfill"
+        },
+        {
           "version": "20260710080000",
           "name": "flowpilot-trust-posture"
         },
@@ -993,6 +997,10 @@
         {
           "version": "20260720010000",
           "name": "instance-sync-status"
+        },
+        {
+          "version": "20260720020000",
+          "name": "auth-user-created-trigger"
         },
         {
           "version": "20260720030000",
