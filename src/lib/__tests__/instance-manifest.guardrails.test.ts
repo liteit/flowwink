@@ -26,7 +26,10 @@ describe('instance manifest freshness', () => {
     expect(fresh.layers.schema.migration_head).toMatch(/^\d{14}$/);
     expect(fresh.layers.skills.seed_hash).toMatch(/^sha256:[0-9a-f]{64}$/);
     expect(fresh.layers.skills.skill_count).toBeGreaterThan(400);
-    expect(fresh.layers.edge_functions.count).toBeGreaterThan(100);
+    // Floor, not a target: the edge-surface consolidation is actively SHRINKING
+    // this number (115 → ~45 per the classification doc) — assert only that the
+    // kernel exists, never that the surface stays big.
+    expect(fresh.layers.edge_functions.count).toBeGreaterThan(30);
     expect(fresh.layers.edge_functions.shared_hash).toMatch(/^sha256:[0-9a-f]{64}$/);
     expect(fresh.layers.frontend.self_describing).toBe(true);
   });
