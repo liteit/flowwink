@@ -3,8 +3,1002 @@
   "schema_version": 1,
   "layers": {
     "schema": {
-      "migration_head": "20260720010000",
-      "migrations_count": 246
+      "migration_head": "20260720030000",
+      "migrations_count": 248,
+      "migrations": [
+        {
+          "version": "00000000000000",
+          "name": "baseline"
+        },
+        {
+          "version": "20260608235336",
+          "name": "9dd4bda5-9321-4726-ac4d-b3f1e7974d4b"
+        },
+        {
+          "version": "20260608235928",
+          "name": "de86f89f-b7af-47f2-adc5-b78fa68987dc"
+        },
+        {
+          "version": "20260610090000",
+          "name": "90010f61-9030-4dfd-8852-b780c66d25e5"
+        },
+        {
+          "version": "20260610093000",
+          "name": "c4de682e-4d4e-4690-924d-5117cb6096ff"
+        },
+        {
+          "version": "20260610094500",
+          "name": "f79c7f14-d360-4f3c-84d8-745ce15426b5"
+        },
+        {
+          "version": "20260610100000",
+          "name": "ff885761-428c-452a-96d0-f81103465f39"
+        },
+        {
+          "version": "20260610104500",
+          "name": "5bf4a275-8e84-42e3-bd19-6cef046f5067"
+        },
+        {
+          "version": "20260610113000",
+          "name": "63c878fc-caf0-43c8-ab4e-7e8d9c67a983"
+        },
+        {
+          "version": "20260610120000",
+          "name": "295e81a3-4a7f-47f6-93cc-c23ac20fba65"
+        },
+        {
+          "version": "20260610130000",
+          "name": "966682fa-c17b-4ef6-875d-f7968ccfebc5"
+        },
+        {
+          "version": "20260610140000",
+          "name": "3cf59df9-2e0d-4b93-ab27-1fa03b8c2675"
+        },
+        {
+          "version": "20260610150000",
+          "name": "8c8737e4-0e1a-4898-84cd-ccef397c7c85"
+        },
+        {
+          "version": "20260610160000",
+          "name": "54ddaa90-ef73-43c7-a36c-c7f30ce832f7"
+        },
+        {
+          "version": "20260610170000",
+          "name": "69e71c20-53d6-42c2-abe2-b2490a245c09"
+        },
+        {
+          "version": "20260610180000",
+          "name": "6e175358-f6cb-4a44-800f-8dae7adbf4ca"
+        },
+        {
+          "version": "20260610190000",
+          "name": "9b2d0556-f5d3-48b2-b677-ce5b7486895d"
+        },
+        {
+          "version": "20260610200000",
+          "name": "0d86aa6a-b1e1-4058-ab23-203545871d55"
+        },
+        {
+          "version": "20260611140000",
+          "name": "6d823cb7-f65b-43c6-8de7-702ce19f3e49"
+        },
+        {
+          "version": "20260611200000",
+          "name": "8c5225e8-f335-4397-9ddc-2858361375b8"
+        },
+        {
+          "version": "20260611210000",
+          "name": "b1eee0f9-14a8-4216-8a3b-e55b80f6277b"
+        },
+        {
+          "version": "20260611220000",
+          "name": "38421186-bbb3-45a1-97d0-3cc92c1f2c8e"
+        },
+        {
+          "version": "20260612100000",
+          "name": "309e53ee-9c45-4651-9492-d686227b57f4"
+        },
+        {
+          "version": "20260612110000",
+          "name": "476c5daf-b2df-422e-8050-e6d9132a455a"
+        },
+        {
+          "version": "20260612120000",
+          "name": "24ceaa55-cc78-4322-bb4e-5f1cc4017009"
+        },
+        {
+          "version": "20260612140000",
+          "name": "83580b08-8a1d-4444-8f50-aa963dd13132"
+        },
+        {
+          "version": "20260612150000",
+          "name": "7d052218-d334-4a1a-86b9-05350c592ca3"
+        },
+        {
+          "version": "20260612160000",
+          "name": "a18ceeb5-c978-437d-ade2-fbb919f79f22"
+        },
+        {
+          "version": "20260612170000",
+          "name": "e7de3cbd-d178-4ed9-a25c-e43d665c6914"
+        },
+        {
+          "version": "20260612180000",
+          "name": "2bbb6100-8962-4270-99c5-52659205b6f8"
+        },
+        {
+          "version": "20260613010000",
+          "name": "fd429c56-9547-4384-8d44-85c106f41cbb"
+        },
+        {
+          "version": "20260613020000",
+          "name": "2fe9cbca-c811-4aca-b9a6-916024fd220d"
+        },
+        {
+          "version": "20260613030000",
+          "name": "7e99fc87-4064-47ae-9063-8d4d36d444d7"
+        },
+        {
+          "version": "20260613040000",
+          "name": "6494adde-2f6c-43d1-a662-b8c455fd8ed7"
+        },
+        {
+          "version": "20260613050000",
+          "name": "826ef509-8b67-41c0-a362-dd0817b0516c"
+        },
+        {
+          "version": "20260613060000",
+          "name": "6d456022-3f97-4d5a-958d-029e00725889"
+        },
+        {
+          "version": "20260614010000",
+          "name": "f2f146cc-d61c-437b-ae06-c21236f751ea"
+        },
+        {
+          "version": "20260614020000",
+          "name": "35453b06-701a-48ce-80db-9f323d3f27ee"
+        },
+        {
+          "version": "20260614030000",
+          "name": "6b170373-92ff-4ab2-8c5f-e0182b63a48d"
+        },
+        {
+          "version": "20260614040000",
+          "name": "452e2df2-498f-4bab-91e4-f7d1c3b65744"
+        },
+        {
+          "version": "20260614050000",
+          "name": "c54c914c-dda1-4479-a1c6-3b44734d5880"
+        },
+        {
+          "version": "20260614060000",
+          "name": "e39daf45-f40e-41ca-837b-d1a4afd5ba08"
+        },
+        {
+          "version": "20260614070000",
+          "name": "04194ba4-1207-4016-879c-09b77fc1e3af"
+        },
+        {
+          "version": "20260614080000",
+          "name": "53176990-a4e4-4d71-92d0-1d0a34da2672"
+        },
+        {
+          "version": "20260614090000",
+          "name": "ff84b0a6-5d99-4dc0-8e82-5ed695e8a508"
+        },
+        {
+          "version": "20260614100000",
+          "name": "1cf39977-0252-4902-b436-42ade360473d"
+        },
+        {
+          "version": "20260615005812",
+          "name": "117108a8-e74b-4c06-99cc-1aed1d396438"
+        },
+        {
+          "version": "20260615092702",
+          "name": "3655d52f-a1c8-4fbc-a10d-e35abebd8599"
+        },
+        {
+          "version": "20260615181508",
+          "name": "d251a0e7-6992-48ef-87d3-4e5e4db3be3b"
+        },
+        {
+          "version": "20260615211957",
+          "name": "cd170059-fdd3-4481-98fa-bac8893d1325"
+        },
+        {
+          "version": "20260615221408",
+          "name": "c2255642-7be4-47e4-8f42-9dd98e9040a8"
+        },
+        {
+          "version": "20260616120000",
+          "name": "7d5dab95-d0ec-4d18-b10d-3761f17f9bf4"
+        },
+        {
+          "version": "20260616170000",
+          "name": "7022c36b-c2f2-461f-a44f-0556b8a32663"
+        },
+        {
+          "version": "20260616180000",
+          "name": "094de1e3-d818-4ca9-8ae8-bc2e7ab7efe6"
+        },
+        {
+          "version": "20260616184749",
+          "name": "9189f47c-bb73-42be-8dbe-1d296f7fcf84"
+        },
+        {
+          "version": "20260616190010",
+          "name": "889c6db2-5333-40ff-8084-3d5f8515a55d"
+        },
+        {
+          "version": "20260616190226",
+          "name": "4672e69f-59dd-4918-90f9-16c15ab7d14b"
+        },
+        {
+          "version": "20260616192829",
+          "name": "e40ceb25-ee8f-49ad-8020-4033fd8754dd"
+        },
+        {
+          "version": "20260616193221",
+          "name": "25ee809a-945f-4f1c-a862-29396ebd0cf3"
+        },
+        {
+          "version": "20260616193319",
+          "name": "085e8907-0539-4ccd-87aa-0dd6d23fa152"
+        },
+        {
+          "version": "20260622163051",
+          "name": "ce3f65d5-01bf-491b-a919-25cbaee82eab"
+        },
+        {
+          "version": "20260622170713",
+          "name": "9bd3daef-12f2-404b-b0c0-4092e0c9535e"
+        },
+        {
+          "version": "20260622191837",
+          "name": "91f7441a-87fe-4fd0-a161-780b01707db9"
+        },
+        {
+          "version": "20260622203416",
+          "name": "0a3cea70-cbfe-4525-846c-fceb21491d86"
+        },
+        {
+          "version": "20260623225444",
+          "name": "4b22b64a-d8d1-4f08-926a-936559b50ed6"
+        },
+        {
+          "version": "20260624225254",
+          "name": "0c830841-250a-4763-8b13-f9ac5cb86610"
+        },
+        {
+          "version": "20260625001955",
+          "name": "aa00d36e-b806-4ae8-8c16-0b3b9190c96b"
+        },
+        {
+          "version": "20260625173509",
+          "name": "364a2024-d211-4cfb-b292-a145efa6aa67"
+        },
+        {
+          "version": "20260625173659",
+          "name": "ff6b8832-b41e-4fb0-b95d-f53596c37563"
+        },
+        {
+          "version": "20260625175850",
+          "name": "6a2ab486-beba-4653-873c-bf1f30c7393c"
+        },
+        {
+          "version": "20260625175953",
+          "name": "d8c7a1d6-b8cb-4043-9db1-8eff18cb77e6"
+        },
+        {
+          "version": "20260625180028",
+          "name": "321eedd5-c2d1-48d6-9a6c-71be7caaf828"
+        },
+        {
+          "version": "20260627123258",
+          "name": "8d12cb3e-f026-46c8-8e01-8af3e9671dbe"
+        },
+        {
+          "version": "20260627194500",
+          "name": "a3f1c2d4-9b8e-4c1a-b2f6-7e0d51a9c4b3"
+        },
+        {
+          "version": "20260627210000",
+          "name": "reconcile-skipped-module-schema"
+        },
+        {
+          "version": "20260627220000",
+          "name": "reconcile-skipped-functions"
+        },
+        {
+          "version": "20260627222029",
+          "name": "04c1bf6d-0313-421a-9753-69e9037dd896"
+        },
+        {
+          "version": "20260627222306",
+          "name": "f6ee4bfc-83be-47d2-86de-5289d6f2419d"
+        },
+        {
+          "version": "20260627222518",
+          "name": "77eb34c0-6fb8-4f41-8923-9b1b21c9dd18"
+        },
+        {
+          "version": "20260628002844",
+          "name": "4372c05f-5870-40b2-b702-205cd46c87d4"
+        },
+        {
+          "version": "20260628200000",
+          "name": "b7c1d2e3-returns-refund-rma-hardening"
+        },
+        {
+          "version": "20260628210000",
+          "name": "c8d2e3f4-reconcile-service-role-escape"
+        },
+        {
+          "version": "20260628212028",
+          "name": "75bec56a-2440-44f4-a55c-9cfbe77323ea"
+        },
+        {
+          "version": "20260628213115",
+          "name": "edb35598-a2ce-44f1-acaa-42392adf5a2d"
+        },
+        {
+          "version": "20260628213350",
+          "name": "0962dddb-656a-448b-abd3-4b02bd0a0ea9"
+        },
+        {
+          "version": "20260628213528",
+          "name": "7e745e18-0a97-4cc0-894e-1a370505c645"
+        },
+        {
+          "version": "20260628213637",
+          "name": "02cf3c03-26ef-4175-b7ab-ab39f5ed89f1"
+        },
+        {
+          "version": "20260628213739",
+          "name": "31800e62-cbee-422b-b4e6-58ef9f7b2584"
+        },
+        {
+          "version": "20260628213839",
+          "name": "ecdae8f1-05de-4c12-8e96-9e42c0219731"
+        },
+        {
+          "version": "20260628213945",
+          "name": "ec2acc1f-d6cd-47e7-8914-b81b79a7a28a"
+        },
+        {
+          "version": "20260628220000",
+          "name": "d9e3f4a5-reconcile-service-role-escape-part2"
+        },
+        {
+          "version": "20260629110547",
+          "name": "896bf1b8-5c54-4967-b31b-93f4fb986ab6"
+        },
+        {
+          "version": "20260629120000",
+          "name": "e4f5a6b7-mo-number-autogen"
+        },
+        {
+          "version": "20260629142430",
+          "name": "c65dddc1-514d-42c3-ba4c-67588c89edaf"
+        },
+        {
+          "version": "20260630010553",
+          "name": "e3874911-f3dc-4ff8-a30e-372f5daedfa5"
+        },
+        {
+          "version": "20260630110355",
+          "name": "7e508c98-94a4-42ec-b70a-44a17dadc65d"
+        },
+        {
+          "version": "20260630110458",
+          "name": "bed733ba-57f3-4262-b0d0-e58faa29514f"
+        },
+        {
+          "version": "20260630120000",
+          "name": "f1a2b3c4-job-posting-slug-autogen"
+        },
+        {
+          "version": "20260630130000",
+          "name": "a2b3c4d5-summarize-candidate-pipeline"
+        },
+        {
+          "version": "20260630140000",
+          "name": "b3c4d5e6-weekly-business-digest"
+        },
+        {
+          "version": "20260630150000",
+          "name": "c4d5e6f7-seed-currencies"
+        },
+        {
+          "version": "20260630160000",
+          "name": "d5e6f7a8-journal-line-account-name"
+        },
+        {
+          "version": "20260630211420",
+          "name": "4de41b14-0202-4290-8783-68570c3ebcd0"
+        },
+        {
+          "version": "20260630234136",
+          "name": "119c58b3-8614-411c-8e3b-86cda931f352"
+        },
+        {
+          "version": "20260701124217",
+          "name": "c180d500-ca3b-4cb9-8cd1-6f8994573663"
+        },
+        {
+          "version": "20260701211258",
+          "name": "b0ee571c-88ac-4f35-a6de-9e0022577f02"
+        },
+        {
+          "version": "20260702170000",
+          "name": "e6f7a8b9-document-number-sequence"
+        },
+        {
+          "version": "20260702180000",
+          "name": "f7a8b9c0-p2p-vat-skills"
+        },
+        {
+          "version": "20260702232145",
+          "name": "f70b6e90-4fdc-4b55-ad3e-5930cbaed43a"
+        },
+        {
+          "version": "20260702232225",
+          "name": "8c7181e1-3b95-4cc9-ab2d-bbb082f06a09"
+        },
+        {
+          "version": "20260703130000",
+          "name": "line-discounts"
+        },
+        {
+          "version": "20260703130500",
+          "name": "quote-expiry-reminders"
+        },
+        {
+          "version": "20260703131048",
+          "name": "129589ae-f3ab-466d-b384-8c75a477b2c0"
+        },
+        {
+          "version": "20260703140000",
+          "name": "ar-aging-report"
+        },
+        {
+          "version": "20260703150000",
+          "name": "booking-staff-assignment"
+        },
+        {
+          "version": "20260703151000",
+          "name": "booking-no-show-status"
+        },
+        {
+          "version": "20260703152000",
+          "name": "booking-reminders-cron"
+        },
+        {
+          "version": "20260703171545",
+          "name": "cc4c3cfa-cb3e-4711-95b0-073dab737397"
+        },
+        {
+          "version": "20260703172114",
+          "name": "77c933ae-50d1-48d4-8db7-c8a8c769bc26"
+        },
+        {
+          "version": "20260703173000",
+          "name": "fix-expense-payment-user-id"
+        },
+        {
+          "version": "20260703210000",
+          "name": "email-lead-association"
+        },
+        {
+          "version": "20260704100000",
+          "name": "esign-hardening"
+        },
+        {
+          "version": "20260704110000",
+          "name": "crm-next-step-discipline"
+        },
+        {
+          "version": "20260704120000",
+          "name": "discount-codes"
+        },
+        {
+          "version": "20260704130000",
+          "name": "checkout-completion"
+        },
+        {
+          "version": "20260704140000",
+          "name": "quote-sign-and-pay"
+        },
+        {
+          "version": "20260704141730",
+          "name": "02b45fc2-6381-4964-8a61-babd42bb0afd"
+        },
+        {
+          "version": "20260704141822",
+          "name": "72b0e699-2096-4e59-b09a-3c7047a607d2"
+        },
+        {
+          "version": "20260704150000",
+          "name": "a9c1d2e3-chat-lead-capture"
+        },
+        {
+          "version": "20260704150500",
+          "name": "b8d2e3f4-global-block-categories"
+        },
+        {
+          "version": "20260704152107",
+          "name": "b1ae331f-23f5-48f8-82ae-4b2803f16688"
+        },
+        {
+          "version": "20260704170000",
+          "name": "visitor-intent-trigger-portable"
+        },
+        {
+          "version": "20260704211755",
+          "name": "95d091fe-c165-49aa-aa6a-4ebc316fc653"
+        },
+        {
+          "version": "20260705150000",
+          "name": "fix-subscription-invoice-idempotency"
+        },
+        {
+          "version": "20260705154508",
+          "name": "67a28b2d-b8bf-486e-8eb7-60399461499d"
+        },
+        {
+          "version": "20260705160000",
+          "name": "webinar-reminders-delivery"
+        },
+        {
+          "version": "20260705170000",
+          "name": "reemit-uom-foundation"
+        },
+        {
+          "version": "20260705211306",
+          "name": "ff4dc45d-e4e2-4059-a8a7-4329731d7aaf"
+        },
+        {
+          "version": "20260705221124",
+          "name": "975ca766-b54e-4be5-9e65-326968f2e1e4"
+        },
+        {
+          "version": "20260705224644",
+          "name": "2e79876b-abf1-4831-808a-1ed7801d4320"
+        },
+        {
+          "version": "20260705225526",
+          "name": "0e6bf9ee-7bf8-49b3-8916-c7ad001705bc"
+        },
+        {
+          "version": "20260705235309",
+          "name": "5d342246-a8cb-4854-8a4a-e45b71056938"
+        },
+        {
+          "version": "20260706001101",
+          "name": "96c9760c-7a39-450d-b937-62a76fc242be"
+        },
+        {
+          "version": "20260706120000",
+          "name": "fix-create-agent-document-manager-role"
+        },
+        {
+          "version": "20260707022750",
+          "name": "5947e018-0987-476f-a8cb-d51ea4be3ed7"
+        },
+        {
+          "version": "20260707035100",
+          "name": "2da2035b-c835-47c1-888c-d21f1f19873f"
+        },
+        {
+          "version": "20260707120000",
+          "name": "bank-tx-journal-link"
+        },
+        {
+          "version": "20260707120000",
+          "name": "parity-r3-shipping-tickets-subscriptions"
+        },
+        {
+          "version": "20260707130000",
+          "name": "invoice-status-enum-complete"
+        },
+        {
+          "version": "20260707140000",
+          "name": "bank-tx-coherence"
+        },
+        {
+          "version": "20260707150000",
+          "name": "journal-entry-template-provenance"
+        },
+        {
+          "version": "20260707160000",
+          "name": "admin-wipe-journal"
+        },
+        {
+          "version": "20260707170000",
+          "name": "payroll-pension-sickpay-wiring"
+        },
+        {
+          "version": "20260707190000",
+          "name": "fix-list-payroll-lines"
+        },
+        {
+          "version": "20260707200000",
+          "name": "beta-exchange-resolution-type"
+        },
+        {
+          "version": "20260707210000",
+          "name": "fixed-assets-parity-r4"
+        },
+        {
+          "version": "20260707211000",
+          "name": "timesheets-parity-r4"
+        },
+        {
+          "version": "20260707212000",
+          "name": "calendar-parity-r4"
+        },
+        {
+          "version": "20260707213000",
+          "name": "field-service-parity-r5"
+        },
+        {
+          "version": "20260707214000",
+          "name": "pos-parity-r5"
+        },
+        {
+          "version": "20260707215000",
+          "name": "resume-parity-r5"
+        },
+        {
+          "version": "20260708003000",
+          "name": "payroll-period-date-alias"
+        },
+        {
+          "version": "20260708010000",
+          "name": "shipping-parity-r6"
+        },
+        {
+          "version": "20260708020000",
+          "name": "projects-parity-r6"
+        },
+        {
+          "version": "20260708023546",
+          "name": "aaca827f-fbfc-4919-aa24-2b93d41c99a5"
+        },
+        {
+          "version": "20260708030000",
+          "name": "sla-parity-r6"
+        },
+        {
+          "version": "20260708040000",
+          "name": "recruitment-parity-r6"
+        },
+        {
+          "version": "20260708050000",
+          "name": "pricelists-parity-r7"
+        },
+        {
+          "version": "20260708060000",
+          "name": "multicurrency-parity-r7"
+        },
+        {
+          "version": "20260708070000",
+          "name": "wiki-parity-r7"
+        },
+        {
+          "version": "20260708080000",
+          "name": "payroll-parity-r7"
+        },
+        {
+          "version": "20260708090000",
+          "name": "pages-parity-r8"
+        },
+        {
+          "version": "20260708100000",
+          "name": "crm-parity-r8"
+        },
+        {
+          "version": "20260708110000",
+          "name": "hr-parity-r8"
+        },
+        {
+          "version": "20260708120000",
+          "name": "kb-parity-r8"
+        },
+        {
+          "version": "20260708121538",
+          "name": "279db998-3ef0-46bc-89c7-ad2462ed1d54"
+        },
+        {
+          "version": "20260708124322",
+          "name": "f58e9085-b874-48fd-b157-1b46c04eb11b"
+        },
+        {
+          "version": "20260708125148",
+          "name": "ae507141-f039-49a9-b564-985b24be8355"
+        },
+        {
+          "version": "20260708125907",
+          "name": "ef9cd92d-2fe0-429b-89a6-8bab90ba79de"
+        },
+        {
+          "version": "20260708130000",
+          "name": "b6d92ac3-7806-4448-bbdb-4f654bd5932e"
+        },
+        {
+          "version": "20260708130000",
+          "name": "payroll-benefit-gl-balance"
+        },
+        {
+          "version": "20260708130553",
+          "name": "a31731b9-39c8-4cea-b537-7250a877a32f"
+        },
+        {
+          "version": "20260708131418",
+          "name": "8b6a5aa2-c949-411c-8833-966d8cc2b820"
+        },
+        {
+          "version": "20260708132027",
+          "name": "dad92616-b484-4d2f-a194-9701dcaf331b"
+        },
+        {
+          "version": "20260708132737",
+          "name": "53e6347f-35cb-4b4a-a1bb-d77b26c750f7"
+        },
+        {
+          "version": "20260708133658",
+          "name": "e317efa7-dfe7-439a-94f4-59196347b068"
+        },
+        {
+          "version": "20260708140000",
+          "name": "accounting-periods-read-policy"
+        },
+        {
+          "version": "20260708195801",
+          "name": "04f333c2-7054-4395-b81e-e94efaee65db"
+        },
+        {
+          "version": "20260708200519",
+          "name": "6efc64f0-f73f-4b3d-9c40-0392641983a2"
+        },
+        {
+          "version": "20260708201354",
+          "name": "0d7927a2-8fa6-43b3-8f64-f3cc72266608"
+        },
+        {
+          "version": "20260708202027",
+          "name": "a70f6d99-cef1-46e2-b336-ed6fb9ab49b6"
+        },
+        {
+          "version": "20260708202836",
+          "name": "ba4cdf83-fa8e-46d2-9f22-51063ccba915"
+        },
+        {
+          "version": "20260709000000",
+          "name": "cfe35a21-dd6a-4e33-af85-9e132f12cf5f"
+        },
+        {
+          "version": "20260709000317",
+          "name": "861f769d-3e16-4de3-b576-c0174ba8553a"
+        },
+        {
+          "version": "20260709001000",
+          "name": "agent-admin-rpcs-b-round"
+        },
+        {
+          "version": "20260709010000",
+          "name": "flowtable-list-tables"
+        },
+        {
+          "version": "20260709020000",
+          "name": "apikey-drop-plaintext"
+        },
+        {
+          "version": "20260709030000",
+          "name": "send-purchase-order-rpc"
+        },
+        {
+          "version": "20260709040000",
+          "name": "approval-step-service-actor"
+        },
+        {
+          "version": "20260709050000",
+          "name": "p2p-match-and-auth-fixes"
+        },
+        {
+          "version": "20260709060000",
+          "name": "move-application-stage-rpc"
+        },
+        {
+          "version": "20260709070000",
+          "name": "subscription-period-proration-fix"
+        },
+        {
+          "version": "20260709080000",
+          "name": "invoice-partially-paid-status"
+        },
+        {
+          "version": "20260709090000",
+          "name": "resolve-approval-service-actor"
+        },
+        {
+          "version": "20260709100000",
+          "name": "pos-sale-resolve-product-name"
+        },
+        {
+          "version": "20260709135335",
+          "name": "bcc1e0cb-e72f-467b-aff0-da25df4c6217"
+        },
+        {
+          "version": "20260710000000",
+          "name": "timesheet-invoice-number-series"
+        },
+        {
+          "version": "20260710010000",
+          "name": "mo-link-active-bom"
+        },
+        {
+          "version": "20260710020000",
+          "name": "record-payment-idempotency"
+        },
+        {
+          "version": "20260710030000",
+          "name": "no-cancel-paid-invoice"
+        },
+        {
+          "version": "20260710040000",
+          "name": "no-cancel-received-po"
+        },
+        {
+          "version": "20260710050000",
+          "name": "no-cancel-shipped-picking"
+        },
+        {
+          "version": "20260710060000",
+          "name": "ar-aging-currency-split"
+        },
+        {
+          "version": "20260710070000",
+          "name": "flowpilot-resume-selector"
+        },
+        {
+          "version": "20260710080000",
+          "name": "flowpilot-trust-posture"
+        },
+        {
+          "version": "20260712120000",
+          "name": "rename-resume-module-to-consultants"
+        },
+        {
+          "version": "20260712130000",
+          "name": "consultant-match-rpc-backfill"
+        },
+        {
+          "version": "20260712140000",
+          "name": "flowtable-view-config"
+        },
+        {
+          "version": "20260712150000",
+          "name": "curator-trust-policy"
+        },
+        {
+          "version": "20260713120000",
+          "name": "harden-agent-automations-rls"
+        },
+        {
+          "version": "20260713150000",
+          "name": "retrieval-engine-m1"
+        },
+        {
+          "version": "20260713212852",
+          "name": "a44639ec-6944-4912-a222-524f7b3ce408"
+        },
+        {
+          "version": "20260713222257",
+          "name": "24922685-7740-4484-85da-6457b12a512b"
+        },
+        {
+          "version": "20260714073215",
+          "name": "366a2269-befb-4113-bd06-9a7f84ac2399"
+        },
+        {
+          "version": "20260714080000",
+          "name": "heartbeat-cadence-dial"
+        },
+        {
+          "version": "20260714140000",
+          "name": "company-contacts-rung3-p0"
+        },
+        {
+          "version": "20260714160754",
+          "name": "e7e7666c-6f49-4b45-80e9-d41ed7edfa2b"
+        },
+        {
+          "version": "20260714170000",
+          "name": "retrieval-semantic-weight"
+        },
+        {
+          "version": "20260716100000",
+          "name": "company-contacts-rung3-p2"
+        },
+        {
+          "version": "20260717110000",
+          "name": "fix-publish-scheduled-pages-cron"
+        },
+        {
+          "version": "20260717234543",
+          "name": "3b5c83fc-75d3-43b6-a7fb-d7d2ad92fa33"
+        },
+        {
+          "version": "20260718090000",
+          "name": "fix-newsletter-cron-self-reference"
+        },
+        {
+          "version": "20260718120000",
+          "name": "rung3-invite-confirm-gate"
+        },
+        {
+          "version": "20260719113547",
+          "name": "4a897259-f05e-47b7-8224-572ff6734e62"
+        },
+        {
+          "version": "20260719120000",
+          "name": "fix-visitor-intent-trigger-self-heal"
+        },
+        {
+          "version": "20260719122201",
+          "name": "5a0dbcb3-176a-4ce4-a019-21b1898a6013"
+        },
+        {
+          "version": "20260719124820",
+          "name": "81b6c9a3-1eb5-4a42-8cb2-85ba8e7353ea"
+        },
+        {
+          "version": "20260719140000",
+          "name": "cron-health-report"
+        },
+        {
+          "version": "20260719160000",
+          "name": "cron-health-report-perf"
+        },
+        {
+          "version": "20260719161946",
+          "name": "5e13c396-2a95-4758-8281-8971c66da142"
+        },
+        {
+          "version": "20260719162817",
+          "name": "91c954c7-6440-441e-8ef2-372101333748"
+        },
+        {
+          "version": "20260719163854",
+          "name": "a06bb1ca-bc52-428c-bbb7-fa5c3d755e24"
+        },
+        {
+          "version": "20260719180000",
+          "name": "cron-health-report-runid-scan"
+        },
+        {
+          "version": "20260719211910",
+          "name": "56f6fd64-f012-4854-a7ce-98f1a47db586"
+        },
+        {
+          "version": "20260719230000",
+          "name": "comms-send-cron-repoint"
+        },
+        {
+          "version": "20260719233000",
+          "name": "flowpilot-lifecycle-cron-repoint"
+        },
+        {
+          "version": "20260720010000",
+          "name": "instance-sync-status"
+        },
+        {
+          "version": "20260720030000",
+          "name": "instance-sync-status-name-match"
+        }
+      ]
     },
     "skills": {
       "seed_hash": "sha256:09239aa42eef7b40f6c3d3f50b2b6d7573e7145d55e6b8ca66eabd0636b4298c",

@@ -65,7 +65,7 @@ export interface InstanceManifest {
   _comment: string;
   schema_version: number;
   layers: {
-    schema: { migration_head: string; migrations_count: number };
+    schema: { migration_head: string; migrations_count: number; migrations: Array<{ version: string; name: string }> };
     skills: { seed_hash: string; skill_count: number; module_count: number };
     edge_functions: { count: number; shared_hash: string; functions: Record<string, string> };
     frontend: { self_describing: true };
@@ -73,10 +73,18 @@ export interface InstanceManifest {
 }
 
 export function buildManifest(root: string): InstanceManifest {
-  // Layer 1: schema — ledger HEAD the repo expects.
+  // Layer 1: schema — the full list of expected migrations, each as {version,
+  // name}. Stored as identities (not just the head timestamp) because a
+  // Lovable-managed ledger stamps `version` with the RUN TIME, so a
+  // filename-timestamp comparison false-flags every managed instance. The
+  // consumer matches each by EITHER version (CLI) or name (managed).
   const migrationsDir = join(root, 'supabase', 'migrations');
-  const migrations = readdirSync(migrationsDir).filter((f) => /^\d{14}.*\.sql$/.test(f)).sort();
-  const migration_head = migrations.length ? migrations[migrations.length - 1].slice(0, 14) : '';
+  const migrationFiles = readdirSync(migrationsDir).filter((f) => /^\d{14}.*\.sql$/.test(f)).sort();
+  const migrations = migrationFiles.map((f) => {
+    const base = f.replace(/\.sql$/, '');
+    return { version: base.slice(0, 14), name: base.slice(15) }; // <ts>_<name>
+  });
+  const migration_head = migrations.length ? migrations[migrations.length - 1].version : '';
 
   // Layer 2: skills — hash of the seed bundle minus volatile fields.
   const skillsRaw = JSON.parse(readFileSync(join(root, 'supabase', 'seed', 'module-skills.json'), 'utf-8'));
@@ -101,7 +109,7 @@ export function buildManifest(root: string): InstanceManifest {
       'The repo\'s desired state per layer; compared against live state by instance_sync_status() and the Instance Sync card.',
     schema_version: 1,
     layers: {
-      schema: { migration_head, migrations_count: migrations.length },
+      schema: { migration_head, migrations_count: migrations.length, migrations },
       skills: {
         seed_hash,
         skill_count: skillsRaw.skill_count ?? 0,
