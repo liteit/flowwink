@@ -171,6 +171,72 @@ export async function loadMemories(supabase: any): Promise<string> {
   return `\n\nMemory (use memory_read for full values):\n${lines.join('\n')}`;
 }
 
+/**
+ * Structural cadence limit for objectives that deliver on a rhythm.
+ *
+ * "Publish at most one post per day" written in the goal text is not binding —
+ * autoversio published twice in a day under exactly that wording (2026-07-19).
+ * Prose describes; only structure constrains.
+ *
+ * Declare it instead as `constraints.cadence`:
+ *   { max: 1, per: 'day' | 'week', counts: '<skill_name>' }
+ * where `counts` is the skill whose SUCCESSFUL run is one delivery — measured
+ * from agent_activity, so the quota rests on what ran, not on what was claimed.
+ *
+ * A satisfied objective is DROPPED FROM THE WORKING SET for this turn, not
+ * failed and not completed: the loop then spends the turn on other work rather
+ * than idling or re-delivering. Malformed config fails OPEN (objective stays
+ * actionable) — a config typo must never silence the operator.
+ */
+export async function partitionByCadence(
+  supabase: any,
+  objectives: any[],
+): Promise<{ actionable: any[]; satisfied: Array<{ goal: string; note: string }> }> {
+  const withCadence = objectives.filter((o) => {
+    const c = o.constraints?.cadence;
+    return c && typeof c.counts === 'string' && Number(c.max) > 0;
+  });
+  if (!withCadence.length) return { actionable: objectives, satisfied: [] };
+
+  const skills = [...new Set(withCadence.map((o) => o.constraints.cadence.counts))];
+  const dayStart = new Date();
+  dayStart.setUTCHours(0, 0, 0, 0);
+  const weekStart = new Date(Date.now() - 7 * 86_400_000);
+  const since = new Date(Math.min(dayStart.getTime(), weekStart.getTime())).toISOString();
+
+  const { data: acts } = await supabase
+    .from('agent_activity')
+    .select('skill_name, status, created_at')
+    .in('skill_name', skills)
+    .eq('status', 'success')
+    .gte('created_at', since);
+
+  const actionable: any[] = [];
+  const satisfied: Array<{ goal: string; note: string }> = [];
+
+  for (const o of objectives) {
+    const c = o.constraints?.cadence;
+    if (!c || typeof c.counts !== 'string' || !(Number(c.max) > 0)) {
+      actionable.push(o);
+      continue;
+    }
+    const windowStart = c.per === 'week' ? weekStart : dayStart;
+    const done = (acts ?? []).filter(
+      (a: any) => a.skill_name === c.counts && new Date(a.created_at) >= windowStart,
+    ).length;
+
+    if (done >= Number(c.max)) {
+      satisfied.push({
+        goal: o.goal.split('\n')[0].slice(0, 60),
+        note: `${done}/${c.max} per ${c.per === 'week' ? 'week' : 'day'} via ${c.counts} — done for this period`,
+      });
+    } else {
+      actionable.push({ ...o, _cadence_left: Number(c.max) - done });
+    }
+  }
+  return { actionable, satisfied };
+}
+
 export async function loadObjectives(supabase: any, opts?: { unlockedOnly?: boolean }): Promise<string> {
   let query = supabase
     .from('agent_objectives')
@@ -188,8 +254,22 @@ export async function loadObjectives(supabase: any, opts?: { unlockedOnly?: bool
 
   if (!data || data.length === 0) return '\nNo active objectives.';
 
+  // Objectives that already met their delivery quota this period step aside so
+  // the turn goes to other work (they are neither failed nor completed).
+  const { actionable, satisfied } = await partitionByCadence(supabase, data);
+  const cadenceNote = satisfied.length
+    ? `\n\nCadence-satisfied this period (do NOT re-deliver these):\n${satisfied
+        .map((s) => `- "${s.goal}" — ${s.note}`)
+        .join('\n')}`
+    : '';
+
+  if (actionable.length === 0) {
+    return `\nNo objectives need delivery right now — every active objective has met its cadence for this period.${cadenceNote}\n` +
+      `\nThis is NOT a reason to idle: spend the turn on standing value instead — review recent outcomes, follow up staged/blocked work, improve a skill's instructions from what you learned, or surface something the operator should know.`;
+  }
+
   // Priority scoring
-  const scored = data.map((o: any) => {
+  const scored = actionable.map((o: any) => {
     let score = 0;
     const plan = o.progress?.plan;
     const constraints = o.constraints || {};
@@ -236,8 +316,9 @@ export async function loadObjectives(supabase: any, opts?: { unlockedOnly?: bool
     const priority = o.constraints?.priority ? ` | priority: ${o.constraints.priority}` : '';
     const nextStep = plan?.steps?.find((s: any) => s.status !== 'done');
     const nextInfo = nextStep ? ` | next: "${nextStep.description || nextStep.action}"` : '';
-    return `- #${i + 1} [score:${o._priority_score}] [${o.id}] "${o.goal}"${planInfo}${nextInfo}${deadline}${priority}`;
-  }).join('\n');
+    const cadence = o._cadence_left != null ? ` | cadence: ${o._cadence_left} left this period` : '';
+    return `- #${i + 1} [score:${o._priority_score}] [${o.id}] "${o.goal}"${planInfo}${nextInfo}${deadline}${priority}${cadence}`;
+  }).join('\n') + cadenceNote;
 }
 
 // ─── Heartbeat State ──────────────────────────────────────────────────────────
