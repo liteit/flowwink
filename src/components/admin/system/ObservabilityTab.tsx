@@ -408,7 +408,7 @@ function InstanceSyncCard() {
       const { data, error } = await supabase.rpc('instance_sync_status' as never);
       if (error) throw error;
       return data as unknown as {
-        schema: { migration_head: string | null; migrations_count: number | null };
+        schema: { migration_head: string | null; migrations_count: number | null; applied?: Array<{ version: string; name: string }> };
         skills: { total: number | null; enabled: number | null; last_updated_at: string | null; stamp: { seed_hash?: string; stamped_at?: string } | null };
       };
     },
@@ -416,15 +416,29 @@ function InstanceSyncCard() {
     refetchInterval: 300_000,
   });
 
-  const dbHead = data?.schema?.migration_head ?? null;
-  const schemaOk = dbHead === null ? null : dbHead >= expected.schema.migration_head;
-  const schemaDetail = dbHead === null
+  // Schema comparison matches each expected migration by IDENTITY, not by
+  // timestamp: a Lovable-managed ledger stamps `version` with the RUN TIME, so
+  // a head-timestamp compare false-flags it. A migration counts as applied if
+  // the ledger has a row whose version == its timestamp (CLI convention) OR
+  // whose name matches its descriptive name (managed convention). Missing =
+  // expected but not found — that is the real "did it apply?" answer.
+  const applied = data?.schema?.applied ?? null;
+  const appliedVersions = new Set((applied ?? []).map((m) => m.version));
+  const appliedNames = new Set((applied ?? []).map((m) => m.name));
+  const missing = applied === null
+    ? []
+    : expected.schema.migrations.filter(
+        (m) => !appliedVersions.has(m.version)
+          && !appliedNames.has(m.name)
+          // managed ledgers sometimes store the full <ts>_<name> basename
+          && !appliedNames.has(`${m.version}_${m.name}`),
+      );
+  const schemaOk = applied === null ? null : missing.length === 0;
+  const schemaDetail = applied === null
     ? 'ledger unreadable'
-    : dbHead === expected.schema.migration_head
-      ? `ledger at ${dbHead}`
-      : dbHead > expected.schema.migration_head
-        ? `ledger ${dbHead} ahead of this build (${expected.schema.migration_head}) — frontend is older`
-        : `ledger ${dbHead} — MISSING migrations up to ${expected.schema.migration_head}`;
+    : missing.length === 0
+      ? `all ${expected.schema.migrations_count} migrations applied`
+      : `${missing.length} migration(s) MISSING — e.g. ${missing.slice(0, 2).map((m) => m.name).join(', ')}${missing.length > 2 ? '…' : ''}`;
 
   const stampHash = data?.skills?.stamp?.seed_hash ?? null;
   const skillsOk = stampHash === null ? null : stampHash === expected.skills.seed_hash;
