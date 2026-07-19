@@ -27,7 +27,7 @@ export default function ChatPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
   const [chatKey, setChatKey] = useState(0);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
   
   // Initial message: prefer ?q= (shareable/refresh-safe), fall back to router state.
   const initialMessage =
