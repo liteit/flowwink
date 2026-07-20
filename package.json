@@ -1,5 +1,6 @@
 {
   "name": "flowwink",
+  "displayName": "FlowWink",
   "private": true,
   "version": "3.0.0",
   "license": "MIT",

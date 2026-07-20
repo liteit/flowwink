@@ -23,6 +23,15 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+      # The product name is READ from package.json, never spelled out here.
+      # v3.0.0 published under the pre-rebrand name because this workflow
+      # carried it hardcoded. It survived the rebrand unnoticed: every earlier
+      # release was cut by hand, so this string had never once run.
+      # See src/lib/__tests__/brand.guardrails.test.ts.
+      - name: Get product name
+        id: product
+        run: echo "NAME=$(node -p "require('./package.json').displayName")" >> $GITHUB_OUTPUT
+
       - name: Extract changelog for this version
         id: changelog
         run: |
@@ -56,7 +65,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          name: Pezcms v${{ steps.version.outputs.VERSION }}
+          name: ${{ steps.product.outputs.NAME }} v${{ steps.version.outputs.VERSION }}
           body: |
             ## What's Changed
             

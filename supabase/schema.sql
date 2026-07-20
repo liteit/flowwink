@@ -634,9 +634,9 @@ INSERT INTO public.site_settings (key, value) VALUES (
 INSERT INTO public.site_settings (key, value) VALUES (
   'seo',
   '{
-    "siteTitle": "Pezcms",
-    "titleTemplate": "%s | Pezcms",
-    "defaultDescription": "A modern CMS built with React and Supabase",
+    "siteTitle": "FlowWink",
+    "titleTemplate": "%s | FlowWink",
+    "defaultDescription": "A self-hosted Business Operating System run by agents",
     "ogImage": "",
     "twitterHandle": "",
     "googleSiteVerification": "",
