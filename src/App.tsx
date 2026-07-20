@@ -68,6 +68,9 @@ const KbArticleEditorPage = lazy(() => import("./pages/admin/KbArticleEditorPage
 const IntegrationsStatusPage = lazy(() => import("./pages/admin/IntegrationsStatusPage"));
 const CopilotPage = lazy(() => import("./pages/admin/CopilotPage"));
 const FlowChatPage = lazy(() => import("./pages/admin/FlowChatPage"));
+const FlowChatSessionsPage = lazy(() => import("./pages/admin/FlowChatSessionsPage"));
+const FlowworkSessionsPage = lazy(() => import("./pages/admin/FlowworkSessionsPage"));
+
 
 const LiveSupportPage = lazy(() => import("./pages/admin/LiveSupportPage"));
 
