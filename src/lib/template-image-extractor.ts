@@ -409,7 +409,7 @@ export function restoreTemplateUrls(
     blogPosts: template.blogPosts?.map(post => ({
       ...post,
       featured_image: restoreUrl(post.featured_image),
-      content: post.content.map(restoreBlock),
+      content: Array.isArray(post.content) ? post.content.map(restoreBlock) : post.content,
     })),
     branding: restoreObject({ ...template.branding } as Record<string, unknown>) as StarterTemplate['branding'],
     headerSettings: template.headerSettings 
