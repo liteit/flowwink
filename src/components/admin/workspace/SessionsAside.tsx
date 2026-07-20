@@ -8,6 +8,7 @@
  * chrome.
  */
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,7 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { MessageSquarePlus, Pencil, Trash2, History } from 'lucide-react';
+import { MessageSquarePlus, Pencil, Trash2, History, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { WorkspaceSession } from '@/hooks/useWorkspaceSessions';
 import { cn } from '@/lib/utils';
@@ -31,6 +32,10 @@ interface Props {
   onDelete: (id: string) => void;
   /** Deprecated — kept for API compatibility; collapse is no longer supported. */
   storageKey?: string;
+  /** Max sessions shown in the sidebar before overflowing to viewAllHref. */
+  limit?: number;
+  /** If set, a footer link is shown pointing to the full sessions page. */
+  viewAllHref?: string;
 }
 
 export function SessionsAside({
@@ -40,7 +45,10 @@ export function SessionsAside({
   onNew,
   onRename,
   onDelete,
+  limit = 15,
+  viewAllHref,
 }: Props) {
+
   const [renameTarget, setRenameTarget] = useState<WorkspaceSession | null>(null);
   const [renameValue, setRenameValue] = useState('');
 
