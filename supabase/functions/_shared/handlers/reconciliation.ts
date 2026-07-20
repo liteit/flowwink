@@ -8,55 +8,49 @@
 // Consolidates reconciliation-auto-match, reconciliation-import-file,
 // reconciliation-import-image, reconciliation-sync-stripe into one Edge Function.
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getServiceClient } from '../_shared/supabase-clients.ts';
-import { requireServiceOrRole, unauthorized } from '../_shared/edge-auth.ts';
-import { logAiUsage } from '../_shared/ai-usage-logger.ts';
+import { getServiceClient } from '../supabase-clients.ts';
+import { logAiUsage } from '../ai-usage-logger.ts';
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// The edge: dispatch parsed the JSON body regardless of HTTP status, so
+// callers only ever saw these objects — status codes drop out, nothing else.
+const json = (body: unknown, _status = 200): Record<string, unknown> =>
+  body as Record<string, unknown>;
 
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+// reconciliation — internal skill handler (4 sub-skills).
+//
+// Moved from the standalone `reconciliation` edge function (edge-surface B1b).
+// The function routed on the URL SUBPATH (/reconciliation/auto-match etc.) and
+// agent-execute's edge: dispatch carried that subpath in the handler string
+// (`edge:reconciliation/auto-match`). Internally the action now comes from the
+// handler suffix instead — same four routes, same bodies, one less hop.
+//
+// The function's own requireServiceOrRole gate is dropped: agent-execute
+// authenticates before dispatching an internal: handler, and the admin UI
+// reaches it through callSkill (authenticated). Same effective policy.
 
-serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
-  // Privileged: writes bank_transactions, matches/settles invoices, pulls Stripe
-  // payouts, runs paid OCR. Admin UI calls via functions.invoke (session JWT);
-  // agent-execute edge dispatch sends the service key. Gate both, reject anon.
-  const auth = await requireServiceOrRole(req, getServiceClient());
-  if (!auth.authorized) return unauthorized(corsHeaders);
-
-  const url = new URL(req.url);
-  const segments = url.pathname.split("/").filter(Boolean);
-  const idx = segments.lastIndexOf("reconciliation");
-  const action = idx >= 0 && segments.length > idx + 1 ? segments[idx + 1] : "";
-
+export async function executeReconciliation(
+  action: string,
+  args: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
   try {
     switch (action) {
       case "auto-match":   return await handleAutoMatch();
-      case "import-file":  return await handleImportFile(req);
-      case "import-image": return await handleImportImage(req);
+      case "import-file":  return await handleImportFile(args);
+      case "import-image": return await handleImportImage(args);
       case "sync-stripe":  return await handleSyncStripe();
       default:
         return json({
           error: "Unknown reconciliation action",
-          hint: "POST to /functions/v1/reconciliation/{auto-match|import-file|import-image|sync-stripe}",
+          hint: "Use one of: auto-match, import-file, import-image, sync-stripe",
         }, 404);
     }
   } catch (e: any) {
     console.error(`[reconciliation/${action}] error`, e);
     return json({ success: false, error: e.message || "Internal error" }, 500);
   }
-});
+}
 
 const sb = () => getServiceClient();
 
@@ -64,7 +58,7 @@ const sb = () => getServiceClient();
 // AUTO-MATCH (was reconciliation-auto-match)
 // =============================================================================
 
-async function handleAutoMatch(): Promise<Response> {
+async function handleAutoMatch(): Promise<Record<string, unknown>> {
   const supabase = sb();
 
   const { data: txs, error: txErr } = await supabase
@@ -298,9 +292,9 @@ function parseSIE(content: string): ParseResult {
   return { transactions, bank_gl_accounts: Array.from(bankGlSet) };
 }
 
-async function handleImportFile(req: Request): Promise<Response> {
+async function handleImportFile(args: Record<string, unknown>): Promise<Record<string, unknown>> {
   const supabase = sb();
-  const { fileName, content, format } = await req.json();
+  const { fileName, content, format } = args as { fileName?: string; content?: string; format?: string };
   if (!content || !format) return json({ error: "content and format required" }, 400);
 
   let result: ParseResult = { transactions: [] };
@@ -490,9 +484,9 @@ async function ocrWithGemini(_dataUrl: string, mime: string, base64: string, mod
   return call.args;
 }
 
-async function handleImportImage(req: Request): Promise<Response> {
+async function handleImportImage(args: Record<string, unknown>): Promise<Record<string, unknown>> {
   const supabase = sb();
-  const body = await req.json();
+  const body = args as Record<string, any>;
   const {
     fileName, contentBase64, mimeType, provider = "openai", model,
     commit = false, transactions: clientTransactions, currency_default: clientCurrency,
@@ -580,7 +574,7 @@ async function handleImportImage(req: Request): Promise<Response> {
 // SYNC-STRIPE (was reconciliation-sync-stripe)
 // =============================================================================
 
-async function handleSyncStripe(): Promise<Response> {
+async function handleSyncStripe(): Promise<Record<string, unknown>> {
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
   if (!stripeKey) return json({ error: "STRIPE_SECRET_KEY not configured" }, 503);
 

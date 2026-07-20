@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { callSkill } from '@/lib/call-skill';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -179,10 +180,7 @@ export function useSyncStripe() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('reconciliation/sync-stripe', {
-        body: {},
-      });
-      if (error) throw error;
+      const data = await callSkill('sync_stripe_payouts', {} as Record<string, unknown>);
       return data as { imported: number; skipped: number };
     },
     onSuccess: (d) => {
@@ -199,10 +197,7 @@ export function useImportBankFile() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { fileName: string; content: string; format: 'csv' | 'camt053' | 'sie' }) => {
-      const { data, error } = await supabase.functions.invoke('reconciliation/import-file', {
-        body: input,
-      });
-      if (error) throw error;
+      const data = await callSkill('import_bank_file', input as Record<string, unknown>);
       return data as { imported: number; skipped: number; errors: number };
     },
     onSuccess: (d) => {
@@ -233,10 +228,7 @@ export function usePreviewBankImage() {
       provider?: 'openai' | 'gemini';
       model?: string;
     }) => {
-      const { data, error } = await supabase.functions.invoke('reconciliation/import-image', {
-        body: { ...input, commit: false },
-      });
-      if (error) throw error;
+      const data = await callSkill('import_bank_image', { ...input, commit: false } as Record<string, unknown>);
       return data as { transactions: OcrTransaction[]; currency_default: string };
     },
     onError: (e: Error) => toast.error(`OCR failed: ${e.message}`),
@@ -252,10 +244,7 @@ export function useCommitBankImage() {
       transactions: OcrTransaction[];
       currency_default?: string;
     }) => {
-      const { data, error } = await supabase.functions.invoke('reconciliation/import-image', {
-        body: { ...input, commit: true },
-      });
-      if (error) throw error;
+      const data = await callSkill('import_bank_image', { ...input, commit: true } as Record<string, unknown>);
       return data as { imported: number; errors: number; batch_id: string };
     },
     onSuccess: (d) => {
@@ -272,10 +261,7 @@ export function useAutoMatch() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('reconciliation/auto-match', {
-        body: {},
-      });
-      if (error) throw error;
+      const data = await callSkill('auto_match_transactions', {} as Record<string, unknown>);
       return data as { matched: number; suggested: number };
     },
     onSuccess: (d) => {

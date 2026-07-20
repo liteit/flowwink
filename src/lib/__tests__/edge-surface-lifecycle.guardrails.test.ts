@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
@@ -76,5 +76,44 @@ describe('flowpilot-lifecycle consolidation', () => {
     expect(ih).toContain("check === 'cron'");
     expect(ih).toContain('cron_health_report');
     expect(ih).toMatch(/requireServiceOrRole\(req, supabase, 'admin'\)/);
+  });
+});
+
+/**
+ * Guardrail: reconciliation's SUB-PATH routing survives the move (B1b).
+ *
+ * The standalone function routed on the URL subpath
+ * (/reconciliation/auto-match) and agent-execute carried that subpath inside
+ * the handler string. As an internal handler the action comes from the
+ * handler suffix instead — if a seed loses its suffix, or the dispatcher stops
+ * splitting on '/', all four sub-skills silently collapse onto one route.
+ */
+describe('reconciliation sub-path routing', () => {
+  const SUBS = ['auto-match', 'import-file', 'import-image', 'sync-stripe'];
+
+  it('all four seeds keep their sub-path suffix', () => {
+    const mod = readFileSync(join(root, 'src/lib/modules/reconciliation-module.ts'), 'utf8');
+    for (const s of SUBS) expect(mod).toContain(`'internal:reconciliation/${s}'`);
+    expect(mod).not.toMatch(/'edge:reconciliation/);
+  });
+
+  it('agent-execute dispatches on the suffix, and the handler covers every route', () => {
+    const ae = readFileSync(join(root, 'supabase/functions/agent-execute/index.ts'), 'utf8');
+    expect(ae).toMatch(/handler\.startsWith\('internal:reconciliation\/'\)/);
+    expect(ae).toMatch(/executeReconciliation\(handler\.split\('\/'\)\[1\]/);
+
+    const h = readFileSync(join(root, 'supabase/functions/_shared/handlers/reconciliation.ts'), 'utf8');
+    for (const s of SUBS) expect(h).toContain(`case "${s}":`);
+    expect(h).toMatch(/export async function executeReconciliation/);
+  });
+
+  it('no moved handler keeps a ../_shared/ path (it now lives inside _shared)', () => {
+    // Live finding: the mechanical move left `../_shared/x.ts`, which resolves
+    // to _shared/_shared/x.ts from handlers/ — the whole function failed to
+    // boot with "Module not found".
+    const dir = join(root, 'supabase/functions/_shared/handlers');
+    for (const f of readdirSync(dir).filter((x) => x.endsWith('.ts'))) {
+      expect(readFileSync(join(dir, f), 'utf8'), f).not.toMatch(/from ['"]\.\.\/_shared\//);
+    }
   });
 });

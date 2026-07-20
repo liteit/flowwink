@@ -117,10 +117,18 @@ describe('Skill handler integrity guardrails', () => {
     const internalSkills = SEEDS.filter((s) => s.handler!.startsWith('internal:'));
     for (const s of internalSkills) {
       it(`[${s.name}] "${s.handler}" has a dispatch branch in agent-execute`, () => {
+        // Most internal handlers match exactly. A few keep a SUB-PATH
+        // (internal:reconciliation/auto-match) that the standalone function
+        // routed on; agent-execute dispatches those via a startsWith prefix
+        // branch, so accept either form.
+        const exact = AGENT_EXECUTE_SRC.includes(`'${s.handler}'`);
+        const prefix = s.handler!.includes('/')
+          && AGENT_EXECUTE_SRC.includes(`handler.startsWith('${s.handler!.split('/')[0]}/')`);
         expect(
-          AGENT_EXECUTE_SRC.includes(`'${s.handler}'`),
+          exact || prefix,
           `Handler ${s.handler} (skill "${s.name}") has no ` +
-            `handler === '${s.handler}' branch in agent-execute — the skill is dead.`,
+            `handler === '${s.handler}' branch (nor a startsWith prefix branch) ` +
+            `in agent-execute — the skill is dead.`,
         ).toBe(true);
       });
     }

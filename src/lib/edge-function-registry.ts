@@ -61,7 +61,7 @@ export const ALL_EDGE_FUNCTIONS: readonly string[] = [
   'extract-pdf-text', 'extract-receipt', 'federation-invite-peer', 'fetch-image', 'flowpilot-lifecycle', 'flowpilot-heartbeat', 'gatewayapi-ingest', 'generate-invoice-pdf', 'get-page', 'github-content-sync', 'gmail-oauth-callback', 'integrations-account', 'instance-health', 'invite-employee',
   'knowledge-indexer', 'llms-txt', 'mcp-server', 'media-optimize', 'migrate-page', 'newsletter',
   'openclaw-responses', 'process-image',
-  'process-job-application', 'quote-expiry-reminders', 'quote-pay', 'quote-sign', 'reconciliation', 'recurring-quotes-cron',
+  'process-job-application', 'quote-expiry-reminders', 'quote-pay', 'quote-sign', 'recurring-quotes-cron',
   'consultant-match', 'run-autonomy-tests',
   'run-platform-tests', 'score-visitor-intent', 'send-webhook', 'setup-database', 'signal-dispatcher', 'signal-ingest', 'sitemap',
   'social-post-scheduler', 'stripe-webhook', 'subscription-billing-cron', 'subscriptions', 'contract-billing-cron',
@@ -112,7 +112,7 @@ export const MODULE_EDGE_FUNCTIONS: Partial<Record<ModuleId, readonly string[]>>
   calendar: [],
   subscriptions: ['subscriptions', 'subscription-billing-cron', 'dunning-processor'],
   expenses: ['extract-receipt'],
-  reconciliation: ['reconciliation'],
+  reconciliation: [],
   multiCurrency: [],
 
   // ── Field service / SLA / surveys ────────────────────────────────────────

@@ -155,9 +155,6 @@ verify_jwt = false
 [functions.subscriptions]
 verify_jwt = false
 
-[functions.reconciliation]
-verify_jwt = false
-
 [functions.ai-task]
 verify_jwt = false
 

@@ -1,7 +1,7 @@
 {
   "generated_by": "scripts/edge-functions-to-json.ts",
   "note": "Selective-deploy map. Core = always deployed. modules[<id>] = deployed only when that module is enabled. Unknown/new functions: deploy (fail-open).",
-  "total": 90,
+  "total": 89,
   "core_count": 40,
   "plan_limits": {
     "free": 100,
@@ -135,9 +135,7 @@
       "quote-pay",
       "quote-sign"
     ],
-    "reconciliation": [
-      "reconciliation"
-    ],
+    "reconciliation": [],
     "recruitment": [
       "invite-employee",
       "process-job-application"

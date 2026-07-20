@@ -21,16 +21,15 @@ import { describe, expect, it } from 'vitest';
 const FUNCTIONS_DIR = join(process.cwd(), 'supabase', 'functions');
 
 // Privileged functions that MUST authenticate the caller in-body.
-// NB: field-service-skill and sales-profile-setup were re-homed as internal:
-// handlers inside agent-execute (edge-surface refactor B1a) — their gate is
-// now agent-execute's own AUTH GATE, which this list still covers.
+// NB: field-service-skill, sales-profile-setup and reconciliation were re-homed
+// as internal: handlers inside agent-execute (edge-surface refactor B1a/B1b) —
+// their gate is now agent-execute's own AUTH GATE, which this list still covers.
 const MUST_BE_GATED = [
   'agent-execute',
   'comms-send',
   'flowpilot-lifecycle',
   'agent-operate',
   'federation-invite-peer',
-  'reconciliation',
   'subscriptions',
   'ai-task',
 ];

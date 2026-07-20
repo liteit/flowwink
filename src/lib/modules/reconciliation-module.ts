@@ -34,7 +34,7 @@ const RECONCILIATION_SKILLS: SkillSeed[] = [
     description:
       'Pull recent Stripe payouts and balance transactions into bank_transactions for matching. Use when: admin asks to refresh Stripe activity, daily payout reconciliation, before running auto_match_transactions. NOT for: bank file imports (use import_bank_file) or OCR of statement images (use import_bank_image).',
     category: 'commerce',
-    handler: 'edge:reconciliation/sync-stripe',
+    handler: 'internal:reconciliation/sync-stripe',
     scope: 'internal',
     tool_definition: {
       type: 'function',
@@ -56,7 +56,7 @@ const RECONCILIATION_SKILLS: SkillSeed[] = [
     description:
       'Import a structured bank statement file (CAMT.053 XML, MT940, OFX, CSV, or SIE 4) into bank_transactions. Auto-detects format and links to the correct bank account via IBAN/BBAN/GL match. Use when: user uploads a file from their bank/accounting system. NOT for: images/PDFs of statements (use import_bank_image), Stripe payouts (use sync_stripe_payouts).',
     category: 'commerce',
-    handler: 'edge:reconciliation/import-file',
+    handler: 'internal:reconciliation/import-file',
     scope: 'internal',
     tool_definition: {
       type: 'function',
@@ -81,7 +81,7 @@ const RECONCILIATION_SKILLS: SkillSeed[] = [
     description:
       'Run the auto-matcher across all unmatched bank_transactions, scoring against open invoices, expenses, and orders. Creates reconciliation_match rows for confident hits and leaves ambiguous ones for human review. Use when: after import_bank_file/sync_stripe_payouts, daily reconciliation cron, before showing the unmatched queue. NOT for: booking unmatched rows (use manage_journal_entry instead).',
     category: 'commerce',
-    handler: 'edge:reconciliation/auto-match',
+    handler: 'internal:reconciliation/auto-match',
     scope: 'internal',
     tool_definition: {
       type: 'function',
@@ -104,7 +104,7 @@ const RECONCILIATION_SKILLS: SkillSeed[] = [
     description:
       'OCR a bank statement image or PDF (screenshot, scan, exported PDF) and turn it into bank_transactions rows. Use when: user uploads a picture/PDF of a bank account printout instead of a structured CSV/CAMT/SIE file. NOT for: structured files (use import_bank_file), or for booking journal entries (use manage_journal_entry). MANDATORY: default to commit=false (preview) so a human can verify rows before they hit the books; only set commit=true when the caller has already shown the parsed rows to the user and got approval.',
     category: 'commerce',
-    handler: 'edge:reconciliation/import-image',
+    handler: 'internal:reconciliation/import-image',
     scope: 'internal',
     tool_definition: {
       type: 'function',
