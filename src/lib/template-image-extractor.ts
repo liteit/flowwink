@@ -281,69 +281,7 @@ export function rewriteTemplateUrls(
   template: StarterTemplate,
   urlMapping: Map<string, string>
 ): StarterTemplate {
-  const rewriteUrl = (url: string | undefined): string | undefined => {
-    if (!url) return url;
-    return urlMapping.get(url) || url;
-  };
-  
-  const rewriteObject = (obj: Record<string, unknown>): Record<string, unknown> => {
-    const result = { ...obj };
-    
-    const imageFields = [
-      'imageSrc', 'imageUrl', 'image', 'backgroundImage', 'backgroundUrl',
-      'src', 'url', 'logo', 'avatar', 'photo', 'thumbnail', 'videoThumb',
-      'featured_image', 'featuredImage', 'image_url', 'imageURL',
-    ];
-    
-    imageFields.forEach(field => {
-      if (typeof result[field] === 'string') {
-        result[field] = rewriteUrl(result[field] as string);
-      }
-    });
-    
-    return result;
-  };
-  
-  const rewriteBlock = (block: ContentBlock): ContentBlock => {
-    const data = block.data as Record<string, unknown>;
-    const newData = rewriteObject({ ...data });
-    
-    // Handle arrays of items
-    const arrayFields = [
-      'logos', 'items', 'testimonials', 'team', 'members', 'images',
-      'slides', 'cards', 'features', 'clients', 'partners', 'badges',
-    ];
-    
-    arrayFields.forEach(field => {
-      if (Array.isArray(newData[field])) {
-        newData[field] = (newData[field] as Record<string, unknown>[]).map(item =>
-          rewriteObject(item)
-        );
-      }
-    });
-    
-    return { ...block, data: newData };
-  };
-  
-  return {
-    ...template,
-    pages: template.pages.map(page => ({
-      ...page,
-      blocks: page.blocks.map(rewriteBlock),
-    })),
-    blogPosts: template.blogPosts?.map(post => ({
-      ...post,
-      featured_image: rewriteUrl(post.featured_image),
-      content: Array.isArray(post.content) ? post.content.map(rewriteBlock) : post.content,
-    })),
-    branding: rewriteObject({ ...template.branding } as Record<string, unknown>) as StarterTemplate['branding'],
-    headerSettings: template.headerSettings 
-      ? rewriteObject({ ...template.headerSettings } as Record<string, unknown>) as StarterTemplate['headerSettings']
-      : undefined,
-    footerSettings: template.footerSettings
-      ? rewriteObject({ ...template.footerSettings } as Record<string, unknown>) as StarterTemplate['footerSettings']
-      : undefined,
-  };
+  return replaceMappedUrls(template, urlMapping) as StarterTemplate;
 }
 
 /**
@@ -353,70 +291,20 @@ export function restoreTemplateUrls(
   template: StarterTemplate,
   urlMapping: Map<string, string> // localPath -> newStorageUrl
 ): StarterTemplate {
-  const restoreUrl = (localPath: string | undefined): string | undefined => {
-    if (!localPath) return localPath;
-    // Check if it's a local path (starts with "images/")
-    if (localPath.startsWith('images/')) {
-      return urlMapping.get(localPath) || localPath;
-    }
-    return localPath;
-  };
-  
-  const restoreObject = (obj: Record<string, unknown>): Record<string, unknown> => {
-    const result = { ...obj };
-    
-    const imageFields = [
-      'imageSrc', 'imageUrl', 'image', 'backgroundImage', 'backgroundUrl',
-      'src', 'url', 'logo', 'avatar', 'photo', 'thumbnail', 'videoThumb',
-      'featured_image', 'featuredImage', 'image_url', 'imageURL',
-    ];
-    
-    imageFields.forEach(field => {
-      if (typeof result[field] === 'string') {
-        result[field] = restoreUrl(result[field] as string);
-      }
-    });
-    
-    return result;
-  };
-  
-  const restoreBlock = (block: ContentBlock): ContentBlock => {
-    const data = block.data as Record<string, unknown>;
-    const newData = restoreObject({ ...data });
-    
-    const arrayFields = [
-      'logos', 'items', 'testimonials', 'team', 'members', 'images',
-      'slides', 'cards', 'features', 'clients', 'partners', 'badges',
-    ];
-    
-    arrayFields.forEach(field => {
-      if (Array.isArray(newData[field])) {
-        newData[field] = (newData[field] as Record<string, unknown>[]).map(item =>
-          restoreObject(item)
-        );
-      }
-    });
-    
-    return { ...block, data: newData };
-  };
-  
-  return {
-    ...template,
-    pages: template.pages.map(page => ({
-      ...page,
-      blocks: page.blocks.map(restoreBlock),
-    })),
-    blogPosts: template.blogPosts?.map(post => ({
-      ...post,
-      featured_image: restoreUrl(post.featured_image),
-      content: Array.isArray(post.content) ? post.content.map(restoreBlock) : post.content,
-    })),
-    branding: restoreObject({ ...template.branding } as Record<string, unknown>) as StarterTemplate['branding'],
-    headerSettings: template.headerSettings 
-      ? restoreObject({ ...template.headerSettings } as Record<string, unknown>) as StarterTemplate['headerSettings']
-      : undefined,
-    footerSettings: template.footerSettings
-      ? restoreObject({ ...template.footerSettings } as Record<string, unknown>) as StarterTemplate['footerSettings']
-      : undefined,
-  };
+  return replaceMappedUrls(template, urlMapping) as StarterTemplate;
+}
+
+/** Replace exact URL values at any depth, for both block arrays and Tiptap docs. */
+function replaceMappedUrls(value: unknown, urlMapping: Map<string, string>): unknown {
+  if (typeof value === 'string') return urlMapping.get(value) ?? value;
+  if (Array.isArray(value)) return value.map(item => replaceMappedUrls(item, urlMapping));
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, nestedValue]) => [
+        key,
+        replaceMappedUrls(nestedValue, urlMapping),
+      ])
+    );
+  }
+  return value;
 }
