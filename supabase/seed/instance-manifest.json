@@ -3,7 +3,6 @@
   "schema_version": 1,
   "layers": {
     "schema": {
-<<<<<<< HEAD
       "migration_head": "20260720030000",
       "migrations_count": 250,
       "migrations": [
@@ -1008,10 +1007,6 @@
           "name": "instance-sync-status-name-match"
         }
       ]
-=======
-      "migration_head": "20260720020000",
-      "migrations_count": 249
->>>>>>> ffcddf8b (fix(platform-tests): the orphan-skill check was crying wolf — 150 false positives)
     },
     "skills": {
       "seed_hash": "sha256:09239aa42eef7b40f6c3d3f50b2b6d7573e7145d55e6b8ca66eabd0636b4298c",
