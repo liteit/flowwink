@@ -140,3 +140,32 @@ describe('handler import depth', () => {
     }
   });
 });
+
+/**
+ * Guardrail: every edge function must be able to answer an HTTP request.
+ *
+ * Live finding (category C): supabase/functions/agent-reason was three lines —
+ * `export * from "../_shared/agent-reason.ts"` with no serve() at all. It could
+ * not respond to anything, had no caller and no seed, yet was deployed on the
+ * fleet and occupied one of the 100 function slots on every instance. The
+ * shared module it re-exported is imported directly by the three functions
+ * that actually use it, so the wrapper was pure dead weight left behind by an
+ * earlier extraction.
+ */
+describe('edge functions are reachable', () => {
+  it('every function directory has an HTTP handler', () => {
+    const dir = join(root, 'supabase/functions');
+    const shells: string[] = [];
+    for (const d of readdirSync(dir, { withFileTypes: true })) {
+      if (!d.isDirectory() || d.name.startsWith('_') || d.name === 'shared') continue;
+      const entry = join(dir, d.name, 'index.ts');
+      if (!existsSync(entry)) continue;
+      const src = readFileSync(entry, 'utf8');
+      if (!/serve\(|Deno\.serve/.test(src)) shells.push(d.name);
+    }
+    expect(
+      shells,
+      'these functions cannot answer a request — they occupy a deploy slot for nothing',
+    ).toEqual([]);
+  });
+});

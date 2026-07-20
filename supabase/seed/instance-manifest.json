@@ -1038,14 +1038,13 @@
       "module_count": 68
     },
     "edge_functions": {
-      "count": 76,
+      "count": 75,
       "shared_hash": "sha256:861d02dc5123f4e42664c152157af207477648e37f669ce84a68a14dfd377480",
       "functions": {
         "a2a": "sha256:ce9a4fb6212cae08011c6418af9ad906786f4bbad6a8de6f962eda2eb4c54978",
         "agent-card": "sha256:9486e3f1a5360c2d0fcfb032e24760eb337757878c51f4eeac4adf786432cddb",
         "agent-execute": "sha256:8bbca557a763e88e7c41e2d230408896c26c6aff6d4ffed48fbd5867df0c14f6",
         "agent-operate": "sha256:72cdafe207ae2a5630e3263e6c993a55aade47c679f2cc200465cb3a17f30689",
-        "agent-reason": "sha256:0ed440de9516635de32e5ddc8dc676f250c40fa8e1764ff9dc81243bcd18daab",
         "ai-task": "sha256:5cc0884b9c7ab08157ee79a5055f847433cb079732200a07bdae3ef2b666f1f6",
         "automation-dispatcher": "sha256:c0ffa7a2c623209bf82030bd4b6feb1ed9ae92baa4ea5a08772eaa3fa912ea3e",
         "blog-rss": "sha256:dd57f6386804f1e0a4b8e0db3cdb83abc386c5790a677c7fdfe145067ae51be6",

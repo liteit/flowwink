@@ -13,9 +13,6 @@ verify_jwt = false
 [functions.agent-operate]
 verify_jwt = false
 
-[functions.agent-reason]
-verify_jwt = false
-
 [functions.automation-dispatcher]
 verify_jwt = false
 
