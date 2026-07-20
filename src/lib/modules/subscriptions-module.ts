@@ -409,6 +409,19 @@ const SUBSCRIPTIONS_SKILLS: SkillSeed[] = [
     },
     instructions: 'Sweep RPC — idempotent: subscriptions already converted are skipped. Run before subscription invoicing so newly-active subscriptions are billed in the same cycle.',
   },
+
+  {
+    name: 'run_subscription_billing',
+    description: 'Invoice every manual subscription whose next invoice date has arrived (runs trial conversions first). Use when: running the daily subscription billing sweep — the Subscription Billing automation calls this. Takes no arguments. NOT for: invoicing one subscription (generate_subscription_invoice); Stripe subscriptions, which Stripe bills itself.',
+    category: 'subscriptions',
+    handler: 'rpc:run_subscription_billing',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: { name: 'run_subscription_billing', parameters: { type: 'object', properties: {} } },
+    },
+    instructions: 'Sweep RPC, capped at 500 subscriptions per run. Idempotent: generate_subscription_invoice refuses a subscription whose next_invoice_date is in the future and rolls the date forward on success, so re-running the same day bills nobody twice. One failing subscription is reported in results[] and never stops the rest of the run.',
+  },
 ];
 
 const SUBSCRIPTIONS_AUTOMATIONS: AutomationSeed[] = [
@@ -418,6 +431,15 @@ const SUBSCRIPTIONS_AUTOMATIONS: AutomationSeed[] = [
     trigger_type: 'cron',
     trigger_config: { cron: '0 5 * * *', expression: '0 5 * * *' },
     skill_name: 'run_trial_conversions',
+    skill_arguments: {},
+  },
+
+  {
+    name: 'Subscription Billing',
+    description: 'Every day at 05:30, invoice manual subscriptions whose next invoice date has arrived (trials are converted first).',
+    trigger_type: 'cron',
+    trigger_config: { cron: '30 5 * * *', expression: '30 5 * * *' },
+    skill_name: 'run_subscription_billing',
     skill_arguments: {},
   },
 ];
@@ -450,7 +472,7 @@ export const subscriptionsModule = defineModule<Input, Output>({
     'list_dunning_sequences',
     'pause_dunning',
     'escalate_dunning',
-  , 'run_trial_conversions'],
+  , 'run_trial_conversions', 'run_subscription_billing'],
   data: {
     tables: [
       'subscription_winback_sends',

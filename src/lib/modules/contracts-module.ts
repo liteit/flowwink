@@ -279,6 +279,19 @@ const CONTRACT_SKILLS: SkillSeed[] = [
     },
     instructions: 'Query public.documents WHERE related_entity_type=\'contract\' AND related_entity_id=<contract_id>. Return id, title, file_name, category, created_at. Files themselves live in the private "documents" storage bucket — generate a signed URL only on explicit request.',
   },
+
+  {
+    name: 'run_contract_billing',
+    description: 'Invoice every active billing-enabled contract whose billing date has arrived. Use when: running the daily contract billing sweep — the Contract Billing automation calls this. Takes no arguments. NOT for: invoicing one contract (generate_contract_invoice); payment reminder emails, which the contract-billing-cron function still sends.',
+    category: 'commerce',
+    handler: 'rpc:run_contract_billing',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: { name: 'run_contract_billing', parameters: { type: 'object', properties: {} } },
+    },
+    instructions: 'Sweep RPC, capped at 500 contracts per run. Invoicing only — reminder emails keep running from the edge function because they render HTML templates. Idempotent: generate_contract_invoice rolls billing_next_date forward, so a second run the same day invoices nobody twice. A failing contract is reported in results[] without stopping the sweep.',
+  },
 ];
 
 const CONTRACT_AUTOMATIONS: AutomationSeed[] = [
@@ -289,6 +302,15 @@ const CONTRACT_AUTOMATIONS: AutomationSeed[] = [
     trigger_config: { cron: '0 8 * * 1-5', expression: '0 8 * * 1-5' },
     skill_name: 'contract_renewal_check',
     skill_arguments: { days_ahead: 30 },
+  },
+
+  {
+    name: 'Contract Billing',
+    description: 'Every day at 06:30, invoice active contracts whose billing date has arrived.',
+    trigger_type: 'cron',
+    trigger_config: { cron: '30 6 * * *', expression: '30 6 * * *' },
+    skill_name: 'run_contract_billing',
+    skill_arguments: {},
   },
 ];
 
@@ -304,7 +326,7 @@ export const contractsModule = defineModule<ContractsInput, ContractsOutput>({
   inputSchema: contractsInputSchema,
   outputSchema: contractsOutputSchema,
 
-  skills: ['manage_contract', 'list_contract_templates', 'contract_renewal_check', 'generate_contract_invoice', 'get_contract_content', 'search_contracts', 'send_contract_for_signature', 'list_contract_documents'],
+  skills: ['manage_contract', 'list_contract_templates', 'contract_renewal_check', 'generate_contract_invoice', 'get_contract_content', 'search_contracts', 'send_contract_for_signature', 'list_contract_documents', 'run_contract_billing'],
   data: {
     tables: [
       'contract_signatures',
