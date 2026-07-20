@@ -76,7 +76,8 @@ export function SessionsAside({
               No saved chats yet
             </div>
           ) : (
-            sessions.map((s) => (
+            sessions.slice(0, limit).map((s) => (
+
               <div
                 key={s.id}
                 className={cn(
