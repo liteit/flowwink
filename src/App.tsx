@@ -292,6 +292,8 @@ const router = createBrowserRouter([
       
       { path: "/admin/chat", element: <ChatSettingsPage /> },
       { path: "/admin/flowwork", element: <WorkspaceChatPage /> },
+      { path: "/admin/flowwork/sessions", element: <FlowworkSessionsPage /> },
+
       { path: "/admin/content-api", element: <Navigate to="/admin/developer" replace /> },
       { path: "/admin/developer", element: <DeveloperPage /> },
       { path: "/admin/migration-audit", element: <MigrationAuditPage /> },
