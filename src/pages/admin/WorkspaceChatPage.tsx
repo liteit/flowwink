@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { useIsModuleEnabled } from '@/hooks/useModules';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   ALL_WORKSPACE_SOURCES,
   useWorkspaceChat,
