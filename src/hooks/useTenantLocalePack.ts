@@ -26,11 +26,17 @@ export async function topUpLocalePackSeeds(packId: string): Promise<void> {
   const pack = getPack(packId);
 
   // Chart accounts: insert missing codes only.
+  //
+  // Presence is checked by account_code ALONE, deliberately. The table has
+  // UNIQUE (account_code) — uniqueness is per code, not per (code, locale) —
+  // so filtering this lookup by locale asks a different question than the
+  // constraint enforces. liteit carries five accounts still tagged with the
+  // legacy locale `sv-SE`; scoping the check to the pack id made them look
+  // missing, the insert then hit the unique constraint, and the throw below
+  // aborted the whole top-up — including every batch after it. That instance
+  // sat at 261 of 263 accounts with nothing reporting why.
   if (pack.chart.length > 0) {
-    const { data: existingAcc } = await supabase
-      .from('chart_of_accounts')
-      .select('account_code')
-      .eq('locale', pack.id);
+    const { data: existingAcc } = await supabase.from('chart_of_accounts').select('account_code');
     const haveCodes = new Set((existingAcc ?? []).map((r) => r.account_code));
     const missingAcc = pack.chart
       .filter((a: any) => !haveCodes.has(a.account_code))
