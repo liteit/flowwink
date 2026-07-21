@@ -3,8 +3,8 @@
   "schema_version": 1,
   "layers": {
     "schema": {
-      "migration_head": "20260721120000",
-      "migrations_count": 257,
+      "migration_head": "20260721181000",
+      "migrations_count": 259,
       "migrations": [
         {
           "version": "00000000000000",
@@ -1033,6 +1033,14 @@
         {
           "version": "20260721120000",
           "name": "status-transition-rpcs"
+        },
+        {
+          "version": "20260721180000",
+          "name": "account-roles"
+        },
+        {
+          "version": "20260721181000",
+          "name": "rpcs-resolve-account-roles"
         }
       ]
     },

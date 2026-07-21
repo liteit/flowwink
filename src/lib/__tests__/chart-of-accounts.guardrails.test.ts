@@ -26,19 +26,27 @@ import { BAS_2024_ACCOUNTS } from '@/data/bas2024-accounts';
 
 const root = process.cwd();
 
-/** Every account code a migration hardcodes as an RPC parameter DEFAULT. */
-function hardcodedDefaultAccounts(): Map<string, string[]> {
+/**
+ * Every account code the SE pack maps a ROLE to.
+ *
+ * This used to scan migrations for hardcoded `DEFAULT '1930'` parameters and
+ * assert each one existed in BAS_2024_ACCOUNTS. That test did real work at the
+ * time — it is how the eleven missing accounts were found — but it encoded
+ * "the platform is Swedish" and would have blocked the move to account roles.
+ * The RPCs no longer name accounts at all; the pack does, through
+ * account_roles. So the question becomes: does every account this pack
+ * PROMISES actually exist in the chart it ships?
+ *
+ * The country-neutrality half now lives in account-roles.guardrails.test.ts.
+ */
+function packRoleAccounts(): Map<string, string[]> {
   const dir = join(root, 'supabase/migrations');
+  const f = readdirSync(dir).find((x) => x.includes('account-roles'));
+  expect(f, 'the account-roles migration is gone').toBeTruthy();
+  const sql = readFileSync(join(dir, f!), 'utf8');
   const found = new Map<string, string[]>();
-  for (const f of readdirSync(dir).filter((x) => x.endsWith('.sql'))) {
-    // The frozen historical dump is not ours to police.
-    if (f === '00000000000000_baseline.sql') continue;
-    const sql = readFileSync(join(dir, f), 'utf8');
-    // p_bank_account text DEFAULT '1930'  /  DEFAULT '1930'::text
-    for (const m of sql.matchAll(/DEFAULT\s+'(\d{4})'(?:::text)?/g)) {
-      const code = m[1];
-      found.set(code, [...(found.get(code) ?? []), f]);
-    }
+  for (const m of sql.matchAll(/'se-bas2024',\s*'([a-z_]+)',\s*'(\d{4})'/g)) {
+    found.set(m[2], [...(found.get(m[2]) ?? []), `role ${m[1]}`]);
   }
   return found;
 }
@@ -51,15 +59,19 @@ describe('chart of accounts', () => {
     expect(BAS_2024_ACCOUNTS.length).toBeGreaterThan(100);
   });
 
-  it('every account an RPC defaults to exists in the seeded chart', () => {
+  it('every account the pack maps a role to exists in the chart it ships', () => {
+    // A role pointing at a code the chart lacks is the same failure as before,
+    // one level up: bookkeeping posts somewhere the balance sheet cannot
+    // classify. It is now a pack-completeness question, which is exactly where
+    // a country's problems should live.
     const missing: string[] = [];
-    for (const [code, files] of hardcodedDefaultAccounts()) {
-      if (!codes.has(code)) missing.push(`${code} (${files.join(', ')})`);
+    for (const [code, roles] of packRoleAccounts()) {
+      if (!codes.has(code)) missing.push(`${code} (${roles.join(', ')})`);
     }
     expect(
       missing,
-      'these RPC default accounts are not in BAS_2024_ACCOUNTS — bookkeeping ' +
-        'would post to an account the balance sheet cannot classify',
+      'these role targets are not in BAS_2024_ACCOUNTS — the pack promises an ' +
+        'account it does not ship',
     ).toEqual([]);
   });
 
