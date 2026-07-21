@@ -50,7 +50,7 @@ export default function LocalePacksPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               {packs.map((p) => {
-                const isActive = p.id === activeId;
+                const isActive = hasChosen && p.id === chosenId;
                 const isSelected = p.id === selectedId;
                 return (
                   <button
