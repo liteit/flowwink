@@ -149,10 +149,20 @@ const packArtifact = JSON.parse(
 );
 const localeRow = await c.query(`select value from site_settings where key = 'accounting_locale' limit 1`);
 const rawLocale = localeRow.rows[0]?.value;
-const activePackId =
-  (typeof rawLocale === 'string' ? rawLocale : rawLocale?.id) || packArtifact.default_pack;
-const pack = (packArtifact.packs ?? []).find((p: any) => p.id === activePackId);
-const coaStats = { pack: activePackId as string, inserted: 0, present: 0, missing: [] as string[] };
+// Empty-until-chosen: no accounting_locale row means no pack has been
+// ACTIVATED, and the correct chart for that state is the empty one. Seeding
+// the default here is how a German instance wakes up with 263 Swedish
+// accounts. Activate via the admin UI, or explicitly:
+//   psql "$DATABASE_URL" -c "insert into site_settings (key, value)
+//     values ('accounting_locale', '\"se-bas2024\"'::jsonb)"
+const activePackId = (typeof rawLocale === 'string' ? rawLocale : rawLocale?.id) || null;
+const pack = activePackId ? (packArtifact.packs ?? []).find((p: any) => p.id === activePackId) : null;
+const coaStats = {
+  pack: activePackId ?? '(inget pack aktiverat — hoppar över kontoplanen)',
+  inserted: 0,
+  present: 0,
+  missing: [] as string[],
+};
 
 if (pack) {
   // By account_code alone — the table has UNIQUE (account_code), so scoping

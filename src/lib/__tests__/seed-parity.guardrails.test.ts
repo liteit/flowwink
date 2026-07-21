@@ -68,6 +68,27 @@ describe('seed parity between the browser path and the CLI', () => {
     expect(sync).toMatch(/executor === 'flowpilot' && !flowpilotEnabled/);
   });
 
+  it('the chart is empty-until-chosen: no path seeds without an explicit activation', () => {
+    // Magnus, 2026-07-21: FlowWink is a generic BOS — a German customer
+    // installs a German kit. An instance where nobody picked a market must not
+    // quietly become Swedish. Display may fall back to the default pack;
+    // SEEDING and POSTING may not.
+    const hook = read('src/hooks/useTenantLocalePack.ts');
+    // The boot top-up keys off the explicit choice…
+    expect(hook).toMatch(/if \(!chosenId \|\| topUpDoneFor === chosenId\) return;/);
+    // …and the CLI refuses to fall back to the artifact's default pack.
+    const sync = read('scripts/sync-skills.ts');
+    expect(sync, 'sync-skills seeds the default pack again').not.toMatch(
+      /\|\|\s*packArtifact\.default_pack/,
+    );
+    // The SQL resolver demands an activation rather than assuming Sweden.
+    const mig = read('supabase/migrations/20260721190000_account-for-requires-activation.sql');
+    expect(mig).toMatch(/No accounting locale activated/);
+    expect(mig, 'the resolver regained a hardcoded default locale').not.toMatch(
+      /'se-bas2024'\s*--\s*pack default/,
+    );
+  });
+
   it('chart presence is checked by account_code alone, in BOTH paths', () => {
     // chart_of_accounts has UNIQUE (account_code). Scoping the presence lookup
     // by locale asks a narrower question than the constraint enforces: liteit

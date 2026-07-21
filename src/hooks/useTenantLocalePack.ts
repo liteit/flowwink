@@ -86,7 +86,12 @@ export function useTenantLocalePack() {
   const qc = useQueryClient();
   const { toast } = useToast();
 
-  const { data: activeId, isLoading } = useQuery({
+  // `chosenId` is the tenant's EXPLICIT choice — null until an admin (or the
+  // install script) activates a pack. Display falls back to DEFAULT_LOCALE_ID
+  // so currency formatting etc. stays sane, but SEEDING keys off chosenId:
+  // empty-until-chosen. FlowWink is a generic BOS; a German instance must not
+  // wake up with 263 Swedish accounts because nobody had picked yet.
+  const { data: chosenId, isLoading } = useQuery({
     queryKey: ['site-settings', SETTING_KEY],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -96,18 +101,17 @@ export function useTenantLocalePack() {
         .maybeSingle();
       if (error) throw error;
       const v = (data?.value as any);
-      const id =
-        (typeof v === 'string' ? v : v?.id) ||
-        (typeof window !== 'undefined' ? localStorage.getItem(ACTIVE_PACK_STORAGE_KEY) : null) ||
-        DEFAULT_LOCALE_ID;
+      const id = (typeof v === 'string' ? v : v?.id) || null;
       // Mirror server value into the local registry cache so synchronous
       // getActivePack() calls (modules, AI instructions) match the server.
-      if (typeof window !== 'undefined' && localStorage.getItem(ACTIVE_PACK_STORAGE_KEY) !== id) {
-        setActivePackId(id);
+      const effective = id ?? DEFAULT_LOCALE_ID;
+      if (typeof window !== 'undefined' && localStorage.getItem(ACTIVE_PACK_STORAGE_KEY) !== effective) {
+        setActivePackId(effective);
       }
-      return id as string;
+      return id as string | null;
     },
   });
+  const activeId = chosenId ?? DEFAULT_LOCALE_ID;
 
   // Re-sync when another tab / component changes the active pack.
   useEffect(() => {
@@ -125,16 +129,20 @@ export function useTenantLocalePack() {
   // with a near-empty chart of accounts while the RPCs kept posting to their
   // hardcoded defaults (1930, 2890, 3970, 7970).
   useEffect(() => {
-    if (!activeId || topUpDoneFor === activeId) return;
-    topUpDoneFor = activeId;
-    topUpLocalePackSeeds(activeId).catch((err) => {
+    // chosenId, not activeId: seeding requires an EXPLICIT activation. Before
+    // that, the correct chart is the empty one — bookkeeping refuses loudly
+    // (account_for raises) instead of silently filling a German instance with
+    // Swedish accounts.
+    if (!chosenId || topUpDoneFor === chosenId) return;
+    topUpDoneFor = chosenId;
+    topUpLocalePackSeeds(chosenId).catch((err) => {
       // logger.error, not warn: warn is stripped in production, and a failure
       // here leaves the books unusable in a way nothing else reports.
       logger.error('[locale-pack] boot top-up failed', err);
       // Let the next admin page load retry instead of latching the guard.
       topUpDoneFor = null;
     });
-  }, [activeId]);
+  }, [chosenId]);
 
   const setActive = useMutation({
     mutationFn: async (id: string) => {
@@ -172,8 +180,11 @@ export function useTenantLocalePack() {
   });
 
   return {
-    activeId: activeId ?? DEFAULT_LOCALE_ID,
+    activeId,
     activePack: getPack(activeId),
+    /** null until an admin activates a pack — the UI should say so. */
+    chosenId: chosenId ?? null,
+    hasChosen: chosenId != null,
     isLoading,
     setActive: setActive.mutate,
     isSaving: setActive.isPending,
