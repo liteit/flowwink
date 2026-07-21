@@ -1535,3 +1535,83 @@ export default function SiteSettingsPage() {
     </AdminLayout>
   );
 }
+
+// ---------------------------------------------------------------------------
+// CountrySelect — searchable ISO country combobox for the General tab.
+// ---------------------------------------------------------------------------
+function CountrySelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (code: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const countries = useMemo(() => listCountries(), []);
+  const selectedLabel = value ? countryName(value) : '';
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between font-normal"
+        >
+          {value ? (
+            <span className="flex items-center gap-2">
+              <span className="font-mono text-xs text-muted-foreground">{value}</span>
+              <span>{selectedLabel}</span>
+            </span>
+          ) : (
+            <span className="text-muted-foreground">Select a country…</span>
+          )}
+          <ChevronsUpDown className="h-4 w-4 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search country…" />
+          <CommandList>
+            <CommandEmpty>No country matches.</CommandEmpty>
+            <CommandGroup>
+              {value && (
+                <CommandItem
+                  value="__clear__"
+                  onSelect={() => {
+                    onChange('');
+                    setOpen(false);
+                  }}
+                >
+                  <span className="text-muted-foreground">Clear selection</span>
+                </CommandItem>
+              )}
+              {countries.map((c) => (
+                <CommandItem
+                  key={c.code}
+                  value={`${c.name} ${c.code}`}
+                  onSelect={() => {
+                    onChange(c.code);
+                    setOpen(false);
+                  }}
+                >
+                  <CheckIcon
+                    className={cn(
+                      'mr-2 h-4 w-4',
+                      value === c.code ? 'opacity-100' : 'opacity-0',
+                    )}
+                  />
+                  <span className="font-mono text-xs w-8 text-muted-foreground">
+                    {c.code}
+                  </span>
+                  <span className="ml-1">{c.name}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
