@@ -187,11 +187,11 @@ function CallActionDialog({ call, open, onOpenChange }: { call: VoiceCallRow | n
 function CallsTable({ calls, onAction }: { calls: VoiceCallRow[]; onAction: (c: VoiceCallRow) => void }) {
   if (calls.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center text-sm text-muted-foreground">
-          No calls yet.
-        </CardContent>
-      </Card>
+      <EmptyState
+        icon={PhoneCall}
+        title="No calls yet"
+        description="Inbound and outbound calls will appear here once your voice line is active."
+      />
     );
   }
   return (
