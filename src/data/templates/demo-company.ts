@@ -66,7 +66,7 @@ export const demoCompanyTemplate: StarterTemplate = {
             eyebrow: 'LIVE DEMO · RESETS EVERY DAY',
             eyebrowColor: 'primary',
             title: 'Watch a business run itself.',
-            subtitle: 'FlowWink exposes 60+ modules and 250+ MCP skills. FlowPilot handles leads, quotes, invoices and expenses — or connect your own OpenClaw or Hermes agent and let it run your business. Sign in with demo / demo1234 and explore.',
+            subtitle: 'FlowWink exposes 60+ modules and 250+ MCP skills. FlowPilot handles leads, quotes, invoices and expenses — or connect your own OpenClaw or Hermes agent and let it run your business. Sign in with demo@flowwink.com / demo1234 and explore.',
             backgroundType: 'video',
             videoType: 'direct',
             videoUrl: '/videos/hero-demo-ambient.mp4',
@@ -298,7 +298,7 @@ export const demoCompanyTemplate: StarterTemplate = {
     enabled: true,
     landingPageEnabled: true,
     widgetPosition: 'bottom-right',
-    welcomeMessage: 'Hi! This is a public demo. Ask me what FlowPilot is doing — or sign in (demo / demo1234) and poke around.',
+    welcomeMessage: 'Hi! This is a public demo. Ask me what FlowPilot is doing — or sign in (demo@flowwink.com / demo1234) and poke around.',
     systemPrompt: 'You are the concierge for a public FlowWink demo. Explain what FlowPilot does, mention that FlowWink exposes 250+ MCP skills across 60+ modules, and that users can connect their own OpenClaw or Hermes agent. Mention that data resets daily, and never claim emails were actually sent.',
     suggestedPrompts: [
       'What does FlowPilot do here?',

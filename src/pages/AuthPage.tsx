@@ -160,7 +160,7 @@ export default function AuthPage() {
                   <div className="space-y-1">
                     <p className="font-medium text-foreground">Public demo instance</p>
                     <p className="text-muted-foreground">
-                      Sign in with <code className="font-mono text-foreground">demo@flowwink.com</code> / <code className="font-mono text-foreground">demo1234</code>. All dynamic data resets every hour. Email sending is disabled.
+                      Sign in with <code className="font-mono text-foreground">demo@flowwink.com</code> / <code className="font-mono text-foreground">demo1234</code>. All dynamic data resets daily at 03:00 UTC. Email sending is disabled.
                     </p>
                   </div>
                 </div>
