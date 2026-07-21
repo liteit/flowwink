@@ -95,7 +95,7 @@
           "type": "hero",
           "data": {
             "title": "Your Business, Run by an Operator",
-            "subtitle": "FlowWink is the Business Operating System — a self-hosted CMS, CRM and ERP (Quote-to-Cash, HR & Payroll, Accounting, Procure-to-Pay, Projects) wired together and run by an autonomous operator. Use the built-in FlowPilot, or plug in your own agent (Claude, Codex, OpenClaw) via MCP.",
+            "subtitle": "FlowWink is the Business Operating System — a self-hosted CMS, CRM and ERP (Quote-to-Cash, HR & Payroll, Accounting, Procure-to-Pay, Projects) wired together and run by an autonomous operator. Use the built-in FlowPilot, or plug in your own agent — Claude, Codex, OpenClaw, or any MCP client.",
             "backgroundType": "video",
             "videoUrl": "https://videos.pexels.com/video-files/3209828/3209828-uhd_2560_1440_25fps.mp4",
             "videoPosterUrl": "https://images.pexels.com/videos/3209828/free-video-3209828.jpg?auto=compress&w=1920",
@@ -578,7 +578,7 @@
                 "id": "mod-mcp",
                 "icon": "Plug",
                 "title": "MCP Server",
-                "description": "Every module exposed as MCP tools. Connect Claude, Cursor, OpenClaw, Codex."
+                "description": "Every module exposed as MCP tools. Connect Claude, Cursor, OpenClaw, Codex — or any MCP client."
               },
               {
                 "id": "mod-composio",
@@ -854,7 +854,7 @@
           "data": {
             "eyebrow": "AGENT-PREPARED PLATFORM",
             "title": "One ERP. Any Agent.",
-            "subtitle": "Every module above is exposed via the Model Context Protocol. Run FlowWink with our built-in FlowPilot — or plug in Claude, Codex, or OpenClaw and let your existing agent operate FlowWink alongside the rest of your SaaS stack.",
+            "subtitle": "Every module above is exposed via the Model Context Protocol. Run FlowWink with our built-in FlowPilot — or plug in Claude, Codex, OpenClaw, or any MCP client and let your existing agent operate FlowWink alongside the rest of your SaaS stack.",
             "columns": 3,
             "variant": "glass",
             "gap": "md",
@@ -870,7 +870,7 @@
               {
                 "id": "ap-byo",
                 "title": "Bring Your Own Agent",
-                "description": "Admin chooses the operator: built-in FlowPilot, Claude Desktop, Cursor, OpenClaw, Codex — or run several in parallel. The platform is operator-agnostic.\n\n• MCP API keys per agent\n• Toolset groups for selective tool loading\n• Per-agent audit trails\n• Trust levels and approval gates",
+                "description": "Admin chooses the operator: built-in FlowPilot, Claude Desktop, Cursor, OpenClaw, Codex, or any MCP client — or run several in parallel. The platform is operator-agnostic.\n\n• MCP API keys per agent\n• Toolset groups for selective tool loading\n• Per-agent audit trails\n• Trust levels and approval gates",
                 "icon": "Users",
                 "span": "wide",
                 "accentColor": "#8B5CF6"
@@ -1181,7 +1181,7 @@
                 "❌ No"
               ],
               [
-                "Bring-your-own agent (Claude / Codex / OpenClaw)",
+                "Bring-your-own agent (any MCP client)",
                 "✅ Yes — admin chooses",
                 "❌ No",
                 "❌ No",

@@ -81,7 +81,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
           type: 'hero',
           data: {
             title: 'Your Business, Run by an Operator',
-            subtitle: 'FlowWink is the Business Operating System — a self-hosted CMS, CRM and ERP (Quote-to-Cash, HR & Payroll, Accounting, Procure-to-Pay, Projects) wired together and run by an autonomous operator. Use the built-in FlowPilot, or plug in your own agent (Claude, Codex, OpenClaw) via MCP.',
+            subtitle: 'FlowWink is the Business Operating System — a self-hosted CMS, CRM and ERP (Quote-to-Cash, HR & Payroll, Accounting, Procure-to-Pay, Projects) wired together and run by an autonomous operator. Use the built-in FlowPilot, or plug in your own agent — Claude, Codex, OpenClaw, or any MCP client.',
             backgroundType: 'video',
             videoUrl: 'https://videos.pexels.com/video-files/3209828/3209828-uhd_2560_1440_25fps.mp4',
             videoPosterUrl: 'https://images.pexels.com/videos/3209828/free-video-3209828.jpg?auto=compress&w=1920',
@@ -291,7 +291,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
               // ─ Platform ─
               { id: 'mod-flowpilot', icon: 'Bot', title: 'FlowPilot Agent', description: 'Built-in autonomous operator with soul, memory, objectives, heartbeat.' },
               { id: 'mod-federation', icon: 'Network', title: 'Agent Federation', description: 'A2A + OpenResponses + MCP — three channels for the agentic web.' },
-              { id: 'mod-mcp', icon: 'Plug', title: 'MCP Server', description: 'Every module exposed as MCP tools. Connect Claude, Cursor, OpenClaw, Codex.' },
+              { id: 'mod-mcp', icon: 'Plug', title: 'MCP Server', description: 'Every module exposed as MCP tools. Connect Claude, Cursor, OpenClaw, Codex — or any MCP client.' },
               { id: 'mod-composio', icon: 'Workflow', title: 'App Integrations', description: '200+ apps via Composio — Gmail, Calendar, Slack via managed OAuth.' },
               { id: 'mod-developer', icon: 'CodeXml', title: 'Developer & API Keys', description: 'API keys, webhooks, edge function logs, MCP regression tests.' },
               { id: 'mod-analytics', icon: 'ChartColumn', title: 'Analytics', description: 'Page views, conversion tracking, funnel analysis, agent performance.' },
@@ -365,14 +365,14 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
           data: {
             eyebrow: 'AGENT-PREPARED PLATFORM',
             title: 'One ERP. Any Agent.',
-            subtitle: 'Every module above is exposed via the Model Context Protocol. Run FlowWink with our built-in FlowPilot — or plug in Claude, Codex, or OpenClaw and let your existing agent operate FlowWink alongside the rest of your SaaS stack.',
+            subtitle: 'Every module above is exposed via the Model Context Protocol. Run FlowWink with our built-in FlowPilot — or plug in Claude, Codex, OpenClaw, or any MCP client and let your existing agent operate FlowWink alongside the rest of your SaaS stack.',
             columns: 3,
             variant: 'glass',
             gap: 'md',
             staggeredReveal: true,
             items: [
               { id: 'ap-mcp', title: 'Universal MCP Server', description: 'Every module ships with a JSON-RPC contract. tools/list returns every skill across CRM, Accounting, HR, Payroll, P2P. Live-validated by a regression workflow on every release.', icon: 'Plug', accentColor: '#3B82F6' },
-              { id: 'ap-byo', title: 'Bring Your Own Agent', description: 'Admin chooses the operator: built-in FlowPilot, Claude Desktop, Cursor, OpenClaw, Codex — or run several in parallel. The platform is operator-agnostic.\n\n• MCP API keys per agent\n• Toolset groups for selective tool loading\n• Per-agent audit trails\n• Trust levels and approval gates', icon: 'Users', span: 'wide', accentColor: '#8B5CF6' },
+              { id: 'ap-byo', title: 'Bring Your Own Agent', description: 'Admin chooses the operator: built-in FlowPilot, Claude Desktop, Cursor, OpenClaw, Codex, or any MCP client — or run several in parallel. The platform is operator-agnostic.\n\n• MCP API keys per agent\n• Toolset groups for selective tool loading\n• Per-agent audit trails\n• Trust levels and approval gates', icon: 'Users', span: 'wide', accentColor: '#8B5CF6' },
               { id: 'ap-flowpilot', title: 'FlowPilot Included', description: 'Self-hosted, OpenClaw-modeled agent: soul, memory, objectives, 6-hour heartbeat. Works out of the box, no external dependency.', icon: 'Bot', accentColor: '#10B981' },
               { id: 'ap-multisaas', title: 'Cross-SaaS Operation', description: 'Connect an external agent to FlowWink + Gmail + Slack + Stripe + Linear and let it operate the whole stack. FlowWink contributes 68 modules of business operations to whatever agent you already use.\n\n• MCP-native — no proprietary SDK\n• Federation via A2A and OpenResponses\n• Composio for 200+ third-party apps', icon: 'Network', span: 'large', accentColor: '#F97316' },
               { id: 'ap-discovery', title: 'Discovery & Briefing', description: 'flowwink://briefing resource gives external agents instant context — active modules, current objectives, recent activity. Token-efficient onboarding without prompt-engineering hell.', span: 'wide', icon: 'BookOpen', accentColor: '#F59E0B' },
@@ -540,7 +540,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
               ['Open source', '✅ MIT', '⚠️ LGPL (Community)', '❌ Proprietary', '❌ Proprietary'],
               ['Agent-native (built-in autonomous operator)', '✅ FlowPilot included', '❌ None', '⚠️ AI Blocks (assistive)', '⚠️ Einstein (assistive)'],
               ['MCP — every module exposed to external agents', '✅ Universal', '❌ No', '❌ No', '❌ No'],
-              ['Bring-your-own agent (Claude / Codex / OpenClaw)', '✅ Yes — admin chooses', '❌ No', '❌ No', '❌ No'],
+              ['Bring-your-own agent (any MCP client)', '✅ Yes — admin chooses', '❌ No', '❌ No', '❌ No'],
               ['Pricing model', 'Free self-host · €49/mo managed', '€31/user/month', '€10–24/user/month', '€80–330/user/month'],
               ['Per-user fees', '❌ Flat', '✅ Per user', '✅ Per user', '✅ Per user'],
               ['Locale packs (BAS 2024 / IFRS / US GAAP)', '✅ Pluggable', '✅ Yes', '❌ N/A', '⚠️ Add-ons'],
