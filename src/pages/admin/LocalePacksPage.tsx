@@ -7,13 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Check, Globe, Coins, Receipt, FileSpreadsheet, Banknote, FileText, BookOpen, Layers } from 'lucide-react';
-import { listPacks, getPack } from '@/lib/locale-packs';
+import { Check, Globe, Coins, Receipt, FileSpreadsheet, Banknote, FileText, BookOpen, Layers, AlertCircle } from 'lucide-react';
+import { listPacks, getPack, LOCALE_PACKS } from '@/lib/locale-packs';
 import { useTenantLocalePack } from '@/hooks/useTenantLocalePack';
+import { AccountRolesEditor } from '@/components/admin/accounting/AccountRolesEditor';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function LocalePacksPage() {
   const packs = listPacks();
-  const { activeId, setActive, isSaving } = useTenantLocalePack();
+  const { activeId, chosenId, hasChosen, setActive, isSaving } = useTenantLocalePack();
   const [selectedId, setSelectedId] = useState<string>(activeId);
   const selected = getPack(selectedId);
 
@@ -24,6 +26,18 @@ export default function LocalePacksPage() {
           title="Locale Packs"
           description="Accounting locale plugins — chart of accounts, VAT, payroll & bank adapters per market."
         />
+
+        {!hasChosen && (
+          <Alert className="mb-6 border-amber-500/50 bg-amber-500/5">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertTitle>No accounting locale activated</AlertTitle>
+            <AlertDescription>
+              Bookkeeping is disabled until you choose a chart of accounts. Pick a pack
+              below and click <span className="font-medium">Set as active</span> to enable
+              journal entries, VAT reports, and payroll postings.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Pack list */}
@@ -36,7 +50,7 @@ export default function LocalePacksPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               {packs.map((p) => {
-                const isActive = p.id === activeId;
+                const isActive = hasChosen && p.id === chosenId;
                 const isSelected = p.id === selectedId;
                 return (
                   <button
@@ -81,9 +95,9 @@ export default function LocalePacksPage() {
                 </div>
                 <Button
                   onClick={() => setActive(selected.id)}
-                  disabled={isSaving || selected.id === activeId}
+                  disabled={isSaving || (hasChosen && selected.id === chosenId)}
                 >
-                  {selected.id === activeId ? 'Currently active' : isSaving ? 'Saving…' : 'Set as active'}
+                  {hasChosen && selected.id === chosenId ? 'Currently active' : isSaving ? 'Saving…' : 'Set as active'}
                 </Button>
               </div>
             </CardHeader>
@@ -184,6 +198,15 @@ export default function LocalePacksPage() {
             </CardContent>
           </Card>
         </div>
+
+        {hasChosen && (
+          <div className="mt-6">
+            <AccountRolesEditor
+              localeId={chosenId!}
+              localeLabel={LOCALE_PACKS[chosenId!]?.label ?? chosenId!}
+            />
+          </div>
+        )}
       </AdminPageContainer>
     </AdminLayout>
   );

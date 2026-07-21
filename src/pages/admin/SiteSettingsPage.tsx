@@ -48,6 +48,11 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useUnsavedChanges, UnsavedChangesDialog } from '@/hooks/useUnsavedChanges';
 import { ResetSiteDialog } from '@/components/admin/ResetSiteDialog';
 import { DemoModeCard } from '@/components/admin/DemoModeCard';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { listCountries, countryName } from '@/data/iso-countries';
+import { cn } from '@/lib/utils';
+import { ChevronsUpDown, Check as CheckIcon } from 'lucide-react';
 
 
 function EnvironmentInfoCard() {
@@ -433,6 +438,23 @@ export default function SiteSettingsPage() {
             </Card>
 
 
+            {/* Business country — drives accounting locale suggestion */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-serif">Business country</CardTitle>
+                <CardDescription>
+                  Determines which accounting locale pack is suggested. Sweden → BAS 2024;
+                  countries without a dedicated pack use the generic IFRS chart. An existing
+                  accounting choice is never overridden.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CountrySelect
+                  value={generalData.country ?? ''}
+                  onChange={(code) => setGeneralData(prev => ({ ...prev, country: code }))}
+                />
+              </CardContent>
+            </Card>
 
 
             {/* Content Workflow */}
@@ -1511,5 +1533,85 @@ export default function SiteSettingsPage() {
         <UnsavedChangesDialog blocker={blocker} />
       </div>
     </AdminLayout>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CountrySelect — searchable ISO country combobox for the General tab.
+// ---------------------------------------------------------------------------
+function CountrySelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (code: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const countries = useMemo(() => listCountries(), []);
+  const selectedLabel = value ? countryName(value) : '';
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between font-normal"
+        >
+          {value ? (
+            <span className="flex items-center gap-2">
+              <span className="font-mono text-xs text-muted-foreground">{value}</span>
+              <span>{selectedLabel}</span>
+            </span>
+          ) : (
+            <span className="text-muted-foreground">Select a country…</span>
+          )}
+          <ChevronsUpDown className="h-4 w-4 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search country…" />
+          <CommandList>
+            <CommandEmpty>No country matches.</CommandEmpty>
+            <CommandGroup>
+              {value && (
+                <CommandItem
+                  value="__clear__"
+                  onSelect={() => {
+                    onChange('');
+                    setOpen(false);
+                  }}
+                >
+                  <span className="text-muted-foreground">Clear selection</span>
+                </CommandItem>
+              )}
+              {countries.map((c) => (
+                <CommandItem
+                  key={c.code}
+                  value={`${c.name} ${c.code}`}
+                  onSelect={() => {
+                    onChange(c.code);
+                    setOpen(false);
+                  }}
+                >
+                  <CheckIcon
+                    className={cn(
+                      'mr-2 h-4 w-4',
+                      value === c.code ? 'opacity-100' : 'opacity-0',
+                    )}
+                  />
+                  <span className="font-mono text-xs w-8 text-muted-foreground">
+                    {c.code}
+                  </span>
+                  <span className="ml-1">{c.name}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

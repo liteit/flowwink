@@ -15,12 +15,21 @@ export interface GeneralSettings {
    * Falls back to PUBLIC_SITE_URL env or the lovable preview when empty.
    */
   siteUrl?: string;
+  /**
+   * ISO 3166-1 alpha-2 country code for the operating business. Used as the
+   * suggestion input to the accounting locale pack installer (Sweden →
+   * se-bas2024; other countries → ifrs-generic). Does NOT override an
+   * existing choice — precedence is: existing choice > packForCountry(country)
+   * > template default.
+   */
+  country?: string;
 }
 
 const defaultGeneralSettings: GeneralSettings = {
   homepageSlug: 'home',
   contentReviewEnabled: false,
   siteUrl: '',
+  country: '',
 };
 
 

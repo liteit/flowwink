@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Settings, Globe, Check, Database, ExternalLink, Hash } from 'lucide-react';
+import { Settings, Globe, Check, Database, ExternalLink, Hash, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Link } from 'react-router-dom';
 import { useAccountingLocale, ACCOUNTING_LOCALES } from '@/hooks/useAccountingLocale';
 import { useTenantLocalePack } from '@/hooks/useTenantLocalePack';
@@ -24,7 +25,7 @@ import { AccountingTabHeader } from './AccountingTabHeader';
 
 export function SettingsTab() {
   const { locale, setLocale } = useAccountingLocale();
-  const { activePack } = useTenantLocalePack();
+  const { activePack, hasChosen } = useTenantLocalePack();
   const { data: accounts } = useChartOfAccounts();
   const { data: prefs } = useAccountingPreferences();
   const updatePrefs = useUpdateAccountingPreferences();
@@ -121,6 +122,18 @@ export function SettingsTab() {
           </Button>
         }
       />
+      {!hasChosen && (
+        <Alert className="border-amber-500/50 bg-amber-500/5">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertTitle>No accounting locale activated</AlertTitle>
+          <AlertDescription>
+            Bookkeeping is disabled until you choose a chart of accounts.{' '}
+            <Link to="/admin/accounting/locale-packs" className="underline font-medium">
+              Choose a locale pack →
+            </Link>
+          </AlertDescription>
+        </Alert>
+      )}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
