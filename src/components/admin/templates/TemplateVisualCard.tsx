@@ -1,9 +1,10 @@
 import { StarterTemplate } from "@/data/templates";
 import { cn } from "@/lib/utils";
 import { getTemplateThumbnail, getTemplateHero } from "@/lib/template-helpers";
-import { Eye, Sparkles, MessageSquare } from "lucide-react";
+import { Eye, Sparkles, MessageSquare, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { LOCALE_PACKS } from "@/lib/locale-packs";
 
 interface TemplateVisualCardProps {
   template: StarterTemplate;
