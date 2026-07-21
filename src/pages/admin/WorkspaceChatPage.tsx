@@ -35,6 +35,7 @@ import {
   Send,
   Square,
   Sparkles,
+  Workflow,
   MessageSquarePlus,
   Globe,
   Database,
