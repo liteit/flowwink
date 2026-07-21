@@ -115,6 +115,12 @@ export function InstallTemplateDialog({ template, open, onOpenChange }: InstallT
                   </div>
                 </div>
 
+                {template.accountingLocale && (
+                  <p className="text-xs text-muted-foreground border-l-2 border-primary/30 pl-3">
+                    Installing activates this accounting locale ({template.accountingLocale}) unless one is already chosen — an existing choice is never overridden.
+                  </p>
+                )}
+
                 <div>
                   <p className="text-sm font-medium mb-2">Pages:</p>
                   <div className="flex flex-wrap gap-1.5">
