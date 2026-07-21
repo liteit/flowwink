@@ -578,7 +578,7 @@
                 "id": "mod-mcp",
                 "icon": "Plug",
                 "title": "MCP Server",
-                "description": "Every module exposed as MCP tools. Connect Claude, Cursor, OpenClaw, GPT."
+                "description": "Every module exposed as MCP tools. Connect Claude, Cursor, OpenClaw, Codex."
               },
               {
                 "id": "mod-composio",
@@ -854,7 +854,7 @@
           "data": {
             "eyebrow": "AGENT-PREPARED PLATFORM",
             "title": "One ERP. Any Agent.",
-            "subtitle": "Every module above is exposed via the Model Context Protocol. Run FlowWink with our built-in FlowPilot — or plug in Claude, GPT, or OpenClaw and let your existing agent operate FlowWink alongside the rest of your SaaS stack.",
+            "subtitle": "Every module above is exposed via the Model Context Protocol. Run FlowWink with our built-in FlowPilot — or plug in Claude, Codex, or OpenClaw and let your existing agent operate FlowWink alongside the rest of your SaaS stack.",
             "columns": 3,
             "variant": "glass",
             "gap": "md",
@@ -870,7 +870,7 @@
               {
                 "id": "ap-byo",
                 "title": "Bring Your Own Agent",
-                "description": "Admin chooses the operator: built-in FlowPilot, Claude Desktop, Cursor, OpenClaw, GPT — or run several in parallel. The platform is operator-agnostic.\n\n• MCP API keys per agent\n• Toolset groups for selective tool loading\n• Per-agent audit trails\n• Trust levels and approval gates",
+                "description": "Admin chooses the operator: built-in FlowPilot, Claude Desktop, Cursor, OpenClaw, Codex — or run several in parallel. The platform is operator-agnostic.\n\n• MCP API keys per agent\n• Toolset groups for selective tool loading\n• Per-agent audit trails\n• Trust levels and approval gates",
                 "icon": "Users",
                 "span": "wide",
                 "accentColor": "#8B5CF6"
@@ -1181,7 +1181,7 @@
                 "❌ No"
               ],
               [
-                "Bring-your-own agent (Claude / GPT / OpenClaw)",
+                "Bring-your-own agent (Claude / Codex / OpenClaw)",
                 "✅ Yes — admin chooses",
                 "❌ No",
                 "❌ No",
