@@ -3,8 +3,8 @@
   "schema_version": 1,
   "layers": {
     "schema": {
-      "migration_head": "20260721190000",
-      "migrations_count": 260,
+      "migration_head": "20260721210000",
+      "migrations_count": 261,
       "migrations": [
         {
           "version": "00000000000000",
@@ -1045,6 +1045,10 @@
         {
           "version": "20260721190000",
           "name": "account-for-requires-activation"
+        },
+        {
+          "version": "20260721210000",
+          "name": "mcp-wrappers-respect-roles"
         }
       ]
     },

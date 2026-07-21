@@ -73,6 +73,33 @@ describe('account roles', () => {
     ).toEqual([]);
   });
 
+  it('no wrapper BODY re-introduces a literal account fallback', () => {
+    // The parameter-DEFAULT check above cannot see inside bodies. The mcp_*
+    // jsonb wrappers predated the role layer and filled absent account args
+    // with hardcoded BAS numbers — passed EXPLICITLY to the inner function, so
+    // COALESCE(param, account_for(role)) never fired for gateway callers,
+    // which is exactly the agent path. Found by the money-path regression
+    // sweep's pre-flight on 2026-07-21.
+    const offenders: string[] = [];
+    for (const f of readdirSync(migrations).filter((x) => x.endsWith('.sql') && x !== BASELINE)) {
+      const sql = readFileSync(join(migrations, f), 'utf8').replace(/--[^\n]*/g, '');
+      for (const m of sql.matchAll(/COALESCE\(\s*args->>'[a-z_]*account[a-z_]*'[^)]*'(\d{4})'\s*\)/g)) {
+        offenders.push(`${f}: fallback '${m[1]}'`);
+      }
+    }
+    // Later migrations win, so only flag codes whose LAST definition still
+    // carries the fallback: the repair migration redefines all three wrappers,
+    // and files sort chronologically. Simplest correct check: the repair file
+    // must exist and be the newest to touch each wrapper.
+    const repair = readdirSync(migrations).find((x) => x.includes('mcp-wrappers-respect-roles'));
+    expect(repair, 'the wrapper repair migration is gone').toBeTruthy();
+    const later = offenders.filter((o) => o.split(':')[0] > repair!);
+    expect(
+      later,
+      `a migration AFTER the repair re-introduced a body-literal account fallback:\n${later.join('\n')}`,
+    ).toEqual([]);
+  });
+
   it('the resolver exists and fails loudly on an unmapped role', () => {
     const f = readdirSync(migrations).find((x) => x.includes('account-roles'));
     expect(f, 'the account-roles migration is gone').toBeTruthy();
