@@ -136,7 +136,6 @@ export function TemplateVisualCard({ template, onPreview, onSelect }: TemplateVi
       </div>
       
       {/* Template name - minimal footer */}
-      <div className="p-4 bg-card">
       <div className="p-4 bg-card space-y-2">
         <div className="flex items-center justify-between">
           <h4 className="font-semibold text-base truncate">
