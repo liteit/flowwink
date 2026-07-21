@@ -87,6 +87,35 @@ describe('chart of accounts', () => {
     expect(hook).toMatch(/logger\.error\('\[locale-pack\] boot top-up failed'/);
   });
 
+  it('every template line posts to an account its OWN pack ships', () => {
+    // The bookkeeping templates are what propose_bookkeeping matches bank
+    // events against — the layer that lets an agent book correctly. A template
+    // line pointing outside its pack's chart books to an account the balance
+    // sheet cannot classify. Checked per pack: the generic pack's templates
+    // must not lean on Swedish BAS accounts, and vice versa.
+    const artifact = JSON.parse(
+      readFileSync(join(root, 'supabase/seed/locale-packs.json'), 'utf8'),
+    );
+    expect(artifact.packs.length).toBeGreaterThan(0);
+    const bad: string[] = [];
+    for (const pack of artifact.packs) {
+      const chart = new Set(pack.accounts.map((a: any) => a.account_code));
+      expect(
+        pack.templates?.length ?? 0,
+        `${pack.id} ships no templates — the artifact lost them (liteit ran a ` +
+          'proof week on 15 of 98 the last time this path was silently missing)',
+      ).toBeGreaterThan(0);
+      for (const t of pack.templates) {
+        for (const line of t.template_lines ?? []) {
+          if (line.account_code && !chart.has(line.account_code)) {
+            bad.push(`${pack.id} / "${t.template_name}" → ${line.account_code}`);
+          }
+        }
+      }
+    }
+    expect(bad, `template lines outside their pack's chart:\n${bad.join('\n')}`).toEqual([]);
+  });
+
   it('chart rows carry the fields the balance sheet classifies on', () => {
     // A row without account_type is what produced balanced:false.
     const bad = BAS_2024_ACCOUNTS.filter(

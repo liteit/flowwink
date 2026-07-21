@@ -98,11 +98,14 @@ writeFileSync(
 );
 console.log(`✅ Wrote supabase/seed/module-automations.json — ${autos.length} modules, ${autoTotal} automations`);
 
-// ── Locale packs (chart of accounts) ────────────────────────────────────────
-// Only the chart travels. Templates, adapters and year-end proposals are code
-// (functions), not data, and cannot cross into a JSON artifact.
+// ── Locale packs (chart of accounts + bookkeeping templates) ────────────────
+// Chart and TEMPLATES travel — both are data. (An earlier version claimed
+// templates were code and left them behind; liteit ran the proof week on 15 of
+// the pack's 98 templates because the browser top-up had aborted and no other
+// path carried them.) Adapters and year-end proposals are functions and stay
+// in code.
 const lp = (await import(join(ROOT, 'src', 'lib', 'locale-packs', 'index.ts'))) as {
-  LOCALE_PACKS?: Record<string, { id: string; label?: string; chart?: unknown[] }>;
+  LOCALE_PACKS?: Record<string, { id: string; label?: string; chart?: unknown[]; templates?: unknown[]; countries?: string[] }>;
   DEFAULT_LOCALE_ID?: string;
 };
 const packs = Object.values(lp.LOCALE_PACKS ?? {})
@@ -115,6 +118,7 @@ const packs = Object.values(lp.LOCALE_PACKS ?? {})
     // resolve country → pack without importing the frontend registry.
     countries: (p as { countries?: string[] }).countries ?? [],
     accounts: p.chart as unknown[],
+    templates: (p as { templates?: unknown[] }).templates ?? [],
   }))
   .sort((a, b) => a.id.localeCompare(b.id));
 writeFileSync(
@@ -132,7 +136,7 @@ writeFileSync(
   ) + '\n',
 );
 console.log(
-  `✅ Wrote supabase/seed/locale-packs.json — ${packs.length} pack(s), ${packs.reduce((n, p) => n + p.accounts.length, 0)} accounts`,
+  `✅ Wrote supabase/seed/locale-packs.json — ${packs.length} pack(s), ${packs.reduce((n, p) => n + p.accounts.length, 0)} accounts, ${packs.reduce((n, p) => n + ((p as any).templates?.length ?? 0), 0)} templates`,
 );
 
 // Same artifact, bundled into agent-execute (the way _templates.json is) so

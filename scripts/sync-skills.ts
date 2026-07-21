@@ -187,6 +187,33 @@ if (pack) {
   }
 }
 
+// ── Bookkeeping templates ───────────────────────────────────────────────────
+// Mirrors the template half of topUpLocalePackSeeds(): insert the active
+// pack's missing templates by (template_name, locale), touch nothing that
+// exists. User-created and learned templates are unaffected. These are what
+// propose_bookkeeping matches bank events against — an instance missing them
+// books WORSE, silently (liteit ran the proof week on 15 of 98).
+const tplStats = { inserted: 0, present: 0 };
+if (pack && Array.isArray((pack as any).templates)) {
+  const haveTpl = new Set(
+    (await c.query(`select template_name from accounting_templates where locale = $1`, [pack.id])).rows.map(
+      (r: any) => r.template_name,
+    ),
+  );
+  for (const t of (pack as any).templates as Array<Record<string, unknown>>) {
+    if (!t?.template_name) continue;
+    if (haveTpl.has(t.template_name)) { tplStats.present++; continue; }
+    if (APPLY) {
+      await c.query(
+        `insert into accounting_templates (template_name, description, category, keywords, template_lines, is_system, locale)
+         values ($1,$2,$3,$4,$5,$6,$7)`,
+        [t.template_name, t.description ?? null, t.category ?? null, t.keywords ?? [], JSON.stringify(t.template_lines ?? []), t.is_system ?? true, pack.id],
+      );
+    }
+    tplStats.inserted++;
+  }
+}
+
 await c.end();
 
 console.log(`\n${APPLY ? 'APPLIED' : 'DRY-RUN'} — modules synced: ${stats.modulesSynced}, skipped (disabled): ${stats.modulesSkipped}`);
@@ -203,10 +230,13 @@ if (autoStats.inserted.length) autoStats.inserted.forEach((x) => console.log('  
 console.log(
   `\n  chart of accounts [${coaStats.pack}] — to insert: ${coaStats.missing.length}  |  already present: ${coaStats.present}`,
 );
+console.log(
+  `  bookkeeping templates — to insert: ${tplStats.inserted}  |  already present: ${tplStats.present}`,
+);
 if (coaStats.missing.length) {
   console.log('    + ' + coaStats.missing.slice(0, 20).join(', ') + (coaStats.missing.length > 20 ? `, … +${coaStats.missing.length - 20} more` : ''));
 }
 
 const anything =
-  stats.inserts.length || stats.updates.length || autoStats.inserted.length || coaStats.missing.length;
+  stats.inserts.length || stats.updates.length || autoStats.inserted.length || coaStats.missing.length || tplStats.inserted;
 if (!APPLY && anything) console.log('\n  Re-run with --apply to write these changes.');
