@@ -1828,20 +1828,45 @@ async function tplInstall(supabase: any, args: Record<string, unknown>): Promise
   // model), the engine stays empty-until-chosen, and an EXISTING choice is
   // never overridden. Chart accounts come from the bundled pack artifact so
   // the agent path needs no browser session afterwards.
+  // Precedence is the Odoo model: existing choice > the BUSINESS's country >
+  // the template's default. Content and jurisdiction are different axes — a
+  // German customer may want this (English) template but needs German books,
+  // so the company country outranks where the template happens to come from.
+  // Country comes from the caller (`country` arg — an agent provisioning an
+  // instance states it) or site_settings general.country; an exact pack match
+  // beats the '*' generic fallback.
+  const packForCountryCode = (country: unknown): string | null => {
+    if (typeof country !== 'string' || !country.trim()) return null;
+    const code = country.trim().toUpperCase();
+    const packs = (bundledLocalePacks as any).packs ?? [];
+    const exact = packs.find((p: any) => (p.countries ?? []).some((c: string) => c.toUpperCase() === code));
+    const generic = packs.find((p: any) => (p.countries ?? []).includes('*'));
+    return exact?.id ?? generic?.id ?? null;
+  };
+
   let localeActivated: string | null = null;
-  if (typeof template.accountingLocale === 'string' && template.accountingLocale) {
+  {
+    const { data: generalRow } = await supabase
+      .from('site_settings').select('value').eq('key', 'general').maybeSingle();
+    const businessCountry = a.country ?? (generalRow?.value as any)?.country;
+    const localeToActivate =
+      packForCountryCode(businessCountry) ??
+      (typeof template.accountingLocale === 'string' && template.accountingLocale
+        ? template.accountingLocale
+        : null);
+
     const { data: existingLocale } = await supabase
       .from('site_settings').select('key').eq('key', 'accounting_locale').maybeSingle();
-    if (!existingLocale) {
+    if (localeToActivate && !existingLocale) {
       const { error: locErr } = await supabase
         .from('site_settings')
-        .insert({ key: 'accounting_locale', value: template.accountingLocale });
+        .insert({ key: 'accounting_locale', value: localeToActivate });
       if (locErr) {
         errors.push(`accounting_locale activation: ${locErr.message}`);
       } else {
-        localeActivated = template.accountingLocale;
+        localeActivated = localeToActivate;
         const pack = (bundledLocalePacks as any).packs?.find(
-          (p: any) => p.id === template.accountingLocale,
+          (p: any) => p.id === localeToActivate,
         );
         if (pack) {
           const { data: haveAcc } = await supabase.from('chart_of_accounts').select('account_code');

@@ -19,6 +19,29 @@ export const LOCALE_PACKS: Record<string, AccountingLocalePack> = {
 };
 
 export const DEFAULT_LOCALE_ID = 'se-bas2024';
+
+/**
+ * Resolve the pack for a business's COUNTRY — the Odoo model. Setting the
+ * company country on an Odoo instance auto-installs the matching l10n_*
+ * package, with l10n_generic_coa as the fallback; here, packs declare
+ * `countries` and ifrs-generic declares ['*']. An exact country match beats
+ * the wildcard, so SE → se-bas2024 while DE (no German pack yet) → the
+ * generic IFRS chart rather than, absurdly, Swedish BAS.
+ *
+ * This is the top of the activation precedence (existing choice always wins):
+ *   explicit choice  >  packForCountry(company country)  >  template default
+ */
+export function packForCountry(country: string | null | undefined): AccountingLocalePack | null {
+  if (!country) return null;
+  const code = country.trim().toUpperCase();
+  if (!code) return null;
+  const all = Object.values(LOCALE_PACKS);
+  return (
+    all.find((p) => p.countries.some((c) => c.toUpperCase() === code)) ??
+    all.find((p) => p.countries.includes('*')) ??
+    null
+  );
+}
 export const ACTIVE_PACK_STORAGE_KEY = 'accounting-locale';
 export const ACTIVE_PACK_EVENT = 'flowwink:active-locale-pack-changed';
 

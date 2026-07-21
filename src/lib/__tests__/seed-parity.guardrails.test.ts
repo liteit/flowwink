@@ -110,17 +110,25 @@ describe('seed parity between the browser path and the CLI', () => {
     }
 
     // Both install paths activate insert-if-absent — switching templates must
-    // never flip the books of a tenant who already picked a pack.
+    // never flip the books of a tenant who already picked a pack — and both
+    // follow the Odoo precedence: existing choice > the business's COUNTRY >
+    // the template's default. Content and jurisdiction are different axes.
     const ui = read('src/hooks/useTemplateInstaller.ts');
-    const uiBlock = ui.slice(ui.indexOf('template.accountingLocale'));
+    const uiBlock = ui.slice(ui.indexOf('Activate an accounting locale'));
+    expect(uiBlock).toMatch(/packForCountry\(businessCountry\)\?\.id \?\? template\.accountingLocale/);
     expect(uiBlock).toMatch(/eq\('key', 'accounting_locale'\)/);
-    expect(uiBlock).toMatch(/if \(!existing\)/);
+    expect(uiBlock).toMatch(/if \(localeToActivate && !existing\)/);
 
     const ae = read('supabase/functions/agent-execute/index.ts');
-    const aeBlock = ae.slice(ae.indexOf('template.accountingLocale'));
-    expect(aeBlock).toMatch(/if \(!existingLocale\)/);
-    // The agent path seeds the chart from the bundled artifact — no browser.
+    const aeBlock = ae.slice(ae.indexOf('packForCountryCode'));
+    expect(aeBlock).toMatch(/packForCountryCode\(businessCountry\) \?\?/);
+    expect(aeBlock).toMatch(/if \(localeToActivate && !existingLocale\)/);
+    // The agent path seeds the chart from the bundled artifact — no browser —
+    // and the artifact carries the country mapping the resolver needs.
     expect(ae).toMatch(/_locale-packs\.json/);
+    const bundle = JSON.parse(read('supabase/functions/agent-execute/_locale-packs.json'));
+    expect(bundle.packs.some((p: any) => (p.countries ?? []).includes('SE'))).toBe(true);
+    expect(bundle.packs.some((p: any) => (p.countries ?? []).includes('*'))).toBe(true);
   });
 
   it('chart presence is checked by account_code alone, in BOTH paths', () => {

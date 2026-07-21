@@ -107,7 +107,15 @@ const lp = (await import(join(ROOT, 'src', 'lib', 'locale-packs', 'index.ts'))) 
 };
 const packs = Object.values(lp.LOCALE_PACKS ?? {})
   .filter((p) => Array.isArray(p.chart) && p.chart.length > 0)
-  .map((p) => ({ id: p.id, label: p.label ?? p.id, accounts: p.chart as unknown[] }))
+  .map((p) => ({
+    id: p.id,
+    label: p.label ?? p.id,
+    // The Odoo key: which business countries this pack serves ('*' = the
+    // generic fallback, our l10n_generic_coa). Lets server-side consumers
+    // resolve country → pack without importing the frontend registry.
+    countries: (p as { countries?: string[] }).countries ?? [],
+    accounts: p.chart as unknown[],
+  }))
   .sort((a, b) => a.id.localeCompare(b.id));
 writeFileSync(
   join(OUT_DIR, 'locale-packs.json'),
