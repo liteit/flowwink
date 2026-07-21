@@ -219,7 +219,7 @@ export const helpCenterTemplate: StarterTemplate = {
   name: 'HelpCenter',
   description: 'Flexible help center template with support for traditional KB, AI chat, or hybrid approach. Configure via helpStyle to match your support strategy.',
   category: 'helpcenter',
-  icon: 'HelpCircle',
+  icon: 'CircleHelp',
   tagline: 'KB + AI support made simple',
   aiChatPosition: 'Configurable via helpStyle',
   helpStyle: 'hybrid',

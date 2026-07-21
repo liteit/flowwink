@@ -146,7 +146,7 @@ export const consultAgencyTemplate: StarterTemplate = {
               { id: 'st1', value: '300+', label: 'Senior Consultants', icon: 'Users' },
               { id: 'st2', value: '48h', label: 'Average Match Time', icon: 'Clock' },
               { id: 'st3', value: '95%', label: 'Client Retention', icon: 'TrendingUp' },
-              { id: 'st4', value: '1 200+', label: 'Successful Placements', icon: 'CheckCircle' },
+              { id: 'st4', value: '1 200+', label: 'Successful Placements', icon: 'CircleCheck' },
             ],
             columns: 4,
             variant: 'cards',
@@ -308,7 +308,7 @@ export const consultAgencyTemplate: StarterTemplate = {
               { id: 'hw1', title: 'Share Your Brief', description: 'Tell us what you need: tech stack, team context, timeline, budget. 10 minutes — then we take it from here.', icon: 'FileText' },
               { id: 'hw2', title: 'Senior Review', description: 'A senior consultant on our team reads your brief personally and searches the network — not a database. We call people we know.', icon: 'Search' },
               { id: 'hw3', title: 'One Presentation', description: 'We present one consultant. Not five. The one we\'d hire ourselves. Full brief, video intro, and direct references.', icon: 'UserCheck' },
-              { id: 'hw4', title: 'Contract & Start', description: 'Simple contract, transparent rate, clear terms. Your consultant is on-site — or remote — within the week.', icon: 'CheckCircle' },
+              { id: 'hw4', title: 'Contract & Start', description: 'Simple contract, transparent rate, clear terms. Your consultant is on-site — or remote — within the week.', icon: 'CircleCheck' },
             ],
             layout: 'horizontal',
             staggeredReveal: true,
@@ -529,7 +529,7 @@ export const consultAgencyTemplate: StarterTemplate = {
               {
                 id: 'tab-data',
                 title: 'Data & AI',
-                icon: 'BarChart3',
+                icon: 'ChartColumn',
                 content: {
                   type: 'doc',
                   content: [
@@ -684,7 +684,7 @@ export const consultAgencyTemplate: StarterTemplate = {
               { id: 'tp3', title: 'Network Search', description: 'We search our active network — not LinkedIn. We call the people we know. We verify availability and assess cultural fit.', icon: 'Search' },
               { id: 'tp4', title: 'One Presentation', description: 'We present one consultant profile. Not five. The one we\'d hire ourselves. Full brief, video intro, and 2 direct references.', icon: 'UserCheck' },
               { id: 'tp5', title: '30-Minute Call', description: 'You meet the consultant. No sales pitch. A direct conversation about the assignment and expectations.', icon: 'Video' },
-              { id: 'tp6', title: 'Contract & Start', description: 'Transparent hourly rate, clear terms. Your consultant is on-site within the week.', icon: 'CheckCircle' },
+              { id: 'tp6', title: 'Contract & Start', description: 'Transparent hourly rate, clear terms. Your consultant is on-site within the week.', icon: 'CircleCheck' },
             ],
             layout: 'vertical',
             staggeredReveal: true,

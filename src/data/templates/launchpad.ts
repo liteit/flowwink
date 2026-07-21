@@ -153,7 +153,7 @@ const launchpadPages: StarterTemplate['pages'] = [
           items: [
             { id: 'bg1', icon: 'Zap', title: 'Instant Deployments', description: 'Push to main and watch your app go live in under 90 seconds. Atomic deploys, instant rollbacks.', span: 'wide' },
             { id: 'bg2', icon: 'Shield', title: 'Zero-Trust Security', description: 'SOC 2 Type II certified. End-to-end encryption, secret scanning, and DDoS protection built in.' },
-            { id: 'bg3', icon: 'BarChart3', title: 'Real-Time Analytics', description: 'P50/P99 latency, error rates, and custom events — all in a single dashboard.' },
+            { id: 'bg3', icon: 'ChartColumn', title: 'Real-Time Analytics', description: 'P50/P99 latency, error rates, and custom events — all in a single dashboard.' },
             { id: 'bg4', icon: 'Cpu', title: 'AI-Native Runtime', description: 'Streaming LLM responses, vector search, and AI function calling with one SDK call.', span: 'wide' },
             { id: 'bg5', icon: 'Puzzle', title: '120+ Integrations', description: 'Stripe, Slack, GitHub, Jira, and more — connected in seconds, not sprints.' },
             { id: 'bg6', icon: 'GitBranch', title: 'Preview Environments', description: 'Every pull request gets its own live preview URL with full data isolation.' },
@@ -304,7 +304,7 @@ const launchpadPages: StarterTemplate['pages'] = [
           features: [
             { id: 'f1', icon: 'Zap', title: 'Instant Deploy', description: 'Push to production in seconds with zero configuration.' },
             { id: 'f2', icon: 'Shield', title: 'Enterprise Security', description: 'SOC 2 compliant from day one with end-to-end encryption.' },
-            { id: 'f3', icon: 'BarChart3', title: 'Analytics', description: 'Real-time insights and metrics to optimize performance.' },
+            { id: 'f3', icon: 'ChartColumn', title: 'Analytics', description: 'Real-time insights and metrics to optimize performance.' },
             { id: 'f4', icon: 'Puzzle', title: 'Integrations', description: '50+ pre-built connectors to your favorite tools.' },
             { id: 'f5', icon: 'Users', title: 'Team Management', description: 'Collaborate seamlessly with role-based access control.' },
             { id: 'f6', icon: 'Cpu', title: 'AI-Powered', description: 'Smart automation built-in to accelerate your workflow.' },

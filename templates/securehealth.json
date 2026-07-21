@@ -1079,7 +1079,7 @@
               },
               {
                 "id": "f3",
-                "icon": "CheckCircle",
+                "icon": "CircleCheck",
                 "title": "3. Confirmation",
                 "description": "We'll call to confirm your appointment."
               }

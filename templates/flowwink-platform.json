@@ -203,7 +203,7 @@
                 "id": "hw-3",
                 "title": "You Review & Approve",
                 "description": "Every action is logged. Sensitive operations require your approval. Full human-in-the-loop when you want it, full autonomy when you don't.",
-                "icon": "CheckCircle"
+                "icon": "CircleCheck"
               }
             ],
             "layout": "horizontal"
@@ -257,7 +257,6 @@
                 "title": "Skill Engine",
                 "description": "Content creation, lead qualification, email campaigns, ticket triage, SEO analysis, invoicing, expense booking, timesheet reminders — 500+ skills that execute autonomously. FlowPilot doesn't suggest. It acts.",
                 "icon": "Zap",
-                "span": "wide",
                 "accentColor": "#3B82F6"
               },
               {
@@ -287,6 +286,7 @@
                 "id": "bg-heartbeat",
                 "title": "A Heartbeat You Set",
                 "description": "FlowPilot wakes on the cadence you choose — hourly when the day is busy, twice daily when cost matters more than speed. Every beat: evaluate objectives, plan the next action, advance the goal, check automations, reflect on outcomes, persist the learning. Morning briefing lands in your inbox.\n\nThe rhythm is a dial, not a promise in a brochure.",
+                "span": "wide",
                 "icon": "Activity",
                 "accentColor": "#F59E0B"
               },
@@ -303,7 +303,7 @@
                 "title": "It Answers the Phone",
                 "description": "Web chat, email, Telegram — and actual phone calls. An incoming call streams live between your telephony provider (46elks, Twilio) and a realtime voice model, so the AI receptionist talks with the caller instead of reading a menu at them.\n\nEvery channel lands in one queue with sentiment and priority, and hands over to a human the moment it should. The receptionist ships switched off — you turn it on when you are ready to be answered for.",
                 "icon": "PhoneCall",
-                "span": "large",
+                "span": "wide",
                 "accentColor": "#0EA5E9"
               },
               {
@@ -318,7 +318,6 @@
                 "title": "Self-Improving Intelligence",
                 "description": "FlowPilot rewrites its own instructions based on outcomes. Skills that underperform get refined. New patterns get codified. The system doesn't just run — it evolves. Week over week, it becomes a better operator than the last version of itself.",
                 "icon": "Sparkles",
-                "span": "wide",
                 "accentColor": "#06B6D4"
               }
             ]
@@ -379,7 +378,7 @@
               },
               {
                 "id": "mod-quotes",
-                "icon": "FileSignature",
+                "icon": "FilePen",
                 "title": "Quotes",
                 "description": "Quote templates, approval workflow, e-signature, automatic conversion to order."
               },
@@ -463,7 +462,7 @@
               },
               {
                 "id": "mod-projects",
-                "icon": "KanbanSquare",
+                "icon": "SquareKanban",
                 "title": "Projects & Tasks",
                 "description": "Kanban projects, task assignments, hourly rates, profitability per project."
               },
@@ -493,7 +492,7 @@
               },
               {
                 "id": "mod-approvals",
-                "icon": "CheckSquare",
+                "icon": "SquareCheck",
                 "title": "Approvals",
                 "description": "Generic approval engine reused by expenses, leave, POs, contracts."
               },
@@ -529,7 +528,7 @@
               },
               {
                 "id": "mod-pages",
-                "icon": "Layout",
+                "icon": "LayoutTemplate",
                 "title": "Pages & CMS",
                 "description": "Visual page builder with 60+ block types. SEO metadata, scheduling, revisions."
               },
@@ -589,13 +588,13 @@
               },
               {
                 "id": "mod-developer",
-                "icon": "Code2",
+                "icon": "CodeXml",
                 "title": "Developer & API Keys",
                 "description": "API keys, webhooks, edge function logs, MCP regression tests."
               },
               {
                 "id": "mod-analytics",
-                "icon": "BarChart3",
+                "icon": "ChartColumn",
                 "title": "Analytics",
                 "description": "Page views, conversion tracking, funnel analysis, agent performance."
               },
@@ -866,7 +865,6 @@
                 "title": "Universal MCP Server",
                 "description": "Every module ships with a JSON-RPC contract. tools/list returns every skill across CRM, Accounting, HR, Payroll, P2P. Live-validated by a regression workflow on every release.",
                 "icon": "Plug",
-                "span": "wide",
                 "accentColor": "#3B82F6"
               },
               {
@@ -874,7 +872,7 @@
                 "title": "Bring Your Own Agent",
                 "description": "Admin chooses the operator: built-in FlowPilot, Claude Desktop, Cursor, OpenClaw, GPT — or run several in parallel. The platform is operator-agnostic.\n\n• MCP API keys per agent\n• Toolset groups for selective tool loading\n• Per-agent audit trails\n• Trust levels and approval gates",
                 "icon": "Users",
-                "span": "large",
+                "span": "wide",
                 "accentColor": "#8B5CF6"
               },
               {
@@ -896,6 +894,7 @@
                 "id": "ap-discovery",
                 "title": "Discovery & Briefing",
                 "description": "flowwink://briefing resource gives external agents instant context — active modules, current objectives, recent activity. Token-efficient onboarding without prompt-engineering hell.",
+                "span": "wide",
                 "icon": "BookOpen",
                 "accentColor": "#F59E0B"
               },
@@ -904,7 +903,6 @@
                 "title": "Self-Hosted Means Sovereign",
                 "description": "Your data, your LLM, your audit trail. The agent runs against your own database — not a vendor's shared multi-tenant cloud. Healthcare, finance, defense-ready.",
                 "icon": "Shield",
-                "span": "wide",
                 "accentColor": "#06B6D4"
               }
             ]
@@ -1714,7 +1712,7 @@
               },
               {
                 "id": "sk-contract",
-                "icon": "FileSignature",
+                "icon": "FilePen",
                 "title": "create_contract_from_template",
                 "description": "Token-rendered employment + customer contracts. DB guard prevents hallucinated empty bodies."
               },
@@ -1756,7 +1754,7 @@
               },
               {
                 "id": "sk-lint",
-                "icon": "CheckSquare",
+                "icon": "SquareCheck",
                 "title": "lint_skill",
                 "description": "CLI + MCP skill that runs the Agent Contract Integrity checklist on any skill before release."
               }
@@ -2404,7 +2402,7 @@
                 "id": "ab-reporting",
                 "title": "Autonomous Reporting",
                 "description": "FlowPilot generates performance briefings for each client automatically. Weekly content summaries, lead pipeline updates, and ticket resolution metrics — delivered without you lifting a finger.",
-                "icon": "BarChart3",
+                "icon": "ChartColumn",
                 "accentColor": "#EC4899"
               }
             ]
@@ -2578,7 +2576,7 @@
                 "id": "cs4",
                 "value": "1,200+",
                 "label": "Successful Placements",
-                "icon": "CheckCircle"
+                "icon": "CircleCheck"
               }
             ],
             "columns": 4,
@@ -2656,7 +2654,7 @@
               {
                 "id": "tab-frontend",
                 "title": "Frontend & Design",
-                "icon": "Layout",
+                "icon": "LayoutTemplate",
                 "content": {
                   "type": "doc",
                   "content": [

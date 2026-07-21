@@ -81,8 +81,8 @@ const trustcorpPages: StarterTemplate['pages'] = [
           items: [
             { id: 'bg1', title: 'Consulting', description: 'C-suite advisory for digital transformation. We\'ve guided 500+ enterprises through complex technology shifts — without operational disruption.', icon: 'Briefcase', accentColor: '#1E40AF', linkUrl: '/services' },
             { id: 'bg2', title: 'Technology', description: 'Private cloud, on-premise AI, and hybrid infrastructure designed for zero-trust security. Built for organizations where data sovereignty isn\'t negotiable.', icon: 'Server', span: 'wide', accentColor: '#0F766E', linkUrl: '/services' },
-            { id: 'bg3', title: 'Analytics', description: 'Real-time dashboards, predictive models, and board-ready reporting. Turn operational data into a competitive advantage your rivals can\'t replicate.', icon: 'BarChart3', accentColor: '#7C3AED', linkUrl: '/services' },
-            { id: 'bg4', title: 'Support', description: 'A dedicated expert team available 24/7. Average response under 4 minutes. SLA-backed — because enterprise problems don\'t wait for business hours.', icon: 'HeadphonesIcon', accentColor: '#DC2626', linkUrl: '/contact' },
+            { id: 'bg3', title: 'Analytics', description: 'Real-time dashboards, predictive models, and board-ready reporting. Turn operational data into a competitive advantage your rivals can\'t replicate.', icon: 'ChartColumn', accentColor: '#7C3AED', linkUrl: '/services' },
+            { id: 'bg4', title: 'Support', description: 'A dedicated expert team available 24/7. Average response under 4 minutes. SLA-backed — because enterprise problems don\'t wait for business hours.', icon: 'Headphones', accentColor: '#DC2626', linkUrl: '/contact' },
           ],
         },
       },
@@ -359,7 +359,7 @@ const trustcorpPages: StarterTemplate['pages'] = [
         data: {
           title: 'Our Impact',
           stats: [
-            { value: '3,000+', label: 'Projects Delivered', icon: 'CheckCircle' },
+            { value: '3,000+', label: 'Projects Delivered', icon: 'CircleCheck' },
             { value: '25K+', label: 'Professionals Trained', icon: 'GraduationCap' },
             { value: '12', label: 'Global Offices', icon: 'Globe' },
             { value: '98%', label: 'Client Retention', icon: 'Heart' },

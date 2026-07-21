@@ -207,7 +207,7 @@
                 "id": "st4",
                 "value": "1 200+",
                 "label": "Successful Placements",
-                "icon": "CheckCircle"
+                "icon": "CircleCheck"
               }
             ],
             "columns": 4,
@@ -397,7 +397,7 @@
                 "id": "hw4",
                 "title": "Contract & Start",
                 "description": "Simple contract, transparent rate, clear terms. Your consultant is on-site — or remote — within the week.",
-                "icon": "CheckCircle"
+                "icon": "CircleCheck"
               }
             ],
             "layout": "horizontal",
@@ -890,7 +890,7 @@
               {
                 "id": "tab-data",
                 "title": "Data & AI",
-                "icon": "BarChart3",
+                "icon": "ChartColumn",
                 "content": {
                   "type": "doc",
                   "content": [
@@ -1280,7 +1280,7 @@
                 "id": "tp6",
                 "title": "Contract & Start",
                 "description": "Transparent hourly rate, clear terms. Your consultant is on-site within the week.",
-                "icon": "CheckCircle"
+                "icon": "CircleCheck"
               }
             ],
             "layout": "vertical",

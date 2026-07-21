@@ -162,7 +162,7 @@
               },
               {
                 "id": "f4",
-                "icon": "HeadphonesIcon",
+                "icon": "Headphones",
                 "title": "24/7 Support",
                 "description": "Our team is always here when you need us."
               }
@@ -215,7 +215,7 @@
               },
               {
                 "id": "bb6",
-                "icon": "HeadphonesIcon",
+                "icon": "Headphones",
                 "title": "Same-Day Response",
                 "description": "Every message, email, and call answered within hours — not days. Your time matters."
               }
@@ -400,7 +400,7 @@
                 "label": "Project Success Rate",
                 "value": 92,
                 "color": "hsl(47, 96%, 53%)",
-                "icon": "CheckCircle"
+                "icon": "CircleCheck"
               }
             ],
             "variant": "default",
@@ -691,7 +691,7 @@
               },
               {
                 "id": "f3",
-                "icon": "HeadphonesIcon",
+                "icon": "Headphones",
                 "title": "Ongoing Support",
                 "description": "Our team is here for you before, during, and after your service."
               }

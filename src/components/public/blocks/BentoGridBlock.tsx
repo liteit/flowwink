@@ -130,7 +130,14 @@ export function BentoGridBlock({ data }: BentoGridBlockProps) {
         <div
           ref={containerRef}
           className={cn(
-            'grid grid-cols-1 md:grid-cols-3 auto-rows-[minmax(160px,auto)]',
+            // grid-flow-row-dense, not the default sparse flow. With mixed
+            // spans (wide = 2 cols, large = 2×2) a card that does not fit the
+            // remaining columns jumps to the next row and CSS leaves the gap
+            // behind — literally "sparse" packing. On the www home page that
+            // left three 160px filler rows and column 3 empty for most of the
+            // grid, which reads as a thin, holey bento. Dense back-fills those
+            // holes with later small cards.
+            'grid grid-cols-1 md:grid-cols-3 grid-flow-row-dense auto-rows-[minmax(160px,auto)]',
             columns === 4 && 'lg:grid-cols-4',
             getGapClass(gap),
           )}

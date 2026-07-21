@@ -533,7 +533,7 @@
             "features": [
               {
                 "id": "f1",
-                "icon": "Layout",
+                "icon": "LayoutTemplate",
                 "title": "Visual Page Builder",
                 "description": "58+ blocks for any layout. Clients can edit, you control what they can touch."
               },

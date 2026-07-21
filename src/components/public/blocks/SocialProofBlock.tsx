@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { Users, Star, Activity, TrendingUp, Heart, Eye, MessageCircle, ShoppingCart } from 'lucide-react';
+import { Users, Star, Activity, TrendingUp, Heart, Eye, MessageCircle, ShoppingCart, Globe, Zap, Package } from 'lucide-react';
 
 export interface SocialProofItem {
   id: string;
   type: 'counter' | 'rating' | 'activity' | 'custom';
-  icon?: 'users' | 'star' | 'activity' | 'trending' | 'heart' | 'eye' | 'message' | 'cart';
+  icon?: 'users' | 'star' | 'activity' | 'trending' | 'heart' | 'eye' | 'message' | 'cart' | 'globe' | 'zap' | 'package';
   label: string;
   value: string;
   suffix?: string;
@@ -47,6 +47,12 @@ const ICONS = {
   eye: Eye,
   message: MessageCircle,
   cart: ShoppingCart,
+  // Added 2026-07-21: the www home page had been asking for these three all
+  // along. A name outside this map resolves to undefined and the icon simply
+  // does not render — no error, no fallback, just a stat with nothing above it.
+  globe: Globe,
+  zap: Zap,
+  package: Package,
 };
 
 function AnimatedCounter({ 

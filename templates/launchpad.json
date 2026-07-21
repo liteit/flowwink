@@ -308,7 +308,7 @@
               },
               {
                 "id": "bg3",
-                "icon": "BarChart3",
+                "icon": "ChartColumn",
                 "title": "Real-Time Analytics",
                 "description": "P50/P99 latency, error rates, and custom events — all in a single dashboard."
               },
@@ -611,7 +611,7 @@
               },
               {
                 "id": "f3",
-                "icon": "BarChart3",
+                "icon": "ChartColumn",
                 "title": "Analytics",
                 "description": "Real-time insights and metrics to optimize performance."
               },
