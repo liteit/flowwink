@@ -580,6 +580,39 @@ export function BlockSelector({ onAdd, onPaste }: BlockSelectorProps) {
         </SheetHeader>
         <ScrollArea className="h-[calc(100vh-140px)]">
           <div className="p-6 space-y-6">
+            {recentBlocks.length > 0 && (
+              <div>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                  Recently used
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {recentBlocks.map((block) => {
+                    const moduleWarning = getModuleWarning(block.type);
+                    return (
+                      <button
+                        key={`recent-${block.type}`}
+                        onClick={() => handleSelect(block.type)}
+                        className={`flex items-start gap-3 p-4 rounded-lg border bg-card hover:bg-accent hover:border-primary/30 transition-all text-left group relative ${moduleWarning ? 'opacity-75' : ''}`}
+                      >
+                        <div className={`p-2 rounded-md transition-colors ${
+                          moduleWarning
+                            ? 'bg-muted text-muted-foreground'
+                            : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground'
+                        }`}>
+                          {block.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm">{block.label}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                            {block.description}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             {filteredGroups.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
                 No blocks match your search
