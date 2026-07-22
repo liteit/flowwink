@@ -187,14 +187,6 @@ export function FlowPilotStatusBar() {
             <Activity className="h-3 w-3" />
             FlowPilot
           </Badge>
-
-          <Button asChild variant="ghost" size="sm" className="h-7 gap-1.5 text-xs">
-            <Link to="/chat">
-              <MessageSquare className="h-3.5 w-3.5" />
-              Open chat
-              <ExternalLink className="h-3 w-3 opacity-60" />
-            </Link>
-          </Button>
         </div>
       </div>
     </div>
