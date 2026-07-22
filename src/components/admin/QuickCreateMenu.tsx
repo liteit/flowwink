@@ -50,12 +50,8 @@ export function QuickCreateMenu() {
   const navigate = useNavigate();
   const [active, setActive] = useState<DialogKey>(null);
   const { isAdmin, roles } = useAuth();
-  const { data: modules } = useModules();
-
-  const enabledModuleIds = useMemo(
-    () => new Set((modules ?? []).filter((m) => m.enabled).map((m) => m.id)),
-    [modules],
-  );
+  const enabledModules = useEnabledModules();
+  const enabledModuleIds = useMemo(() => new Set<string>(enabledModules), [enabledModules]);
 
   const visible = useMemo(() => {
     return ACTIONS.filter((a) => {
