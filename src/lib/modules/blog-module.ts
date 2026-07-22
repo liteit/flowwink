@@ -17,7 +17,7 @@ import {
 const BLOG_SKILLS: SkillSeed[] = [
   {
     name: 'write_blog_post',
-    description: 'Create a blog post with title, topic, tone, and pre-written content. Pass status="published" to publish immediately in one call (recommended when the user asks to "draft and publish"). Use when: writing a new article; publishing a blog post in one step. NOT for: managing existing posts (manage_blog_posts); generating multi-channel content (generate_content_proposal).',
+    description: 'Create a blog post with title, topic, tone, and pre-written content. Pass status="published" to publish immediately in one call (recommended when the user asks to "draft and publish"). If the brief references an external website, company, person or current events: research FIRST (search_web/scrape_url) and base the content on the results — never write about an external subject from memory alone. Use when: writing a new article; publishing a blog post in one step. NOT for: managing existing posts (manage_blog_posts); generating multi-channel content (generate_content_proposal).',
     category: 'content',
     handler: 'module:blog',
     scope: 'internal',
@@ -25,7 +25,7 @@ const BLOG_SKILLS: SkillSeed[] = [
       type: 'function',
       function: {
         name: 'write_blog_post',
-        description: 'Create a blog post with title, topic, tone, and pre-written content. Pass status="published" to publish immediately in one call (recommended when the user asks to "draft and publish"). Use when: writing a new article; publishing a blog post in one step. NOT for: managing existing posts (manage_blog_posts); generating multi-channel content (generate_content_proposal).',
+        description: 'Create a blog post with title, topic, tone, and pre-written content. Pass status="published" to publish immediately in one call (recommended when the user asks to "draft and publish"). If the brief references an external website, company, person or current events: research FIRST (search_web/scrape_url) and base the content on the results — never write about an external subject from memory alone. Use when: writing a new article; publishing a blog post in one step. NOT for: managing existing posts (manage_blog_posts); generating multi-channel content (generate_content_proposal).',
         parameters: {
           type: 'object',
           properties: {

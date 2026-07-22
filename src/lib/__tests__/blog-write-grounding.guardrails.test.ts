@@ -30,6 +30,17 @@ describe('write_blog_post grounding and slug safety', () => {
     expect(block).toMatch(/never write about a specific\s*\n?external subject from memory/);
   });
 
+  it('the grounding cue lives in the DESCRIPTION, not only in instructions', () => {
+    // Round 2 of the live test proved instructions are NOT a pre-call lever in
+    // the ReAct path: prompt-compiler loads them lazily (skill_read / after
+    // first use), so a rule that only exists there is invisible at the moment
+    // the model decides to skip research. The description is what the model
+    // sees up front — the rule must be there, in both seed copies.
+    const block = seed.slice(seed.indexOf("name: 'write_blog_post'"));
+    const hits = block.match(/research FIRST \(search_web\/scrape_url\)/g) ?? [];
+    expect(hits.length, 'grounding missing from a description copy').toBeGreaterThanOrEqual(2);
+  });
+
   it('the handler suffixes colliding slugs instead of crashing on the constraint', () => {
     const start = ae.indexOf('const baseSlug = resolvedTitle');
     expect(start, 'slug uniqueness logic missing from the blog handler').toBeGreaterThan(0);
