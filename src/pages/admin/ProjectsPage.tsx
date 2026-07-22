@@ -32,8 +32,10 @@ const PROJECT_STATUS_COLORS: Record<string, string> = {
   on_hold: "bg-yellow-100 text-yellow-800",
 };
 
-function NewProjectDialog() {
-  const [open, setOpen] = useState(false);
+function NewProjectDialog({ open: controlledOpen, onOpenChange }: { open?: boolean; onOpenChange?: (o: boolean) => void } = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (v: boolean) => { if (onOpenChange) onOpenChange(v); if (controlledOpen === undefined) setInternalOpen(v); };
   const create = useCreateProject();
   const [form, setForm] = useState({ name: "", description: "", client_name: "", deadline: "" });
 
