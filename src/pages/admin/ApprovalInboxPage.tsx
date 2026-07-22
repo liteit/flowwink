@@ -5,6 +5,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminPageContainer } from '@/components/admin/AdminPageContainer';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
@@ -109,7 +110,7 @@ export function InboxSection() {
           description: firstError ? `First error: ${firstError}` : undefined,
         });
         result?.failures?.forEach(f => {
-          console.warn('[bulk approval failed]', f.id, f.error);
+          logger.warn('[bulk approval failed]', f.id, f.error);
         });
       } else {
         toast.success(`${processed} request(s) ${decision}d`);
