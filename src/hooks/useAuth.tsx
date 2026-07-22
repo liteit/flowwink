@@ -46,12 +46,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [previewRoles, setPreviewRolesState] = useState<AppRole[] | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = sessionStorage.getItem('flowwink.rolePreview');
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as AppRole[];
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+    } catch { return null; }
+  });
+
+  const setPreviewRoles = (next: AppRole[] | null) => {
+    setPreviewRolesState(next);
+    try {
+      if (next && next.length > 0) {
+        sessionStorage.setItem('flowwink.rolePreview', JSON.stringify(next));
+      } else {
+        sessionStorage.removeItem('flowwink.rolePreview');
+      }
+    } catch { /* ignore */ }
+  };
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+
 
         // Defer profile fetch with setTimeout to avoid deadlock
         if (session?.user) {
