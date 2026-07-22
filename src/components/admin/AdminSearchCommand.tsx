@@ -137,7 +137,7 @@ interface AdminSearchCommandProps {
 
 export function AdminSearchCommand({ open, onOpenChange }: AdminSearchCommandProps) {
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, roles } = useAuth();
   const { data: modules } = useModules();
   const { data: featureFlags } = useNavFeatureFlags();
   const [query, setQuery] = useState('');
