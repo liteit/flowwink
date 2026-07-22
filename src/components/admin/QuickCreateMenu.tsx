@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Plus, UserPlus, Briefcase, CheckSquare, LifeBuoy, HandCoins, FileSignature,
   Building2, FileText, Receipt, ClipboardList, User, Newspaper, FileCode,
-  Megaphone, Package, Truck, Image as ImageIcon, FolderKanban,
+  Megaphone, Package, Truck, Image as ImageIcon, FolderKanban, BookOpen, Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
