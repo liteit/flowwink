@@ -23,6 +23,8 @@ import {
   CalendarPlus,
   Megaphone,
   ClipboardList,
+  Clock,
+  Image as ImageIcon,
 } from 'lucide-react';
 import {
   CommandDialog,
