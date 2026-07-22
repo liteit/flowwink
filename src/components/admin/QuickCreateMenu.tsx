@@ -14,7 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { CreateLeadDialog } from '@/components/admin/CreateLeadDialog';
 import { CreateTaskDialog } from '@/components/admin/CreateTaskDialog';
 import { CreateTicketDialog } from '@/components/admin/tickets/CreateTicketDialog';
-import { useModules } from '@/hooks/useModules';
+import { useEnabledModules } from '@/hooks/useModules';
 import { useAuth } from '@/hooks/useAuth';
 import type { AppRole } from '@/types/cms';
 
