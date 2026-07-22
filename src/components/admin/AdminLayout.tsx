@@ -9,6 +9,8 @@ import { useFlowPilotBootstrap } from '@/hooks/useFlowPilotBootstrap';
 import { useLocalePackBootstrap } from '@/hooks/useTenantLocalePack';
 import { IncomingCallToaster } from './voice/IncomingCallToaster';
 import Softphone from './voice/Softphone';
+import { RolePreviewBanner } from './RolePreview';
+
 
 interface AdminLayoutProps {
   children: ReactNode;
