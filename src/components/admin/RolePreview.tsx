@@ -85,6 +85,16 @@ export function RolePreviewSwitcher({ collapsed }: { collapsed?: boolean }) {
             </DropdownMenuItem>
           </>
         )}
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+          Customer view lives in the portal
+        </DropdownMenuLabel>
+        <DropdownMenuItem asChild>
+          <a href="/account" target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="mr-2 h-4 w-4" />
+            Open customer portal
+          </a>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
