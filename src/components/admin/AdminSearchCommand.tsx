@@ -169,6 +169,14 @@ export function AdminSearchCommand({ open, onOpenChange }: AdminSearchCommandPro
     [roleFilteredGroups, modules, featureFlags]
   );
 
+  const quickActions = useMemo(() => {
+    return QUICK_ACTIONS.filter((a) => {
+      if (a.moduleId && modules && !(modules[a.moduleId]?.enabled ?? true)) return false;
+      if (isAdmin) return true;
+      return a.roles.some((r) => roles.includes(r));
+    });
+  }, [modules, isAdmin, roles]);
+
   const { data: hits, isFetching } = useQuery({
     queryKey: ['global-search', debouncedQuery],
     enabled: isAdmin && open && debouncedQuery.trim().length >= 2,
