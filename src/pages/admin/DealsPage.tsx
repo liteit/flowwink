@@ -51,6 +51,7 @@ import { DealTemplatesPanel } from '@/components/admin/deals/DealTemplatesPanel'
 import { useDealTeams, useLatestExchangeRates, useBaseCurrency, convertAmount } from '@/hooks/useDealsParity';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
+import { useOpenOnQueryParam } from '@/hooks/useOpenOnQueryParam';
 
 type ViewMode = 'kanban' | 'table';
 
