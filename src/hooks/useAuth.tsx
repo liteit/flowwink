@@ -210,22 +210,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const isAdmin = roles.includes('admin');
-  // Legacy gates: writer/approver are deprecated. Treat them as admin so existing
-  // CMS publish-flow checks still grant access. New code should use hasRole/hasAnyRole.
-  const isWriter = isAdmin || roles.includes('writer') || roles.includes('approver') || roles.length > 0;
-  const isApprover = isAdmin || roles.includes('approver');
+  const realRoles = roles;
+  const realIsAdmin = realRoles.includes('admin');
 
-  const hasRole = (r: AppRole) => isAdmin || roles.includes(r);
-  const hasAnyRole = (rs: AppRole[]) => isAdmin || rs.some(r => roles.includes(r));
+  // If admin has an active preview, use those roles for all downstream checks.
+  // Preview is a visual-only override — server-side RLS uses the real JWT.
+  const effectiveRoles: AppRole[] = realIsAdmin && previewRoles && previewRoles.length > 0
+    ? previewRoles
+    : realRoles;
+  const effectivePrimary: AppRole | null = effectiveRoles.includes('admin')
+    ? 'admin'
+    : (effectiveRoles[0] ?? null);
+
+  const isAdmin = effectiveRoles.includes('admin');
+  const isWriter = isAdmin || effectiveRoles.includes('writer') || effectiveRoles.includes('approver') || effectiveRoles.length > 0;
+  const isApprover = isAdmin || effectiveRoles.includes('approver');
+
+  const hasRole = (r: AppRole) => isAdmin || effectiveRoles.includes(r);
+  const hasAnyRole = (rs: AppRole[]) => isAdmin || rs.some(r => effectiveRoles.includes(r));
 
   return (
     <AuthContext.Provider value={{
       user,
       session,
       profile,
-      role,
-      roles,
+      role: effectivePrimary,
+      roles: effectiveRoles,
       loading,
       signIn,
       signUp,
@@ -236,11 +246,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isWriter,
       isApprover,
       isAdmin,
+      realIsAdmin,
+      realRoles,
+      previewRoles: realIsAdmin ? previewRoles : null,
+      setPreviewRoles,
     }}>
       {children}
     </AuthContext.Provider>
   );
 }
+
 
 export function useAuth() {
   const context = useContext(AuthContext);
