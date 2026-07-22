@@ -220,6 +220,25 @@ export function AdminSearchCommand({ open, onOpenChange }: AdminSearchCommandPro
           {isFetching ? 'Searching…' : 'No results found.'}
         </CommandEmpty>
 
+        {quickActions.length > 0 && (
+          <CommandGroup heading="Quick create">
+            {quickActions.map((a) => (
+              <CommandItem
+                key={a.href}
+                value={`create new ${a.label}`}
+                onSelect={() => handleSelect(a.href)}
+                className="cursor-pointer"
+              >
+                <a.icon className="mr-2 h-4 w-4" />
+                <span>{a.label}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+
+        {quickActions.length > 0 && <CommandSeparator />}
+
+
         {showingDataResults &&
           hitsByGroup.map(([group, items]) => (
             <CommandGroup key={`hit-${group}`} heading={group}>
