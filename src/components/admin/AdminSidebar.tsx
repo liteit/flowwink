@@ -460,9 +460,8 @@ export function AdminSidebar() {
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarFooter>
-        </>
-        )}
       </Sidebar>
+      <AdminSearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
     </>
   );
 }
