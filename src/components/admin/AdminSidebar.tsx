@@ -89,6 +89,8 @@ import { AdminSearchCommand } from './AdminSearchCommand';
 import { useNavFeatureFlags, isFeatureFlagOn } from '@/hooks/useNavFeatureFlags';
 import { useRoleModuleAccess } from '@/hooks/useRoleModuleAccess';
 import type { AppRole } from '@/types/cms';
+import { RolePreviewSwitcher } from './RolePreview';
+
 
 
 export function AdminSidebar() {
