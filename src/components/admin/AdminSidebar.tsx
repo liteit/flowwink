@@ -260,56 +260,9 @@ export function AdminSidebar() {
           </div>
         )}
 
-        {/* Full-panel search (replaces navigation + footer when active) */}
-        {searchOpen ? (
-          <SidebarContent className="px-2 pt-1 pb-2 flex-1">
-            <Command className="flex flex-col h-full bg-transparent text-sidebar-foreground shadow-none [&_[cmdk-group-heading]]:text-sidebar-foreground/50 [&_[cmdk-input-wrapper]]:border-sidebar-border [&_[cmdk-input-wrapper]_svg]:text-sidebar-foreground/50">
-              <div className="px-1 pb-2">
-                <CommandInput
-                  ref={searchInputRef}
-                  placeholder="Search pages..."
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') {
-                      setSearchOpen(false);
-                    }
-                  }}
-                  className="h-8 text-sm text-sidebar-foreground placeholder:text-sidebar-foreground/40"
-                />
-              </div>
-              <CommandList className="flex-1 max-h-none overflow-y-auto">
-                <CommandEmpty className="py-6 text-center text-xs text-sidebar-foreground/50">No results found.</CommandEmpty>
-                {Object.entries(
-                  allSearchItems.reduce<Record<string, typeof allSearchItems>>((acc, item) => {
-                    (acc[item.group] ??= []).push(item);
-                    return acc;
-                  }, {})
-                ).map(([groupLabel, items]) => (
-                  <CommandGroup key={groupLabel} heading={groupLabel}>
-                    {items.map((item) => (
-                      <CommandItem
-                        key={item.href}
-                        onSelect={() => handleSearchSelect(item.href)}
-                        className="cursor-pointer text-sm text-sidebar-foreground/80 hover:text-sidebar-foreground aria-selected:bg-sidebar-accent aria-selected:text-sidebar-accent-foreground"
-                      >
-                        <item.icon className="mr-2 h-4 w-4" />
-                        <span>{item.name}</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                ))}
-              </CommandList>
-            </Command>
-            <button
-              onClick={() => setSearchOpen(false)}
-              className="mt-2 w-full py-1.5 text-xs text-sidebar-foreground/40 hover:text-sidebar-foreground/60 transition-colors"
-            >
-              Press Esc to close
-            </button>
-          </SidebarContent>
-        ) : (
-        <>
-        {/* Navigation */}
+        {/* Navigation (always visible; search opens as dialog overlay) */}
         <SidebarContent ref={sidebarScrollRef} className="px-2 pt-1 pb-2">
+
           {filteredGroups.map((group, index) => {
             const hasActiveItem = group.items.some(item => isItemActive(item.href));
 
