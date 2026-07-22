@@ -27,7 +27,7 @@ export default function RecruitmentPage() {
           title="Recruitment"
           description="Job postings, candidate pipeline, and AI-assisted screening"
         >
-          <NewJobDialog />
+          <NewJobDialog open={newJobOpen} onOpenChange={setNewJobOpen} />
         </AdminPageHeader>
 
         <div className="grid gap-4 sm:grid-cols-3">
