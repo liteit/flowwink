@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,7 +9,13 @@ import { BudgetTab } from '@/components/admin/timesheets/BudgetTab';
 import { EntriesTab } from '@/components/admin/timesheets/EntriesTab';
 import { ReportsTab } from '@/components/admin/timesheets/ReportsTab';
 
+const VALID_TABS = ['tasks', 'weekly', 'entries', 'reports', 'budget', 'projects'];
+
 export default function TimesheetsPage() {
+  const [searchParams] = useSearchParams();
+  const urlTab = searchParams.get('tab');
+  const defaultTab = urlTab && VALID_TABS.includes(urlTab) ? urlTab : 'tasks';
+
   return (
     <AdminLayout>
     <div className="space-y-6">
@@ -17,7 +24,7 @@ export default function TimesheetsPage() {
         description="Manage projects, tasks, time tracking and budgets"
       />
 
-      <Tabs defaultValue="tasks" className="space-y-4">
+      <Tabs defaultValue={defaultTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
           <TabsTrigger value="weekly">Timesheet</TabsTrigger>

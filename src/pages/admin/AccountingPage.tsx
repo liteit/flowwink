@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useOpenOnQueryParam } from '@/hooks/useOpenOnQueryParam';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminPageContainer } from '@/components/admin/AdminPageContainer';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
@@ -34,6 +36,7 @@ import { PendingOperationsList } from '@/components/admin/PendingOperationsList'
 import { OverviewTab } from '@/components/admin/accounting/dashboard/OverviewTab';
 import { FiscalYearProvider } from '@/components/admin/accounting/FiscalYearContext';
 import { FiscalYearSelector } from '@/components/admin/accounting/FiscalYearSelector';
+import { NewJournalEntryDialog } from '@/components/admin/accounting/NewJournalEntryDialog';
 
 type TabId =
   | 'overview'
@@ -88,7 +91,14 @@ const ALL_IDS = new Set<TabId>([
 ]);
 
 export default function AccountingPage() {
-  const [tab, setTab] = useState<TabId>('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlTab = searchParams.get('tab') as TabId | null;
+  const initialTab = urlTab && ALL_IDS.has(urlTab) ? urlTab : 'overview';
+  const [tab, setTab] = useState<TabId>(initialTab);
+  const [showCreate, setShowCreate] = useState(false);
+
+  useOpenOnQueryParam('new', '1', () => setShowCreate(true));
+
   const inPrimary = PRIMARY.some((t) => t.id === tab);
   const activeMore = !inPrimary
     ? MORE.flatMap((g) => g.items).find((i) => i.id === tab)
@@ -168,6 +178,8 @@ export default function AccountingPage() {
           <TabsContent value="settings"><SettingsTab /></TabsContent>
           </FiscalYearProvider>
         </Tabs>
+
+        <NewJournalEntryDialog open={showCreate} onOpenChange={setShowCreate} />
       </AdminPageContainer>
     </AdminLayout>
   );

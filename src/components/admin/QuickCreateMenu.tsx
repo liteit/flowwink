@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Plus, UserPlus, Briefcase, CheckSquare, LifeBuoy, HandCoins, FileSignature,
   Building2, FileText, Receipt, ClipboardList, User, Newspaper, FileCode,
-  Megaphone, Package, Truck, Image as ImageIcon, FolderKanban,
+  Megaphone, Package, Truck, Image as ImageIcon, FolderKanban, BookOpen, Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -44,6 +44,8 @@ const ACTIONS: QuickAction[] = [
   { kind: 'nav',    href: '/admin/projects?new=1',        label: 'Project',        icon: FolderKanban,  moduleId: 'projects',    roles: ['projects'] },
   { kind: 'nav',    href: '/admin/products?new=1',        label: 'Product',        icon: Package,       moduleId: 'ecommerce',   roles: ['warehouse', 'sales'] },
   { kind: 'nav',    href: '/admin/vendors?new=1',         label: 'Vendor',         icon: Truck,         moduleId: 'purchasing',  roles: ['purchasing', 'warehouse'] },
+  { kind: 'nav',    href: '/admin/accounting?tab=journal&new=1', label: 'Journal entry', icon: BookOpen, moduleId: 'accounting', roles: ['accounting'] },
+  { kind: 'nav',    href: '/admin/timesheets?tab=entries&new=1', label: 'Time entry',    icon: Clock,    moduleId: 'projects',   roles: ['projects', 'hr', 'sales'] },
   // Task is available to everyone with an operator role — it's the universal capture surface.
   { kind: 'dialog', key: 'task',   label: 'Activity / task', icon: CheckSquare,   roles: ['sales', 'support', 'hr', 'accounting', 'warehouse', 'marketing', 'purchasing', 'projects'] },
 ];
