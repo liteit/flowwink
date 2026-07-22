@@ -19,6 +19,10 @@ import {
   User,
   Truck,
   Briefcase,
+  Receipt,
+  CalendarPlus,
+  Megaphone,
+  ClipboardList,
 } from 'lucide-react';
 import {
   CommandDialog,
@@ -34,6 +38,7 @@ import { useModules } from '@/hooks/useModules';
 import { useNavFeatureFlags, isFeatureFlagOn } from '@/hooks/useNavFeatureFlags';
 import { navigationGroups } from './adminNavigation';
 import { supabase } from '@/integrations/supabase/client';
+import type { AppRole } from '@/types/cms';
 
 const ENTITY_META: Record<string, { label: string; icon: any; group: string }> = {
   company:    { label: 'Company',    icon: Building2,     group: 'Companies' },
@@ -53,6 +58,42 @@ const ENTITY_META: Record<string, { label: string; icon: any; group: string }> =
   vendor:     { label: 'Vendor',     icon: Truck,         group: 'Vendors' },
   project:    { label: 'Project',    icon: Briefcase,     group: 'Projects' },
 };
+
+interface QuickAction {
+  label: string;
+  href: string;
+  icon: any;
+  moduleId?: string;
+  roles: AppRole[]; // admin sees all
+}
+
+// Role-aware quick creates surfaced at the top of ⌘K. Filtered by user roles + enabled modules.
+const QUICK_ACTIONS: QuickAction[] = [
+  // Sales
+  { label: 'New lead',            href: '/admin/leads?new=1',           icon: UserPlus,      moduleId: 'leads',       roles: ['sales', 'marketing'] },
+  { label: 'New deal',            href: '/admin/deals?new=1',           icon: HandCoins,     moduleId: 'deals',       roles: ['sales'] },
+  { label: 'New quote',           href: '/admin/quotes/new',            icon: FileSignature, moduleId: 'quotes',      roles: ['sales'] },
+  { label: 'New company',         href: '/admin/companies?new=1',       icon: Building2,     moduleId: 'companies',   roles: ['sales', 'accounting', 'support'] },
+  // Accounting / CFO
+  { label: 'New invoice',         href: '/admin/invoices/new',          icon: FileText,      moduleId: 'invoicing',   roles: ['accounting', 'sales'] },
+  { label: 'New expense',         href: '/admin/expenses?new=1',        icon: Receipt,       moduleId: 'expenses',    roles: ['accounting', 'hr'] },
+  { label: 'New purchase order',  href: '/admin/purchase-orders?new=1', icon: ClipboardList, moduleId: 'purchasing',  roles: ['purchasing', 'accounting'] },
+  // Support
+  { label: 'New ticket',          href: '/admin/tickets?new=1',         icon: LifeBuoy,      moduleId: 'tickets',     roles: ['support'] },
+  // HR
+  { label: 'New employee',        href: '/admin/employees?new=1',       icon: User,          moduleId: 'hr',          roles: ['hr'] },
+  { label: 'New job posting',     href: '/admin/recruitment?new=1',     icon: Briefcase,     moduleId: 'recruitment', roles: ['hr'] },
+  // Marketing / content
+  { label: 'New blog post',       href: '/admin/blog/new',              icon: Newspaper,     moduleId: 'blog',        roles: ['marketing'] },
+  { label: 'New page',            href: '/admin/pages/new',             icon: FileCode,      moduleId: 'pages',       roles: ['marketing'] },
+  { label: 'New campaign',        href: '/admin/campaigns?new=1',       icon: Megaphone,     moduleId: 'growth',      roles: ['marketing'] },
+  // Projects
+  { label: 'New project',         href: '/admin/projects?new=1',        icon: Briefcase,     moduleId: 'projects',    roles: ['projects'] },
+  { label: 'New task',            href: '/admin/tasks?new=1',           icon: CalendarPlus,  moduleId: 'projects',    roles: ['projects', 'sales', 'support'] },
+  // Warehouse / purchasing
+  { label: 'New product',         href: '/admin/products?new=1',        icon: Package,       moduleId: 'products',    roles: ['warehouse', 'sales'] },
+  { label: 'New vendor',          href: '/admin/vendors?new=1',         icon: Truck,         moduleId: 'vendors',     roles: ['purchasing', 'warehouse'] },
+];
 
 interface SearchHit {
   entity_type: string;
@@ -96,7 +137,7 @@ interface AdminSearchCommandProps {
 
 export function AdminSearchCommand({ open, onOpenChange }: AdminSearchCommandProps) {
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, roles } = useAuth();
   const { data: modules } = useModules();
   const { data: featureFlags } = useNavFeatureFlags();
   const [query, setQuery] = useState('');
@@ -127,6 +168,14 @@ export function AdminSearchCommand({ open, onOpenChange }: AdminSearchCommandPro
         .filter((group) => group.items.length > 0),
     [roleFilteredGroups, modules, featureFlags]
   );
+
+  const quickActions = useMemo(() => {
+    return QUICK_ACTIONS.filter((a) => {
+      if (a.moduleId && modules && !(modules[a.moduleId]?.enabled ?? true)) return false;
+      if (isAdmin) return true;
+      return a.roles.some((r) => roles.includes(r));
+    });
+  }, [modules, isAdmin, roles]);
 
   const { data: hits, isFetching } = useQuery({
     queryKey: ['global-search', debouncedQuery],
@@ -170,6 +219,25 @@ export function AdminSearchCommand({ open, onOpenChange }: AdminSearchCommandPro
         <CommandEmpty>
           {isFetching ? 'Searching…' : 'No results found.'}
         </CommandEmpty>
+
+        {quickActions.length > 0 && (
+          <CommandGroup heading="Quick create">
+            {quickActions.map((a) => (
+              <CommandItem
+                key={a.href}
+                value={`create new ${a.label}`}
+                onSelect={() => handleSelect(a.href)}
+                className="cursor-pointer"
+              >
+                <a.icon className="mr-2 h-4 w-4" />
+                <span>{a.label}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+
+        {quickActions.length > 0 && <CommandSeparator />}
+
 
         {showingDataResults &&
           hitsByGroup.map(([group, items]) => (
