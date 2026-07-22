@@ -49,6 +49,8 @@ export default function ExpensesPage() {
             <ExpenseDelegationsTab />
           </TabsContent>
         </Tabs>
+        </Tabs>
+        <AddExpenseDialog open={addOpen} onOpenChange={setAddOpen} />
       </AdminPageContainer>
     </AdminLayout>
   );
