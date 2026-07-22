@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { QuoteDetailSheet } from '@/components/admin/quotes/QuoteDetailSheet';
 import { CreateQuoteDialog } from '@/components/admin/quotes/CreateQuoteDialog';
 import { RecurringQuotesTab } from '@/components/admin/quotes/RecurringQuotesTab';
+import { useOpenOnQueryParam } from '@/hooks/useOpenOnQueryParam';
 
 const STATUS_COLORS: Record<QuoteStatus, string> = {
   draft: 'bg-muted text-muted-foreground',
