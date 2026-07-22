@@ -87,7 +87,7 @@ export default function CompaniesPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <CreateCompanyDialog />
+            <CreateCompanyDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
           </div>
         </AdminPageHeader>
 
