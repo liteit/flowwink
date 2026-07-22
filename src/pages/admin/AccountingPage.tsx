@@ -36,6 +36,7 @@ import { PendingOperationsList } from '@/components/admin/PendingOperationsList'
 import { OverviewTab } from '@/components/admin/accounting/dashboard/OverviewTab';
 import { FiscalYearProvider } from '@/components/admin/accounting/FiscalYearContext';
 import { FiscalYearSelector } from '@/components/admin/accounting/FiscalYearSelector';
+import { NewJournalEntryDialog } from '@/components/admin/accounting/NewJournalEntryDialog';
 
 type TabId =
   | 'overview'
