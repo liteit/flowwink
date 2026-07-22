@@ -40,6 +40,7 @@ export default function ProductsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  useOpenOnQueryParam('new', '1', () => { setEditingProduct(null); setDialogOpen(true); });
   const isStripeConfigured = useIsStripeConfigured();
 
   const handleEdit = (product: Product) => {
