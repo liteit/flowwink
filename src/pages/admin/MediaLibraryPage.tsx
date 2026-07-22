@@ -1,5 +1,6 @@
 import { logger } from '@/lib/logger';
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AdminLayout } from '@/components/admin/AdminLayout';
@@ -69,6 +70,18 @@ export default function MediaLibraryPage() {
   const [lightboxImage, setLightboxImage] = useState<{ url: string; name: string; index: number } | null>(null);
   const [detailsFor, setDetailsFor] = useState<{ storagePath: string; filename: string; publicUrl: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ⌘K / quick-create wiring: `?upload=1` opens the file picker on mount.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get('upload') === '1') {
+      const next = new URLSearchParams(searchParams);
+      next.delete('upload');
+      setSearchParams(next, { replace: true });
+      // Defer to next tick so the input is mounted.
+      setTimeout(() => fileInputRef.current?.click(), 0);
+    }
+  }, [searchParams, setSearchParams]);
 
   const { data: assetMap } = useMediaAssets();
   const upsertMeta = useUpsertMediaAsset();

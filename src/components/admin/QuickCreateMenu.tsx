@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Plus, UserPlus, Briefcase, CheckSquare, LifeBuoy, HandCoins, FileSignature,
   Building2, FileText, Receipt, ClipboardList, User, Newspaper, FileCode,
-  Megaphone, Package, Truck,
+  Megaphone, Package, Truck, Image as ImageIcon, FolderKanban,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,6 +40,8 @@ const ACTIONS: QuickAction[] = [
   { kind: 'nav',    href: '/admin/blog/new',              label: 'Blog post',      icon: Newspaper,     moduleId: 'blog',        roles: ['marketing'] },
   { kind: 'nav',    href: '/admin/pages/new',             label: 'Page',           icon: FileCode,      moduleId: 'pages',       roles: ['marketing'] },
   { kind: 'nav',    href: '/admin/campaigns?new=1',       label: 'Campaign',       icon: Megaphone,     moduleId: 'paidGrowth',  roles: ['marketing'] },
+  { kind: 'nav',    href: '/admin/media?upload=1',        label: 'Media upload',   icon: ImageIcon,     moduleId: 'media',       roles: ['marketing'] },
+  { kind: 'nav',    href: '/admin/projects?new=1',        label: 'Project',        icon: FolderKanban,  moduleId: 'projects',    roles: ['projects'] },
   { kind: 'nav',    href: '/admin/products?new=1',        label: 'Product',        icon: Package,       moduleId: 'ecommerce',   roles: ['warehouse', 'sales'] },
   { kind: 'nav',    href: '/admin/vendors?new=1',         label: 'Vendor',         icon: Truck,         moduleId: 'purchasing',  roles: ['purchasing', 'warehouse'] },
   // Task is available to everyone with an operator role — it's the universal capture surface.
