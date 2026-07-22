@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { PublicNavigation } from '@/components/public/PublicNavigation';
 import { PublicFooter } from '@/components/public/PublicFooter';
@@ -8,14 +8,18 @@ import { cn } from '@/lib/utils';
 import { Package, MapPin, Heart, User, LogOut, Loader2, CalendarOff, Receipt, Users, Target, Clock, GraduationCap, FileText, Sparkles } from 'lucide-react';
 import { useEmployeeSelf } from '@/hooks/useEmployeeSelf';
 import { useIsManager } from '@/hooks/useTeam';
+import { useIsModuleEnabled } from '@/hooks/useModules';
 import { BuildBadge } from '@/components/BuildBadge';
 
-const customerNav = [
+// Commerce-scoped portal sections — hidden when the ecommerce module is off
+// (an HR-only site still gets the portal, for employee self-service).
+const commerceNav = [
   { to: '/account', label: 'Orders', icon: Package, exact: true },
-  { to: '/account/assistant', label: 'Assistant', icon: Sparkles },
   { to: '/account/addresses', label: 'Addresses', icon: MapPin },
   { to: '/account/wishlist', label: 'Wishlist', icon: Heart },
 ];
+
+const assistantNav = [{ to: '/account/assistant', label: 'Assistant', icon: Sparkles }];
 
 const employeeNav = [
   { to: '/account/attendance', label: 'Time clock', icon: Clock },
@@ -35,11 +39,13 @@ export default function AccountLayout() {
   const { isLoggedIn, loading, signOut, profile } = useCustomerAuth();
   const { isEmployee } = useEmployeeSelf();
   const { isManager } = useIsManager();
+  const ecommerceEnabled = useIsModuleEnabled('ecommerce');
   const location = useLocation();
   const navigate = useNavigate();
 
   const navItems = [
-    ...customerNav,
+    ...(ecommerceEnabled ? commerceNav : []),
+    ...assistantNav,
     ...(isEmployee ? employeeNav : []),
     ...(isManager ? managerNav : []),
     ...profileNav,
@@ -59,6 +65,12 @@ export default function AccountLayout() {
   if (!isLoggedIn) {
     navigate('/account/login?redirect=' + encodeURIComponent(location.pathname));
     return null;
+  }
+
+  // The portal index is the Orders page; with ecommerce off it isn't in the
+  // nav, so land the visitor on the first section that is.
+  if (!ecommerceEnabled && location.pathname === '/account') {
+    return <Navigate to="/account/assistant" replace />;
   }
 
   const handleSignOut = async () => {

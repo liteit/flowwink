@@ -30,6 +30,10 @@ export function PublicNavigation() {
   const { branding } = useBranding();
   const { resolvedTheme } = useTheme();
   const ecommerceEnabled = useIsModuleEnabled('ecommerce');
+  const hrEnabled = useIsModuleEnabled('hr');
+  // The account portal is cross-functional: customers (ecommerce) and employee
+  // self-service (hr) share the same entrance. Only the cart is commerce-only.
+  const accountEnabled = ecommerceEnabled || hrEnabled;
   const blogModuleEnabled = useIsModuleEnabled('blog');
   
   // Use header global block settings
@@ -414,14 +418,14 @@ export function PublicNavigation() {
             {/* Custom nav items - with mega menu support */}
             {customNavItems.map((item) => renderNavItem(item))}
             {branding?.allowThemeToggle !== false && <ThemeToggle />}
-            {ecommerceEnabled && <AccountIndicator />}
+            {accountEnabled && <AccountIndicator />}
             {ecommerceEnabled && <CartIndicator />}
           </nav>
 
           {/* Mobile Menu Button */}
           <div className="flex items-center gap-2 md:hidden">
             {branding?.allowThemeToggle !== false && <ThemeToggle />}
-            {ecommerceEnabled && <AccountIndicator />}
+            {accountEnabled && <AccountIndicator />}
             {ecommerceEnabled && <CartIndicator />}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
