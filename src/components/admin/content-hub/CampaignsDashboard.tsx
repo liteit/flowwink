@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useOpenOnQueryParam } from '@/hooks/useOpenOnQueryParam';
 import { Plus, Sparkles, Calendar, Filter, LayoutGrid, List } from 'lucide-react';
 import { useContentProposals, useDeleteProposal, useApproveProposal, ContentProposal } from '@/hooks/useContentProposals';
 import { Button } from '@/components/ui/button';
