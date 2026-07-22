@@ -37,6 +37,8 @@ export function InboxSection() {
   const [comment, setComment] = useState<Record<string, string>>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkComment, setBulkComment] = useState('');
+  const formatAmount = useFormatAmount();
+
 
   const { data, isLoading } = useQuery({
     queryKey: ['approval-inbox'],
