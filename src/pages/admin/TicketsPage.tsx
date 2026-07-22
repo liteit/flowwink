@@ -94,7 +94,7 @@ export default function TicketsPage() {
               }}
             />
             <CannedResponsesDialog />
-            <CreateTicketDialog />
+            <CreateTicketDialog open={createOpen} onOpenChange={setCreateOpen} />
           </AdminPageHeader>
 
           {/* Search + tag filter (only for queue views) */}
